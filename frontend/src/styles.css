@@ -19,18 +19,18 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #93441a;
-  --bg-deep: #3b1b0c;
-  --surface: rgba(66, 31, 15, 0.84);
-  --surface-strong: #5c2a13;
-  --surface-soft: rgba(78, 39, 20, 0.74);
-  --ink: #f8f0e4;
-  --accent: #b67332;
-  --accent-strong: #e3b27d;
-  --line: rgba(248, 240, 228, 0.12);
-  --line-strong: rgba(248, 240, 228, 0.18);
-  --muted: #ccb9a0;
-  --shadow: rgba(45, 17, 5, 0.5);
+  --bg: #151311;
+  --bg-deep: #0f0d0b;
+  --surface: rgba(26, 22, 19, 0.84);
+  --surface-strong: #1d1815;
+  --surface-soft: rgba(23, 20, 17, 0.72);
+  --ink: #f6efe5;
+  --accent: #7cc2b0;
+  --accent-strong: #5ca18f;
+  --line: rgba(246, 239, 229, 0.12);
+  --line-strong: rgba(246, 239, 229, 0.18);
+  --muted: #b7ab9e;
+  --shadow: rgba(0, 0, 0, 0.42);
 }
 
 * {
@@ -50,14 +50,6 @@ body {
     radial-gradient(circle at 88% 22%, rgba(111, 153, 145, 0.18), transparent 24%),
     linear-gradient(135deg, var(--bg-deep), var(--bg) 32%, #f7efe2 72%, #fff8ef 100%);
   color: var(--ink);
-}
-
-:root[data-theme="dark"] body {
-  background:
-    radial-gradient(circle at 84% 84%, rgba(255, 248, 240, 0.28), transparent 18%),
-    radial-gradient(circle at 72% 76%, rgba(255, 255, 255, 0.12), transparent 20%),
-    radial-gradient(circle at 84% 20%, rgba(182, 115, 50, 0.18), transparent 22%),
-    linear-gradient(135deg, #2b1208 0%, var(--bg-deep) 24%, #93441a 58%, #b67332 100%);
 }
 
 button,
@@ -126,16 +118,12 @@ select {
 
 :root[data-theme="dark"] .auth-panel,
 :root[data-theme="dark"] .workspace-panel {
-  border-color: rgba(255, 255, 255, 0.22);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 32%),
-    linear-gradient(145deg, rgba(182, 115, 50, 0.16), rgba(147, 68, 26, 0.12)),
-    rgba(26, 13, 8, 0.38);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(7, 6, 5, 0.34);
   box-shadow:
-    0 24px 80px rgba(45, 17, 5, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 18px 40px rgba(255, 255, 255, 0.03);
+    0 24px 80px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .auth-brand-row,
@@ -332,8 +320,8 @@ select {
 
 .auth-card-copy {
   margin: 14px 0 0;
-  color: var(--muted);
   line-height: 1.7;
+  color: var(--muted);
 }
 
 .auth-provider-stack {
@@ -369,21 +357,11 @@ select {
   box-shadow: 0 16px 34px rgba(22, 63, 55, 0.24);
 }
 
-:root[data-theme="dark"] .auth-primary-button {
-  background: linear-gradient(135deg, #d39a58, #b67332);
-  box-shadow: 0 16px 34px rgba(60, 24, 8, 0.34);
-}
-
 .auth-secondary-button {
   margin-top: 20px;
   border-color: var(--line);
   background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
   color: var(--ink);
-}
-
-:root[data-theme="dark"] .auth-secondary-button {
-  border-color: var(--line);
-  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
 }
 
 .auth-primary-button:hover,
@@ -413,9 +391,6 @@ select {
 
 .identity-block span {
   margin-bottom: 10px;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 
 .identity-block strong {
