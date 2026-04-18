@@ -20,11 +20,14 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY --from=builder /app/target/release/usestakly-backend /usr/local/bin/usestakly-backend
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY migrations ./migrations
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=4000
 
 EXPOSE 4000
 
-CMD ["usestakly-backend"]
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
