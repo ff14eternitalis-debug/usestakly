@@ -11,6 +11,7 @@ type CurrentUser = {
 };
 
 type Locale = "en" | "fr";
+type Theme = "light" | "dark";
 
 const COPY: Record<
   Locale,
@@ -26,6 +27,7 @@ const COPY: Record<
     authAccessValue: string;
     loading: string;
     language: string;
+    theme: string;
     connectedTitle: string;
     connectedBody: string;
     connectedLabel: string;
@@ -45,6 +47,7 @@ const COPY: Record<
     authAccessValue: "English / French",
     loading: "Checking session...",
     language: "FR",
+    theme: "Dark",
     connectedTitle: "You are connected",
     connectedBody: "Your session is active and ready to access UseStakly.",
     connectedLabel: "Signed in as",
@@ -63,6 +66,7 @@ const COPY: Record<
     authAccessValue: "Français / Anglais",
     loading: "Vérification de la session...",
     language: "EN",
+    theme: "Sombre",
     connectedTitle: "Tu es connecté",
     connectedBody: "Ta session est active et prête à accéder à UseStakly.",
     connectedLabel: "Connecté en tant que",
@@ -83,14 +87,33 @@ function detectInitialLocale(): Locale {
   return window.navigator.language.toLowerCase().startsWith("fr") ? "fr" : "en";
 }
 
+function detectInitialTheme(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const stored = window.localStorage.getItem("usestakly-theme");
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function AppShell() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [locale, setLocale] = useState<Locale>(detectInitialLocale);
+  const [theme, setTheme] = useState<Theme>(detectInitialTheme);
 
   useEffect(() => {
     window.localStorage.setItem("usestakly-locale", locale);
   }, [locale]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("usestakly-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,15 +165,26 @@ export function AppShell() {
             <p className="auth-brand-mark">UseStakly</p>
             <p className="auth-brand-subtitle">{copy.authEyebrow}</p>
           </div>
-          <button
-            className="lang-toggle"
-            type="button"
-            onClick={() => {
-              setLocale((current) => (current === "en" ? "fr" : "en"));
-            }}
-          >
-            {copy.language}
-          </button>
+          <div className="auth-controls">
+            <button
+              className="lang-toggle"
+              type="button"
+              onClick={() => {
+                setTheme((current) => (current === "light" ? "dark" : "light"));
+              }}
+            >
+              {copy.theme}
+            </button>
+            <button
+              className="lang-toggle"
+              type="button"
+              onClick={() => {
+                setLocale((current) => (current === "en" ? "fr" : "en"));
+              }}
+            >
+              {copy.language}
+            </button>
+          </div>
         </div>
 
         <div className="auth-grid">
