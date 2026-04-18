@@ -6,8 +6,9 @@ export const COPY: Record<Locale, CopyBlock> = {
     authTitle: "Sign in to continue",
     authBody:
       "Access your libraries, sync your identity, and start from your own codebase.",
-    authButton: "Continue with GitHub",
-    authNotice: "Only GitHub is enabled for the MVP.",
+    authGitHubButton: "Continue with GitHub",
+    authDiscordButton: "Continue with Discord",
+    authNotice: "GitHub and Discord are available for MVP login.",
     authSecurityLabel: "Session",
     authSecurityValue: "Secure browser session",
     authAccessLabel: "Language",
@@ -82,8 +83,9 @@ export const COPY: Record<Locale, CopyBlock> = {
     authTitle: "Connecte-toi pour continuer",
     authBody:
       "Accède à tes bibliothèques, synchronise ton identité et démarre depuis ta propre base de code.",
-    authButton: "Continuer avec GitHub",
-    authNotice: "Seul GitHub est activé pour le MVP.",
+    authGitHubButton: "Continuer avec GitHub",
+    authDiscordButton: "Continuer avec Discord",
+    authNotice: "GitHub et Discord sont disponibles pour le login MVP.",
     authSecurityLabel: "Session",
     authSecurityValue: "Session navigateur sécurisée",
     authAccessLabel: "Langue",

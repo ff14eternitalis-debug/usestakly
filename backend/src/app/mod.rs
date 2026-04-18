@@ -30,6 +30,8 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/health", get(health::health))
         .route("/api/auth/github/start", get(auth::github_start))
         .route("/api/auth/github/callback", get(auth::github_callback))
+        .route("/api/auth/discord/start", get(auth::discord_start))
+        .route("/api/auth/discord/callback", get(auth::discord_callback))
         .route("/api/auth/logout", post(auth::logout))
         .route("/api/me", get(me::me))
         .route(

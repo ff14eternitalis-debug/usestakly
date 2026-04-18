@@ -8,7 +8,10 @@ use serde::Deserialize;
 
 use crate::{
     app::{AppState, error::ApiError},
-    auth::{clear_session_cookie, finish_github_oauth, github_oauth_url, session_cookie},
+    auth::{
+        clear_session_cookie, discord_oauth_url, finish_discord_oauth, finish_github_oauth,
+        github_oauth_url, session_cookie,
+    },
 };
 
 #[derive(Deserialize)]
@@ -33,6 +36,27 @@ pub async fn github_callback(
     response
         .headers_mut()
         .insert(header::SET_COOKIE, HeaderValue::from_str(&cookie).map_err(|_| ApiError::bad_request("invalid session cookie"))?);
+    Ok(response)
+}
+
+pub async fn discord_start(State(state): State<AppState>) -> Result<Redirect, ApiError> {
+    let url = discord_oauth_url(&state.config)?;
+    Ok(Redirect::temporary(&url))
+}
+
+pub async fn discord_callback(
+    State(state): State<AppState>,
+    Query(query): Query<GithubCallbackQuery>,
+) -> Result<Response, ApiError> {
+    let current_user =
+        finish_discord_oauth(&state.db, &state.config, &query.code, &query.state).await?;
+    let cookie = session_cookie(&state.config, current_user.id)?;
+
+    let mut response = Redirect::to(&state.config.frontend_base_url).into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie).map_err(|_| ApiError::bad_request("invalid session cookie"))?,
+    );
     Ok(response)
 }
 

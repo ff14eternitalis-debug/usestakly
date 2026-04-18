@@ -297,6 +297,15 @@ select {
   color: var(--muted);
 }
 
+.auth-provider-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-provider-button {
+  margin-top: 0;
+}
+
 .auth-primary-button,
 .auth-secondary-button {
   display: inline-flex;

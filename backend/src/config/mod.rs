@@ -18,6 +18,8 @@ pub struct AppConfig {
     pub app_session_secret: Option<String>,
     pub github_client_id: Option<String>,
     pub github_client_secret: Option<String>,
+    pub discord_client_id: Option<String>,
+    pub discord_client_secret: Option<String>,
 }
 
 impl AppConfig {
@@ -49,6 +51,8 @@ impl AppConfig {
         let app_session_secret = env::var("APP_SESSION_SECRET").ok();
         let github_client_id = env::var("GITHUB_CLIENT_ID").ok();
         let github_client_secret = env::var("GITHUB_CLIENT_SECRET").ok();
+        let discord_client_id = env::var("DISCORD_CLIENT_ID").ok();
+        let discord_client_secret = env::var("DISCORD_CLIENT_SECRET").ok();
 
         Ok(Self {
             host,
@@ -65,6 +69,8 @@ impl AppConfig {
             app_session_secret,
             github_client_id,
             github_client_secret,
+            discord_client_id,
+            discord_client_secret,
         })
     }
 
@@ -74,9 +80,26 @@ impl AppConfig {
             && self.app_session_secret.is_some()
     }
 
+    pub fn discord_auth_enabled(&self) -> bool {
+        self.discord_client_id.is_some()
+            && self.discord_client_secret.is_some()
+            && self.app_session_secret.is_some()
+    }
+
+    pub fn auth_enabled(&self) -> bool {
+        self.github_auth_enabled() || self.discord_auth_enabled()
+    }
+
     pub fn github_callback_url(&self) -> String {
         format!(
             "{}/api/auth/github/callback",
+            self.app_base_url.trim_end_matches('/')
+        )
+    }
+
+    pub fn discord_callback_url(&self) -> String {
+        format!(
+            "{}/api/auth/discord/callback",
             self.app_base_url.trim_end_matches('/')
         )
     }

@@ -60,7 +60,8 @@ export type CopyBlock = {
   authEyebrow: string;
   authTitle: string;
   authBody: string;
-  authButton: string;
+  authGitHubButton: string;
+  authDiscordButton: string;
   authNotice: string;
   authSecurityLabel: string;
   authSecurityValue: string;

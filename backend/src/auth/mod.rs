@@ -10,6 +10,7 @@ use crate::{app::error::ApiError, config::AppConfig};
 
 const SESSION_COOKIE_NAME: &str = "usestakly_session";
 const GITHUB_PROVIDER: &str = "github";
+const DISCORD_PROVIDER: &str = "discord";
 const DEBUG_USER_ID_HEADER: &str = "x-debug-user-id";
 const DEBUG_USER_EMAIL_HEADER: &str = "x-debug-user-email";
 const DEBUG_USER_USERNAME_HEADER: &str = "x-debug-user-username";
@@ -61,6 +62,23 @@ struct GithubEmail {
     verified: bool,
 }
 
+#[derive(Debug, Deserialize)]
+struct DiscordTokenResponse {
+    access_token: Option<String>,
+    error: Option<String>,
+    error_description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct DiscordUser {
+    id: String,
+    username: String,
+    global_name: Option<String>,
+    avatar: Option<String>,
+    email: Option<String>,
+    verified: Option<bool>,
+}
+
 pub async fn resolve_current_user(
     db: &PgPool,
     config: &AppConfig,
@@ -70,7 +88,7 @@ pub async fn resolve_current_user(
         return Ok(user);
     }
 
-    if config.github_auth_enabled() {
+    if config.auth_enabled() {
         return Err(ApiError::unauthorized("Authentication required"));
     }
 
@@ -89,6 +107,21 @@ pub fn github_oauth_url(config: &AppConfig) -> Result<String, ApiError> {
         client_id,
         urlencoding::encode(&config.github_callback_url()),
         urlencoding::encode(&state),
+    ))
+}
+
+pub fn discord_oauth_url(config: &AppConfig) -> Result<String, ApiError> {
+    let client_id = config
+        .discord_client_id
+        .as_ref()
+        .ok_or_else(|| ApiError::bad_request("Discord auth is not configured"))?;
+    let state = encode_oauth_state(config)?;
+
+    Ok(format!(
+        "https://discord.com/oauth2/authorize?response_type=code&client_id={}&scope=identify%20email&state={}&redirect_uri={}&prompt=consent",
+        client_id,
+        urlencoding::encode(&state),
+        urlencoding::encode(&config.discord_callback_url()),
     ))
 }
 
@@ -230,6 +263,137 @@ pub async fn finish_github_oauth(
         username: github_user.login,
         display_name: github_user.name,
         avatar_url: github_user.avatar_url,
+    })
+}
+
+pub async fn finish_discord_oauth(
+    db: &PgPool,
+    config: &AppConfig,
+    code: &str,
+    state: &str,
+) -> Result<CurrentUser, ApiError> {
+    validate_oauth_state(config, state)?;
+
+    let client_id = config
+        .discord_client_id
+        .clone()
+        .ok_or_else(|| ApiError::bad_request("Discord client id missing"))?;
+    let client_secret = config
+        .discord_client_secret
+        .clone()
+        .ok_or_else(|| ApiError::bad_request("Discord client secret missing"))?;
+
+    let http = Client::new();
+    let token_response = http
+        .post("https://discord.com/api/v10/oauth2/token")
+        .basic_auth(client_id.clone(), Some(client_secret.clone()))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("redirect_uri", config.discord_callback_url().as_str()),
+        ])
+        .send()
+        .await
+        .map_err(|err| ApiError::bad_request(format!("Discord token exchange failed: {err}")))?;
+
+    let token_body = token_response
+        .json::<DiscordTokenResponse>()
+        .await
+        .map_err(|err| ApiError::bad_request(format!("Invalid Discord token response: {err}")))?;
+
+    let access_token = token_body.access_token.ok_or_else(|| {
+        ApiError::bad_request(
+            token_body
+                .error_description
+                .or(token_body.error)
+                .unwrap_or_else(|| "Discord did not return an access token".to_string()),
+        )
+    })?;
+
+    let discord_user = http
+        .get("https://discord.com/api/v10/users/@me")
+        .header("Accept", "application/json")
+        .header("Authorization", format!("Bearer {access_token}"))
+        .send()
+        .await
+        .map_err(|err| ApiError::bad_request(format!("Discord user request failed: {err}")))?
+        .error_for_status()
+        .map_err(|err| ApiError::bad_request(format!("Discord user request failed: {err}")))?
+        .json::<DiscordUser>()
+        .await
+        .map_err(|err| ApiError::bad_request(format!("Invalid Discord user response: {err}")))?;
+
+    let primary_email = discord_user
+        .email
+        .clone()
+        .filter(|_| discord_user.verified.unwrap_or(false))
+        .ok_or_else(|| {
+            ApiError::bad_request(
+                "Discord account must expose one verified email for MVP login",
+            )
+        })?;
+
+    let avatar_url = discord_user.avatar.as_ref().map(|avatar| {
+        format!(
+            "https://cdn.discordapp.com/avatars/{}/{}.png",
+            discord_user.id, avatar
+        )
+    });
+
+    let display_name = discord_user
+        .global_name
+        .clone()
+        .or_else(|| Some(discord_user.username.clone()));
+
+    let user_id: Uuid = sqlx::query_scalar(
+        r#"
+        INSERT INTO users (email, username, display_name, avatar_url)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (email) DO UPDATE
+        SET
+          username = EXCLUDED.username,
+          display_name = EXCLUDED.display_name,
+          avatar_url = EXCLUDED.avatar_url,
+          updated_at = NOW()
+        RETURNING id
+        "#,
+    )
+    .bind(&primary_email)
+    .bind(&discord_user.username)
+    .bind(&display_name)
+    .bind(&avatar_url)
+    .fetch_one(db)
+    .await
+    .map_err(ApiError::from)?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO auth_identities (user_id, provider, provider_user_id, credentials)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (provider, provider_user_id) DO UPDATE
+        SET
+          user_id = EXCLUDED.user_id,
+          credentials = EXCLUDED.credentials
+        "#,
+    )
+    .bind(user_id)
+    .bind(DISCORD_PROVIDER)
+    .bind(discord_user.id.clone())
+    .bind(serde_json::json!({
+        "username": discord_user.username,
+        "email": primary_email,
+    }))
+    .execute(db)
+    .await
+    .map_err(ApiError::from)?;
+
+    Ok(CurrentUser {
+        id: user_id,
+        email: primary_email,
+        username: discord_user.username,
+        display_name: display_name,
+        avatar_url,
     })
 }
 

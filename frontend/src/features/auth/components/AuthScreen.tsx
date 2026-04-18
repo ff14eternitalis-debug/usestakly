@@ -55,9 +55,17 @@ export function AuthScreen({ copy, loading, setLocale }: AuthScreenProps) {
             </div>
           ) : (
             <div className="auth-state">
-              <a className="auth-primary-button" href={authUrl("/api/auth/github/start")}>
-                {copy.authButton}
-              </a>
+              <div className="auth-provider-stack">
+                <a className="auth-primary-button" href={authUrl("/api/auth/github/start")}>
+                  {copy.authGitHubButton}
+                </a>
+                <a
+                  className="auth-secondary-button auth-provider-button"
+                  href={authUrl("/api/auth/discord/start")}
+                >
+                  {copy.authDiscordButton}
+                </a>
+              </div>
               <p className="auth-card-copy">{copy.authNotice}</p>
             </div>
           )}
