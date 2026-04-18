@@ -1,12 +1,16 @@
 pub mod error;
 
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    http::{HeaderValue, Method},
+    routing::{get, post},
+};
 use sqlx::PgPool;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{
     config::AppConfig,
-    handlers::{health, libraries, me, snippets},
+    handlers::{auth, health, libraries, me, snippets},
 };
 
 #[derive(Clone)]
@@ -16,10 +20,17 @@ pub struct AppState {
 }
 
 pub fn build_app(config: AppConfig, db: PgPool) -> Router {
+    let frontend_origin = config
+        .frontend_base_url
+        .parse::<HeaderValue>()
+        .unwrap_or_else(|_| HeaderValue::from_static("http://localhost:5173"));
     let state = AppState { config, db };
 
     Router::new()
         .route("/health", get(health::health))
+        .route("/api/auth/github/start", get(auth::github_start))
+        .route("/api/auth/github/callback", get(auth::github_callback))
+        .route("/api/auth/logout", post(auth::logout))
         .route("/api/me", get(me::me))
         .route(
             "/api/libraries",
@@ -43,7 +54,22 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             "/api/snippets/{snippet_id}/versions",
             get(snippets::list_snippet_versions).post(snippets::create_snippet_version),
         )
-        .layer(CorsLayer::permissive())
+        .layer(
+            CorsLayer::new()
+                .allow_origin(frontend_origin)
+                .allow_credentials(true)
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PATCH,
+                    Method::DELETE,
+                    Method::OPTIONS,
+                ])
+                .allow_headers([
+                    axum::http::header::CONTENT_TYPE,
+                    axum::http::header::AUTHORIZATION,
+                ]),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
