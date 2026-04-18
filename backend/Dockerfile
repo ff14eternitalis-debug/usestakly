@@ -20,15 +20,11 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY --from=builder /app/target/release/usestakly-backend /usr/local/bin/usestakly-backend
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY migrations ./migrations
-
-RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
-    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=4000
 
 EXPOSE 4000
 
-CMD ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["sh", "-lc", "/usr/local/bin/usestakly-backend > /tmp/usestakly-backend.log 2>&1; code=$?; cat /tmp/usestakly-backend.log; if [ \"$code\" -ne 0 ]; then echo \"[usestakly-backend] exited with code $code; keeping container alive for 300 seconds for debugging\"; sleep 300; fi; exit \"$code\""]
