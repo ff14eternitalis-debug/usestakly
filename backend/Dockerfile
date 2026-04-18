@@ -27,4 +27,4 @@ ENV APP_PORT=4000
 
 EXPOSE 4000
 
-CMD ["sh", "-lc", "/usr/local/bin/usestakly-backend > /tmp/usestakly-backend.log 2>&1 & pid=$!; sleep 8; cat /tmp/usestakly-backend.log || true; if ! kill -0 \"$pid\" 2>/dev/null; then echo \"[usestakly-backend] process exited early; keeping container alive for 300 seconds for debugging\"; sleep 300; exit 1; fi; wait \"$pid\""]
+CMD ["sh", "-lc", "echo '[usestakly-backend] dependency check'; ldd /usr/local/bin/usestakly-backend || true; RUST_BACKTRACE=1 /usr/local/bin/usestakly-backend > /tmp/usestakly-backend.log 2>&1 & pid=$!; sleep 8; if ! kill -0 \"$pid\" 2>/dev/null; then wait \"$pid\"; code=$?; cat /tmp/usestakly-backend.log || true; echo \"[usestakly-backend] process exited early with code $code; keeping container alive for 300 seconds for debugging\"; sleep 300; exit \"$code\"; fi; cat /tmp/usestakly-backend.log || true; wait \"$pid\""]
