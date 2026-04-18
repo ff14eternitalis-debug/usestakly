@@ -27,7 +27,4 @@ ENV APP_PORT=4000
 
 EXPOSE 4000
 
-HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
-    CMD curl -fsS http://localhost:4000/health || exit 1
-
 CMD ["usestakly-backend"]
