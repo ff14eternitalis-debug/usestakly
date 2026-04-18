@@ -26,6 +26,10 @@ export function AppShell() {
   }, [locale]);
 
   useEffect(() => {
+    document.documentElement.dataset.theme = "dark";
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadUser() {
