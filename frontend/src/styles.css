@@ -2,15 +2,15 @@
 
 :root {
   color-scheme: light;
-  --bg: #b8d7ca;
-  --bg-deep: #8fb7a8;
-  --surface: rgba(221, 241, 232, 0.78);
-  --surface-strong: #d9f0e6;
-  --ink: #10261f;
+  --bg: #efe6d5;
+  --bg-deep: #d7c3a1;
+  --surface: rgba(255, 251, 244, 0.88);
+  --surface-strong: #fffaf2;
+  --ink: #1d160f;
   --accent: #1f6f5f;
-  --accent-strong: #174f43;
-  --line: rgba(16, 38, 31, 0.14);
-  --muted: #44655a;
+  --accent-strong: #163f37;
+  --line: rgba(29, 22, 15, 0.12);
+  --muted: #77695f;
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -31,9 +31,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 12% 18%, rgba(236, 255, 247, 0.72), transparent 28%),
-    radial-gradient(circle at 88% 22%, rgba(31, 111, 95, 0.14), transparent 24%),
-    linear-gradient(135deg, var(--bg-deep), var(--bg) 32%, #cfe6db 72%, #e8f5ef 100%);
+    radial-gradient(circle at 12% 18%, rgba(255, 248, 230, 0.9), transparent 28%),
+    radial-gradient(circle at 88% 22%, rgba(111, 153, 145, 0.18), transparent 24%),
+    linear-gradient(135deg, var(--bg-deep), var(--bg) 32%, #f7efe2 72%, #fff8ef 100%);
   color: var(--ink);
 }
 
@@ -79,13 +79,13 @@ a {
   width: min(1180px, 100%);
   padding: 32px;
   border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
-    rgba(19, 75, 61, 0.16);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
+    rgba(31, 21, 13, 0.08);
   backdrop-filter: blur(18px);
   box-shadow:
-    0 24px 80px rgba(14, 47, 39, 0.2),
+    0 24px 80px rgba(54, 35, 10, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
@@ -212,10 +212,10 @@ a {
   width: 100%;
   padding: 28px;
   border-radius: 26px;
-  border: 1px solid rgba(16, 38, 31, 0.08);
+  border: 1px solid rgba(29, 22, 15, 0.08);
   background:
-    linear-gradient(180deg, rgba(248, 255, 252, 0.94), rgba(225, 245, 235, 0.92));
-  box-shadow: 0 18px 50px rgba(12, 54, 43, 0.16);
+    linear-gradient(180deg, rgba(255, 253, 249, 0.92), rgba(252, 245, 233, 0.86));
+  box-shadow: 0 18px 50px rgba(61, 40, 14, 0.12);
 }
 
 :root[data-theme="dark"] .auth-state {
@@ -278,7 +278,7 @@ a {
   padding: 18px;
   border-radius: 18px;
   background: color-mix(in srgb, var(--surface-strong) 74%, transparent);
-  border: 1px solid rgba(16, 38, 31, 0.08);
+  border: 1px solid rgba(29, 22, 15, 0.07);
 }
 
 :root[data-theme="dark"] .identity-block {
