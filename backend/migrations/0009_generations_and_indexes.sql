@@ -26,7 +26,5 @@ CREATE INDEX IF NOT EXISTS idx_libraries_slug_trgm ON libraries USING gin (slug 
 
 CREATE INDEX IF NOT EXISTS idx_versions_snippet ON snippet_versions(snippet_id);
 CREATE INDEX IF NOT EXISTS idx_versions_hash ON snippet_versions(content_hash);
-CREATE INDEX IF NOT EXISTS idx_versions_embedding ON snippet_versions
-  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 CREATE INDEX IF NOT EXISTS idx_generations_user ON generations(user_id, created_at DESC);

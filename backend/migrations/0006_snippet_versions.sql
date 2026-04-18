@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS snippet_versions (
   compatibility JSONB NOT NULL DEFAULT '{}',
   metadata JSONB NOT NULL DEFAULT '{}',
   content_hash TEXT NOT NULL,
-  embedding vector(384),
+  embedding JSONB,
   risk_level TEXT NOT NULL DEFAULT 'safe',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(snippet_id, version)
