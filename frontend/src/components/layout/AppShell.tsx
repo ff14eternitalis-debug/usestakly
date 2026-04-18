@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { apiGet, apiPost, authUrl } from "../../lib/api-client";
+import { apiPost, authUrl } from "../../lib/api-client";
 
 type CurrentUser = {
   id: string;
@@ -10,9 +10,87 @@ type CurrentUser = {
   avatarUrl: string | null;
 };
 
+type Locale = "en" | "fr";
+
+const COPY: Record<
+  Locale,
+  {
+    authEyebrow: string;
+    authTitle: string;
+    authBody: string;
+    authButton: string;
+    authNotice: string;
+    authSecurityLabel: string;
+    authSecurityValue: string;
+    authAccessLabel: string;
+    authAccessValue: string;
+    loading: string;
+    language: string;
+    connectedTitle: string;
+    connectedBody: string;
+    connectedLabel: string;
+    logout: string;
+  }
+> = {
+  en: {
+    authEyebrow: "Authentication",
+    authTitle: "Sign in to continue",
+    authBody:
+      "Access your libraries, sync your identity, and start from your own codebase.",
+    authButton: "Continue with GitHub",
+    authNotice: "Only GitHub is enabled for the MVP.",
+    authSecurityLabel: "Session",
+    authSecurityValue: "Secure browser session",
+    authAccessLabel: "Language",
+    authAccessValue: "English / French",
+    loading: "Checking session...",
+    language: "FR",
+    connectedTitle: "You are connected",
+    connectedBody: "Your session is active and ready to access UseStakly.",
+    connectedLabel: "Signed in as",
+    logout: "Logout"
+  },
+  fr: {
+    authEyebrow: "Authentification",
+    authTitle: "Connecte-toi pour continuer",
+    authBody:
+      "Accède à tes bibliothèques, synchronise ton identité et démarre depuis ta propre base de code.",
+    authButton: "Continuer avec GitHub",
+    authNotice: "Seul GitHub est activé pour le MVP.",
+    authSecurityLabel: "Session",
+    authSecurityValue: "Session navigateur sécurisée",
+    authAccessLabel: "Langue",
+    authAccessValue: "Français / Anglais",
+    loading: "Vérification de la session...",
+    language: "EN",
+    connectedTitle: "Tu es connecté",
+    connectedBody: "Ta session est active et prête à accéder à UseStakly.",
+    connectedLabel: "Connecté en tant que",
+    logout: "Se déconnecter"
+  }
+};
+
+function detectInitialLocale(): Locale {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  const stored = window.localStorage.getItem("usestakly-locale");
+  if (stored === "fr" || stored === "en") {
+    return stored;
+  }
+
+  return window.navigator.language.toLowerCase().startsWith("fr") ? "fr" : "en";
+}
+
 export function AppShell() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [locale, setLocale] = useState<Locale>(detectInitialLocale);
+
+  useEffect(() => {
+    window.localStorage.setItem("usestakly-locale", locale);
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,88 +131,81 @@ export function AppShell() {
     setUser(null);
   }
 
+  const copy = COPY[locale];
+
   return (
-    <main style={{ maxWidth: 1120, margin: "0 auto", padding: "48px 24px" }}>
-      <section
-        style={{
-          border: "1px solid rgba(31, 26, 23, 0.1)",
-          background: "rgba(255, 253, 248, 0.9)",
-          borderRadius: 24,
-          padding: 32,
-          boxShadow: "0 12px 40px rgba(31, 26, 23, 0.08)"
-        }}
-      >
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>UseStakly MVP</p>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 16,
-            alignItems: "center",
-            flexWrap: "wrap"
-          }}
-        >
+    <main className="auth-screen">
+      <div className="auth-noise" />
+      <section className="auth-panel">
+        <div className="auth-brand-row">
           <div>
-            <h1 style={{ marginTop: 12, marginBottom: 12, fontSize: 44, lineHeight: 1.05 }}>
-              Build apps by resolving libraries before generating code.
-            </h1>
-            <p style={{ maxWidth: 760, fontSize: 18, lineHeight: 1.6, marginBottom: 24 }}>
-              UseStakly is now scaffolded with a backend, a frontend, Docker for PostgreSQL, and the
-              documentation blueprint that drives the implementation.
-            </p>
+            <p className="auth-brand-mark">UseStakly</p>
+            <p className="auth-brand-subtitle">{copy.authEyebrow}</p>
           </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button
+            className="lang-toggle"
+            type="button"
+            onClick={() => {
+              setLocale((current) => (current === "en" ? "fr" : "en"));
+            }}
+          >
+            {copy.language}
+          </button>
+        </div>
+
+        <div className="auth-grid">
+          <div className="auth-hero">
+            <h1 className="auth-title">UseStakly</h1>
+            <p className="auth-copy">{copy.authTitle}</p>
+            <p className="auth-subcopy">{copy.authBody}</p>
+
+            <div className="auth-meta">
+              <div>
+                <span>{copy.authSecurityLabel}</span>
+                <strong>{copy.authSecurityValue}</strong>
+              </div>
+              <div>
+                <span>{copy.authAccessLabel}</span>
+                <strong>{copy.authAccessValue}</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside className="auth-card">
             {loading ? (
-              <span style={{ color: "var(--muted)" }}>Checking session…</span>
+              <div className="auth-state">
+                <p className="auth-status">{copy.loading}</p>
+              </div>
             ) : user ? (
-              <>
-                <div style={{ textAlign: "right" }}>
-                  <strong style={{ display: "block" }}>
-                    {user.displayName ?? user.username}
-                  </strong>
-                  <span style={{ color: "var(--muted)", fontSize: 14 }}>{user.email}</span>
+              <div className="auth-state">
+                <p className="auth-status">{copy.connectedTitle}</p>
+                <p className="auth-card-copy">{copy.connectedBody}</p>
+                <div className="identity-block">
+                  <span>{copy.connectedLabel}</span>
+                  <strong>{user.displayName ?? user.username}</strong>
+                  <small>{user.email}</small>
                 </div>
                 <button
+                  className="auth-secondary-button"
                   type="button"
                   onClick={() => {
                     void handleLogout();
                   }}
-                  style={buttonStyle("secondary")}
                 >
-                  Logout
+                  {copy.logout}
                 </button>
-              </>
+              </div>
             ) : (
-              <a href={authUrl("/api/auth/github/start")} style={buttonStyle("primary")}>
-                Login with GitHub
-              </a>
+              <div className="auth-state">
+                <a className="auth-primary-button" href={authUrl("/api/auth/github/start")}>
+                  {copy.authButton}
+                </a>
+                <p className="auth-card-copy">{copy.authNotice}</p>
+              </div>
             )}
-          </div>
+          </aside>
         </div>
-        <ul style={{ paddingLeft: 18, margin: 0, lineHeight: 1.8 }}>
-          <li>Backend target: Rust + Axum + SQLx</li>
-          <li>Frontend target: React + Vite + Tailwind v4</li>
-          <li>Core primitive: addressable libraries and snippets</li>
-          <li>Auth target: GitHub OAuth (direct MVP flow)</li>
-        </ul>
       </section>
     </main>
   );
-}
-
-function buttonStyle(variant: "primary" | "secondary") {
-  const isPrimary = variant === "primary";
-
-  return {
-    appearance: "none",
-    textDecoration: "none",
-    border: isPrimary ? "1px solid #1f1a17" : "1px solid rgba(31, 26, 23, 0.16)",
-    background: isPrimary ? "#1f1a17" : "transparent",
-    color: isPrimary ? "#fffdf8" : "#1f1a17",
-    borderRadius: 999,
-    padding: "12px 18px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer"
-  } as const;
 }
