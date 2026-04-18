@@ -23,7 +23,8 @@ COPY --from=builder /app/target/release/usestakly-backend /usr/local/bin/usestak
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY migrations ./migrations
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=4000
