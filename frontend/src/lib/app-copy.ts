@@ -1,4 +1,4 @@
-import type { CopyBlock, CurrentUser, Locale, Theme } from "./app-types";
+import type { CopyBlock, CurrentUser, Locale } from "./app-types";
 
 export const COPY: Record<Locale, CopyBlock> = {
   en: {
@@ -14,7 +14,6 @@ export const COPY: Record<Locale, CopyBlock> = {
     authAccessValue: "English / French",
     loading: "Checking session...",
     language: "FR",
-    theme: "Dark",
     connectedTitle: "You are connected",
     connectedBody: "Your session is active and ready to access UseStakly.",
     connectedLabel: "Signed in as",
@@ -91,7 +90,6 @@ export const COPY: Record<Locale, CopyBlock> = {
     authAccessValue: "Français / Anglais",
     loading: "Vérification de la session...",
     language: "EN",
-    theme: "Sombre",
     connectedTitle: "Tu es connecté",
     connectedBody: "Ta session est active et prête à accéder à UseStakly.",
     connectedLabel: "Connecté en tant que",
@@ -169,17 +167,6 @@ export function detectInitialLocale(): Locale {
     return stored;
   }
   return window.navigator.language.toLowerCase().startsWith("fr") ? "fr" : "en";
-}
-
-export function detectInitialTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-  const stored = window.localStorage.getItem("usestakly-theme");
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function getVisibilityLabel(copy: CopyBlock, visibility: string): string {

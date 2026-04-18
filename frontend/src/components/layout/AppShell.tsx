@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AuthScreen } from "../../features/auth/components/AuthScreen";
 import { WorkspaceScreen } from "../../features/workspace/components/WorkspaceScreen";
-import { COPY, detectInitialLocale, detectInitialTheme } from "../../lib/app-copy";
+import { COPY, detectInitialLocale } from "../../lib/app-copy";
 import { apiGet, apiPost, apiPostJson, authUrl } from "../../lib/api-client";
 import type {
   CurrentUser,
@@ -10,8 +10,7 @@ import type {
   LibraryRecord,
   Locale,
   SnippetDetail,
-  SnippetListResponse,
-  Theme
+  SnippetListResponse
 } from "../../lib/app-types";
 
 export function AppShell() {
@@ -21,16 +20,10 @@ export function AppShell() {
   const [loading, setLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [locale, setLocale] = useState<Locale>(detectInitialLocale);
-  const [theme, setTheme] = useState<Theme>(detectInitialTheme);
 
   useEffect(() => {
     window.localStorage.setItem("usestakly-locale", locale);
   }, [locale]);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("usestakly-theme", theme);
-  }, [theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -207,7 +200,6 @@ export function AppShell() {
           workspaceLoading={workspaceLoading}
           locale={locale}
           setLocale={setLocale}
-          setTheme={setTheme}
           onLogout={() => {
             void handleLogout();
           }}
@@ -221,7 +213,6 @@ export function AppShell() {
           copy={copy}
           loading={loading}
           setLocale={setLocale}
-          setTheme={setTheme}
         />
       )}
     </main>

@@ -1,21 +1,15 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import { authUrl } from "../../../lib/api-client";
-import type { CopyBlock, Locale, Theme } from "../../../lib/app-types";
+import type { CopyBlock, Locale } from "../../../lib/app-types";
 
 type AuthScreenProps = {
   copy: CopyBlock;
   loading: boolean;
   setLocale: Dispatch<SetStateAction<Locale>>;
-  setTheme: Dispatch<SetStateAction<Theme>>;
 };
 
-export function AuthScreen({
-  copy,
-  loading,
-  setLocale,
-  setTheme
-}: AuthScreenProps) {
+export function AuthScreen({ copy, loading, setLocale }: AuthScreenProps) {
   return (
     <section className="auth-panel">
       <div className="auth-brand-row">
@@ -24,15 +18,6 @@ export function AuthScreen({
           <p className="auth-brand-subtitle">{copy.authEyebrow}</p>
         </div>
         <div className="auth-controls">
-          <button
-            className="lang-toggle"
-            type="button"
-            onClick={() => {
-              setTheme((current) => (current === "light" ? "dark" : "light"));
-            }}
-          >
-            {copy.theme}
-          </button>
           <button
             className="lang-toggle"
             type="button"

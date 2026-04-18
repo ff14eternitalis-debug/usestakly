@@ -6,8 +6,7 @@ import type {
   CurrentUser,
   LibraryRecord,
   Locale,
-  SnippetDetail,
-  Theme
+  SnippetDetail
 } from "../../../lib/app-types";
 import { AssemblySection } from "./AssemblySection";
 import { LibrariesSection } from "./LibrariesSection";
@@ -25,7 +24,6 @@ type WorkspaceScreenProps = {
   workspaceLoading: boolean;
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
-  setTheme: Dispatch<SetStateAction<Theme>>;
   onLogout: () => void;
   publicAssetCount: number;
   readyReferences: number;
@@ -58,7 +56,6 @@ export function WorkspaceScreen({
   workspaceLoading,
   locale,
   setLocale,
-  setTheme,
   onLogout,
   publicAssetCount,
   readyReferences,
@@ -89,7 +86,6 @@ export function WorkspaceScreen({
         copy={copy}
         user={user}
         setLocale={setLocale}
-        setTheme={setTheme}
         onLogout={onLogout}
       />
 

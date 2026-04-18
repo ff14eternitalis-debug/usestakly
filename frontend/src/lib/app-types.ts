@@ -55,7 +55,6 @@ export type SnippetListResponse = {
 };
 
 export type Locale = "en" | "fr";
-export type Theme = "light" | "dark";
 
 export type CopyBlock = {
   authEyebrow: string;
@@ -69,7 +68,6 @@ export type CopyBlock = {
   authAccessValue: string;
   loading: string;
   language: string;
-  theme: string;
   connectedTitle: string;
   connectedBody: string;
   connectedLabel: string;
