@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 
 import type {
   CopyBlock,
-  CurrentUser,
   LibraryRecord,
   Locale,
   SnippetDetail
@@ -13,18 +11,14 @@ import { LibrariesSection } from "./LibrariesSection";
 import { ReferencesSection } from "./ReferencesSection";
 import { SnippetDetailPanel } from "./SnippetDetailPanel";
 import { SnippetsSection } from "./SnippetsSection";
-import { WorkspaceTopbar } from "./WorkspaceTopbar";
 
 type WorkspaceScreenProps = {
   copy: CopyBlock;
-  user: CurrentUser;
   libraries: LibraryRecord[];
   snippets: SnippetDetail[];
   recentSnippets: SnippetDetail[];
   workspaceLoading: boolean;
   locale: Locale;
-  setLocale: Dispatch<SetStateAction<Locale>>;
-  onLogout: () => void;
   publicAssetCount: number;
   readyReferences: number;
   onCreateLibrary: (input: {
@@ -49,14 +43,11 @@ type WorkspaceScreenProps = {
 
 export function WorkspaceScreen({
   copy,
-  user,
   libraries,
   snippets,
   recentSnippets,
   workspaceLoading,
   locale,
-  setLocale,
-  onLogout,
   publicAssetCount,
   readyReferences,
   onCreateLibrary,
@@ -81,14 +72,7 @@ export function WorkspaceScreen({
     snippets.find((item) => item.snippet.id === selectedSnippetId) ?? null;
 
   return (
-    <section className="workspace-panel">
-      <WorkspaceTopbar
-        copy={copy}
-        user={user}
-        setLocale={setLocale}
-        onLogout={onLogout}
-      />
-
+    <section className="workspace-studio">
       <div className="workspace-hero">
         <div className="workspace-hero-copy">
           <span className="workspace-status-pill">{copy.workspaceStatus}</span>

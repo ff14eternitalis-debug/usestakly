@@ -56,6 +56,22 @@ export type SnippetListResponse = {
 
 export type Locale = "en" | "fr";
 
+export type AppView = "home" | "explore" | "studio" | "profile";
+
+export type CommunitySnippet = {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  library: string;
+  language: string;
+  framework: string | null;
+  appreciation: number;
+  saves: number;
+  canonicalReference: string;
+  scope: "community" | "private";
+};
+
 export type CopyBlock = {
   authEyebrow: string;
   authTitle: string;
@@ -128,4 +144,34 @@ export type CopyBlock = {
   versionLabel: string;
   scopeLabel: string;
   logoutSecondary: string;
+  navHome: string;
+  navExplore: string;
+  navStudio: string;
+  navProfile: string;
+  appEyebrow: string;
+  homeTitle: string;
+  homeBody: string;
+  homeFeaturedTitle: string;
+  homeFeaturedBody: string;
+  homeHighlightsTitle: string;
+  homeHighlightsBody: string;
+  homeTrendingLabel: string;
+  homeSavedLabel: string;
+  homeReferenceLabel: string;
+  homeScopeCommunity: string;
+  homeScopePrivate: string;
+  homeEmpty: string;
+  exploreTitle: string;
+  exploreBody: string;
+  exploreEmpty: string;
+  studioTitle: string;
+  studioBody: string;
+  profileTitle: string;
+  profileBody: string;
+  profileIdentity: string;
+  profileEmail: string;
+  profileHandle: string;
+  profilePresence: string;
+  profilePrivateLabel: string;
+  profilePublicLabel: string;
 };

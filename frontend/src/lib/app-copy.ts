@@ -76,7 +76,42 @@ export const COPY: Record<Locale, CopyBlock> = {
     tagsLabel: "Tags",
     versionLabel: "Version",
     scopeLabel: "Scope",
-    logoutSecondary: "Sign out"
+    logoutSecondary: "Sign out",
+    navHome: "Home",
+    navExplore: "Explore",
+    navStudio: "Private studio",
+    navProfile: "Profile",
+    appEyebrow: "Community + private code graph",
+    homeTitle: "Build from what the community already proved.",
+    homeBody:
+      "Start from the snippets people actually reuse, then move into your private studio when you need your own addressable assets.",
+    homeFeaturedTitle: "Most appreciated snippets",
+    homeFeaturedBody: "Community picks that should surface first in the product experience.",
+    homeHighlightsTitle: "Why people save them",
+    homeHighlightsBody:
+      "High-signal assets with strong reuse potential, clean references, and stack clarity.",
+    homeTrendingLabel: "Appreciation",
+    homeSavedLabel: "Saves",
+    homeReferenceLabel: "Reference",
+    homeScopeCommunity: "Community",
+    homeScopePrivate: "Private",
+    homeEmpty: "No highlighted snippet yet. Publish a few strong assets and the feed will start here.",
+    exploreTitle: "Explore public libraries",
+    exploreBody:
+      "Browse reusable blocks by stack, language, and reference quality before opening your private studio.",
+    exploreEmpty: "No public snippet available yet in this MVP feed.",
+    studioTitle: "Private studio",
+    studioBody:
+      "Your personal libraries, references, and assembly-first workspace stay here, separate from the public feed.",
+    profileTitle: "Identity",
+    profileBody:
+      "Your social presence and your private code surface should live together, but never be confused.",
+    profileIdentity: "Identity",
+    profileEmail: "Email",
+    profileHandle: "Handle",
+    profilePresence: "Presence",
+    profilePrivateLabel: "Private assets",
+    profilePublicLabel: "Public assets"
   },
   fr: {
     authEyebrow: "Authentification",
@@ -156,7 +191,43 @@ export const COPY: Record<Locale, CopyBlock> = {
     tagsLabel: "Tags",
     versionLabel: "Version",
     scopeLabel: "Scope",
-    logoutSecondary: "Déconnexion"
+    logoutSecondary: "Déconnexion",
+    navHome: "Accueil",
+    navExplore: "Explorer",
+    navStudio: "Studio privé",
+    navProfile: "Profil",
+    appEyebrow: "Graphe de code communautaire + privé",
+    homeTitle: "Construis à partir de ce que la communauté a déjà validé.",
+    homeBody:
+      "Commence par les snippets réellement appréciés, puis bascule dans ton studio privé quand tu as besoin de tes propres assets adressables.",
+    homeFeaturedTitle: "Snippets les plus appréciés",
+    homeFeaturedBody: "Les picks communautaires qui doivent être mis en avant dans l’expérience produit.",
+    homeHighlightsTitle: "Pourquoi ils sont sauvegardés",
+    homeHighlightsBody:
+      "Des assets à fort signal, avec vrai potentiel de réutilisation, références propres et stack claire.",
+    homeTrendingLabel: "Appréciation",
+    homeSavedLabel: "Sauvegardes",
+    homeReferenceLabel: "Référence",
+    homeScopeCommunity: "Communauté",
+    homeScopePrivate: "Privé",
+    homeEmpty:
+      "Aucun snippet mis en avant pour l’instant. Publie quelques assets solides et le feed démarrera ici.",
+    exploreTitle: "Explorer les bibliothèques publiques",
+    exploreBody:
+      "Parcours les briques réutilisables par stack, langage et qualité de référence avant d’ouvrir ton studio privé.",
+    exploreEmpty: "Aucun snippet public disponible pour l’instant dans ce feed MVP.",
+    studioTitle: "Studio privé",
+    studioBody:
+      "Tes bibliothèques personnelles, tes références et ton workspace orienté assemblage restent ici, séparés du feed public.",
+    profileTitle: "Identité",
+    profileBody:
+      "Ta présence sociale et ta surface de code privée doivent vivre ensemble, sans jamais être confondues.",
+    profileIdentity: "Identité",
+    profileEmail: "Email",
+    profileHandle: "Handle",
+    profilePresence: "Présence",
+    profilePrivateLabel: "Assets privés",
+    profilePublicLabel: "Assets publics"
   }
 };
 

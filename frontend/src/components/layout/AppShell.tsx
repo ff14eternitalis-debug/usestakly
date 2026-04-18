@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { AppScreen } from "../../features/app/components/AppScreen";
 import { AuthScreen } from "../../features/auth/components/AuthScreen";
-import { WorkspaceScreen } from "../../features/workspace/components/WorkspaceScreen";
 import { COPY, detectInitialLocale } from "../../lib/app-copy";
 import { apiGet, apiPost, apiPostJson, authUrl } from "../../lib/api-client";
+import { buildCommunityFeed, featuredCommunitySnippets } from "../../lib/community-feed";
 import type {
+  AppView,
   CurrentUser,
   LibraryListResponse,
   LibraryRecord,
@@ -20,6 +22,7 @@ export function AppShell() {
   const [loading, setLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [locale, setLocale] = useState<Locale>(detectInitialLocale);
+  const [activeView, setActiveView] = useState<AppView>("home");
 
   useEffect(() => {
     window.localStorage.setItem("usestakly-locale", locale);
@@ -189,18 +192,27 @@ export function AppShell() {
     [snippets]
   );
   const recentSnippets = useMemo(() => snippets.slice(0, 4), [snippets]);
+  const communitySnippets = useMemo(() => buildCommunityFeed(snippets), [snippets]);
+  const featuredSnippets = useMemo(
+    () => featuredCommunitySnippets(communitySnippets),
+    [communitySnippets]
+  );
 
   return (
     <main className={user ? "workspace-shell" : "auth-screen"}>
       <div className="auth-noise" />
 
       {user ? (
-        <WorkspaceScreen
+        <AppScreen
           copy={copy}
           user={user}
           libraries={libraries}
           snippets={snippets}
           recentSnippets={recentSnippets}
+          featuredSnippets={featuredSnippets}
+          communitySnippets={communitySnippets}
+          activeView={activeView}
+          setActiveView={setActiveView}
           workspaceLoading={workspaceLoading}
           locale={locale}
           setLocale={setLocale}

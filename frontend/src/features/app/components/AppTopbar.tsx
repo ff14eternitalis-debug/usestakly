@@ -1,0 +1,79 @@
+import type { Dispatch, SetStateAction } from "react";
+
+import { avatarFallback } from "../../../lib/app-copy";
+import type { AppView, CopyBlock, CurrentUser, Locale } from "../../../lib/app-types";
+
+type AppTopbarProps = {
+  copy: CopyBlock;
+  user: CurrentUser;
+  activeView: AppView;
+  setActiveView: Dispatch<SetStateAction<AppView>>;
+  setLocale: Dispatch<SetStateAction<Locale>>;
+  onLogout: () => void;
+};
+
+const NAV_ITEMS: AppView[] = ["home", "explore", "studio", "profile"];
+
+export function AppTopbar({
+  copy,
+  user,
+  activeView,
+  setActiveView,
+  setLocale,
+  onLogout
+}: AppTopbarProps) {
+  const labels: Record<AppView, string> = {
+    home: copy.navHome,
+    explore: copy.navExplore,
+    studio: copy.navStudio,
+    profile: copy.navProfile
+  };
+
+  return (
+    <header className="app-topbar">
+      <div className="app-brand-block">
+        <p className="auth-brand-mark">UseStakly</p>
+        <p className="auth-brand-subtitle">{copy.appEyebrow}</p>
+      </div>
+
+      <nav className="app-nav" aria-label="Primary">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item}
+            className={`app-nav-button${activeView === item ? " app-nav-button-active" : ""}`}
+            type="button"
+            onClick={() => setActiveView(item)}
+          >
+            {labels[item]}
+          </button>
+        ))}
+      </nav>
+
+      <div className="workspace-actions">
+        <button
+          className="lang-toggle"
+          type="button"
+          onClick={() => setLocale((current) => (current === "en" ? "fr" : "en"))}
+        >
+          {copy.language}
+        </button>
+        <div className="workspace-user">
+          <div className="workspace-avatar">
+            {user.avatarUrl ? (
+              <img alt={user.displayName ?? user.username} src={user.avatarUrl} />
+            ) : (
+              <span>{avatarFallback(user)}</span>
+            )}
+          </div>
+          <div className="workspace-user-copy">
+            <strong>{user.displayName ?? user.username}</strong>
+            <small>{user.email}</small>
+          </div>
+          <button className="workspace-logout" type="button" onClick={onLogout}>
+            {copy.logoutSecondary}
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
