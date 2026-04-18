@@ -27,4 +27,4 @@ ENV APP_PORT=4000
 
 EXPOSE 4000
 
-CMD ["sh", "-lc", "/usr/local/bin/usestakly-backend > /tmp/usestakly-backend.log 2>&1; code=$?; cat /tmp/usestakly-backend.log; if [ \"$code\" -ne 0 ]; then echo \"[usestakly-backend] exited with code $code; keeping container alive for 300 seconds for debugging\"; sleep 300; fi; exit \"$code\""]
+CMD ["sh", "-lc", "/usr/local/bin/usestakly-backend > /tmp/usestakly-backend.log 2>&1 & pid=$!; sleep 8; cat /tmp/usestakly-backend.log || true; if ! kill -0 \"$pid\" 2>/dev/null; then echo \"[usestakly-backend] process exited early; keeping container alive for 300 seconds for debugging\"; sleep 300; exit 1; fi; wait \"$pid\""]
