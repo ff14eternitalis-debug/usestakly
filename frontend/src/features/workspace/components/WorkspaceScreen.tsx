@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
 import type {
@@ -11,6 +12,7 @@ import type {
 import { AssemblySection } from "./AssemblySection";
 import { LibrariesSection } from "./LibrariesSection";
 import { ReferencesSection } from "./ReferencesSection";
+import { SnippetDetailPanel } from "./SnippetDetailPanel";
 import { SnippetsSection } from "./SnippetsSection";
 import { WorkspaceTopbar } from "./WorkspaceTopbar";
 
@@ -27,6 +29,24 @@ type WorkspaceScreenProps = {
   onLogout: () => void;
   publicAssetCount: number;
   readyReferences: number;
+  onCreateLibrary: (input: {
+    name: string;
+    slug: string;
+    description?: string;
+  }) => Promise<void>;
+  onCreateSnippet: (input: {
+    libraryId: string;
+    slug: string;
+    name: string;
+    domain: string;
+    kind: string;
+    category: string;
+    language: string;
+    framework?: string;
+    tags: string[];
+    version: string;
+    code: string;
+  }) => Promise<void>;
 };
 
 export function WorkspaceScreen({
@@ -41,8 +61,28 @@ export function WorkspaceScreen({
   setTheme,
   onLogout,
   publicAssetCount,
-  readyReferences
+  readyReferences,
+  onCreateLibrary,
+  onCreateSnippet
 }: WorkspaceScreenProps) {
+  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(
+    snippets[0]?.snippet.id ?? null
+  );
+
+  useEffect(() => {
+    if (snippets.length === 0) {
+      setSelectedSnippetId(null);
+      return;
+    }
+
+    if (!selectedSnippetId || !snippets.some((item) => item.snippet.id === selectedSnippetId)) {
+      setSelectedSnippetId(snippets[0].snippet.id);
+    }
+  }, [selectedSnippetId, snippets]);
+
+  const selectedSnippet =
+    snippets.find((item) => item.snippet.id === selectedSnippetId) ?? null;
+
   return (
     <section className="workspace-panel">
       <WorkspaceTopbar
@@ -85,9 +125,22 @@ export function WorkspaceScreen({
           copy={copy}
           libraries={libraries}
           workspaceLoading={workspaceLoading}
+          onCreateLibrary={onCreateLibrary}
         />
         <AssemblySection copy={copy} locale={locale} />
-        <SnippetsSection copy={copy} snippets={snippets} />
+        <SnippetsSection
+          copy={copy}
+          libraries={libraries}
+          snippets={snippets}
+          selectedSnippetId={selectedSnippetId}
+          onSelectSnippet={(snippet) => setSelectedSnippetId(snippet.snippet.id)}
+          onCreateSnippet={onCreateSnippet}
+        />
+        <SnippetDetailPanel
+          copy={copy}
+          libraries={libraries}
+          selectedSnippet={selectedSnippet}
+        />
         <ReferencesSection copy={copy} recentSnippets={recentSnippets} />
       </div>
     </section>

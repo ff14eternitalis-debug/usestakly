@@ -1,12 +1,36 @@
 import { getVisibilityLabel } from "../../../lib/app-copy";
-import type { CopyBlock, SnippetDetail } from "../../../lib/app-types";
+import type { CopyBlock, LibraryRecord, SnippetDetail } from "../../../lib/app-types";
+import { CreateSnippetForm } from "./CreateSnippetForm";
 
 type SnippetsSectionProps = {
   copy: CopyBlock;
+  libraries: LibraryRecord[];
   snippets: SnippetDetail[];
+  selectedSnippetId: string | null;
+  onSelectSnippet: (snippet: SnippetDetail) => void;
+  onCreateSnippet: (input: {
+    libraryId: string;
+    slug: string;
+    name: string;
+    domain: string;
+    kind: string;
+    category: string;
+    language: string;
+    framework?: string;
+    tags: string[];
+    version: string;
+    code: string;
+  }) => Promise<void>;
 };
 
-export function SnippetsSection({ copy, snippets }: SnippetsSectionProps) {
+export function SnippetsSection({
+  copy,
+  libraries,
+  snippets,
+  selectedSnippetId,
+  onSelectSnippet,
+  onCreateSnippet
+}: SnippetsSectionProps) {
   return (
     <section className="workspace-section workspace-section-wide">
       <div className="workspace-section-head">
@@ -16,12 +40,29 @@ export function SnippetsSection({ copy, snippets }: SnippetsSectionProps) {
         </div>
       </div>
 
+      <div className="workspace-form-shell">
+        <h3 className="workspace-subtitle">{copy.createSnippetTitle}</h3>
+        <CreateSnippetForm copy={copy} libraries={libraries} onCreate={onCreateSnippet} />
+      </div>
+
       {snippets.length === 0 ? (
         <div className="workspace-empty">{copy.emptySnippets}</div>
       ) : (
         <div className="snippet-grid">
           {snippets.slice(0, 6).map((item) => (
-            <article className="snippet-row" key={item.snippet.id}>
+            <article
+              className={`snippet-row${selectedSnippetId === item.snippet.id ? " snippet-row-selected" : ""}`}
+              key={item.snippet.id}
+              onClick={() => onSelectSnippet(item)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectSnippet(item);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               <div className="snippet-head">
                 <div>
                   <h3>{item.snippet.name}</h3>

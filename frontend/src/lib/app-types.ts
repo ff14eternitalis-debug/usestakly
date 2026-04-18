@@ -20,6 +20,7 @@ export type SnippetVersionRecord = {
   id: string;
   version: string;
   riskLevel: string;
+  code: string;
 };
 
 export type SnippetRecord = {
@@ -93,6 +94,30 @@ export type CopyBlock = {
   commandModeAuto: string;
   commandModePrompt: string;
   defaultLibrary: string;
+  createLibraryTitle: string;
+  createLibraryName: string;
+  createLibrarySlug: string;
+  createLibraryDescription: string;
+  createLibrarySubmit: string;
+  createSnippetTitle: string;
+  createSnippetLibrary: string;
+  createSnippetName: string;
+  createSnippetSlug: string;
+  createSnippetDomain: string;
+  createSnippetKind: string;
+  createSnippetCategory: string;
+  createSnippetLanguage: string;
+  createSnippetFramework: string;
+  createSnippetVersion: string;
+  createSnippetTags: string;
+  createSnippetCode: string;
+  createSnippetSubmit: string;
+  detailTitle: string;
+  detailEmpty: string;
+  detailDescription: string;
+  detailCode: string;
+  detailLibrary: string;
+  detailRisk: string;
   emptyLibraries: string;
   emptySnippets: string;
   visibilityPrivate: string;

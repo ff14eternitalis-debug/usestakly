@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AuthScreen } from "../../features/auth/components/AuthScreen";
 import { WorkspaceScreen } from "../../features/workspace/components/WorkspaceScreen";
 import { COPY, detectInitialLocale, detectInitialTheme } from "../../lib/app-copy";
-import { apiGet, apiPost, authUrl } from "../../lib/api-client";
+import { apiGet, apiPost, apiPostJson, authUrl } from "../../lib/api-client";
 import type {
   CurrentUser,
   LibraryListResponse,
@@ -107,11 +107,75 @@ export function AppShell() {
     };
   }, [user]);
 
+  async function refreshWorkspace() {
+    if (!user) {
+      return;
+    }
+
+    setWorkspaceLoading(true);
+    try {
+      const [libraryResponse, snippetResponse] = await Promise.all([
+        apiGet<LibraryListResponse>("/api/libraries"),
+        apiGet<SnippetListResponse>("/api/snippets")
+      ]);
+      setLibraries(libraryResponse.items);
+      setSnippets(snippetResponse.items);
+    } finally {
+      setWorkspaceLoading(false);
+    }
+  }
+
   async function handleLogout() {
     await apiPost("/api/auth/logout");
     setUser(null);
     setLibraries([]);
     setSnippets([]);
+  }
+
+  async function handleCreateLibrary(input: {
+    name: string;
+    slug: string;
+    description?: string;
+  }) {
+    await apiPostJson("/api/libraries", {
+      ...input,
+      visibility: "private",
+      isDefault: libraries.length === 0
+    });
+    await refreshWorkspace();
+  }
+
+  async function handleCreateSnippet(input: {
+    libraryId: string;
+    slug: string;
+    name: string;
+    domain: string;
+    kind: string;
+    category: string;
+    language: string;
+    framework?: string;
+    tags: string[];
+    version: string;
+    code: string;
+  }) {
+    await apiPostJson("/api/snippets", {
+      libraryId: input.libraryId,
+      slug: input.slug,
+      name: input.name,
+      domain: input.domain,
+      kind: input.kind,
+      category: input.category,
+      language: input.language,
+      framework: input.framework,
+      visibility: "private",
+      tags: input.tags,
+      initialVersion: {
+        version: input.version,
+        code: input.code,
+        riskLevel: "safe"
+      }
+    });
+    await refreshWorkspace();
   }
 
   const copy = COPY[locale];
@@ -149,6 +213,8 @@ export function AppShell() {
           }}
           publicAssetCount={publicLibraries + publicSnippets}
           readyReferences={readyReferences}
+          onCreateLibrary={handleCreateLibrary}
+          onCreateSnippet={handleCreateSnippet}
         />
       ) : (
         <AuthScreen

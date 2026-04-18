@@ -17,6 +17,26 @@ export async function apiPost(path: string): Promise<Response> {
   });
 }
 
+export async function apiPostJson<TResponse>(
+  path: string,
+  body: unknown
+): Promise<TResponse> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<TResponse>;
+}
+
 export function authUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }

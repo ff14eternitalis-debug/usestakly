@@ -1,16 +1,23 @@
 import { getTrustLabel, getVisibilityLabel } from "../../../lib/app-copy";
 import type { CopyBlock, LibraryRecord } from "../../../lib/app-types";
+import { CreateLibraryForm } from "./CreateLibraryForm";
 
 type LibrariesSectionProps = {
   copy: CopyBlock;
   libraries: LibraryRecord[];
   workspaceLoading: boolean;
+  onCreateLibrary: (input: {
+    name: string;
+    slug: string;
+    description?: string;
+  }) => Promise<void>;
 };
 
 export function LibrariesSection({
   copy,
   libraries,
-  workspaceLoading
+  workspaceLoading,
+  onCreateLibrary
 }: LibrariesSectionProps) {
   return (
     <section className="workspace-section workspace-section-wide">
@@ -20,6 +27,11 @@ export function LibrariesSection({
           <p>{copy.librariesBody}</p>
         </div>
         {workspaceLoading ? <span className="workspace-inline-note">{copy.loading}</span> : null}
+      </div>
+
+      <div className="workspace-form-shell">
+        <h3 className="workspace-subtitle">{copy.createLibraryTitle}</h3>
+        <CreateLibraryForm copy={copy} onCreate={onCreateLibrary} />
       </div>
 
       {libraries.length === 0 ? (
