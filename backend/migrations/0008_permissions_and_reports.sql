@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS library_permissions (
+  library_id UUID NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  can_read BOOLEAN NOT NULL DEFAULT TRUE,
+  can_resolve BOOLEAN NOT NULL DEFAULT TRUE,
+  can_search BOOLEAN NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (library_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS snippet_reports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  snippet_id UUID NOT NULL REFERENCES snippets(id) ON DELETE CASCADE,
+  reported_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  details JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
