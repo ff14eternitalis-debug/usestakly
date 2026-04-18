@@ -128,14 +128,15 @@ select {
 :root[data-theme="dark"] .workspace-panel {
   border-color: rgba(255, 255, 255, 0.22);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05)),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, 0.08), transparent 24%),
     linear-gradient(145deg, rgba(182, 115, 50, 0.16), rgba(147, 68, 26, 0.12)),
     rgba(26, 13, 8, 0.38);
   box-shadow:
     0 24px 80px rgba(45, 17, 5, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 18px 40px rgba(255, 255, 255, 0.03);
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 24px 44px rgba(255, 255, 255, 0.05);
 }
 
 .auth-brand-row,
@@ -315,8 +316,12 @@ select {
 :root[data-theme="dark"] .snippet-row,
 :root[data-theme="dark"] .library-row {
   background:
-    linear-gradient(180deg, rgba(31, 27, 23, 0.94), rgba(22, 19, 17, 0.9));
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
+    linear-gradient(180deg, rgba(42, 28, 20, 0.95), rgba(25, 17, 13, 0.92)),
+    radial-gradient(circle at 22% 0%, rgba(255, 255, 255, 0.14), transparent 30%);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 22px 36px rgba(255, 255, 255, 0.03);
 }
 
 .auth-state {
@@ -369,11 +374,28 @@ select {
   box-shadow: 0 16px 34px rgba(22, 63, 55, 0.24);
 }
 
+:root[data-theme="dark"] .auth-primary-button {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.04)),
+    linear-gradient(135deg, #d39a58, #b67332);
+  box-shadow:
+    0 16px 34px rgba(60, 24, 8, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
 .auth-secondary-button {
   margin-top: 20px;
   border-color: var(--line);
   background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
   color: var(--ink);
+}
+
+:root[data-theme="dark"] .auth-secondary-button {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .auth-primary-button:hover,
