@@ -320,8 +320,8 @@ select {
 
 .auth-card-copy {
   margin: 14px 0 0;
-  line-height: 1.7;
   color: var(--muted);
+  line-height: 1.7;
 }
 
 .auth-provider-stack {
@@ -391,6 +391,9 @@ select {
 
 .identity-block span {
   margin-bottom: 10px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .identity-block strong {
