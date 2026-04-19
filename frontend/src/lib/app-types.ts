@@ -59,6 +59,7 @@ export type Locale = "en" | "fr";
 export type AppView =
   | "home"
   | "explore"
+  | "library"
   | "documents"
   | "forum"
   | "studio"
@@ -73,9 +74,12 @@ export type CommunitySnippet = {
   description: string;
   fullDescription: string;
   author: string;
+  authorName: string;
   library: string;
+  libraryName: string;
   language: string;
   framework: string | null;
+  domain: string;
   appreciation: number;
   saves: number;
   canonicalReference: string;
@@ -85,6 +89,19 @@ export type CommunitySnippet = {
   previewLabel: string;
   previewNote: string;
   previewActionLabel?: string;
+};
+
+export type PublicLibraryProfile = {
+  id: string;
+  author: string;
+  authorName: string;
+  library: string;
+  libraryName: string;
+  bio: string;
+  snippetCount: number;
+  languages: string[];
+  domains: string[];
+  snippets: CommunitySnippet[];
 };
 
 export type CopyBlock = {
@@ -161,6 +178,7 @@ export type CopyBlock = {
   logoutSecondary: string;
   navHome: string;
   navExplore: string;
+  navLibrary: string;
   navDocuments: string;
   navForum: string;
   navStudio: string;
@@ -182,6 +200,14 @@ export type CopyBlock = {
   exploreTitle: string;
   exploreBody: string;
   exploreEmpty: string;
+  exploreOpenLibrary: string;
+  libraryBack: string;
+  libraryTitleSuffix: string;
+  libraryBody: string;
+  libraryFilterLanguage: string;
+  libraryFilterDomain: string;
+  libraryAll: string;
+  libraryEmpty: string;
   snippetBack: string;
   snippetReadonly: string;
   snippetRenderTitle: string;

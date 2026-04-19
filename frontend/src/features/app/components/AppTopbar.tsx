@@ -23,6 +23,7 @@ export function AppTopbar({
   const labels: Record<AppView, string> = {
     home: copy.navHome,
     explore: copy.navExplore,
+    library: copy.navLibrary,
     documents: copy.navDocuments,
     forum: copy.navForum,
     studio: copy.navStudio,

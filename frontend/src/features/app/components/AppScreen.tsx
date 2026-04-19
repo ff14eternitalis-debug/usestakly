@@ -7,6 +7,7 @@ import type {
   CurrentUser,
   LibraryRecord,
   Locale,
+  PublicLibraryProfile,
   SnippetDetail
 } from "../../../lib/app-types";
 import { ExploreFeed } from "./ExploreFeed";
@@ -14,6 +15,7 @@ import { HomeFeed } from "./HomeFeed";
 import { PlaceholderPage } from "./PlaceholderPage";
 import { ProfileView } from "./ProfileView";
 import { AppTopbar } from "./AppTopbar";
+import { PublicLibraryView } from "./PublicLibraryView";
 import { PublicSnippetView } from "./PublicSnippetView";
 import { WorkspaceScreen } from "../../workspace/components/WorkspaceScreen";
 
@@ -25,12 +27,15 @@ type AppScreenProps = {
   recentSnippets: SnippetDetail[];
   featuredSnippets: CommunitySnippet[];
   communitySnippets: CommunitySnippet[];
+  publicLibraries: PublicLibraryProfile[];
+  selectedLibrary: PublicLibraryProfile | null;
   selectedSnippet: CommunitySnippet | null;
   activeView: AppView;
   setActiveView: Dispatch<SetStateAction<AppView>>;
+  setSelectedLibraryId: Dispatch<SetStateAction<string | null>>;
   setSelectedSnippetId: Dispatch<SetStateAction<string | null>>;
-  snippetSourceView: "home" | "explore";
-  setSnippetSourceView: Dispatch<SetStateAction<"home" | "explore">>;
+  snippetSourceView: "home" | "explore" | "library";
+  setSnippetSourceView: Dispatch<SetStateAction<"home" | "explore" | "library">>;
   workspaceLoading: boolean;
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
@@ -65,9 +70,12 @@ export function AppScreen({
   recentSnippets,
   featuredSnippets,
   communitySnippets,
+  publicLibraries,
+  selectedLibrary,
   selectedSnippet,
   activeView,
   setActiveView,
+  setSelectedLibraryId,
   setSelectedSnippetId,
   snippetSourceView,
   setSnippetSourceView,
@@ -84,10 +92,19 @@ export function AppScreen({
     libraries.filter((library) => library.visibility !== "public").length +
     snippets.filter((item) => item.snippet.visibility !== "public").length;
 
-  function handleOpenSnippet(snippet: CommunitySnippet, sourceView: "home" | "explore") {
+  function handleOpenSnippet(
+    snippet: CommunitySnippet,
+    sourceView: "home" | "explore" | "library"
+  ) {
+    setSelectedLibraryId(snippet.library);
     setSelectedSnippetId(snippet.id);
     setSnippetSourceView(sourceView);
     setActiveView("snippet");
+  }
+
+  function handleOpenLibrary(library: PublicLibraryProfile) {
+    setSelectedLibraryId(library.id);
+    setActiveView("library");
   }
 
   return (
@@ -112,8 +129,17 @@ export function AppScreen({
         {activeView === "explore" ? (
           <ExploreFeed
             copy={copy}
-            communitySnippets={communitySnippets}
-            onOpenSnippet={(snippet) => handleOpenSnippet(snippet, "explore")}
+            publicLibraries={publicLibraries}
+            onOpenLibrary={handleOpenLibrary}
+          />
+        ) : null}
+
+        {activeView === "library" && selectedLibrary ? (
+          <PublicLibraryView
+            copy={copy}
+            library={selectedLibrary}
+            onBack={() => setActiveView("explore")}
+            onOpenSnippet={(snippet) => handleOpenSnippet(snippet, "library")}
           />
         ) : null}
 
@@ -121,7 +147,7 @@ export function AppScreen({
           <PublicSnippetView
             copy={copy}
             snippet={selectedSnippet}
-            onBack={() => setActiveView(snippetSourceView)}
+            onBack={() => setActiveView(snippetSourceView === "library" ? "library" : snippetSourceView)}
           />
         ) : null}
 

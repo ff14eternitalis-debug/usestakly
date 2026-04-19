@@ -25,6 +25,9 @@ function PublicSnippetRender({ copy, snippet }: { copy: CopyBlock; snippet: Comm
   return (
     <div className="public-snippet-preview public-snippet-preview-readonly">
       <span>{snippet.previewLabel}</span>
+      <div className="public-snippet-language-mark" aria-hidden="true">
+        {snippet.language.slice(0, 3).toUpperCase()}
+      </div>
       <strong>{snippet.title}</strong>
       <p>{snippet.previewNote}</p>
     </div>
@@ -73,7 +76,7 @@ export function PublicSnippetView({ copy, snippet, onBack }: PublicSnippetViewPr
         </div>
       </section>
 
-      <section className="public-snippet-layout">
+      <section className="public-snippet-layout public-snippet-layout-three">
         <article className="public-snippet-section">
           <div className="app-section-head">
             <div>
@@ -95,7 +98,7 @@ export function PublicSnippetView({ copy, snippet, onBack }: PublicSnippetViewPr
           </div>
         </article>
 
-        <article className="public-snippet-section public-snippet-section-code">
+        <article className="public-snippet-section">
           <div className="app-section-head">
             <div>
               <h2>{copy.snippetCodeTitle}</h2>

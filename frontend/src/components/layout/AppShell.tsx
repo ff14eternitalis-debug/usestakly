@@ -4,38 +4,58 @@ import { AppScreen } from "../../features/app/components/AppScreen";
 import { AuthScreen } from "../../features/auth/components/AuthScreen";
 import { COPY, detectInitialLocale } from "../../lib/app-copy";
 import { apiGet, apiPost, apiPostJson, authUrl } from "../../lib/api-client";
-import { buildCommunityFeed, featuredCommunitySnippets } from "../../lib/community-feed";
+import {
+  buildCommunityFeed,
+  buildPublicLibraries,
+  featuredCommunitySnippets
+} from "../../lib/community-feed";
 import type {
   AppView,
   CurrentUser,
   LibraryListResponse,
   LibraryRecord,
   Locale,
+  PublicLibraryProfile,
   SnippetDetail,
   SnippetListResponse
 } from "../../lib/app-types";
 
-type SnippetSourceView = "home" | "explore";
+type SnippetSourceView = "home" | "explore" | "library";
 
 function parseHashState(hash: string): {
   view: AppView;
+  libraryId: string | null;
   snippetId: string | null;
   snippetSourceView: SnippetSourceView;
 } {
   const normalized = hash.replace(/^#/, "");
 
   if (!normalized || normalized === "/") {
-    return { view: "home", snippetId: null, snippetSourceView: "home" };
+    return { view: "home", libraryId: null, snippetId: null, snippetSourceView: "home" };
+  }
+
+  if (normalized.startsWith("/library/")) {
+    const libraryId = normalized.replace("/library/", "") || null;
+    return {
+      view: libraryId ? "library" : "explore",
+      libraryId,
+      snippetId: null,
+      snippetSourceView: "explore"
+    };
   }
 
   if (normalized.startsWith("/snippet/")) {
     const [pathPart, queryPart] = normalized.split("?");
     const snippetId = pathPart.replace("/snippet/", "") || null;
     const params = new URLSearchParams(queryPart ?? "");
-    const source = params.get("from") === "explore" ? "explore" : "home";
+    const fromParam = params.get("from");
+    const source =
+      fromParam === "explore" || fromParam === "library" ? fromParam : "home";
+    const libraryId = params.get("library");
 
     return {
       view: snippetId ? "snippet" : "home",
+      libraryId,
       snippetId,
       snippetSourceView: source
     };
@@ -45,20 +65,28 @@ function parseHashState(hash: string): {
   const allowedViews: AppView[] = ["home", "explore", "documents", "forum", "studio", "profile"];
 
   if (allowedViews.includes(view)) {
-    return { view, snippetId: null, snippetSourceView: "home" };
+    return { view, libraryId: null, snippetId: null, snippetSourceView: "home" };
   }
 
-  return { view: "home", snippetId: null, snippetSourceView: "home" };
+  return { view: "home", libraryId: null, snippetId: null, snippetSourceView: "home" };
 }
 
 function buildHashState(
   view: AppView,
+  libraryId: string | null,
   snippetId: string | null,
   snippetSourceView: SnippetSourceView
 ): string {
+  if (view === "library" && libraryId) {
+    return `#/library/${libraryId}`;
+  }
+
   if (view === "snippet" && snippetId) {
     const params = new URLSearchParams();
     params.set("from", snippetSourceView);
+    if (libraryId) {
+      params.set("library", libraryId);
+    }
     return `#/snippet/${snippetId}?${params.toString()}`;
   }
 
@@ -72,7 +100,12 @@ function buildHashState(
 export function AppShell() {
   const initialHashState =
     typeof window === "undefined"
-      ? { view: "home" as AppView, snippetId: null, snippetSourceView: "home" as SnippetSourceView }
+      ? {
+          view: "home" as AppView,
+          libraryId: null,
+          snippetId: null,
+          snippetSourceView: "home" as SnippetSourceView
+        }
       : parseHashState(window.location.hash);
 
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -82,10 +115,11 @@ export function AppShell() {
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [locale, setLocale] = useState<Locale>(detectInitialLocale);
   const [activeView, setActiveView] = useState<AppView>(initialHashState.view);
-  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(initialHashState.snippetId);
-  const [snippetSourceView, setSnippetSourceView] = useState<SnippetSourceView>(
-    initialHashState.snippetSourceView
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(
+    initialHashState.libraryId
   );
+  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(initialHashState.snippetId);
+  const [snippetSourceView, setSnippetSourceView] = useState<SnippetSourceView>(initialHashState.snippetSourceView);
 
   useEffect(() => {
     window.localStorage.setItem("usestakly-locale", locale);
@@ -99,6 +133,7 @@ export function AppShell() {
     function handleHashChange() {
       const nextState = parseHashState(window.location.hash);
       setActiveView(nextState.view);
+      setSelectedLibraryId(nextState.libraryId);
       setSelectedSnippetId(nextState.snippetId);
       setSnippetSourceView(nextState.snippetSourceView);
     }
@@ -256,7 +291,7 @@ export function AppShell() {
   }
 
   const copy = COPY[locale];
-  const publicLibraries = useMemo(
+  const publicLibraryCount = useMemo(
     () => libraries.filter((library) => library.visibility === "public").length,
     [libraries]
   );
@@ -270,9 +305,17 @@ export function AppShell() {
   );
   const recentSnippets = useMemo(() => snippets.slice(0, 4), [snippets]);
   const communitySnippets = useMemo(() => buildCommunityFeed(snippets), [snippets]);
+  const publicLibraries = useMemo(
+    () => buildPublicLibraries(communitySnippets),
+    [communitySnippets]
+  );
   const featuredSnippets = useMemo(
     () => featuredCommunitySnippets(communitySnippets),
     [communitySnippets]
+  );
+  const selectedLibrary = useMemo<PublicLibraryProfile | null>(
+    () => publicLibraries.find((library) => library.id === selectedLibraryId) ?? null,
+    [publicLibraries, selectedLibraryId]
   );
   const selectedSnippet = useMemo(
     () => communitySnippets.find((snippet) => snippet.id === selectedSnippetId) ?? null,
@@ -294,19 +337,43 @@ export function AppShell() {
       return;
     }
 
+    setSelectedLibraryId(fallbackSnippet.library);
     setSelectedSnippetId(fallbackSnippet.id);
   }, [activeView, selectedSnippet, featuredSnippets, communitySnippets]);
+
+  useEffect(() => {
+    if (activeView !== "library") {
+      return;
+    }
+
+    if (selectedLibrary) {
+      return;
+    }
+
+    const fallbackLibrary = publicLibraries[0] ?? null;
+    if (!fallbackLibrary) {
+      setActiveView("explore");
+      return;
+    }
+
+    setSelectedLibraryId(fallbackLibrary.id);
+  }, [activeView, selectedLibrary, publicLibraries]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const nextHash = buildHashState(activeView, selectedSnippetId, snippetSourceView);
+    const nextHash = buildHashState(
+      activeView,
+      selectedLibraryId,
+      selectedSnippetId,
+      snippetSourceView
+    );
     if (window.location.hash !== nextHash) {
       window.history.pushState(null, "", nextHash);
     }
-  }, [activeView, selectedSnippetId, snippetSourceView]);
+  }, [activeView, selectedLibraryId, selectedSnippetId, snippetSourceView]);
 
   return (
     <main className={user ? "workspace-shell" : "auth-screen"}>
@@ -321,9 +388,12 @@ export function AppShell() {
           recentSnippets={recentSnippets}
           featuredSnippets={featuredSnippets}
           communitySnippets={communitySnippets}
+          publicLibraries={publicLibraries}
+          selectedLibrary={selectedLibrary}
           selectedSnippet={selectedSnippet}
           activeView={activeView}
           setActiveView={setActiveView}
+          setSelectedLibraryId={setSelectedLibraryId}
           setSelectedSnippetId={setSelectedSnippetId}
           snippetSourceView={snippetSourceView}
           setSnippetSourceView={setSnippetSourceView}
@@ -333,7 +403,7 @@ export function AppShell() {
           onLogout={() => {
             void handleLogout();
           }}
-          publicAssetCount={publicLibraries + publicSnippets}
+          publicAssetCount={publicLibraryCount + publicSnippets}
           readyReferences={readyReferences}
           onCreateLibrary={handleCreateLibrary}
           onCreateSnippet={handleCreateSnippet}

@@ -1,12 +1,20 @@
-import type { CommunitySnippet, CopyBlock } from "../../../lib/app-types";
+import type { CopyBlock, PublicLibraryProfile } from "../../../lib/app-types";
 
 type ExploreFeedProps = {
   copy: CopyBlock;
-  communitySnippets: CommunitySnippet[];
-  onOpenSnippet: (snippet: CommunitySnippet) => void;
+  publicLibraries: PublicLibraryProfile[];
+  onOpenLibrary: (library: PublicLibraryProfile) => void;
 };
 
-export function ExploreFeed({ copy, communitySnippets, onOpenSnippet }: ExploreFeedProps) {
+function avatarMonogram(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+export function ExploreFeed({ copy, publicLibraries, onOpenLibrary }: ExploreFeedProps) {
   return (
     <section className="app-view-shell app-page">
       <div className="workspace-section workspace-section-wide explore-shell">
@@ -17,40 +25,56 @@ export function ExploreFeed({ copy, communitySnippets, onOpenSnippet }: ExploreF
           </div>
         </div>
 
-        {communitySnippets.length === 0 ? (
+        {publicLibraries.length === 0 ? (
           <div className="workspace-empty">{copy.exploreEmpty}</div>
         ) : (
-          <div className="community-snippet-list">
-            {communitySnippets.map((item) => (
-              <button
-                className="community-snippet-card"
-                key={item.id}
-                type="button"
-                onClick={() => onOpenSnippet(item)}
-              >
-                <div className="community-snippet-head">
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.description}</p>
+          <div className="public-library-grid">
+            {publicLibraries.map((library) => (
+              <article className="public-library-card" key={library.id}>
+                <button
+                  className="public-library-author"
+                  type="button"
+                  onClick={() => onOpenLibrary(library)}
+                >
+                  <div className="public-library-avatar">{avatarMonogram(library.authorName)}</div>
+                  <div className="public-library-author-copy">
+                    <strong>{library.authorName}</strong>
+                    <span>{library.author}</span>
                   </div>
-                  <span className="workspace-chip">
-                    {item.scope === "community" ? copy.homeScopeCommunity : copy.homeScopePrivate}
-                  </span>
+                </button>
+
+                <div className="public-library-card-copy">
+                  <h3>{library.libraryName}</h3>
+                  <p>{library.bio}</p>
                 </div>
 
                 <div className="community-snippet-meta">
-                  <span className="workspace-chip">{item.library}</span>
-                  <span className="workspace-chip">{item.language}</span>
-                  {item.framework ? <span className="workspace-chip">{item.framework}</span> : null}
+                  {library.languages.map((language) => (
+                    <span className="workspace-chip" key={language}>
+                      {language}
+                    </span>
+                  ))}
+                  {library.domains.map((domain) => (
+                    <span className="workspace-chip" key={domain}>
+                      {domain}
+                    </span>
+                  ))}
                 </div>
 
-                <div className="snippet-reference">
-                  <span>{copy.referenceLabel}</span>
-                  <code>{item.canonicalReference}</code>
+                <div className="public-library-footer">
+                  <div className="featured-snippet-score">
+                    <strong>{library.snippetCount}</strong>
+                    <span>{copy.snippetsStat}</span>
+                  </div>
+                  <button
+                    className="public-library-open"
+                    type="button"
+                    onClick={() => onOpenLibrary(library)}
+                  >
+                    {copy.exploreOpenLibrary}
+                  </button>
                 </div>
-
-                <span className="featured-snippet-link">{copy.homeOpenSnippet}</span>
-              </button>
+              </article>
             ))}
           </div>
         )}
