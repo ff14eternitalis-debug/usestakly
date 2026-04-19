@@ -15,14 +15,77 @@ import type {
   SnippetListResponse
 } from "../../lib/app-types";
 
+type SnippetSourceView = "home" | "explore";
+
+function parseHashState(hash: string): {
+  view: AppView;
+  snippetId: string | null;
+  snippetSourceView: SnippetSourceView;
+} {
+  const normalized = hash.replace(/^#/, "");
+
+  if (!normalized || normalized === "/") {
+    return { view: "home", snippetId: null, snippetSourceView: "home" };
+  }
+
+  if (normalized.startsWith("/snippet/")) {
+    const [pathPart, queryPart] = normalized.split("?");
+    const snippetId = pathPart.replace("/snippet/", "") || null;
+    const params = new URLSearchParams(queryPart ?? "");
+    const source = params.get("from") === "explore" ? "explore" : "home";
+
+    return {
+      view: snippetId ? "snippet" : "home",
+      snippetId,
+      snippetSourceView: source
+    };
+  }
+
+  const view = normalized.replace(/^\//, "") as AppView;
+  const allowedViews: AppView[] = ["home", "explore", "documents", "forum", "studio", "profile"];
+
+  if (allowedViews.includes(view)) {
+    return { view, snippetId: null, snippetSourceView: "home" };
+  }
+
+  return { view: "home", snippetId: null, snippetSourceView: "home" };
+}
+
+function buildHashState(
+  view: AppView,
+  snippetId: string | null,
+  snippetSourceView: SnippetSourceView
+): string {
+  if (view === "snippet" && snippetId) {
+    const params = new URLSearchParams();
+    params.set("from", snippetSourceView);
+    return `#/snippet/${snippetId}?${params.toString()}`;
+  }
+
+  if (view === "home") {
+    return "#/";
+  }
+
+  return `#/${view}`;
+}
+
 export function AppShell() {
+  const initialHashState =
+    typeof window === "undefined"
+      ? { view: "home" as AppView, snippetId: null, snippetSourceView: "home" as SnippetSourceView }
+      : parseHashState(window.location.hash);
+
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [libraries, setLibraries] = useState<LibraryRecord[]>([]);
   const [snippets, setSnippets] = useState<SnippetDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [locale, setLocale] = useState<Locale>(detectInitialLocale);
-  const [activeView, setActiveView] = useState<AppView>("home");
+  const [activeView, setActiveView] = useState<AppView>(initialHashState.view);
+  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(initialHashState.snippetId);
+  const [snippetSourceView, setSnippetSourceView] = useState<SnippetSourceView>(
+    initialHashState.snippetSourceView
+  );
 
   useEffect(() => {
     window.localStorage.setItem("usestakly-locale", locale);
@@ -30,6 +93,20 @@ export function AppShell() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = "dark";
+  }, []);
+
+  useEffect(() => {
+    function handleHashChange() {
+      const nextState = parseHashState(window.location.hash);
+      setActiveView(nextState.view);
+      setSelectedSnippetId(nextState.snippetId);
+      setSnippetSourceView(nextState.snippetSourceView);
+    }
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -197,6 +274,39 @@ export function AppShell() {
     () => featuredCommunitySnippets(communitySnippets),
     [communitySnippets]
   );
+  const selectedSnippet = useMemo(
+    () => communitySnippets.find((snippet) => snippet.id === selectedSnippetId) ?? null,
+    [communitySnippets, selectedSnippetId]
+  );
+
+  useEffect(() => {
+    if (activeView !== "snippet") {
+      return;
+    }
+
+    if (selectedSnippet) {
+      return;
+    }
+
+    const fallbackSnippet = featuredSnippets[0] ?? communitySnippets[0] ?? null;
+    if (!fallbackSnippet) {
+      setActiveView("home");
+      return;
+    }
+
+    setSelectedSnippetId(fallbackSnippet.id);
+  }, [activeView, selectedSnippet, featuredSnippets, communitySnippets]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const nextHash = buildHashState(activeView, selectedSnippetId, snippetSourceView);
+    if (window.location.hash !== nextHash) {
+      window.history.pushState(null, "", nextHash);
+    }
+  }, [activeView, selectedSnippetId, snippetSourceView]);
 
   return (
     <main className={user ? "workspace-shell" : "auth-screen"}>
@@ -211,8 +321,12 @@ export function AppShell() {
           recentSnippets={recentSnippets}
           featuredSnippets={featuredSnippets}
           communitySnippets={communitySnippets}
+          selectedSnippet={selectedSnippet}
           activeView={activeView}
           setActiveView={setActiveView}
+          setSelectedSnippetId={setSelectedSnippetId}
+          snippetSourceView={snippetSourceView}
+          setSnippetSourceView={setSnippetSourceView}
           workspaceLoading={workspaceLoading}
           locale={locale}
           setLocale={setLocale}

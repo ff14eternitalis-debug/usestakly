@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import type {
   AppView,
@@ -25,8 +25,12 @@ type AppScreenProps = {
   recentSnippets: SnippetDetail[];
   featuredSnippets: CommunitySnippet[];
   communitySnippets: CommunitySnippet[];
+  selectedSnippet: CommunitySnippet | null;
   activeView: AppView;
   setActiveView: Dispatch<SetStateAction<AppView>>;
+  setSelectedSnippetId: Dispatch<SetStateAction<string | null>>;
+  snippetSourceView: "home" | "explore";
+  setSnippetSourceView: Dispatch<SetStateAction<"home" | "explore">>;
   workspaceLoading: boolean;
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
@@ -61,8 +65,12 @@ export function AppScreen({
   recentSnippets,
   featuredSnippets,
   communitySnippets,
+  selectedSnippet,
   activeView,
   setActiveView,
+  setSelectedSnippetId,
+  snippetSourceView,
+  setSnippetSourceView,
   workspaceLoading,
   locale,
   setLocale,
@@ -72,24 +80,6 @@ export function AppScreen({
   onCreateLibrary,
   onCreateSnippet
 }: AppScreenProps) {
-  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(
-    featuredSnippets[0]?.id ?? communitySnippets[0]?.id ?? null
-  );
-  const [snippetSourceView, setSnippetSourceView] = useState<"home" | "explore">("home");
-
-  useEffect(() => {
-    const currentExists = communitySnippets.some((snippet) => snippet.id === selectedSnippetId);
-    if (currentExists) {
-      return;
-    }
-    setSelectedSnippetId(featuredSnippets[0]?.id ?? communitySnippets[0]?.id ?? null);
-  }, [communitySnippets, featuredSnippets, selectedSnippetId]);
-
-  const selectedSnippet = useMemo(
-    () => communitySnippets.find((snippet) => snippet.id === selectedSnippetId) ?? null,
-    [communitySnippets, selectedSnippetId]
-  );
-
   const privateAssetCount =
     libraries.filter((library) => library.visibility !== "public").length +
     snippets.filter((item) => item.snippet.visibility !== "public").length;
