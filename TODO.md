@@ -61,14 +61,17 @@ Ordre recommandé :
 - [x] Créer `frontend/src/app/providers.tsx`
 - [x] Créer `frontend/src/components/layout/AppShell.tsx`
 - [x] Créer `frontend/src/lib/api-client.ts`
-- [x] Créer `frontend/src/lib/supabase.ts`
+- [x] Retirer `frontend/src/lib/supabase.ts` et la dépendance `@supabase/supabase-js` du `package.json` (décision VPS, plus d'auth SaaS)
 - [x] Créer stores Zustand minimaux
 
 ## Phase 4 — Auth
 
-- [ ] Implémenter validation JWT Supabase côté backend
-- [ ] Implémenter synchronisation `users` / `auth_identities`
-- [ ] Ajouter UI login GitHub réelle
+> App auto-hébergée sur VPS → **OAuth direct côté backend**, pas de Supabase / SaaS d'auth.
+
+- [x] Implémenter OAuth GitHub (callback + session JWT cookie)
+- [x] Implémenter OAuth Discord (callback + session JWT cookie)
+- [x] Implémenter synchronisation `users` / `auth_identities`
+- [ ] Ajouter UI login GitHub / Discord réelle dans le frontend
 - [x] Connecter `GET /api/me` à l'utilisateur courant en mode dev temporaire
 
 ## Phase 5 — Libraries / Snippets

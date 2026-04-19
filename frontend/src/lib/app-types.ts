@@ -68,6 +68,27 @@ export type AppView =
 
 export type CommunitySnippetPreviewKind = "button" | "backend" | "database";
 
+export type SnippetFileLanguage =
+  | "html"
+  | "css"
+  | "js"
+  | "ts"
+  | "jsx"
+  | "tsx"
+  | "rust"
+  | "sql"
+  | "bash"
+  | "yaml"
+  | "json"
+  | "plaintext";
+
+export type SnippetFile = {
+  id: string;
+  label: string;
+  language: SnippetFileLanguage;
+  content: string;
+};
+
 export type CommunitySnippet = {
   id: string;
   title: string;
@@ -84,7 +105,8 @@ export type CommunitySnippet = {
   saves: number;
   canonicalReference: string;
   scope: "community" | "private";
-  rawCode: string;
+  files: SnippetFile[];
+  primaryFileId?: string;
   previewKind: CommunitySnippetPreviewKind;
   previewLabel: string;
   previewNote: string;

@@ -16,7 +16,7 @@
 | Monorepo | **pnpm workspaces** + **Cargo workspaces** | Gestion multi-langages |
 | Containerisation | **Docker** + **docker-compose** | Dev local reproductible |
 | CI/CD | **GitHub Actions** | Gratuit, standard |
-| Auth | **GitHub + Supabase Auth** (MVP) | Onboarding développeur rapide sans auth maison |
+| Auth | **OAuth direct GitHub + Discord** (MVP) | Auth maison minimale, aucune dépendance à un provider externe (app hébergée sur VPS) |
 
 ## 🦀 Backend — Rust
 
@@ -76,7 +76,7 @@ thiserror = "1"
 
 ## 🗄️ Base de données — PostgreSQL + pgvector
 
-- Standard, portable, hébergeable partout (local, Supabase, Neon, self-host)
+- Standard, portable, hébergeable partout (local, self-host sur VPS via Coolify)
 - `pgvector` : recherche sémantique dans la même DB que le reste — pas de vector DB séparée à maintenir
 - `JSONB` pour les règles et métadonnées évolutives
 - Migrations via `sqlx migrate`
@@ -116,8 +116,9 @@ PROJET_K/
 
 ## 🔑 Authentification & secrets
 
-- **GitHub + Supabase Auth** pour le MVP
-- **JWT validés côté backend Rust** au lieu d'une auth maison
+- **OAuth direct GitHub + Discord** côté backend Rust (pas de provider externe type Supabase / Auth0)
+- Session stockée dans un cookie JWT signé (`APP_SESSION_SECRET`) — validation maison
+- Pourquoi pas Supabase Auth : l'app est auto-hébergée sur VPS via Coolify ; ajouter un SaaS d'auth externe n'a pas de valeur et complique le déploiement
 - Secrets en variables d'environnement via `.env` (jamais commité) + `dotenvy` en dev
 - Production : secrets injectés par le runtime Coolify
 

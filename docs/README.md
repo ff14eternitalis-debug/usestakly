@@ -23,6 +23,7 @@
 - [**rules-system.md**](./rules-system.md) — Les 5 RULES & format JSON
 - [**detection-system.md**](./detection-system.md) — Détection automatique (plan zéro coût)
 - [**deployment-coolify.md**](./deployment-coolify.md) — Stratégie d'hébergement cible sur Coolify
+- [**security-secrets-playbook.md**](./security-secrets-playbook.md) — Rotation des secrets et reprise de contrôle des variables sensibles
 
 ### Plans d'action (exécution)
 - [**plans/00-overview.md**](./plans/00-overview.md) — Vue d'ensemble des phases

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(npm audit *)",
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(npm ls *)",
+      "Bash(npm run *)",
+      "WebFetch(domain:blog.codepen.io)"
+    ]
+  }
+}

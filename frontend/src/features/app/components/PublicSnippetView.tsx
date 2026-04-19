@@ -1,4 +1,6 @@
-import type { CommunitySnippet, CopyBlock } from "../../../lib/app-types";
+import { useMemo, useState } from "react";
+import type { CommunitySnippet, CopyBlock, SnippetFile } from "../../../lib/app-types";
+import { LanguageLogo } from "../../../lib/language-logo";
 
 type PublicSnippetViewProps = {
   copy: CopyBlock;
@@ -22,18 +24,37 @@ function PublicSnippetRender({ copy, snippet }: { copy: CopyBlock; snippet: Comm
   }
 
   return (
-    <div className="public-snippet-preview public-snippet-preview-readonly">
+    <div className="public-snippet-preview public-snippet-preview-language">
       <span>{snippet.previewLabel}</span>
-      <div className="public-snippet-language-mark" aria-hidden="true">
-        {snippet.language.slice(0, 3).toUpperCase()}
-      </div>
-      <strong>{snippet.title}</strong>
+      <LanguageLogo
+        language={snippet.language}
+        framework={snippet.framework}
+        size={96}
+      />
+      <strong>{snippet.framework ?? snippet.language}</strong>
       <p>{snippet.previewNote}</p>
     </div>
   );
 }
 
+function resolveInitialFile(files: SnippetFile[], primaryFileId?: string): SnippetFile {
+  if (primaryFileId) {
+    const match = files.find((file) => file.id === primaryFileId);
+    if (match) return match;
+  }
+  return files[0];
+}
+
 export function PublicSnippetView({ copy, snippet }: PublicSnippetViewProps) {
+  const initialFile = useMemo(
+    () => resolveInitialFile(snippet.files, snippet.primaryFileId),
+    [snippet.files, snippet.primaryFileId]
+  );
+  const [activeFileId, setActiveFileId] = useState<string>(initialFile.id);
+  const activeFile =
+    snippet.files.find((file) => file.id === activeFileId) ?? initialFile;
+  const hasMultipleFiles = snippet.files.length > 1;
+
   return (
     <section className="app-view-shell app-page public-snippet-page">
       <section className="public-snippet-hero">
@@ -100,8 +121,31 @@ export function PublicSnippetView({ copy, snippet }: PublicSnippetViewProps) {
               <h2>{copy.snippetCodeTitle}</h2>
             </div>
           </div>
-          <pre className="public-snippet-code">
-            <code>{snippet.rawCode}</code>
+          {hasMultipleFiles ? (
+            <div className="public-snippet-tabs" role="tablist" aria-label="Snippet files">
+              {snippet.files.map((file) => {
+                const isActive = file.id === activeFile.id;
+                return (
+                  <button
+                    key={file.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={
+                      isActive
+                        ? "public-snippet-tab public-snippet-tab-active"
+                        : "public-snippet-tab"
+                    }
+                    onClick={() => setActiveFileId(file.id)}
+                  >
+                    {file.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <pre className="public-snippet-code" data-language={activeFile.language}>
+            <code>{activeFile.content}</code>
           </pre>
         </article>
       </section>

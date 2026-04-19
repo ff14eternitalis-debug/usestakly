@@ -1,4 +1,9 @@
-import type { CommunitySnippet, PublicLibraryProfile, SnippetDetail } from "./app-types";
+import type {
+  CommunitySnippet,
+  PublicLibraryProfile,
+  SnippetDetail,
+  SnippetFile
+} from "./app-types";
 
 const COMMUNITY_SEED: CommunitySnippet[] = [
   {
@@ -18,14 +23,74 @@ const COMMUNITY_SEED: CommunitySnippet[] = [
     saves: 312,
     canonicalReference: "@alice/react-ui-kit:aurora-pulse-button",
     scope: "community",
-    rawCode: `export function AuroraPulseButton() {
+    files: [
+      {
+        id: "aurora-html",
+        label: "HTML",
+        language: "html",
+        content: `<button class="aurora-button">
+  <span class="aurora-button__aura"></span>
+  <span class="aurora-button__label">Launch workspace</span>
+</button>`
+      },
+      {
+        id: "aurora-css",
+        label: "CSS",
+        language: "css",
+        content: `.aurora-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #B67332, #93441A);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f5f5f4;
+  box-shadow: 0 18px 40px rgba(147, 68, 26, 0.35);
+  transition: transform 200ms ease;
+  cursor: pointer;
+}
+
+.aurora-button:hover {
+  transform: translateY(-2px);
+}
+
+.aurora-button__aura {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 245, 232, 0.32), transparent 62%);
+  opacity: 0.8;
+  filter: blur(10px);
+  transition: opacity 200ms ease;
+}
+
+.aurora-button:hover .aurora-button__aura {
+  opacity: 1;
+}
+
+.aurora-button__label {
+  position: relative;
+}`
+      },
+      {
+        id: "aurora-tsx",
+        label: "React",
+        language: "tsx",
+        content: `export function AuroraPulseButton() {
   return (
     <button className="group relative inline-flex items-center justify-center rounded-full border border-white/10 bg-[linear-gradient(135deg,#B67332,#93441A)] px-6 py-3 text-sm font-semibold text-stone-50 shadow-[0_18px_40px_rgba(147,68,26,0.35)] transition-transform duration-200 hover:-translate-y-0.5">
       <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(255,245,232,0.32),transparent_62%)] opacity-80 blur-md transition-opacity duration-200 group-hover:opacity-100" />
       <span className="relative">Launch workspace</span>
     </button>
   );
-}`,
+}`
+      }
+    ],
+    primaryFileId: "aurora-tsx",
     previewKind: "button",
     previewLabel: "React component preview",
     previewNote: "Interactive public snippet preview built with React + Tailwind.",
@@ -48,7 +113,49 @@ const COMMUNITY_SEED: CommunitySnippet[] = [
     saves: 241,
     canonicalReference: "@alice/react-ui-kit:signal-pill-toggle",
     scope: "community",
-    rawCode: `type SignalPillToggleProps = {
+    files: [
+      {
+        id: "signal-html",
+        label: "HTML",
+        language: "html",
+        content: `<div class="signal-pill" role="tablist">
+  <button class="signal-pill__option is-active" role="tab" aria-selected="true">public</button>
+  <button class="signal-pill__option" role="tab" aria-selected="false">private</button>
+</div>`
+      },
+      {
+        id: "signal-css",
+        label: "CSS",
+        language: "css",
+        content: `.signal-pill {
+  display: inline-flex;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 10, 9, 0.6);
+  padding: 4px;
+}
+
+.signal-pill__option {
+  border: 0;
+  background: transparent;
+  color: #d6d3d1;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.signal-pill__option.is-active {
+  background: linear-gradient(135deg, #B67332, #93441A);
+  color: #ffffff;
+}`
+      },
+      {
+        id: "signal-tsx",
+        label: "React",
+        language: "tsx",
+        content: `type SignalPillToggleProps = {
   value: "public" | "private";
   onChange: (value: "public" | "private") => void;
 };
@@ -67,7 +174,10 @@ export function SignalPillToggle({ value, onChange }: SignalPillToggleProps) {
       ))}
     </div>
   );
-}`,
+}`
+      }
+    ],
+    primaryFileId: "signal-tsx",
     previewKind: "button",
     previewLabel: "React component preview",
     previewNote: "Interactive public snippet preview built with React + Tailwind.",
@@ -90,7 +200,12 @@ export function SignalPillToggle({ value, onChange }: SignalPillToggleProps) {
     saves: 204,
     canonicalReference: "@nox/rust-backend-core:auth-guard-v1",
     scope: "community",
-    rawCode: `use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+    files: [
+      {
+        id: "auth-guard-rs",
+        label: "auth_guard.rs",
+        language: "rust",
+        content: `use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 
 pub struct AuthUser {
     pub user_id: String,
@@ -117,10 +232,12 @@ where
             user_id: session.to_string(),
         })
     }
-}`,
+}`
+      }
+    ],
     previewKind: "backend",
     previewLabel: "Rust backend asset",
-    previewNote: "Read-only backend asset. The preview shows a language emblem instead of live UI."
+    previewNote: "Read-only backend asset. The preview shows the language emblem instead of live UI."
   },
   {
     id: "nox-session-cookie-config",
@@ -139,7 +256,12 @@ where
     saves: 166,
     canonicalReference: "@nox/rust-backend-core:session-cookie-config",
     scope: "community",
-    rawCode: `pub fn build_session_cookie(name: &str, value: &str) -> Cookie<'static> {
+    files: [
+      {
+        id: "session-cookie-rs",
+        label: "session_cookie.rs",
+        language: "rust",
+        content: `pub fn build_session_cookie(name: &str, value: &str) -> Cookie<'static> {
     Cookie::build((name.to_string(), value.to_string()))
         .http_only(true)
         .secure(true)
@@ -147,10 +269,12 @@ where
         .path("/")
         .max_age(time::Duration::days(7))
         .build()
-}`,
+}`
+      }
+    ],
     previewKind: "backend",
     previewLabel: "Rust backend asset",
-    previewNote: "Read-only backend asset. The preview shows a language emblem instead of live UI."
+    previewNote: "Read-only backend asset. The preview shows the language emblem instead of live UI."
   },
   {
     id: "mira-sql-migration-pack",
@@ -169,7 +293,12 @@ where
     saves: 188,
     canonicalReference: "@mira/database-patterns:starter-schema-core",
     scope: "community",
-    rawCode: `create table libraries (
+    files: [
+      {
+        id: "starter-schema-sql",
+        label: "starter_schema.sql",
+        language: "sql",
+        content: `create table libraries (
   id uuid primary key,
   owner_id uuid not null,
   slug text not null,
@@ -182,10 +311,12 @@ create table snippets (
   slug text not null,
   language text not null,
   description text
-);`,
+);`
+      }
+    ],
     previewKind: "database",
     previewLabel: "Database asset",
-    previewNote: "Read-only database asset. The preview shows a language emblem instead of live UI."
+    previewNote: "Read-only database asset. The preview shows the language emblem instead of live UI."
   },
   {
     id: "mira-query-audit-trigger",
@@ -204,23 +335,68 @@ create table snippets (
     saves: 149,
     canonicalReference: "@mira/database-patterns:query-audit-trigger",
     scope: "community",
-    rawCode: `create function log_library_change() returns trigger as $$
+    files: [
+      {
+        id: "audit-trigger-sql",
+        label: "audit_trigger.sql",
+        language: "sql",
+        content: `create function log_library_change() returns trigger as $$
 begin
   insert into audit_log(table_name, row_id, action)
   values (tg_table_name, new.id, tg_op);
   return new;
 end;
-$$ language plpgsql;`,
+$$ language plpgsql;`
+      }
+    ],
     previewKind: "database",
     previewLabel: "Database asset",
-    previewNote: "Read-only database asset. The preview shows a language emblem instead of live UI."
+    previewNote: "Read-only database asset. The preview shows the language emblem instead of live UI."
   }
 ];
+
+function mapLanguageToFileLanguage(language: string): SnippetFile["language"] {
+  const normalized = language.trim().toLowerCase();
+  switch (normalized) {
+    case "rust":
+      return "rust";
+    case "sql":
+    case "postgresql":
+      return "sql";
+    case "typescript":
+    case "ts":
+      return "ts";
+    case "tsx":
+      return "tsx";
+    case "javascript":
+    case "js":
+      return "js";
+    case "jsx":
+      return "jsx";
+    case "html":
+      return "html";
+    case "css":
+      return "css";
+    case "bash":
+    case "sh":
+    case "shell":
+      return "bash";
+    case "yaml":
+    case "yml":
+      return "yaml";
+    case "json":
+      return "json";
+    default:
+      return "plaintext";
+  }
+}
 
 function toCommunitySnippet(item: SnippetDetail, index: number): CommunitySnippet {
   const framework = item.snippet.framework ?? null;
   const publicScope = item.snippet.visibility === "public" ? "community" : "private";
   const libraryRef = item.canonicalReference.split(":")[0] ?? item.snippet.slug;
+  const fileLanguage = mapLanguageToFileLanguage(item.snippet.language);
+  const fileId = `${item.snippet.id}-source`;
 
   return {
     id: item.snippet.id,
@@ -240,9 +416,17 @@ function toCommunitySnippet(item: SnippetDetail, index: number): CommunitySnippe
     saves: Math.max(48, 160 - index * 11),
     canonicalReference: item.canonicalReference,
     scope: publicScope,
-    rawCode:
-      item.currentVersion?.code ??
-      "// No code snapshot available yet for this public snippet.",
+    files: [
+      {
+        id: fileId,
+        label: framework ?? item.snippet.language,
+        language: fileLanguage,
+        content:
+          item.currentVersion?.code ??
+          "// No code snapshot available yet for this public snippet."
+      }
+    ],
+    primaryFileId: fileId,
     previewKind: "backend",
     previewLabel: framework ?? item.snippet.language,
     previewNote: "Imported public snippet from your workspace. This preview is read-only."

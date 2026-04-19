@@ -84,27 +84,27 @@ Le dossier `shared/` est **repoussé** tant qu'on n'a pas une duplication réell
 
 ### 4. Choix d'authentification MVP
 
-**Choix recommandé : `Supabase Auth` avec `GitHub` comme premier provider.**
+**Choix retenu : OAuth direct `GitHub` + `Discord`, auth portée par le backend Rust (pas de SaaS d'auth).**
 
 Pourquoi ce choix :
-- évite une auth maison en Rust au MVP
-- GitHub est très pertinent pour une cible de développeurs
-- Supabase gère les sessions, JWT, OAuth, refresh tokens et la couche utilisateur
-- le backend Rust peut simplement **vérifier les JWT** au lieu de porter tout le cycle auth
-- la même base Postgres peut héberger les données métier et rester cohérente avec l'écosystème choisi
+- l'app est auto-hébergée sur VPS via Coolify ; un SaaS d'auth externe (Supabase, Auth0, Clerk…) n'apporte aucune valeur et ajoute une dépendance réseau payante
+- GitHub cible les développeurs, Discord élargit à la communauté (contributeurs, bibliothèques publiques)
+- le backend Axum gère le cycle OAuth complet : `authorize` → `callback` → échange code → fetch profil → upsert `users`/`auth_identities` → session JWT signée dans un cookie `HttpOnly`
+- le secret `APP_SESSION_SECRET` est la seule clé à faire tourner pour invalider toutes les sessions
+- zéro SDK externe côté frontend : un simple lien `GET /api/auth/{github|discord}/start` déclenche le flow
 
 ### 5. Position claire sur GitHub Auth
 
-**Oui, GitHub Auth est pertinent pour ce projet, mais pas comme unique vérité produit.**
+**GitHub Auth reste un provider pertinent, mais au même titre que Discord — aucun des deux n'est l'identité canonique.**
 
 Décision :
-- **MVP** : login principal via GitHub
-- **identité interne** : l'utilisateur est identifié par un `user_id` local / Supabase, pas par l'email GitHub
-- **v1.1** : ajouter un fallback `email magic link`
+- **MVP** : login via GitHub **ou** Discord, OAuth direct côté backend
+- **identité interne** : l'utilisateur est identifié par un `user_id` local (UUID en DB), pas par l'email ni l'ID provider
+- **v1.1** : ajouter un fallback `email magic link` si le besoin émerge
 - **plus tard** : ajouter une vraie intégration GitHub séparée pour accéder aux repos, commits ou gists
 
 Important :
-- le **login GitHub** et l'**intégration GitHub** sont deux sujets différents
+- le **login GitHub** et l'**intégration GitHub** sont deux sujets différents (scopes, tokens, durée de vie)
 - on ne doit pas coupler toute l'identité produit aux permissions repo GitHub
 - si on a besoin plus tard d'accéder à des dépôts, on évaluera un **GitHub App** ou un flux OAuth dédié à cette intégration
 
@@ -127,48 +127,49 @@ Important :
 ## Auth cible au MVP
 
 ### Frontend
-- bouton `Continuer avec GitHub`
-- redirection vers Supabase Auth
-- récupération de session côté frontend
-- stockage côté client via SDK Supabase
+- boutons `Continuer avec GitHub` / `Continuer avec Discord`
+- chaque bouton est un simple lien `<a href="/api/auth/{provider}/start">` — pas de SDK externe
+- après callback, le backend pose un cookie `usestakly_session` et redirige vers `FRONTEND_BASE_URL`
+- la session est récupérée par `GET /api/me` (le cookie est envoyé automatiquement grâce à `credentials: "include"`)
 
 ### Backend Rust
-- middleware Axum qui :
-  - lit le bearer token
-  - vérifie le JWT Supabase avec la clé publique du projet
-  - extrait `sub`
-  - mappe `sub` vers l'utilisateur applicatif
+- routes `GET /api/auth/{github|discord}/start` et `GET /api/auth/{github|discord}/callback`
+- `start` : génère un `state` JWT court (anti-CSRF) et redirige vers le provider
+- `callback` : valide le `state`, échange le `code` contre un access token, récupère le profil, upsert dans `users` + `auth_identities`, signe un JWT de session avec `APP_SESSION_SECRET` et le pose dans un cookie `HttpOnly`
+- middleware `CurrentUser` qui décode le cookie à chaque requête et rejette 401 si invalide
+- route `POST /api/auth/logout` qui efface le cookie
 
 ### Base de données
-- table `users` locale conservée
-- table `auth_identities` conservée
-- `provider = 'github'` pour le MVP
-- `provider_user_id` = identifiant GitHub stable
-- ne jamais prendre l'email GitHub comme clé primaire métier
+- table `users` locale : source de vérité (UUID interne)
+- table `auth_identities` : `(provider, provider_user_id) → user_id`
+- `provider ∈ {'github', 'discord'}` au MVP
+- ne jamais prendre l'email provider comme clé primaire métier
 
 ## Règles d'implémentation auth
 
-1. Un utilisateur qui se connecte pour la première fois crée ou alimente un `users` local.
-2. Le backend ne fait confiance qu'aux JWT validés.
-3. Le frontend n'accède jamais directement aux tables métier sensibles sans passer par l'API Rust.
-4. L'accès MCP exige un token utilisateur valide.
-5. Les futurs tokens API de l'utilisateur sont séparés des sessions web.
+1. Un utilisateur qui se connecte pour la première fois crée ou alimente un `users` local + une ligne `auth_identities`.
+2. Le backend ne fait confiance qu'aux JWT de session qu'il a lui-même signés.
+3. Le frontend n'accède jamais directement à la base — tout passe par l'API Rust.
+4. L'accès MCP exige une session valide (ou, plus tard, un token API dédié).
+5. Les futurs tokens API utilisateur seront stockés dans une table séparée, distincte des sessions web.
+6. Toute rotation de `APP_SESSION_SECRET` invalide toutes les sessions actives — c'est le bouton d'arrêt d'urgence.
 
 ## Variables d'environnement minimales
 
 ```env
 # frontend
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_API_BASE_URL=http://localhost:4000
 
 # backend
-SUPABASE_URL=
-SUPABASE_JWT_JWKS_URL=
-SUPABASE_JWT_ISSUER=
 DATABASE_URL=
 APP_ENV=development
 APP_BASE_URL=http://localhost:4000
 FRONTEND_BASE_URL=http://localhost:5173
+APP_SESSION_SECRET=change-me-to-a-long-random-string
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
 ```
 
 ---
@@ -323,38 +324,40 @@ Poser un backend Rust stable, observable et sécurisé.
 
 ### Objectif
 
-Permettre un login GitHub concret sans auth maison.
+Permettre un login GitHub et Discord concret via OAuth direct, sans dépendance à un SaaS d'auth.
 
 ### Actions
 
-- créer le projet Supabase
-- activer GitHub provider
-- configurer les URLs de callback locales et production
-- brancher le frontend avec le client Supabase
-- ajouter un écran login minimal
-- implémenter le middleware JWT côté Axum
-- créer le flow `sign-in -> callback -> session -> GET /api/me`
-- synchroniser l'utilisateur Supabase vers `users` + `auth_identities`
+- créer les OAuth apps GitHub et Discord (dev + prod), noter `client_id` / `client_secret`
+- configurer les URLs de callback `{APP_BASE_URL}/api/auth/{provider}/callback` en local et prod
+- générer un `APP_SESSION_SECRET` long (≥ 32 bytes aléatoires)
+- implémenter les routes `start` + `callback` pour chaque provider (crate `reqwest` pour l'échange code, `jsonwebtoken` pour le state et la session)
+- implémenter le middleware `CurrentUser` qui lit/valide le cookie session
+- créer le flow complet : bouton frontend → `/start` → provider → `/callback` → cookie → redirect → `GET /api/me`
+- upsert dans `users` + `auth_identities` à chaque login
+- implémenter `POST /api/auth/logout` (cookie effacé côté serveur)
 
 ### Décisions produit
 
-- login principal via GitHub
-- pas de mot de passe au MVP
-- pas de reset password
-- pas de MFA au MVP
+- login par provider OAuth uniquement (GitHub + Discord)
+- pas de mot de passe, pas de reset, pas de MFA au MVP
+- pas de SDK d'auth côté frontend
 
 ### Risques à surveiller
 
-- ne pas dépendre de l'email GitHub pour l'identité
-- prévoir des usernames applicatifs indépendants
-- ne pas mélanger session web et futurs API tokens
+- ne pas dépendre de l'email provider pour l'identité (l'email GitHub peut être privé, celui de Discord changé)
+- prévoir des usernames applicatifs indépendants du username provider
+- ne pas mélanger session web et futurs API tokens (tables distinctes)
+- `APP_SESSION_SECRET` doit être stocké comme un secret, pas dans le repo
+- cookie session : `HttpOnly`, `SameSite=Lax`, `Secure` en prod (géré par `session_cookie_secure()`)
 
 ### Definition of Done
 
-- un utilisateur peut se connecter avec GitHub
-- le backend reconnaît l'utilisateur
+- un utilisateur peut se connecter avec GitHub ou Discord
+- le backend reconnaît l'utilisateur via le cookie session
 - `GET /api/me` renvoie un profil cohérent
-- logout fonctionnel
+- `POST /api/auth/logout` invalide la session
+- aucune dépendance Supabase dans le code ni dans les env vars
 
 ---
 

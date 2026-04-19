@@ -30,11 +30,12 @@ Le MVP n'est plus pensé comme :
 
 - frontend sur Vercel
 - backend sur Fly.io / Railway
-- base sur Supabase / Neon
+- base et auth sur un SaaS externe (Supabase, Neon, etc.)
 
 Le MVP est maintenant pensé comme :
 
-- **un déploiement unifié sur Coolify**
+- **un déploiement unifié sur Coolify (VPS auto-hébergé)**
+- auth OAuth implémentée directement dans le backend Rust (GitHub + Discord), pas de service d'auth externe
 
 ---
 
@@ -70,8 +71,6 @@ Ce découpage permet des déploiements indépendants, des variables séparées e
 
 ```env
 VITE_API_BASE_URL=https://api.usestakly.com
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
 ```
 
 ### Backend
@@ -82,20 +81,21 @@ APP_HOST=0.0.0.0
 APP_PORT=4000
 APP_BASE_URL=https://api.usestakly.com
 FRONTEND_BASE_URL=https://usestakly.com
+APP_SESSION_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
 RUST_LOG=info
-SUPABASE_URL=
-SUPABASE_JWT_JWKS_URL=
-SUPABASE_JWT_ISSUER=
 ```
 
 ### Note importante
 
-L'hébergement sur Coolify et la stratégie d'auth sont **deux décisions séparées**.
+L'app est auto-hébergée sur VPS via Coolify. L'auth est implémentée directement dans le backend Rust :
 
-Donc :
-
-- hébergement cible = Coolify
-- auth MVP documentée actuellement = GitHub + Supabase Auth
+- OAuth GitHub + Discord callbacks servis par le backend
+- session persistée dans un cookie JWT signé avec `APP_SESSION_SECRET`
+- aucune dépendance à un SaaS d'auth (Supabase, Auth0, Clerk...) — pas de valeur ajoutée sur un VPS auto-hébergé
 
 ---
 

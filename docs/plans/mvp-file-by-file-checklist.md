@@ -57,9 +57,9 @@ Ce document est conçu pour servir directement à une implémentation agentique 
 ### `.env.example`
 - Rôle : documentation centralisée des variables d'environnement
 - Doit contenir :
-  - variables backend
-  - variables frontend
-  - variables Supabase
+  - variables backend (`DATABASE_URL`, `APP_*`, `APP_SESSION_SECRET`, `GITHUB_CLIENT_*`, `DISCORD_CLIENT_*`)
+  - variables frontend (`VITE_API_BASE_URL`)
+  - variables du dev user fallback (`DEV_USER_*`)
   - URLs locales par défaut
 - Done quand :
   - un dev peut copier ce fichier en `.env` sans deviner une variable
@@ -188,9 +188,9 @@ Ce document est conçu pour servir directement à une implémentation agentique 
 - Rôle : identité locale
 - Doit contenir :
   - `users`
-  - `auth_identities`
+  - `auth_identities` avec `(provider, provider_user_id)` unique, `provider ∈ {'github', 'discord'}`
 - Done quand :
-  - un utilisateur Supabase peut être synchronisé côté app
+  - un callback OAuth GitHub ou Discord peut upsert l'utilisateur applicatif sans doublon
 
 ### `backend/migrations/0003_libraries.sql`
 - Rôle : bibliothèques adressables
@@ -287,13 +287,19 @@ Ce document est conçu pour servir directement à une implémentation agentique 
 ## 6. Backend — auth
 
 ### `backend/src/auth/mod.rs`
-- Rôle : façade auth
+- Rôle : façade auth (OAuth direct GitHub + Discord, session JWT cookie)
 - Doit contenir :
-  - vérification JWT Supabase
-  - types claims
-  - extraction user courant
+  - routes `start` + `callback` pour GitHub et Discord
+  - échange `code → access_token` via `reqwest`
+  - fetch profil provider (`/user` GitHub, `/users/@me` Discord)
+  - upsert `users` + `auth_identities`
+  - génération + validation du JWT de session signé avec `APP_SESSION_SECRET`
+  - helper `HttpOnly` cookie `usestakly_session`
+  - extracteur `CurrentUser` qui lit le cookie et tombe en 401 sinon
+  - fallback dev user quand `APP_SESSION_SECRET` + un couple `*_CLIENT_ID/SECRET` est absent
 - Done quand :
   - `GET /api/me` peut être protégé proprement
+  - un utilisateur peut se connecter via GitHub **ou** Discord sans aucun SDK côté frontend
 
 ### `backend/src/auth/jwks.rs`
 - Rôle : validation des JWT via JWKS
@@ -669,13 +675,9 @@ Ce document est conçu pour servir directement à une implémentation agentique 
 - Done quand :
   - tous les appels REST passent par ce client
 
-### `frontend/src/lib/supabase.ts`
-- Rôle : client Supabase frontend
-- Doit contenir :
-  - init client
-  - config env
-- Done quand :
-  - le login GitHub peut être déclenché depuis l'UI
+### ~~`frontend/src/lib/supabase.ts`~~ — supprimé du périmètre
+
+Pas de SDK d'auth côté frontend. Le login est déclenché par un simple lien `<a href="{VITE_API_BASE_URL}/api/auth/{github|discord}/start">` et la session est portée par un cookie posé par le backend. Si un fichier stub existe dans le repo pour raisons historiques, il doit être retiré ou vidé de toute dépendance à `@supabase/supabase-js`.
 
 ### `frontend/src/lib/query-client.ts`
 - Rôle : config TanStack Query

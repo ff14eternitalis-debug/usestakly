@@ -1152,7 +1152,8 @@ select {
 }
 
 .public-snippet-preview-copy span,
-.public-snippet-preview-readonly span {
+.public-snippet-preview-readonly span,
+.public-snippet-preview-language span {
   display: block;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -1162,6 +1163,7 @@ select {
 
 .public-snippet-preview-copy p,
 .public-snippet-preview-readonly p,
+.public-snippet-preview-language p,
 .public-snippet-summary p {
   margin: 0;
   color: rgba(246, 239, 229, 0.74);
@@ -1225,9 +1227,76 @@ select {
   box-shadow: 0 20px 34px rgba(147, 68, 26, 0.28);
 }
 
+.public-snippet-preview-language {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+  justify-items: center;
+  padding: 26px;
+  text-align: center;
+}
+
+.public-snippet-preview-language strong {
+  color: #f8efe3;
+  font-size: 1.05rem;
+}
+
+.public-snippet-preview-language svg {
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.35));
+}
+
+.public-snippet-language-logo-fallback {
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 247, 233, 0.12), transparent 32%),
+    linear-gradient(135deg, rgba(182, 115, 50, 0.9), rgba(147, 68, 26, 0.88));
+  color: #fff8ef;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 20px 34px rgba(147, 68, 26, 0.28);
+}
+
 .public-snippet-summary {
   display: grid;
   gap: 12px;
+}
+
+.public-snippet-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 239, 229, 0.08);
+  background: rgba(12, 10, 9, 0.48);
+  width: fit-content;
+}
+
+.public-snippet-tab {
+  border: 0;
+  background: transparent;
+  color: rgba(246, 239, 229, 0.64);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.public-snippet-tab:hover {
+  color: #f8efe3;
+}
+
+.public-snippet-tab-active {
+  background: linear-gradient(135deg, rgba(182, 115, 50, 0.95), rgba(147, 68, 26, 0.92));
+  color: #fff8ef;
+  box-shadow: 0 10px 22px rgba(147, 68, 26, 0.28);
 }
 
 .public-snippet-code {

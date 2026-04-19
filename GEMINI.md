@@ -19,7 +19,7 @@ Le projet utilise une classification à deux axes (voir `docs/architecture.md`) 
 -   **Backend :** Rust (Axum, sqlx, PostgreSQL + pgvector).
 -   **Frontend :** React 19 (Tailwind v4, TypeScript, Vite, TanStack Router).
 -   **Détection :** tree-sitter + fastembed (100% local).
--   **Infrastructure :** Docker, Fly.io, Supabase/Neon.
+-   **Infrastructure :** Docker + Coolify sur VPS auto-hébergé (frontend + backend + Postgres sur la même plateforme, aucun SaaS externe).
 
 ---
 

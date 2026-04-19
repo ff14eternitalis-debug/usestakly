@@ -79,8 +79,8 @@ Le MVP visé ici doit permettre :
 ## Inclus
 
 ### Identité
-- login via GitHub avec Supabase Auth
-- session utilisateur
+- login OAuth direct via GitHub **et** Discord (implémenté dans le backend Rust, aucun SaaS d'auth)
+- session utilisateur dans un cookie JWT signé (`APP_SESSION_SECRET`)
 - profil minimal
 
 ### Bibliothèques
@@ -171,8 +171,9 @@ Le MVP visé ici doit permettre :
 - React Router ou TanStack Router
 
 ## Auth
-- Supabase Auth
-- provider initial : GitHub
+- OAuth direct côté backend Rust (pas de SaaS d'auth — app auto-hébergée sur VPS)
+- providers MVP : GitHub **et** Discord
+- session JWT dans un cookie `HttpOnly` signé avec `APP_SESSION_SECRET`
 
 ## Infra
 - Docker Compose
@@ -817,8 +818,9 @@ Pour chaque brique assemblée :
 
 ### 1. Login
 
-- bouton `Continuer avec GitHub`
-- redirection Supabase
+- boutons `Continuer avec GitHub` et `Continuer avec Discord`
+- chaque bouton = lien direct vers `/api/auth/{provider}/start` (pas de SDK côté frontend)
+- après callback, le backend pose le cookie session et redirige vers le frontend
 
 ### 2. Dashboard
 
@@ -915,30 +917,46 @@ Ordre recommandé de ranking :
 
 ## Choix
 
-- Supabase Auth
-- GitHub comme provider principal MVP
+- OAuth direct côté backend Rust, aucun SaaS d'auth externe
+- providers MVP : GitHub **et** Discord
+- session : JWT signé avec `APP_SESSION_SECRET`, stocké dans un cookie `HttpOnly`
 
 ## Pourquoi
 
-- cible développeurs
-- bon onboarding
-- pas d'auth maison
-- JWT vérifiables côté Rust
+- app auto-hébergée sur VPS via Coolify → un SaaS d'auth externe n'apporte pas de valeur et ajoute une dépendance réseau payante
+- GitHub cible les développeurs, Discord élargit à la communauté
+- `APP_SESSION_SECRET` est le bouton d'arrêt d'urgence : sa rotation invalide toutes les sessions
+- zéro SDK frontend à maintenir
+
+## Flow détaillé
+
+1. **Start** — `GET /api/auth/{provider}/start`
+   - génère un `state` JWT court (anti-CSRF) signé avec `APP_SESSION_SECRET`
+   - redirige vers `https://github.com/login/oauth/authorize` ou `https://discord.com/oauth2/authorize`
+2. **Callback** — `GET /api/auth/{provider}/callback?code=...&state=...`
+   - valide le `state`
+   - échange `code` contre un access token via `reqwest`
+   - récupère le profil (`GET /user` pour GitHub, `GET /users/@me` pour Discord)
+   - upsert dans `users` + `auth_identities`
+   - signe un JWT de session (sub = `user_id`, exp = 7 jours)
+   - pose le cookie `usestakly_session` (`HttpOnly`, `SameSite=Lax`, `Secure` si `APP_BASE_URL` est en `https://`)
+   - redirige vers `FRONTEND_BASE_URL`
+3. **Usage** — chaque requête API renvoie le cookie ; un middleware le décode et injecte `CurrentUser`
+4. **Logout** — `POST /api/auth/logout` efface le cookie
 
 ## Règles
 
-- ne jamais utiliser l'email GitHub comme clé métier
-- créer un `user_id` applicatif local
-- stocker la relation dans `auth_identities`
-- séparer les sessions web et futurs API tokens
+- ne jamais utiliser l'email provider comme clé métier
+- `user_id` applicatif = UUID local, stable et unique
+- stocker la relation dans `auth_identities (provider, provider_user_id → user_id)`
+- séparer les sessions web et futurs API tokens (tables distinctes)
+- rotation de `APP_SESSION_SECRET` = kill switch global
 
 ## Variables d'environnement
 
 ### Frontend
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
 VITE_API_BASE_URL=http://localhost:4000
 ```
 
@@ -946,14 +964,16 @@ VITE_API_BASE_URL=http://localhost:4000
 
 ```env
 DATABASE_URL=
-SUPABASE_URL=
-SUPABASE_JWT_JWKS_URL=
-SUPABASE_JWT_ISSUER=
 APP_ENV=development
 APP_HOST=0.0.0.0
 APP_PORT=4000
 APP_BASE_URL=https://api.usestakly.com
 FRONTEND_BASE_URL=https://usestakly.com
+APP_SESSION_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
 RUST_LOG=info
 ```
 
@@ -1125,7 +1145,7 @@ Si ce document sert de base à une implémentation agentique, l'agent doit suivr
 Construire :
 - un backend Rust + Axum + SQLx + Postgres
 - un frontend React + Vite + Tailwind
-- une auth GitHub via Supabase
+- une auth OAuth directe (GitHub + Discord) portée par le backend
 - un modèle `libraries -> snippets -> versions`
 - une résolution canonique `@library:snippet@version`
 - une recherche hybride
