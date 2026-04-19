@@ -825,21 +825,31 @@ select {
   gap: 26px;
 }
 
-.public-snippet-header {
+.public-snippet-actions {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.public-snippet-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .public-snippet-back {
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
-  color: var(--ink);
+  background: rgba(14, 11, 10, 0.52);
+  color: #f6efe5;
   border-radius: 999px;
-  padding: 10px 14px;
+  padding: 11px 16px;
   cursor: pointer;
   font-weight: 700;
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .public-snippet-hero {
@@ -1430,6 +1440,10 @@ select {
 
   .public-snippet-meta {
     grid-template-columns: 1fr;
+  }
+
+  .public-snippet-actions {
+    align-items: stretch;
   }
 
   .profile-grid {

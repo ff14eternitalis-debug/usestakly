@@ -34,16 +34,19 @@ function PublicSnippetRender({ copy, snippet }: { copy: CopyBlock; snippet: Comm
 export function PublicSnippetView({ copy, snippet, onBack }: PublicSnippetViewProps) {
   return (
     <section className="app-view-shell app-page public-snippet-page">
-      <div className="public-snippet-header">
-        <button className="public-snippet-back" type="button" onClick={onBack}>
-          {copy.snippetBack}
-        </button>
-        <span className="workspace-status-pill">{copy.snippetReadonly}</span>
-      </div>
-
       <section className="public-snippet-hero">
         <div className="public-snippet-copy">
-          <span className="workspace-status-pill">{snippet.scope === "community" ? copy.homeScopeCommunity : copy.homeScopePrivate}</span>
+          <div className="public-snippet-actions">
+            <button className="public-snippet-back" type="button" onClick={onBack}>
+              ← {copy.snippetBack}
+            </button>
+            <div className="public-snippet-pills">
+              <span className="workspace-status-pill">{copy.snippetReadonly}</span>
+              <span className="workspace-status-pill">
+                {snippet.scope === "community" ? copy.homeScopeCommunity : copy.homeScopePrivate}
+              </span>
+            </div>
+          </div>
           <h1 className="public-snippet-title">{snippet.title}</h1>
           <p className="public-snippet-subcopy">{snippet.description}</p>
 
