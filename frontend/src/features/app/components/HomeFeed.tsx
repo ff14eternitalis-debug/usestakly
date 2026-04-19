@@ -11,7 +11,6 @@ export function HomeFeed({ copy, featuredSnippets, onOpenSnippet }: HomeFeedProp
     <section className="app-view-shell app-page">
       <section className="home-hero">
         <div className="home-hero-copy">
-          <span className="workspace-status-pill">{copy.homeFeaturedTitle}</span>
           <h1 className="home-title">{copy.homeTitle}</h1>
           <p className="home-subcopy">{copy.homeBody}</p>
           <div className="home-hero-support">

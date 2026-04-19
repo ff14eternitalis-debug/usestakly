@@ -663,6 +663,9 @@ select {
   display: grid;
   gap: 18px;
   max-width: 860px;
+  margin: 0 auto;
+  justify-items: center;
+  text-align: center;
 }
 
 .home-title {
@@ -689,6 +692,7 @@ select {
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid rgba(246, 239, 229, 0.14);
+  justify-items: center;
 }
 
 .home-hero-support strong {
