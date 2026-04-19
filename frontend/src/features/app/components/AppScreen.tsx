@@ -75,7 +75,7 @@ export function AppScreen({
     snippets.filter((item) => item.snippet.visibility !== "public").length;
 
   return (
-    <section className="workspace-panel app-panel">
+    <section className="app-shell">
       <AppTopbar
         copy={copy}
         user={user}
@@ -85,37 +85,39 @@ export function AppScreen({
         onLogout={onLogout}
       />
 
-      {activeView === "home" ? (
-        <HomeFeed copy={copy} featuredSnippets={featuredSnippets} />
-      ) : null}
+      <div className="app-main">
+        {activeView === "home" ? (
+          <HomeFeed copy={copy} featuredSnippets={featuredSnippets} />
+        ) : null}
 
-      {activeView === "explore" ? (
-        <ExploreFeed copy={copy} communitySnippets={communitySnippets} />
-      ) : null}
+        {activeView === "explore" ? (
+          <ExploreFeed copy={copy} communitySnippets={communitySnippets} />
+        ) : null}
 
-      {activeView === "studio" ? (
-        <WorkspaceScreen
-          copy={copy}
-          libraries={libraries}
-          snippets={snippets}
-          recentSnippets={recentSnippets}
-          workspaceLoading={workspaceLoading}
-          locale={locale}
-          publicAssetCount={publicAssetCount}
-          readyReferences={readyReferences}
-          onCreateLibrary={onCreateLibrary}
-          onCreateSnippet={onCreateSnippet}
-        />
-      ) : null}
+        {activeView === "studio" ? (
+          <WorkspaceScreen
+            copy={copy}
+            libraries={libraries}
+            snippets={snippets}
+            recentSnippets={recentSnippets}
+            workspaceLoading={workspaceLoading}
+            locale={locale}
+            publicAssetCount={publicAssetCount}
+            readyReferences={readyReferences}
+            onCreateLibrary={onCreateLibrary}
+            onCreateSnippet={onCreateSnippet}
+          />
+        ) : null}
 
-      {activeView === "profile" ? (
-        <ProfileView
-          copy={copy}
-          user={user}
-          privateAssetCount={privateAssetCount}
-          publicAssetCount={publicAssetCount}
-        />
-      ) : null}
+        {activeView === "profile" ? (
+          <ProfileView
+            copy={copy}
+            user={user}
+            privateAssetCount={privateAssetCount}
+            publicAssetCount={publicAssetCount}
+          />
+        ) : null}
+      </div>
     </section>
   );
 }

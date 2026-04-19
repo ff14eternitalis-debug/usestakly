@@ -90,6 +90,12 @@ export const COPY: Record<Locale, CopyBlock> = {
     homeHighlightsTitle: "Why people save them",
     homeHighlightsBody:
       "High-signal assets with strong reuse potential, clean references, and stack clarity.",
+    homeOnboardingExplore:
+      "Browse public snippets first and understand what already exists before building.",
+    homeOnboardingStudio:
+      "Keep your own libraries private and build on top of your stack when you need control.",
+    homeOnboardingProfile:
+      "Manage identity, public presence, and private assets in one place.",
     homeTrendingLabel: "Appreciation",
     homeSavedLabel: "Saves",
     homeReferenceLabel: "Reference",
@@ -205,6 +211,12 @@ export const COPY: Record<Locale, CopyBlock> = {
     homeHighlightsTitle: "Pourquoi ils sont sauvegardés",
     homeHighlightsBody:
       "Des assets à fort signal, avec vrai potentiel de réutilisation, références propres et stack claire.",
+    homeOnboardingExplore:
+      "Parcours d’abord les snippets publics pour comprendre ce qui existe déjà avant de construire.",
+    homeOnboardingStudio:
+      "Garde tes bibliothèques privées et construis sur ta propre stack quand tu as besoin de contrôle.",
+    homeOnboardingProfile:
+      "Gère ton identité, ta présence publique et tes assets privés au même endroit.",
     homeTrendingLabel: "Appréciation",
     homeSavedLabel: "Sauvegardes",
     homeReferenceLabel: "Référence",

@@ -155,6 +155,9 @@ export type CopyBlock = {
   homeFeaturedBody: string;
   homeHighlightsTitle: string;
   homeHighlightsBody: string;
+  homeOnboardingExplore: string;
+  homeOnboardingStudio: string;
+  homeOnboardingProfile: string;
   homeTrendingLabel: string;
   homeSavedLabel: string;
   homeReferenceLabel: string;

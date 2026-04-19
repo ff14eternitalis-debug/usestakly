@@ -30,44 +30,46 @@ export function AppTopbar({
   };
 
   return (
-    <header className="app-topbar">
-      <div className="app-brand-block">
-        <p className="auth-brand-mark">UseStakly</p>
-        <p className="auth-brand-subtitle">{copy.appEyebrow}</p>
-      </div>
+    <header className="app-header">
+      <div className="app-header-inner">
+        <div className="app-brand-block">
+          <p className="auth-brand-mark">UseStakly</p>
+          <p className="auth-brand-subtitle">{copy.appEyebrow}</p>
+        </div>
 
-      <nav className="app-nav" aria-label="Primary">
-        {NAV_ITEMS.map((item) => (
+        <nav className="app-nav" aria-label="Primary">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item}
+              className={`app-nav-button${activeView === item ? " app-nav-button-active" : ""}`}
+              type="button"
+              onClick={() => setActiveView(item)}
+            >
+              {labels[item]}
+            </button>
+          ))}
+        </nav>
+
+        <div className="app-user-bar">
           <button
-            key={item}
-            className={`app-nav-button${activeView === item ? " app-nav-button-active" : ""}`}
+            className="lang-toggle"
             type="button"
-            onClick={() => setActiveView(item)}
+            onClick={() => setLocale((current) => (current === "en" ? "fr" : "en"))}
           >
-            {labels[item]}
+            {copy.language}
           </button>
-        ))}
-      </nav>
-
-      <div className="workspace-actions">
-        <button
-          className="lang-toggle"
-          type="button"
-          onClick={() => setLocale((current) => (current === "en" ? "fr" : "en"))}
-        >
-          {copy.language}
-        </button>
-        <div className="workspace-user">
-          <div className="workspace-avatar">
-            {user.avatarUrl ? (
-              <img alt={user.displayName ?? user.username} src={user.avatarUrl} />
-            ) : (
-              <span>{avatarFallback(user)}</span>
-            )}
-          </div>
-          <div className="workspace-user-copy">
-            <strong>{user.displayName ?? user.username}</strong>
-            <small>{user.email}</small>
+          <div className="app-user-meta">
+            <div className="workspace-avatar">
+              {user.avatarUrl ? (
+                <img alt={user.displayName ?? user.username} src={user.avatarUrl} />
+              ) : (
+                <span>{avatarFallback(user)}</span>
+              )}
+            </div>
+            <div className="workspace-user-copy">
+              <strong>{user.displayName ?? user.username}</strong>
+              <small>{user.email}</small>
+            </div>
           </div>
           <button className="workspace-logout" type="button" onClick={onLogout}>
             {copy.logoutSecondary}
