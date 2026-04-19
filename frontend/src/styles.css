@@ -177,6 +177,10 @@ select {
   gap: 20px;
 }
 
+.placeholder-page-box {
+  min-height: 220px;
+}
+
 .app-section-head h2,
 .home-hero-aside h2 {
   margin: 0;

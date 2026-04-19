@@ -79,6 +79,8 @@ export const COPY: Record<Locale, CopyBlock> = {
     logoutSecondary: "Sign out",
     navHome: "Home",
     navExplore: "Explore",
+    navDocuments: "Documents",
+    navForum: "Forum",
     navStudio: "Private studio",
     navProfile: "Profile",
     appEyebrow: "Community + private code graph",
@@ -106,6 +108,13 @@ export const COPY: Record<Locale, CopyBlock> = {
     exploreBody:
       "Browse reusable blocks by stack, language, and reference quality before opening your private studio.",
     exploreEmpty: "No public snippet available yet in this MVP feed.",
+    documentsTitle: "Documents",
+    documentsBody:
+      "Guides, learning paths, and onboarding material will live here for both newcomers and experienced builders.",
+    forumTitle: "Forum",
+    forumBody:
+      "Community discussions, questions, and snippet exchange posts will live here so people can learn and build together.",
+    pageInProgress: "Page in progress",
     studioTitle: "Private studio",
     studioBody:
       "Your personal libraries, references, and assembly-first workspace stay here, separate from the public feed.",
@@ -200,6 +209,8 @@ export const COPY: Record<Locale, CopyBlock> = {
     logoutSecondary: "Déconnexion",
     navHome: "Accueil",
     navExplore: "Explorer",
+    navDocuments: "Documents",
+    navForum: "Forum",
     navStudio: "Studio privé",
     navProfile: "Profil",
     appEyebrow: "Graphe de code communautaire + privé",
@@ -228,6 +239,13 @@ export const COPY: Record<Locale, CopyBlock> = {
     exploreBody:
       "Parcours les briques réutilisables par stack, langage et qualité de référence avant d’ouvrir ton studio privé.",
     exploreEmpty: "Aucun snippet public disponible pour l’instant dans ce feed MVP.",
+    documentsTitle: "Documents",
+    documentsBody:
+      "Les guides, parcours d’apprentissage et contenus d’onboarding vivront ici, pour les nouveaux comme pour les profils expérimentés.",
+    forumTitle: "Forum",
+    forumBody:
+      "Les discussions communautaires, questions et posts d’échange autour des snippets vivront ici pour apprendre et construire ensemble.",
+    pageInProgress: "Page en construction",
     studioTitle: "Studio privé",
     studioBody:
       "Tes bibliothèques personnelles, tes références et ton workspace orienté assemblage restent ici, séparés du feed public.",

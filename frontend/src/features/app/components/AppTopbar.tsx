@@ -12,7 +12,7 @@ type AppTopbarProps = {
   onLogout: () => void;
 };
 
-const NAV_ITEMS: AppView[] = ["home", "explore", "studio", "profile"];
+const NAV_ITEMS: AppView[] = ["home", "explore", "documents", "forum", "studio", "profile"];
 
 export function AppTopbar({
   copy,
@@ -25,6 +25,8 @@ export function AppTopbar({
   const labels: Record<AppView, string> = {
     home: copy.navHome,
     explore: copy.navExplore,
+    documents: copy.navDocuments,
+    forum: copy.navForum,
     studio: copy.navStudio,
     profile: copy.navProfile
   };

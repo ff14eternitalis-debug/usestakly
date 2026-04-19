@@ -11,6 +11,7 @@ import type {
 } from "../../../lib/app-types";
 import { ExploreFeed } from "./ExploreFeed";
 import { HomeFeed } from "./HomeFeed";
+import { PlaceholderPage } from "./PlaceholderPage";
 import { ProfileView } from "./ProfileView";
 import { AppTopbar } from "./AppTopbar";
 import { WorkspaceScreen } from "../../workspace/components/WorkspaceScreen";
@@ -92,6 +93,24 @@ export function AppScreen({
 
         {activeView === "explore" ? (
           <ExploreFeed copy={copy} communitySnippets={communitySnippets} />
+        ) : null}
+
+        {activeView === "documents" ? (
+          <PlaceholderPage
+            eyebrow={copy.pageInProgress}
+            title={copy.documentsTitle}
+            body={copy.documentsBody}
+            copy={copy}
+          />
+        ) : null}
+
+        {activeView === "forum" ? (
+          <PlaceholderPage
+            eyebrow={copy.pageInProgress}
+            title={copy.forumTitle}
+            body={copy.forumBody}
+            copy={copy}
+          />
         ) : null}
 
         {activeView === "studio" ? (

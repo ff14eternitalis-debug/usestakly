@@ -56,7 +56,13 @@ export type SnippetListResponse = {
 
 export type Locale = "en" | "fr";
 
-export type AppView = "home" | "explore" | "studio" | "profile";
+export type AppView =
+  | "home"
+  | "explore"
+  | "documents"
+  | "forum"
+  | "studio"
+  | "profile";
 
 export type CommunitySnippet = {
   id: string;
@@ -146,6 +152,8 @@ export type CopyBlock = {
   logoutSecondary: string;
   navHome: string;
   navExplore: string;
+  navDocuments: string;
+  navForum: string;
   navStudio: string;
   navProfile: string;
   appEyebrow: string;
@@ -167,6 +175,11 @@ export type CopyBlock = {
   exploreTitle: string;
   exploreBody: string;
   exploreEmpty: string;
+  documentsTitle: string;
+  documentsBody: string;
+  forumTitle: string;
+  forumBody: string;
+  pageInProgress: string;
   studioTitle: string;
   studioBody: string;
   profileTitle: string;
