@@ -83,7 +83,6 @@ export function AppScreen({
         activeView={activeView}
         setActiveView={setActiveView}
         setLocale={setLocale}
-        onLogout={onLogout}
       />
 
       <div className="app-main">
@@ -134,6 +133,7 @@ export function AppScreen({
             user={user}
             privateAssetCount={privateAssetCount}
             publicAssetCount={publicAssetCount}
+            onLogout={onLogout}
           />
         ) : null}
       </div>

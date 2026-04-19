@@ -529,11 +529,22 @@ select {
   justify-content: flex-end;
 }
 
-.app-user-meta {
+.app-user-trigger {
   display: flex;
   align-items: center;
   gap: 12px;
   min-width: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.app-user-trigger:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
 }
 
 .workspace-brand-block {
@@ -747,6 +758,12 @@ select {
 
 .profile-stats {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .workspace-stats {

@@ -9,18 +9,16 @@ type AppTopbarProps = {
   activeView: AppView;
   setActiveView: Dispatch<SetStateAction<AppView>>;
   setLocale: Dispatch<SetStateAction<Locale>>;
-  onLogout: () => void;
 };
 
-const NAV_ITEMS: AppView[] = ["home", "explore", "documents", "forum", "studio", "profile"];
+const NAV_ITEMS: AppView[] = ["home", "explore", "documents", "forum", "studio"];
 
 export function AppTopbar({
   copy,
   user,
   activeView,
   setActiveView,
-  setLocale,
-  onLogout
+  setLocale
 }: AppTopbarProps) {
   const labels: Record<AppView, string> = {
     home: copy.navHome,
@@ -60,7 +58,11 @@ export function AppTopbar({
           >
             {copy.language}
           </button>
-          <div className="app-user-meta">
+          <button
+            className="app-user-trigger"
+            type="button"
+            onClick={() => setActiveView("profile")}
+          >
             <div className="workspace-avatar">
               {user.avatarUrl ? (
                 <img alt={user.displayName ?? user.username} src={user.avatarUrl} />
@@ -72,9 +74,6 @@ export function AppTopbar({
               <strong>{user.displayName ?? user.username}</strong>
               <small>{user.email}</small>
             </div>
-          </div>
-          <button className="workspace-logout" type="button" onClick={onLogout}>
-            {copy.logoutSecondary}
           </button>
         </div>
       </div>

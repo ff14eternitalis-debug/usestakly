@@ -5,13 +5,15 @@ type ProfileViewProps = {
   user: CurrentUser;
   privateAssetCount: number;
   publicAssetCount: number;
+  onLogout: () => void;
 };
 
 export function ProfileView({
   copy,
   user,
   privateAssetCount,
-  publicAssetCount
+  publicAssetCount,
+  onLogout
 }: ProfileViewProps) {
   return (
     <section className="app-view-shell">
@@ -64,6 +66,12 @@ export function ProfileView({
               <span>{copy.profilePublicLabel}</span>
               <strong>{publicAssetCount}</strong>
             </div>
+          </div>
+
+          <div className="profile-actions">
+            <button className="workspace-logout" type="button" onClick={onLogout}>
+              {copy.logoutSecondary}
+            </button>
           </div>
         </section>
       </div>
