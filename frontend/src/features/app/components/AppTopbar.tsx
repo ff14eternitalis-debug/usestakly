@@ -26,7 +26,8 @@ export function AppTopbar({
     documents: copy.navDocuments,
     forum: copy.navForum,
     studio: copy.navStudio,
-    profile: copy.navProfile
+    profile: copy.navProfile,
+    snippet: copy.homeOpenSnippet
   };
 
   return (

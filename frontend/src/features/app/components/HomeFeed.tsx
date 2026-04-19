@@ -3,9 +3,10 @@ import type { CommunitySnippet, CopyBlock } from "../../../lib/app-types";
 type HomeFeedProps = {
   copy: CopyBlock;
   featuredSnippets: CommunitySnippet[];
+  onOpenSnippet: (snippet: CommunitySnippet) => void;
 };
 
-export function HomeFeed({ copy, featuredSnippets }: HomeFeedProps) {
+export function HomeFeed({ copy, featuredSnippets, onOpenSnippet }: HomeFeedProps) {
   return (
     <section className="app-view-shell app-page">
       <section className="home-hero">
@@ -13,24 +14,9 @@ export function HomeFeed({ copy, featuredSnippets }: HomeFeedProps) {
           <span className="workspace-status-pill">{copy.homeFeaturedTitle}</span>
           <h1 className="home-title">{copy.homeTitle}</h1>
           <p className="home-subcopy">{copy.homeBody}</p>
-        </div>
-
-        <div className="home-hero-aside">
-          <h2>{copy.homeHighlightsTitle}</h2>
-          <p>{copy.homeHighlightsBody}</p>
-          <div className="home-onboarding-list">
-            <article className="home-onboarding-item">
-              <strong>{copy.navExplore}</strong>
-              <p>{copy.homeOnboardingExplore}</p>
-            </article>
-            <article className="home-onboarding-item">
-              <strong>{copy.navStudio}</strong>
-              <p>{copy.homeOnboardingStudio}</p>
-            </article>
-            <article className="home-onboarding-item">
-              <strong>{copy.navProfile}</strong>
-              <p>{copy.homeOnboardingProfile}</p>
-            </article>
+          <div className="home-hero-support">
+            <strong>{copy.homeSecondaryTitle}</strong>
+            <p>{copy.homeSecondaryBody}</p>
           </div>
         </div>
       </section>
@@ -48,7 +34,12 @@ export function HomeFeed({ copy, featuredSnippets }: HomeFeedProps) {
         ) : (
           <div className="featured-snippet-grid">
             {featuredSnippets.map((item) => (
-              <article className="featured-snippet-card" key={item.id}>
+              <button
+                className="featured-snippet-card"
+                key={item.id}
+                type="button"
+                onClick={() => onOpenSnippet(item)}
+              >
                 <div className="featured-snippet-top">
                   <span className="workspace-chip workspace-chip-accent">
                     {item.scope === "community" ? copy.homeScopeCommunity : copy.homeScopePrivate}
@@ -74,7 +65,9 @@ export function HomeFeed({ copy, featuredSnippets }: HomeFeedProps) {
                   <span>{copy.homeReferenceLabel}</span>
                   <code>{item.canonicalReference}</code>
                 </div>
-              </article>
+
+                <span className="featured-snippet-link">{copy.homeOpenSnippet}</span>
+              </button>
             ))}
           </div>
         )}

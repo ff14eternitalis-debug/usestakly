@@ -86,28 +86,33 @@ export const COPY: Record<Locale, CopyBlock> = {
     appEyebrow: "Community + private code graph",
     homeTitle: "Build from what the community already proved.",
     homeBody:
-      "Start from the snippets people actually reuse, then move into your private studio when you need your own addressable assets.",
+      "Browse public building blocks first, understand what they do, then open your private studio when you are ready to compose your own app.",
     homeFeaturedTitle: "Most appreciated snippets",
-    homeFeaturedBody: "Community picks that should surface first in the product experience.",
-    homeHighlightsTitle: "Why people save them",
-    homeHighlightsBody:
-      "High-signal assets with strong reuse potential, clean references, and stack clarity.",
-    homeOnboardingExplore:
-      "Browse public snippets first and understand what already exists before building.",
-    homeOnboardingStudio:
-      "Keep your own libraries private and build on top of your stack when you need control.",
-    homeOnboardingProfile:
-      "Manage identity, public presence, and private assets in one place.",
+    homeFeaturedBody: "Open any public snippet to inspect its live result, its purpose, and its raw source.",
+    homeSecondaryTitle: "Start with examples people really reuse",
+    homeSecondaryBody:
+      "Each public snippet is readable by everyone, but only its owner can edit it. That keeps discovery simple and the source trustworthy.",
     homeTrendingLabel: "Appreciation",
     homeSavedLabel: "Saves",
     homeReferenceLabel: "Reference",
     homeScopeCommunity: "Community",
     homeScopePrivate: "Private",
     homeEmpty: "No highlighted snippet yet. Publish a few strong assets and the feed will start here.",
+    homeOpenSnippet: "Open snippet",
     exploreTitle: "Explore public libraries",
     exploreBody:
-      "Browse reusable blocks by stack, language, and reference quality before opening your private studio.",
+      "Search public snippets, compare references, and open any asset in read-only mode before building with your own private libraries.",
     exploreEmpty: "No public snippet available yet in this MVP feed.",
+    snippetBack: "Back",
+    snippetReadonly: "Public snippet · read only",
+    snippetRenderTitle: "Render",
+    snippetRenderBody: "Preview the public asset exactly as a visitor would discover it.",
+    snippetSummaryTitle: "Description",
+    snippetCodeTitle: "Raw code",
+    snippetStackLabel: "Stack",
+    snippetAuthorLabel: "Author",
+    snippetLibraryLabel: "Library",
+    snippetOpenSourceLabel: "Reference",
     documentsTitle: "Documents",
     documentsBody:
       "Guides, learning paths, and onboarding material will live here for both newcomers and experienced builders.",
@@ -216,18 +221,13 @@ export const COPY: Record<Locale, CopyBlock> = {
     appEyebrow: "Graphe de code communautaire + privé",
     homeTitle: "Construis à partir de ce que la communauté a déjà validé.",
     homeBody:
-      "Commence par les snippets réellement appréciés, puis bascule dans ton studio privé quand tu as besoin de tes propres assets adressables.",
+      "Commence par découvrir les briques publiques, comprends ce qu’elles font, puis ouvre ton studio privé quand tu es prêt à composer ta propre app.",
     homeFeaturedTitle: "Snippets les plus appréciés",
-    homeFeaturedBody: "Les picks communautaires qui doivent être mis en avant dans l’expérience produit.",
-    homeHighlightsTitle: "Pourquoi ils sont sauvegardés",
-    homeHighlightsBody:
-      "Des assets à fort signal, avec vrai potentiel de réutilisation, références propres et stack claire.",
-    homeOnboardingExplore:
-      "Parcours d’abord les snippets publics pour comprendre ce qui existe déjà avant de construire.",
-    homeOnboardingStudio:
-      "Garde tes bibliothèques privées et construis sur ta propre stack quand tu as besoin de contrôle.",
-    homeOnboardingProfile:
-      "Gère ton identité, ta présence publique et tes assets privés au même endroit.",
+    homeFeaturedBody:
+      "Ouvre n’importe quel snippet public pour voir son rendu, sa logique et son code brut dans une vue en lecture seule.",
+    homeSecondaryTitle: "Commence par des exemples vraiment réutilisés",
+    homeSecondaryBody:
+      "Chaque snippet public est lisible par tous, mais seul son propriétaire peut l’éditer. La découverte reste simple et la source reste fiable.",
     homeTrendingLabel: "Appréciation",
     homeSavedLabel: "Sauvegardes",
     homeReferenceLabel: "Référence",
@@ -235,10 +235,21 @@ export const COPY: Record<Locale, CopyBlock> = {
     homeScopePrivate: "Privé",
     homeEmpty:
       "Aucun snippet mis en avant pour l’instant. Publie quelques assets solides et le feed démarrera ici.",
+    homeOpenSnippet: "Ouvrir le snippet",
     exploreTitle: "Explorer les bibliothèques publiques",
     exploreBody:
-      "Parcours les briques réutilisables par stack, langage et qualité de référence avant d’ouvrir ton studio privé.",
+      "Parcours les snippets publics, compare les références, puis ouvre n’importe quel asset en lecture seule avant de construire avec tes bibliothèques privées.",
     exploreEmpty: "Aucun snippet public disponible pour l’instant dans ce feed MVP.",
+    snippetBack: "Retour",
+    snippetReadonly: "Snippet public · lecture seule",
+    snippetRenderTitle: "Rendu",
+    snippetRenderBody: "Prévisualise l’asset public comme un visiteur le découvrirait.",
+    snippetSummaryTitle: "Descriptif",
+    snippetCodeTitle: "Code brut",
+    snippetStackLabel: "Stack",
+    snippetAuthorLabel: "Auteur",
+    snippetLibraryLabel: "Bibliothèque",
+    snippetOpenSourceLabel: "Référence",
     documentsTitle: "Documents",
     documentsBody:
       "Les guides, parcours d’apprentissage et contenus d’onboarding vivront ici, pour les nouveaux comme pour les profils expérimentés.",

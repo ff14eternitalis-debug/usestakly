@@ -3,12 +3,13 @@ import type { CommunitySnippet, CopyBlock } from "../../../lib/app-types";
 type ExploreFeedProps = {
   copy: CopyBlock;
   communitySnippets: CommunitySnippet[];
+  onOpenSnippet: (snippet: CommunitySnippet) => void;
 };
 
-export function ExploreFeed({ copy, communitySnippets }: ExploreFeedProps) {
+export function ExploreFeed({ copy, communitySnippets, onOpenSnippet }: ExploreFeedProps) {
   return (
-    <section className="app-view-shell">
-      <div className="workspace-section workspace-section-wide">
+    <section className="app-view-shell app-page">
+      <div className="workspace-section workspace-section-wide explore-shell">
         <div className="workspace-section-head">
           <div>
             <h1 className="workspace-title workspace-title-compact">{copy.exploreTitle}</h1>
@@ -21,7 +22,12 @@ export function ExploreFeed({ copy, communitySnippets }: ExploreFeedProps) {
         ) : (
           <div className="community-snippet-list">
             {communitySnippets.map((item) => (
-              <article className="community-snippet-card" key={item.id}>
+              <button
+                className="community-snippet-card"
+                key={item.id}
+                type="button"
+                onClick={() => onOpenSnippet(item)}
+              >
                 <div className="community-snippet-head">
                   <div>
                     <h3>{item.title}</h3>
@@ -42,7 +48,9 @@ export function ExploreFeed({ copy, communitySnippets }: ExploreFeedProps) {
                   <span>{copy.referenceLabel}</span>
                   <code>{item.canonicalReference}</code>
                 </div>
-              </article>
+
+                <span className="featured-snippet-link">{copy.homeOpenSnippet}</span>
+              </button>
             ))}
           </div>
         )}

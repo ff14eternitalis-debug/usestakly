@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 
 import type {
   AppView,
@@ -14,6 +14,7 @@ import { HomeFeed } from "./HomeFeed";
 import { PlaceholderPage } from "./PlaceholderPage";
 import { ProfileView } from "./ProfileView";
 import { AppTopbar } from "./AppTopbar";
+import { PublicSnippetView } from "./PublicSnippetView";
 import { WorkspaceScreen } from "../../workspace/components/WorkspaceScreen";
 
 type AppScreenProps = {
@@ -71,9 +72,33 @@ export function AppScreen({
   onCreateLibrary,
   onCreateSnippet
 }: AppScreenProps) {
+  const [selectedSnippetId, setSelectedSnippetId] = useState<string | null>(
+    featuredSnippets[0]?.id ?? communitySnippets[0]?.id ?? null
+  );
+  const [snippetSourceView, setSnippetSourceView] = useState<"home" | "explore">("home");
+
+  useEffect(() => {
+    const currentExists = communitySnippets.some((snippet) => snippet.id === selectedSnippetId);
+    if (currentExists) {
+      return;
+    }
+    setSelectedSnippetId(featuredSnippets[0]?.id ?? communitySnippets[0]?.id ?? null);
+  }, [communitySnippets, featuredSnippets, selectedSnippetId]);
+
+  const selectedSnippet = useMemo(
+    () => communitySnippets.find((snippet) => snippet.id === selectedSnippetId) ?? null,
+    [communitySnippets, selectedSnippetId]
+  );
+
   const privateAssetCount =
     libraries.filter((library) => library.visibility !== "public").length +
     snippets.filter((item) => item.snippet.visibility !== "public").length;
+
+  function handleOpenSnippet(snippet: CommunitySnippet, sourceView: "home" | "explore") {
+    setSelectedSnippetId(snippet.id);
+    setSnippetSourceView(sourceView);
+    setActiveView("snippet");
+  }
 
   return (
     <section className="app-shell">
@@ -87,11 +112,27 @@ export function AppScreen({
 
       <div className="app-main">
         {activeView === "home" ? (
-          <HomeFeed copy={copy} featuredSnippets={featuredSnippets} />
+          <HomeFeed
+            copy={copy}
+            featuredSnippets={featuredSnippets}
+            onOpenSnippet={(snippet) => handleOpenSnippet(snippet, "home")}
+          />
         ) : null}
 
         {activeView === "explore" ? (
-          <ExploreFeed copy={copy} communitySnippets={communitySnippets} />
+          <ExploreFeed
+            copy={copy}
+            communitySnippets={communitySnippets}
+            onOpenSnippet={(snippet) => handleOpenSnippet(snippet, "explore")}
+          />
+        ) : null}
+
+        {activeView === "snippet" && selectedSnippet ? (
+          <PublicSnippetView
+            copy={copy}
+            snippet={selectedSnippet}
+            onBack={() => setActiveView(snippetSourceView)}
+          />
         ) : null}
 
         {activeView === "documents" ? (

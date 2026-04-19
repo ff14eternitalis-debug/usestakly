@@ -62,12 +62,16 @@ export type AppView =
   | "documents"
   | "forum"
   | "studio"
-  | "profile";
+  | "profile"
+  | "snippet";
+
+export type CommunitySnippetPreviewKind = "button" | "backend" | "database";
 
 export type CommunitySnippet = {
   id: string;
   title: string;
   description: string;
+  fullDescription: string;
   author: string;
   library: string;
   language: string;
@@ -76,6 +80,11 @@ export type CommunitySnippet = {
   saves: number;
   canonicalReference: string;
   scope: "community" | "private";
+  rawCode: string;
+  previewKind: CommunitySnippetPreviewKind;
+  previewLabel: string;
+  previewNote: string;
+  previewActionLabel?: string;
 };
 
 export type CopyBlock = {
@@ -161,20 +170,28 @@ export type CopyBlock = {
   homeBody: string;
   homeFeaturedTitle: string;
   homeFeaturedBody: string;
-  homeHighlightsTitle: string;
-  homeHighlightsBody: string;
-  homeOnboardingExplore: string;
-  homeOnboardingStudio: string;
-  homeOnboardingProfile: string;
+  homeSecondaryTitle: string;
+  homeSecondaryBody: string;
   homeTrendingLabel: string;
   homeSavedLabel: string;
   homeReferenceLabel: string;
   homeScopeCommunity: string;
   homeScopePrivate: string;
   homeEmpty: string;
+  homeOpenSnippet: string;
   exploreTitle: string;
   exploreBody: string;
   exploreEmpty: string;
+  snippetBack: string;
+  snippetReadonly: string;
+  snippetRenderTitle: string;
+  snippetRenderBody: string;
+  snippetSummaryTitle: string;
+  snippetCodeTitle: string;
+  snippetStackLabel: string;
+  snippetAuthorLabel: string;
+  snippetLibraryLabel: string;
+  snippetOpenSourceLabel: string;
   documentsTitle: string;
   documentsBody: string;
   forumTitle: string;
