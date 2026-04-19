@@ -5,14 +5,12 @@ import type { CommunitySnippet, CopyBlock, PublicLibraryProfile } from "../../..
 type PublicLibraryViewProps = {
   copy: CopyBlock;
   library: PublicLibraryProfile;
-  onBack: () => void;
   onOpenSnippet: (snippet: CommunitySnippet) => void;
 };
 
 export function PublicLibraryView({
   copy,
   library,
-  onBack,
   onOpenSnippet
 }: PublicLibraryViewProps) {
   const [languageFilter, setLanguageFilter] = useState<string>("all");
@@ -33,9 +31,6 @@ export function PublicLibraryView({
     <section className="app-view-shell app-page public-library-page">
       <section className="public-library-hero">
         <div className="public-library-hero-copy">
-          <button className="public-snippet-back" type="button" onClick={onBack}>
-            ← {copy.libraryBack}
-          </button>
           <span className="workspace-status-pill">
             {library.authorName} · {copy.libraryTitleSuffix}
           </span>

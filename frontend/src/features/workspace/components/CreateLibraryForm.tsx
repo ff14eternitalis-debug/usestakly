@@ -9,6 +9,7 @@ type CreateLibraryFormProps = {
     name: string;
     slug: string;
     description?: string;
+    visibility: "private" | "public";
   }) => Promise<void>;
 };
 
@@ -16,6 +17,7 @@ export function CreateLibraryForm({ copy, onCreate }: CreateLibraryFormProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("@me/core-library");
   const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -25,11 +27,13 @@ export function CreateLibraryForm({ copy, onCreate }: CreateLibraryFormProps) {
       await onCreate({
         name,
         slug,
-        description: description.trim() || undefined
+        description: description.trim() || undefined,
+        visibility
       });
       setName("");
       setSlug("@me/core-library");
       setDescription("");
+      setVisibility("private");
     } finally {
       setSubmitting(false);
     }
@@ -54,6 +58,13 @@ export function CreateLibraryForm({ copy, onCreate }: CreateLibraryFormProps) {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
+      </label>
+      <label className="workspace-field">
+        <span>{copy.createLibraryVisibility}</span>
+        <select value={visibility} onChange={(event) => setVisibility(event.target.value as "private" | "public")}>
+          <option value="private">{copy.visibilityPrivate}</option>
+          <option value="public">{copy.visibilityPublic}</option>
+        </select>
       </label>
       <button className="auth-primary-button workspace-submit" disabled={submitting} type="submit">
         {copy.createLibrarySubmit}

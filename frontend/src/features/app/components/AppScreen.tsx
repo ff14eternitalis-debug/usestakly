@@ -46,6 +46,7 @@ type AppScreenProps = {
     name: string;
     slug: string;
     description?: string;
+    visibility: "private" | "public";
   }) => Promise<void>;
   onCreateSnippet: (input: {
     libraryId: string;
@@ -138,7 +139,6 @@ export function AppScreen({
           <PublicLibraryView
             copy={copy}
             library={selectedLibrary}
-            onBack={() => setActiveView("explore")}
             onOpenSnippet={(snippet) => handleOpenSnippet(snippet, "library")}
           />
         ) : null}
@@ -147,7 +147,6 @@ export function AppScreen({
           <PublicSnippetView
             copy={copy}
             snippet={selectedSnippet}
-            onBack={() => setActiveView(snippetSourceView === "library" ? "library" : snippetSourceView)}
           />
         ) : null}
 

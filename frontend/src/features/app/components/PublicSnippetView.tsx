@@ -3,7 +3,6 @@ import type { CommunitySnippet, CopyBlock } from "../../../lib/app-types";
 type PublicSnippetViewProps = {
   copy: CopyBlock;
   snippet: CommunitySnippet;
-  onBack: () => void;
 };
 
 function PublicSnippetRender({ copy, snippet }: { copy: CopyBlock; snippet: CommunitySnippet }) {
@@ -34,15 +33,12 @@ function PublicSnippetRender({ copy, snippet }: { copy: CopyBlock; snippet: Comm
   );
 }
 
-export function PublicSnippetView({ copy, snippet, onBack }: PublicSnippetViewProps) {
+export function PublicSnippetView({ copy, snippet }: PublicSnippetViewProps) {
   return (
     <section className="app-view-shell app-page public-snippet-page">
       <section className="public-snippet-hero">
         <div className="public-snippet-copy">
           <div className="public-snippet-actions">
-            <button className="public-snippet-back" type="button" onClick={onBack}>
-              ← {copy.snippetBack}
-            </button>
             <div className="public-snippet-pills">
               <span className="workspace-status-pill">{copy.snippetReadonly}</span>
               <span className="workspace-status-pill">

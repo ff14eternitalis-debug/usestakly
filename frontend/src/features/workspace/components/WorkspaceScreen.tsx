@@ -25,6 +25,7 @@ type WorkspaceScreenProps = {
     name: string;
     slug: string;
     description?: string;
+    visibility: "private" | "public";
   }) => Promise<void>;
   onCreateSnippet: (input: {
     libraryId: string;

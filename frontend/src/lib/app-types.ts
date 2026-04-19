@@ -145,6 +145,7 @@ export type CopyBlock = {
   createLibraryName: string;
   createLibrarySlug: string;
   createLibraryDescription: string;
+  createLibraryVisibility: string;
   createLibrarySubmit: string;
   createSnippetTitle: string;
   createSnippetLibrary: string;

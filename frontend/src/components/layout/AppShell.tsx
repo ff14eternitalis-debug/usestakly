@@ -248,10 +248,10 @@ export function AppShell() {
     name: string;
     slug: string;
     description?: string;
+    visibility: "private" | "public";
   }) {
     await apiPostJson("/api/libraries", {
       ...input,
-      visibility: "private",
       isDefault: libraries.length === 0
     });
     await refreshWorkspace();
