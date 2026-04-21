@@ -1,8 +1,21 @@
 # UseStakly — MVP One-Shot Blueprint
 
-> Version : 1.0 — 2026-04-18
-> Statut : document maître de construction MVP
+> Version : 1.0 — 2026-04-18 *(pré-pivot 2026-04-20)*
+> Statut : document maître de construction MVP *(phases 0–5 toujours valides, phases 6+ obsolètes)*
 > But : fournir une spécification suffisamment précise pour construire le MVP en une seule passe cohérente
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce blueprint **précède le pivot** vers le registry qualité-scored. Source de vérité actuelle : [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) (produit) et [`../../TODO.md`](../../TODO.md) (exécution).
+>
+> **Toujours valide** : §2–§5 (positionnement général, principes d'assemblage, périmètre bibliothèques/snippets), parties backend/frontend/auth/DB — implémentées en phases 0–5 du TODO actuel.
+>
+> **Obsolète ou à compléter** :
+> - La boucle de valeur §2 s'arrête à « IA assemble avant d'inventer » — post-pivot, elle continue par : *télémétrie d'usage → score → filtrage automatique par l'agent*.
+> - §3 principes : ajouter « capture des signaux d'usage dès le jour 1 », « get_snippet renvoie un quality_context natif », « mode `auto` = filtre par défaut sur reliability/abandonment/flags ».
+> - Toute section sur la recherche MCP / safety / publication publique doit être relue avec les phases 6–11 du TODO actuel en tête.
+>
+> Le reste du document est conservé pour référence historique.
 
 ## 1. Intention du document
 

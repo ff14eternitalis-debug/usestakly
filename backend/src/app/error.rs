@@ -45,6 +45,19 @@ impl ApiError {
             message: message.into(),
         }
     }
+
+    pub fn internal(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: message.into(),
+        }
+    }
+}
+
+impl From<anyhow::Error> for ApiError {
+    fn from(value: anyhow::Error) -> Self {
+        Self::internal(value.to_string())
+    }
 }
 
 impl From<sqlx::Error> for ApiError {

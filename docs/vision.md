@@ -1,10 +1,26 @@
 # Projet K — Vision & Proposition de Valeur
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce document **précède le pivot** vers l'angle *registry qualité-scored pour agents IA*. Source de vérité produit actuelle : [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md).
+>
+> **Ce qui change** :
+> - Le pitch « GitHub personnel intelligent » est remplacé par « Rotten Tomatoes pour le code, lu par des agents ». Le produit ne vend plus *le stockage de tes snippets* mais *le jugement qualité* consommé par des agents IA.
+> - La persona principale MVP n'est plus uniquement le dev solo qui curate sa bibliothèque — c'est le dev solo dont l'agent IA veut savoir *ce qu'il doit éviter* dans l'écosystème open source.
+> - Le Nord Star « snippets créés par utilisateur > 20 » devient secondaire. Les vraies métriques post-pivot : `resolve_count`, `build_success_rate`, `regret_rate`, couverture du scoring sur les deps du `package.json` utilisateur.
+>
+> **Ce qui reste valide** :
+> - Principes directeurs 1–5 (propriété utilisateur, zéro verrou, qualité > quantité, IA exécutante, progressif).
+> - Personas secondaires (tech lead, créateur de contenu) — inchangés.
+> - Hors périmètre (Web3, collab temps réel, marketplace, mobile, IDE natif).
 
 ## 🎯 Pitch en une phrase
 
-> **Projet K est un "GitHub personnel intelligent" : une bibliothèque vivante de tes snippets de code, pilotée par une IA qui ne peut coder qu'en assemblant tes propres briques.**
+> ~~**Projet K est un "GitHub personnel intelligent" : une bibliothèque vivante de tes snippets de code, pilotée par une IA qui ne peut coder qu'en assemblant tes propres briques.**~~
+>
+> **Pitch retenu post-pivot** : Un registry de code avec scoring qualité dérivé de l'usage réel, que les agents IA utilisent pour filtrer automatiquement les briques obsolètes, cassées ou dangereuses avant même de proposer du code.
 
 ## 🔥 Le problème
 

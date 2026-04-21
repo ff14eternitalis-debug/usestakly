@@ -1,8 +1,16 @@
 # Projet K — MVP File-by-File Checklist
 
-> Version : 1.0 — 2026-04-18
-> Statut : checklist d'implémentation détaillée
+> Version : 1.0 — 2026-04-18 *(pré-pivot 2026-04-20)*
+> Statut : checklist d'implémentation détaillée *(phases 0–5 valides, phases 6+ obsolètes)*
 > Dépendance principale : `docs/plans/mvp-one-shot-blueprint.md`
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Cette checklist **précède le pivot** vers le registry qualité-scored. Source d'exécution actuelle : [`../../TODO.md`](../../TODO.md) v4.
+>
+> - Les entrées pour racine repo, backend bootstrap (main.rs, config, db, telemetry, migrations 0001–0009), frontend bootstrap, auth OAuth, CRUD libraries/snippets — **toujours valides**, implémentées.
+> - Les entrées pour `/api/search`, `/api/resolve`, MCP, safety — **à réviser** contre phases 6–9 du TODO actuel : ajouter quality_signals (migration 0010), paramètre `filter`, `get_snippet_with_quality_context`, provenance signée avec score.
+> - Une **nouvelle migration 0010_quality_signals.sql** est à prévoir, absente de cette checklist.
 
 ## But
 

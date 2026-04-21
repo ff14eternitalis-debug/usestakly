@@ -1,0 +1,51 @@
+# UseStakly — Quality scoring formula v1
+#
+# Publique et versionnée. Chaque score persisté est taggé `formula_version = "v1"`
+# et horodaté, donc une future v2 n'invalide pas l'historique d'audit.
+# Anti-gaming géré en amont (réputation owner + evidence obligatoire),
+# pas par l'opacité.
+
+[meta]
+version = "v1"
+created = "2026-04-21"
+
+# --- Dimensions ---
+# Chaque dimension ∈ [0, 1]. overall = Σ (dim * weight), clampé à [0, 1].
+
+[dimensions.freshness]
+# source de vérité:
+#   - snippet : max(snippet_versions.created_at)
+#   - external : priors.last_commit_at
+# décroissance exponentielle : score = 0.5 ^ (age_days / half_life_days)
+weight = 0.20
+half_life_days = 180
+
+[dimensions.adoption]
+# resolve_count log-normalisé
+# score = min(1, log(resolve_count + 1) / log(saturation + 1))
+weight = 0.15
+saturation = 1000
+
+[dimensions.reliability]
+# build_success / (build_success + build_failure)
+# sous `min_sample`, on retombe sur `neutral_default` (pas de pénalité newborn)
+weight = 0.40
+min_sample = 5
+neutral_default = 0.5
+
+[dimensions.abandonment]
+# heuristique inverse (1 = abandonné), entre en score comme (1 - abandonment)
+# inputs : freshness decay + regret_rate + owner_inactive_days
+weight = 0.25
+regret_rate_threshold = 0.3
+
+# --- Flags ---
+# Les flags n'entrent PAS dans le score numérique.
+# Ils sont des hard filters dans les modes auto/strict du MCP.
+
+[flags]
+blocking_in_auto = ["security-issue", "broken"]
+blocking_in_strict = ["security-issue", "broken", "deprecated", "unmaintained"]
+
+# Reputation weighting (anti-gaming) : prévu mais pas wiré en v1.
+# Sera ajouté en formula_v2 avec la table user_reputation.

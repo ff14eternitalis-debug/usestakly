@@ -38,9 +38,9 @@ Le projet est actuellement en phase de démarrage (Phase 1). L'arborescence cibl
 
 *Note : Ces commandes sont prévues pour la Phase 1.*
 
--   **Backend :** `cd backend-core && cargo run`
--   **Frontend :** `cd frontend-studio && pnpm dev`
--   **Base de données :** `docker-compose up -d` (PostgreSQL + pgvector)
+-   **Backend :** `cd backend && cargo run`
+-   **Frontend :** `cd frontend && npm run dev`
+-   **Base de données :** `docker compose up -d` (PostgreSQL + pgvector)
 
 ---
 

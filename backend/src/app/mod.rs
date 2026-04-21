@@ -10,7 +10,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{
     config::AppConfig,
-    handlers::{auth, health, libraries, me, snippets},
+    handlers::{admin, auth, health, libraries, me, resolve, search, signals, snippets},
 };
 
 #[derive(Clone)]
@@ -56,6 +56,16 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             "/api/snippets/{snippet_id}/versions",
             get(snippets::list_snippet_versions).post(snippets::create_snippet_version),
         )
+        .route(
+            "/api/snippets/{snippet_id}/signals",
+            post(signals::create_snippet_signal),
+        )
+        .route(
+            "/api/admin/scoring/recompute",
+            post(admin::recompute_scores),
+        )
+        .route("/api/resolve", get(resolve::resolve))
+        .route("/api/search", get(search::search))
         .layer(
             CorsLayer::new()
                 .allow_origin(frontend_origin)

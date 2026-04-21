@@ -17,6 +17,7 @@ sha2 = "0.10"
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "uuid", "chrono"] }
 thiserror = "2"
 tokio = { version = "1", features = ["full"] }
+toml = "0.8"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 tracing = "0.1"

@@ -1,6 +1,20 @@
 # Projet K — Protocole MCP
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce protocole **précède le pivot**. Source post-pivot : [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md) + [`../TODO.md`](../TODO.md) Phase 8.
+>
+> **Changements à intégrer dans une V2** :
+> - `get_snippet` devient `get_snippet_with_quality_context` — renvoie le snippet **+ score multi-dim** (`freshness`, `adoption`, `reliability`, `stack-match`, `abandonment`, `flags`) **+ provenance signée** `slug@v + score@t`.
+> - `search_library` accepte un param `filter ∈ {auto, strict, explore}` appliqué sur les seuils de qualité. `auto` est le défaut pour agents.
+> - `resolve_reference` **logue chaque résolution** (télémétrie passive : `resolve_count`).
+> - `log_generation` est **étendu** : recueille un outcome post-insertion (T+1h) pour alimenter `build_success_rate` et `regret_rate`.
+> - Nouvel outil `submit_signal(snippet_id, type, evidence_url)` pour signaux actifs (evidence **obligatoire**, sinon ignoré).
+> - Le mode `auto` applique par défaut `reliability > 0.9 AND abandonment < 0.3 AND flags excludes 'security'` — cf. strategy §📊.
+>
+> **Reste valide** : principe « l'IA ne parle jamais directement à la DB », scopes de recherche, provenance obligatoire.
 
 ## 🎯 Rôle du serveur MCP
 
@@ -10,8 +24,9 @@ Le serveur MCP (Model Context Protocol) est le **pont obligatoire** entre l'IA e
 
 Le MCP doit fonctionner comme :
 - un **résolveur exact** de références explicites
-- un **moteur de recherche** dans des bibliothèques ciblées
+- un **moteur de recherche** dans des bibliothèques ciblées *(post-pivot : filtré par qualité)*
 - un **orchestrateur d'assemblage** qui réutilise avant de générer
+- *(post-pivot)* un **émetteur de signaux de qualité** — chaque appel est une ligne de télémétrie
 
 ## 🛠️ Outils exposés
 

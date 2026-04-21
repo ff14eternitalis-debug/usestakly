@@ -1,6 +1,22 @@
 # Plan Global — Vue d'ensemble
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce plan **précède le pivot** vers le registry qualité-scored. Les 8 phases listées ci-dessous ne correspondent plus au découpage actuel.
+>
+> **Source de vérité d'exécution post-pivot** : [`../../TODO.md`](../../TODO.md) v4 (phases 0–11).
+>
+> Correspondance approximative :
+> - Phases 1–3 historiques (fondations, backend, frontend) ≈ Phases 0–5 du TODO actuel — **acquis**.
+> - Phase 2 (Backend MCP) ≈ Phases 6 + 8 du TODO actuel (quality signals + MCP) — **à refondre avec quality_context natif**.
+> - Phase 4 (détection auto) ≈ secondaire post-pivot, peut alimenter les signaux mais n'est plus bloquant.
+> - Phase 5 (RULES) ≈ secondaire — les RULES ne sont plus le filtre principal, le scoring prend le relais.
+> - Phase 6 (communauté) ≈ à refondre — la publication publique devient annotation scoring.
+> - Phase 7 (monétisation) ≈ à refondre — cf. strategy §💰 Business model (Free / Pro / Team / Enterprise).
+>
+> Le reste du document est conservé pour référence historique.
 
 ## 🎯 Objectif
 

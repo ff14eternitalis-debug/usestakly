@@ -1,8 +1,20 @@
 # Phase 6 — Communauté & Publication
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20 — à refondre)*
 > Durée estimée : 1-2 semaines
 > Dépendances : Phase 2, 3
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce plan est **à refondre** post-pivot.
+>
+> - **Étoiles / forks sont anti-pattern** : ce sont exactement les signaux politiques (stars de hype, cargo cult) que le pivot rejette. Ils ne doivent pas être le signal de qualité.
+> - La « publication publique » devient **annotation scoring** : les snippets publics sont scorés par usage réel (`resolve_count`, `build_success_rate`), pas par popularité sociale.
+> - La page « Explore » reste valide mais doit être **triée par scoring qualité**, pas par étoiles/récence.
+> - Le modèle peut s'étendre à l'**annotation de code public externe** (npm / GitHub / shadcn) — cf. strategy §💡. Décision de scope ouverte (MVP ou V2).
+> - Le flow de publication doit capturer dès le jour 1 les signaux d'usage sur les snippets publiés.
+>
+> Voir [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) §⚠ Problèmes durs (anti-gaming, transparence du scoring, flags toxiques) pour le cadre de refonte.
 
 ## 🎯 Objectif
 

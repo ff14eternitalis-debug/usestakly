@@ -1,6 +1,17 @@
 # Étude de Rentabilité Financière — UseStakly
 
-> Analyse des flux de revenus, de la structure des coûts et des perspectives de croissance (Projection 2026-2027).
+> Analyse des flux de revenus, de la structure des coûts et des perspectives de croissance (Projection 2026-2027). *(pré-pivot 2026-04-20)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Modèle économique à aligner sur [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) §💰 :
+>
+> - **Free** : 0 € (registry perso + lecture scoring public) — inchangé.
+> - **Pro solo** : 12 €/mo — inchangé.
+> - **Team** : **40 €/user/mo** (post-pivot) vs 29 €/user/mo (pré-pivot) — à recalculer. La valeur perçue est plus élevée (graphe d'usage interne = signal parfait pour l'équipe).
+> - **Marketplace avec commission 25 %** : **supprimé** post-pivot — le produit vend du jugement, pas des packs. Remplacé par tier **Enterprise** (on-prem, compliance signals, SLA).
+>
+> Le reste du document (coûts infra, projections, structure) reste largement valide — à réviser avec les nouveaux prix Team.
 
 ## 1. Modèle Économique (Freemium & SaaS)
 

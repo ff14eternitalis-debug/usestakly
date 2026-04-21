@@ -1,8 +1,12 @@
 # Phase 4 — Moteur de Détection Automatique
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20 — secondaire post-pivot)*
 > Durée estimée : 1-2 semaines
 > Dépendances : Phase 2
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Post-pivot, la détection automatique **n'est plus bloquante** pour le MVP. Elle peut alimenter certains signaux de qualité (détection de snippet dépréciés, abandonment heuristique, classification de risque) mais n'est pas sur le chemin critique. Voir [`../../TODO.md`](../../TODO.md) : priorité aux phases 6 (quality signals), 7 (search + filter), 8 (MCP quality_context).
 
 ## 🎯 Objectif
 

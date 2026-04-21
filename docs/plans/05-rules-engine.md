@@ -1,8 +1,14 @@
 # Phase 5 — Moteur de RULES
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20 — secondaire post-pivot)*
 > Durée estimée : 1 semaine
 > Dépendances : Phase 2
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Post-pivot, les RULES **ne sont plus le filtre principal** imposé à l'IA. Le filtre principal devient le **scoring qualité multi-dim** avec modes `auto / strict / explore` (cf. [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md)).
+>
+> Les RULES peuvent rester utiles en V2 comme **contraintes d'assemblage** spécifiques à un projet (ex. « utilise React 19 » imposé par le `package.json`), mais ne sont plus bloquantes pour le MVP. Voir [`../../TODO.md`](../../TODO.md) phases 6–9.
 
 ## 🎯 Objectif
 

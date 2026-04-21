@@ -1,4 +1,4 @@
-pub mod generation;
 pub mod library;
-pub mod search;
+pub mod quality;
+pub mod reference;
 pub mod snippet;

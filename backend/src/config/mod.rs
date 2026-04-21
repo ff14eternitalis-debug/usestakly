@@ -12,7 +12,6 @@ pub struct AppConfig {
     pub dev_user_username: String,
     pub dev_user_display_name: Option<String>,
     pub dev_user_avatar_url: Option<String>,
-    pub app_env: String,
     pub app_base_url: String,
     pub frontend_base_url: String,
     pub app_session_secret: Option<String>,
@@ -20,6 +19,7 @@ pub struct AppConfig {
     pub github_client_secret: Option<String>,
     pub discord_client_id: Option<String>,
     pub discord_client_secret: Option<String>,
+    pub admin_api_token: Option<String>,
 }
 
 impl AppConfig {
@@ -43,7 +43,6 @@ impl AppConfig {
             env::var("DEV_USER_USERNAME").unwrap_or_else(|_| "projectk-dev".to_string());
         let dev_user_display_name = env::var("DEV_USER_DISPLAY_NAME").ok();
         let dev_user_avatar_url = env::var("DEV_USER_AVATAR_URL").ok();
-        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let app_base_url =
             env::var("APP_BASE_URL").unwrap_or_else(|_| format!("http://{}:{}", host, port));
         let frontend_base_url =
@@ -53,6 +52,7 @@ impl AppConfig {
         let github_client_secret = env::var("GITHUB_CLIENT_SECRET").ok();
         let discord_client_id = env::var("DISCORD_CLIENT_ID").ok();
         let discord_client_secret = env::var("DISCORD_CLIENT_SECRET").ok();
+        let admin_api_token = env::var("ADMIN_API_TOKEN").ok();
 
         Ok(Self {
             host,
@@ -63,7 +63,6 @@ impl AppConfig {
             dev_user_username,
             dev_user_display_name,
             dev_user_avatar_url,
-            app_env,
             app_base_url,
             frontend_base_url,
             app_session_secret,
@@ -71,6 +70,7 @@ impl AppConfig {
             github_client_secret,
             discord_client_id,
             discord_client_secret,
+            admin_api_token,
         })
     }
 

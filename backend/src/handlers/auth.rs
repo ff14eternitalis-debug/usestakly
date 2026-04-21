@@ -29,13 +29,16 @@ pub async fn github_callback(
     State(state): State<AppState>,
     Query(query): Query<GithubCallbackQuery>,
 ) -> Result<Response, ApiError> {
-    let current_user = finish_github_oauth(&state.db, &state.config, &query.code, &query.state).await?;
+    let current_user =
+        finish_github_oauth(&state.db, &state.config, &query.code, &query.state).await?;
     let cookie = session_cookie(&state.config, current_user.id)?;
 
     let mut response = Redirect::to(&state.config.frontend_base_url).into_response();
-    response
-        .headers_mut()
-        .insert(header::SET_COOKIE, HeaderValue::from_str(&cookie).map_err(|_| ApiError::bad_request("invalid session cookie"))?);
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie)
+            .map_err(|_| ApiError::bad_request("invalid session cookie"))?,
+    );
     Ok(response)
 }
 
@@ -55,17 +58,27 @@ pub async fn discord_callback(
     let mut response = Redirect::to(&state.config.frontend_base_url).into_response();
     response.headers_mut().insert(
         header::SET_COOKIE,
-        HeaderValue::from_str(&cookie).map_err(|_| ApiError::bad_request("invalid session cookie"))?,
+        HeaderValue::from_str(&cookie)
+            .map_err(|_| ApiError::bad_request("invalid session cookie"))?,
     );
     Ok(response)
 }
 
-pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<Response, ApiError> {
+pub async fn logout(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
     let cookie = clear_session_cookie(&state.config)?;
-    let mut response = (StatusCode::NO_CONTENT, Json(serde_json::json!({ "ok": true }))).into_response();
-    response
-        .headers_mut()
-        .insert(header::SET_COOKIE, HeaderValue::from_str(&cookie).map_err(|_| ApiError::bad_request("invalid session cookie"))?);
+    let mut response = (
+        StatusCode::NO_CONTENT,
+        Json(serde_json::json!({ "ok": true })),
+    )
+        .into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie)
+            .map_err(|_| ApiError::bad_request("invalid session cookie"))?,
+    );
     let _ = headers;
     Ok(response)
 }

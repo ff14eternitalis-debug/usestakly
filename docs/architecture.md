@@ -1,7 +1,13 @@
 # Projet K — Architecture & Classification Multi-Domaines
 
 > Document de référence pour l'architecture du Projet K (Komorebi).
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Le modèle de classification multi-domaines (`frontend / backend / devops / data / shared`) et la nomenclature `{domain}-{kind}-{category}-{name}` **restent la fondation**. Post-pivot, ils sont **complétés** par une couche qualité-scored (cf. [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md)) qui devient le filtre principal consommé par les agents IA.
+>
+> Section 7 et 8 de ce doc (détection automatique, évolution détection) : **secondaires** post-pivot. La détection peut alimenter certains signaux d'usage mais n'est plus un composant bloquant du MVP. Voir TODO.md phases 6–11 pour la priorisation actuelle.
 
 ---
 

@@ -1,8 +1,23 @@
 # Phase 7 — Monétisation (Free / Premium)
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20 — à refondre)*
 > Durée estimée : 1 semaine
 > Dépendances : Phase 2, 3, 6
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Le modèle Free/Premium à ~9 €/mois décrit ici est **remplacé** par le modèle 4 tiers défini dans [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) §💰 :
+>
+> | Tier | Prix | Valeur |
+> |---|---|---|
+> | Free | 0 € | Registry perso + lecture scoring public |
+> | Pro solo | ~12 €/mo | Registry privé, filtres custom, mode strict |
+> | Team | ~40 €/user/mo | Registry équipe, reputation partagée, collecte CI |
+> | Enterprise | contact | On-prem, compliance signals, SLA, rules custom |
+>
+> Le **vrai cash est Team** : dans une équipe de 15 devs, le graphe d'usage interne est le signal parfait pour cette équipe. Valeur perçue très élevée.
+>
+> Le reste du document (limites techniques par tier, Stripe, webhooks) reste inspirant mais les limites exactes sont à recalibrer.
 
 ## 🎯 Objectif
 

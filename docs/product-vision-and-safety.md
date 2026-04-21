@@ -1,7 +1,27 @@
 # UseStakly — Vision Produit Universelle & Trust / Safety
 
-> Version : 1.0 — 2026-04-18
+> Version : 1.0 — 2026-04-18 *(pré-pivot 2026-04-20)*
 > Statut : document de cadrage produit et sécurité
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce document **précède le pivot** vers le registry qualité-scored. Source de vérité produit actuelle : [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md).
+>
+> **Ce qui change** :
+> - L'ambition « infrastructure universelle de bibliothèques de code » reste, mais la **thèse de valeur** n'est plus l'adressabilité — c'est le **jugement qualité dérivé de l'usage réel** qui est consommé par les agents.
+> - La section Trust & Safety de ce doc (niveaux de confiance `private / public_unverified / verified_author / community_trusted / flagged / quarantined`) **ne disparaît pas** mais devient un **sous-ensemble** du modèle de scoring multi-dim (`freshness`, `adoption`, `reliability`, `stack-match`, `abandonment`, `flags`). Voir strategy §📊 pour le modèle complet.
+> - La « défense en couches » (sanitize → analyse statique → policy MCP → provenance → réputation) monte au **cœur produit** (Phase 9 du TODO), pas à la fin.
+> - La provenance obligatoire devient **provenance signée** : `slug@v + score@t` pour audit trail.
+>
+> **Ce qui reste valide et critique** :
+> - Le principe « un snippet est une donnée, jamais une autorité de pilotage » est intact.
+> - Les menaces (code malveillant, prompt injection, poisoning sémantique, dépendances à risque) sont toutes à prévenir.
+> - La classification risque opérationnel (`safe / review_required / restricted`) reste orthogonale au domain.
+> - Le modèle de compatibilité (domain, language, framework, dependencies, etc.) est **prérequis** pour calculer `stack-match` dans le scoring.
+> - La règle « plus le mode est automatique, plus le filtre de confiance doit être élevé » devient le design des filtres `auto` / `strict` / `explore`.
+>
+> **Ce qui devient secondaire** :
+> - La stratégie Web3 / Intuition est repoussée encore plus tard — le moat post-pivot vient du dataset d'usage, pas de l'onchain.
 
 ## 🎯 Ambition
 

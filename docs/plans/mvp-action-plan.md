@@ -1,9 +1,17 @@
 # UseStakly — Plan d'Action MVP
 
-> Version : 1.0 — 2026-04-18
+> Version : 1.0 — 2026-04-18 *(pré-pivot 2026-04-20)*
 > Portée : MVP autonome de `UseStakly`, sans dépendance à `collab-dashboard`
 
 > Note de transition : `UseStakly` est le nom produit retenu. `Project-K` reste l'ancien nom de travail encore visible dans certaines structures techniques.
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Ce plan d'action **précède le pivot** vers le registry qualité-scored. Source actuelle : [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) + [`../../TODO.md`](../../TODO.md) v4.
+>
+> L'objectif 1–6 listé ci-dessous (login, créer bibliothèques, créer snippets, rendre public, rechercher, exposer via MCP) reste valide. L'objectif 7 (« assembler du code assisté par IA en réutilisant des snippets existants ») est **étendu** post-pivot : l'agent ne cherche plus, il **filtre un index qualité-scored** via `filter ∈ {auto, strict, explore}`. Le MCP renvoie un `quality_context` natif avec la réponse.
+>
+> Les décisions structurantes (repo dédié, Rust + React, OAuth direct backend, Coolify) restent intactes.
 
 ## 🎯 Objectif du MVP
 

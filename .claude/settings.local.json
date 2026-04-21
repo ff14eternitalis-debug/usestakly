@@ -7,7 +7,17 @@
       "Bash(npm install *)",
       "Bash(npm ls *)",
       "Bash(npm run *)",
-      "WebFetch(domain:blog.codepen.io)"
+      "WebFetch(domain:blog.codepen.io)",
+      "Bash(set +e)",
+      "Bash(docker --version)",
+      "Bash(sqlx --version)",
+      "Bash(psql --version)",
+      "Bash(http --version)",
+      "Bash(curl --version)",
+      "Bash(sc query *)",
+      "Bash(cargo clippy *)",
+      "Bash(cargo test *)",
+      "Bash(cargo fmt *)"
     ]
   }
 }

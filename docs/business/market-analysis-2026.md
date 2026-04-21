@@ -1,6 +1,10 @@
 # Analyse de Marché (Contexte 2026) — Pourquoi maintenant ?
 
-> Analyse rétrospective des barrières technologiques et psychologiques ayant empêché la création de cet outil avant 2026.
+> Analyse rétrospective des barrières technologiques et psychologiques ayant empêché la création de cet outil avant 2026. *(pré-pivot 2026-04-20 — globalement renforcée par le pivot)*
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> L'analyse reste **valide et renforcée** par le pivot : le besoin de « Gouvernance de l'IA » s'exprime encore plus clairement sous la forme d'un scoring qualité consommé par les agents. Voir [`../strategy-quality-scored-registry.md`](../strategy-quality-scored-registry.md) §🗺 pour le timing de marché affiné (agents mainstream 2026–2027, ~12–18 mois d'avance).
 
 ## 1. Le Biais de la "Génération Pure" (2023-2025)
 

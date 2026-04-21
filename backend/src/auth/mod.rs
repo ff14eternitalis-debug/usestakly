@@ -329,9 +329,7 @@ pub async fn finish_discord_oauth(
         .clone()
         .filter(|_| discord_user.verified.unwrap_or(false))
         .ok_or_else(|| {
-            ApiError::bad_request(
-                "Discord account must expose one verified email for MVP login",
-            )
+            ApiError::bad_request("Discord account must expose one verified email for MVP login")
         })?;
 
     let avatar_url = discord_user.avatar.as_ref().map(|avatar| {
@@ -392,7 +390,7 @@ pub async fn finish_discord_oauth(
         id: user_id,
         email: primary_email,
         username: discord_user.username,
-        display_name: display_name,
+        display_name,
         avatar_url,
     })
 }

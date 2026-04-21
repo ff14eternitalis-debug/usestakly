@@ -1,8 +1,18 @@
 # Projet K — Parcours Utilisateur
 
-> Version : 1.0 — 2026-04-15
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
 >
 > Ce document décrit les **parcours utilisateur** (user journeys) principaux du produit. Il sert de référence pour le design UX, les choix d'API et les priorités de développement.
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Les **principes UX (time-to-value < 5 min, zéro friction, progressif, honnête, dogfooding) restent valides**. Les 8 flows décrits ci-dessous sont à relire avec l'angle pivot :
+>
+> - Le flow d'**onboarding** change : le premier moment de valeur devient « connecte ton `package.json`, vois ce que ton agent doit éviter dans tes deps », pas « crée ton premier snippet ».
+> - Le flow de **création de snippet** reste valide mais devient **secondaire** — il sert la boucle Pro/Team, pas le hook Free.
+> - Le flow d'**assemblage MCP** s'enrichit : l'agent doit **visualiser le filtre appliqué** (`auto` / `strict` / `explore`) et voir pourquoi un snippet a été exclu.
+>
+> Voir [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md) §🗺 GTM en 3 temps pour la séquence d'adoption.
 
 ## 🎯 Principes UX directeurs
 

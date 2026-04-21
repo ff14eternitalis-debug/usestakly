@@ -1,7 +1,17 @@
 # Projet K — Modèle de Données
 
-> Version : 1.0 — 2026-04-15
-> Fichier de référence : migrations `sqlx` dans `backend-core/migrations/`
+> Version : 1.0 — 2026-04-15 *(pré-pivot 2026-04-20)*
+> Fichier de référence : migrations `sqlx` dans `backend/migrations/`
+
+> ### ⚠ Bandeau de reconciliation — pivot 2026-04-20
+>
+> Le schéma décrit ici (migrations 0001–0009) est **implémenté et valide**. Post-pivot, il est **étendu** par une nouvelle migration `0010_quality_signals.sql` (voir TODO.md Phase 6). Ce document ne couvre pas encore cette extension.
+>
+> **À ajouter dans une V2 de ce document** :
+> - Table `quality_signals(snippet_id, signal_type, value, evidence_url, reporter_id, weight, created_at)` pour signaux actifs.
+> - Colonnes sur `snippets` : `resolve_count`, `build_success_rate`, `regret_rate`, `freshness_score`, `abandonment_score`, `flags TEXT[]`, `stack_match_cache JSONB`, `quality_score_current NUMERIC`, `quality_score_updated_at`.
+> - Table `resolve_events(id, snippet_id, agent_context, client_hash, stack_signature, outcome, outcome_at, created_at)` pour télémétrie passive (signal `resolve_count`, `build_success_rate`, `regret_rate`).
+> - Table `owner_reputation(owner_id, score, evidence_count, last_recomputed_at)` pour pondération anti-gaming.
 
 ## 🎯 Principes
 
@@ -12,6 +22,7 @@
 5. **Bibliothèques adressables** comme primitive produit principale
 6. **Provider-agnostic** pour auth et subscriptions (prêt pour OAuth, wallets, etc.)
 7. **Trust & Safety** intégré au modèle pour les bibliothèques publiques
+8. *(post-pivot)* **Signaux d'usage capturés dès le jour 1** — irréversible, la donnée historique ne se reconstruit pas.
 
 ## 📦 Extensions requises
 
