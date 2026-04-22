@@ -24,130 +24,134 @@ function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
   return "neutral";
 }
 
+function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
+  if (tone === "danger") return "var(--color-danger)";
+  if (tone === "warn") return "var(--color-warn)";
+  if (tone === "ok") return "var(--color-accent)";
+  return "var(--color-fg-muted)";
+}
+
 export function RepoCard({ repo, index }: Props) {
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
   return (
-    <article className="group relative grid gap-5 border-t border-line pt-6">
-      {index !== undefined ? (
-        <span className="kicker absolute right-0 top-6 data-value">
-          No. {String(index + 1).padStart(2, "0")}
-        </span>
-      ) : null}
-
-      <div className="grid gap-2">
-        <Link
-          to="/repos/$id"
-          params={{ id: repo.artifactId }}
-          className="block"
-        >
-          <h3 className="display-md font-display">
-            <span className="text-ink-muted font-mono text-[0.82em] mr-2">
-              {repo.owner}/
-            </span>
-            <span className="italic-accent">{repo.name}</span>
-          </h3>
-        </Link>
-        {repo.description ? (
-          <p className="max-w-[56ch] text-[0.98rem] leading-relaxed text-ink-dim">
-            {repo.description}
-          </p>
+    <Link
+      to="/repos/$id"
+      params={{ id: repo.artifactId }}
+      className="group block"
+    >
+      <article className="relative grid gap-4 rounded-[10px] border border-line bg-surface/40 p-5 transition-all duration-200 hover:border-line-strong hover:bg-surface md:p-6">
+        {index !== undefined ? (
+          <span className="kicker absolute right-5 top-5 data-value">
+            {String(index + 1).padStart(2, "0")}
+          </span>
         ) : null}
-      </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {repo.language ? <Chip tone="info">{repo.language}</Chip> : null}
-        {repo.licenseSpdx ? (
-          <Chip tone="neutral">{repo.licenseSpdx}</Chip>
-        ) : null}
-        {repo.archived ? <Chip tone="warn">archived</Chip> : null}
-        {q?.flags.map((flag) => (
-          <Chip key={flag} tone={toneFromFlag(flag)}>
-            {flagLabel(flag)}
-          </Chip>
-        ))}
-        {repo.topics.slice(0, 3).map((t) => (
-          <Chip key={t} tone="neutral">
-            #{t}
-          </Chip>
-        ))}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-        <div className="grid gap-2">
-          <span className="kicker">Overall</span>
-          <div className="flex items-baseline gap-2">
-            <span
-              className="font-display italic-accent data-value text-[3.4rem] leading-none"
-              style={{
-                color:
-                  overallTone === "danger"
-                    ? "var(--color-ember)"
-                    : overallTone === "warn"
-                      ? "var(--color-ochre)"
-                      : overallTone === "ok"
-                        ? "var(--color-ink)"
-                        : "var(--color-ink-muted)"
-              }}
-            >
-              {formatScore(q?.overall)}
-            </span>
-            <span className="kicker">
-              formula {q?.formulaVersion ?? "—"}
-            </span>
+        <div className="grid gap-2 pr-10">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <h3 className="display-md !text-[1.15rem] md:!text-[1.3rem]">
+              <span className="font-mono text-[0.78em] font-normal text-fg-muted mr-1">
+                {repo.owner}/
+              </span>
+              <span className="group-hover:text-accent transition-colors">
+                {repo.name}
+              </span>
+            </h3>
           </div>
-          <div className="flex gap-4 pt-1">
-            <span className="data-value text-[0.85rem] text-ink-dim">
-              ★ {formatStars(repo.starsCount)}
-            </span>
-            <span className="data-value text-[0.85rem] text-ink-dim">
-              commits · {formatRelative(repo.lastCommitAt)}
-            </span>
+          {repo.description ? (
+            <p className="max-w-[60ch] text-[0.94rem] leading-relaxed text-fg-dim">
+              {repo.description}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {repo.language ? <Chip tone="info">{repo.language}</Chip> : null}
+          {repo.licenseSpdx ? (
+            <Chip tone="neutral">{repo.licenseSpdx}</Chip>
+          ) : null}
+          {repo.archived ? <Chip tone="warn">archived</Chip> : null}
+          {q?.flags.map((flag) => (
+            <Chip key={flag} tone={toneFromFlag(flag)}>
+              {flagLabel(flag)}
+            </Chip>
+          ))}
+          {repo.topics.slice(0, 3).map((t) => (
+            <Chip key={t} tone="neutral">
+              #{t}
+            </Chip>
+          ))}
+        </div>
+
+        <div className="grid gap-4 pt-2 md:grid-cols-[220px_1fr] md:gap-8">
+          <div className="grid gap-2 border-t border-line pt-4 md:border-0 md:border-r md:pt-0 md:pr-6">
+            <span className="kicker">Overall</span>
+            <div className="flex items-baseline gap-3">
+              <span
+                className="data-value text-[3.2rem] font-medium leading-none tracking-tight"
+                style={{ color: scoreColor(overallTone) }}
+              >
+                {formatScore(q?.overall)}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[0.82rem]">
+              <span className="data-value text-fg-dim">
+                ★ {formatStars(repo.starsCount)}
+              </span>
+              <span className="data-value text-fg-muted">
+                {formatRelative(repo.lastCommitAt).replace(" ago", "")}
+              </span>
+              {q?.formulaVersion ? (
+                <span className="mono text-fg-muted">
+                  {q.formulaVersion}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid gap-x-6 gap-y-3 md:grid-cols-2">
+            <ScoreBar
+              label="Freshness"
+              value={q?.freshness ?? null}
+              tone={scoreTone(q?.freshness ?? null)}
+            />
+            <ScoreBar
+              label="Adoption"
+              value={q?.adoption ?? null}
+              tone={scoreTone(q?.adoption ?? null)}
+            />
+            <ScoreBar
+              label="Reliability"
+              value={q?.reliability ?? null}
+              tone={scoreTone(q?.reliability ?? null)}
+            />
+            <ScoreBar
+              label="Abandonment"
+              value={q?.abandonment ?? null}
+              tone={abandonmentTone(q?.abandonment ?? null)}
+              invert
+            />
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <ScoreBar
-            label="Freshness"
-            value={q?.freshness ?? null}
-            tone={scoreTone(q?.freshness ?? null)}
-          />
-          <ScoreBar
-            label="Adoption"
-            value={q?.adoption ?? null}
-            tone={scoreTone(q?.adoption ?? null)}
-          />
-          <ScoreBar
-            label="Reliability"
-            value={q?.reliability ?? null}
-            tone={scoreTone(q?.reliability ?? null)}
-          />
-          <ScoreBar
-            label="Abandonment"
-            value={q?.abandonment ?? null}
-            tone={abandonmentTone(q?.abandonment ?? null)}
-            invert
-          />
+        <div className="flex items-center justify-between pt-2 text-[0.82rem]">
+          <span className="text-fg-dim group-hover:text-accent transition-colors">
+            View profile <span className="arrow">→</span>
+          </span>
+          <span
+            className="mono text-[0.72rem] uppercase tracking-[0.16em] text-fg-muted hover:text-fg"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(repo.htmlUrl, "_blank", "noreferrer");
+            }}
+            role="button"
+            tabIndex={0}
+          >
+            github ↗
+          </span>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between text-[0.84rem]">
-        <Link
-          to="/repos/$id"
-          params={{ id: repo.artifactId }}
-          className="link-underline text-ink group-hover:text-ember"
-        >
-          Read the full verdict <span className="arrow">→</span>
-        </Link>
-        <a
-          href={repo.htmlUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="font-mono text-[0.76rem] uppercase tracking-[0.16em] text-ink-muted hover:text-ink"
-        >
-          github.com ↗
-        </a>
-      </div>
-    </article>
+      </article>
+    </Link>
   );
 }

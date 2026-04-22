@@ -15,22 +15,22 @@ type CommonProps = {
 };
 
 const base =
-  "inline-flex items-center gap-2 font-sans font-semibold tracking-tight whitespace-nowrap transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed";
+  "inline-flex items-center gap-2 font-sans font-medium tracking-tight whitespace-nowrap transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed rounded-[6px] select-none";
 
 const sizes: Record<Size, string> = {
-  md: "px-5 py-3 text-[0.92rem] rounded-sm",
-  sm: "px-3 py-1.5 text-[0.82rem] rounded-sm"
+  md: "px-4 py-2.5 text-[0.92rem]",
+  sm: "px-3 py-1.5 text-[0.82rem]"
 };
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-ink text-paper-soft border border-ink hover:bg-ink-dim hover:border-ink-dim",
+    "bg-surface text-fg border border-line-strong hover:border-accent hover:text-accent",
   ghost:
-    "bg-transparent text-ink-dim hover:text-ink border border-transparent hover:border-line",
+    "bg-transparent text-fg-dim hover:text-fg border border-transparent hover:border-line",
   danger:
-    "bg-ember text-paper-soft border border-ember hover:bg-[color:#7c1f0f] hover:border-[color:#7c1f0f]",
+    "bg-transparent text-[color:var(--color-danger)] border border-[color:var(--color-danger)]/40 hover:bg-[color:var(--color-danger)]/10 hover:border-[color:var(--color-danger)]",
   outline:
-    "bg-transparent text-ink border border-ink hover:bg-ink hover:text-paper-soft"
+    "bg-transparent text-fg-dim border border-line hover:border-line-strong hover:text-fg"
 };
 
 export function buttonClass(

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, buttonClass } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { ScoreBar } from "../components/ScoreBar";
+import { useT } from "../i18n";
 import {
   ApiError,
   apiDelete,
@@ -28,7 +29,15 @@ function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
   return "neutral";
 }
 
+function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
+  if (tone === "danger") return "var(--color-danger)";
+  if (tone === "warn") return "var(--color-warn)";
+  if (tone === "ok") return "var(--color-accent)";
+  return "var(--color-fg-muted)";
+}
+
 export function RepoDetailPage() {
+  const t = useT();
   const { id } = useParams({ from: "/repos/$id" });
   const isAuthed = useAuthStore((s) => s.status === "authenticated");
   const queryClient = useQueryClient();
@@ -62,10 +71,17 @@ export function RepoDetailPage() {
     }
   });
 
+  function verdictLabel(tone: "ok" | "warn" | "danger" | "neutral"): string {
+    if (tone === "ok") return t.repoDetail.healthy;
+    if (tone === "warn") return t.repoDetail.monitor;
+    if (tone === "danger") return t.repoDetail.atRisk;
+    return t.repoDetail.unscored;
+  }
+
   if (profile.isLoading) {
     return (
-      <section className="shell py-16 text-center text-ink-muted">
-        <span className="kicker">Pulling the file…</span>
+      <section className="shell py-16 text-center">
+        <span className="kicker">{t.repoDetail.loading}</span>
       </section>
     );
   }
@@ -74,17 +90,18 @@ export function RepoDetailPage() {
     const err = profile.error;
     const notFound = err instanceof ApiError && err.status === 404;
     return (
-      <section className="shell grid gap-4 py-16 text-ink-muted">
-        <p className="kicker text-ember">
-          {notFound ? "Not in the register" : "Observatory offline"}
+      <section className="shell grid gap-4 py-16">
+        <p className="kicker" style={{ color: "var(--color-danger)" }}>
+          {notFound ? t.repoDetail.notFound : t.common.offline}
         </p>
-        <p className="text-[0.95rem]">
-          {notFound
-            ? "No profile exists under this identifier."
-            : "The backend didn't answer."}
+        <p className="text-[0.94rem] text-fg-dim">
+          {notFound ? t.repoDetail.notFoundBody : t.repoDetail.offlineBody}
         </p>
-        <Link to="/discover" className="link-underline w-fit text-ink">
-          Back to discover <span className="arrow">→</span>
+        <Link
+          to="/discover"
+          className="link-underline w-fit text-accent"
+        >
+          {t.repoDetail.backToDiscover} <span className="arrow">→</span>
         </Link>
       </section>
     );
@@ -95,36 +112,36 @@ export function RepoDetailPage() {
   const overallTone = scoreTone(q?.overall);
 
   return (
-    <article className="shell grid gap-12 py-12 md:py-16">
-      <header className="grid gap-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <Link
-            to="/discover"
-            className="kicker link-underline border-0"
-          >
-            ← Register
-          </Link>
-          <p className="kicker">
-            formula {q?.formulaVersion ?? "—"} · computed{" "}
-            {formatRelative(q?.computedAt ?? null)}
-          </p>
-        </div>
+    <article className="shell grid gap-10 py-10 md:py-14">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <Link
+          to="/discover"
+          className="inline-flex items-center gap-1.5 text-[0.88rem] text-fg-dim hover:text-accent transition-colors"
+        >
+          <span>←</span> {t.repoDetail.back}
+        </Link>
+        <p className="mono text-[0.76rem] text-fg-muted">
+          {t.repoDetail.formula} {q?.formulaVersion ?? "—"} ·{" "}
+          {t.repoDetail.computed} {formatRelative(q?.computedAt ?? null)}
+        </p>
+      </div>
 
-        <div className="grid gap-3">
-          <p className="font-mono text-[0.84rem] uppercase tracking-[0.18em] text-ink-muted">
+      <header className="grid gap-5">
+        <div className="grid gap-2">
+          <p className="mono text-[0.82rem] uppercase tracking-[0.14em] text-fg-muted">
             {repo.owner} / {repo.name}
           </p>
-          <h1 className="display-xl">
-            <span className="italic-accent">{repo.name}</span>
+          <h1 className="display-xl !text-[clamp(2.2rem,5vw,3.8rem)]">
+            {repo.name}
           </h1>
           {repo.description ? (
-            <p className="max-w-[64ch] text-[1.1rem] leading-[1.55] text-ink-dim">
+            <p className="max-w-[64ch] text-[1.02rem] leading-[1.6] text-fg-dim">
               {repo.description}
             </p>
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {repo.language ? <Chip tone="info">{repo.language}</Chip> : null}
           {repo.licenseSpdx ? (
             <Chip tone="neutral">{repo.licenseSpdx}</Chip>
@@ -135,14 +152,14 @@ export function RepoDetailPage() {
               {flagLabel(flag)}
             </Chip>
           ))}
-          {repo.topics.map((t) => (
-            <Chip key={t} tone="neutral">
-              #{t}
+          {repo.topics.map((tp) => (
+            <Chip key={tp} tone="neutral">
+              #{tp}
             </Chip>
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           {isAuthed ? (
             watching ? (
               <Button
@@ -150,152 +167,146 @@ export function RepoDetailPage() {
                 onClick={() => removeWatch.mutate()}
                 disabled={removeWatch.isPending}
               >
-                {removeWatch.isPending ? "Unwatching…" : "Unwatch"}
+                {removeWatch.isPending
+                  ? t.repoDetail.unwatching
+                  : t.repoDetail.unwatch}
               </Button>
             ) : (
               <Button
                 variant="primary"
                 onClick={() => addWatch.mutate()}
                 disabled={addWatch.isPending}
-                iconAfter={<span className="arrow">→</span>}
+                iconAfter={<span className="arrow">+</span>}
               >
-                {addWatch.isPending ? "Adding…" : "Add to watchlist"}
+                {addWatch.isPending
+                  ? t.repoDetail.adding
+                  : t.repoDetail.addToWatchlist}
               </Button>
             )
           ) : (
             <Link to="/login" className={buttonClass("outline")}>
-              Sign in to watch
+              {t.repoDetail.signInToWatch}
             </Link>
           )}
           <a
             href={repo.htmlUrl}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-[0.82rem] uppercase tracking-[0.16em] text-ink-muted hover:text-ink"
+            className="inline-flex items-center gap-1.5 text-[0.86rem] text-fg-dim hover:text-accent transition-colors"
           >
-            github.com ↗
+            {t.common.viewOnGithub} ↗
           </a>
         </div>
       </header>
 
-      <hr className="rule-double" />
+      <hr className="hairline" />
 
-      <section className="grid gap-10 md:grid-cols-[260px_1fr] md:gap-16">
-        <div className="grid gap-3">
-          <p className="kicker">Overall verdict</p>
-          <p
-            className="font-display italic-accent data-value text-[6rem] leading-none"
-            style={{
-              color:
-                overallTone === "danger"
-                  ? "var(--color-ember)"
-                  : overallTone === "warn"
-                    ? "var(--color-ochre)"
-                    : overallTone === "ok"
-                      ? "var(--color-ink)"
-                      : "var(--color-ink-muted)"
-            }}
-          >
-            {formatScore(q?.overall)}
-          </p>
-          <p className="kicker">
-            {overallTone === "ok"
-              ? "Healthy"
-              : overallTone === "warn"
-                ? "Monitor"
-                : overallTone === "danger"
-                  ? "At risk"
-                  : "Unscored"}
-          </p>
+      <section className="grid gap-8 md:grid-cols-[280px_1fr] md:gap-14">
+        <div className="grid gap-4">
+          <div className="surface p-5 grid gap-4">
+            <span className="kicker">{t.repoDetail.overallVerdict}</span>
+            <p
+              className="data-value text-[5.4rem] leading-none tracking-tight"
+              style={{ color: scoreColor(overallTone) }}
+            >
+              {formatScore(q?.overall)}
+            </p>
+            <div className="flex items-center gap-2">
+              <span
+                className="dot"
+                style={{ color: scoreColor(overallTone) }}
+              />
+              <span className="text-[0.86rem] font-medium text-fg">
+                {verdictLabel(overallTone)}
+              </span>
+            </div>
+          </div>
 
-          <div className="mt-4 grid gap-2 border-t border-line pt-4 text-[0.92rem]">
-            <Row k="Stars" v={formatStars(repo.starsCount)} />
-            <Row k="Forks" v={formatStars(repo.forksCount)} />
-            <Row k="Open issues" v={String(repo.openIssuesCount)} />
-            <Row k="Subscribers" v={formatStars(repo.subscribersCount)} />
+          <div className="surface p-5 grid gap-2 text-[0.88rem]">
+            <Row k={t.repoDetail.stars} v={formatStars(repo.starsCount)} />
+            <Row k={t.repoDetail.forks} v={formatStars(repo.forksCount)} />
+            <Row k={t.repoDetail.openIssues} v={String(repo.openIssuesCount)} />
+            <Row k={t.repoDetail.subscribers} v={formatStars(repo.subscribersCount)} />
+            <Row k={t.repoDetail.lastCommit} v={formatRelative(repo.lastCommitAt)} />
             <Row
-              k="Last commit"
-              v={formatRelative(repo.lastCommitAt)}
-            />
-            <Row
-              k="Priors fetched"
+              k={t.repoDetail.priorsFetched}
               v={formatRelative(repo.priorsFetchedAt)}
             />
             {repo.defaultBranch ? (
-              <Row k="Default branch" v={repo.defaultBranch} mono />
+              <Row k={t.repoDetail.defaultBranch} v={repo.defaultBranch} mono />
             ) : null}
           </div>
         </div>
 
-        <div className="grid gap-8">
-          <div>
-            <p className="kicker mb-4">Dimensions</p>
-            <div className="grid gap-6 md:grid-cols-2">
-              <ScoreBar
-                label="Freshness"
-                value={q?.freshness ?? null}
-                tone={scoreTone(q?.freshness ?? null)}
-                hint="Exponential decay on last_commit_at (half-life 180d)."
-              />
-              <ScoreBar
-                label="Adoption"
-                value={q?.adoption ?? null}
-                tone={scoreTone(q?.adoption ?? null)}
-                hint="Log-normalised resolve count (saturates at 1k)."
-              />
-              <ScoreBar
-                label="Reliability"
-                value={q?.reliability ?? null}
-                tone={scoreTone(q?.reliability ?? null)}
-                hint="Success / total builds. Neutral 0.5 before 5 samples."
-              />
-              <ScoreBar
-                label="Abandonment"
-                value={q?.abandonment ?? null}
-                tone={abandonmentTone(q?.abandonment ?? null)}
-                invert
-                hint="Inverse freshness plus regret bump above threshold."
-              />
-            </div>
+        <div className="grid gap-6">
+          <span className="kicker">{t.repoDetail.dimensions}</span>
+          <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+            <ScoreBar
+              label={t.repoDetail.freshness}
+              value={q?.freshness ?? null}
+              tone={scoreTone(q?.freshness ?? null)}
+              hint={t.repoDetail.freshnessHint}
+            />
+            <ScoreBar
+              label={t.repoDetail.adoption}
+              value={q?.adoption ?? null}
+              tone={scoreTone(q?.adoption ?? null)}
+              hint={t.repoDetail.adoptionHint}
+            />
+            <ScoreBar
+              label={t.repoDetail.reliability}
+              value={q?.reliability ?? null}
+              tone={scoreTone(q?.reliability ?? null)}
+              hint={t.repoDetail.reliabilityHint}
+            />
+            <ScoreBar
+              label={t.repoDetail.abandonment}
+              value={q?.abandonment ?? null}
+              tone={abandonmentTone(q?.abandonment ?? null)}
+              invert
+              hint={t.repoDetail.abandonmentHint}
+            />
           </div>
         </div>
       </section>
 
-      <hr className="rule-dashed" />
+      <hr className="hairline" />
 
       <section className="grid gap-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="display-md">Recent signals</h2>
+          <h2 className="display-md">{t.repoDetail.recentSignals}</h2>
           <p className="kicker">
-            {repo.recentSignals.length} entr
-            {repo.recentSignals.length === 1 ? "y" : "ies"}
+            {repo.recentSignals.length}{" "}
+            {repo.recentSignals.length === 1
+              ? t.repoDetail.entrySingle
+              : t.repoDetail.entriesPlural}
           </p>
         </div>
         {repo.recentSignals.length === 0 ? (
-          <p className="text-[0.98rem] text-ink-muted border-t border-line pt-6">
-            No signals reported yet. The observatory is listening.
+          <p className="text-[0.94rem] text-fg-muted border-t border-line pt-6">
+            {t.repoDetail.noSignals}
           </p>
         ) : (
-          <ul className="grid gap-3">
+          <ul className="grid gap-2">
             {repo.recentSignals.map((signal, i) => (
               <li
                 key={i}
-                className="grid grid-cols-[auto_1fr_auto] items-baseline gap-4 border-t border-dashed border-line pt-3"
+                className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-[6px] border border-line bg-surface/30 px-4 py-3 hover:border-line-strong transition-colors"
               >
                 <Chip tone={signal.isPassive ? "neutral" : "info"} mono>
-                  {signal.isPassive ? "passive" : "reported"}
+                  {signal.isPassive ? t.repoDetail.passive : t.repoDetail.reported}
                 </Chip>
-                <div className="grid gap-1">
-                  <p className="font-mono text-[0.88rem] text-ink">
+                <div className="grid gap-0.5">
+                  <p className="mono text-[0.86rem] text-fg">
                     {signal.signal}
                   </p>
                   {signal.evidenceDescription ? (
-                    <p className="text-[0.9rem] text-ink-dim">
+                    <p className="text-[0.86rem] text-fg-dim">
                       {signal.evidenceDescription}
                     </p>
                   ) : null}
                 </div>
-                <span className="kicker">
+                <span className="kicker whitespace-nowrap">
                   {formatRelative(signal.createdAt)}
                 </span>
               </li>
@@ -312,7 +323,7 @@ function Row({ k, v, mono = false }: { k: string; v: string; mono?: boolean }) {
     <div className="flex items-baseline justify-between gap-3">
       <span className="kicker">{k}</span>
       <span
-        className={`text-ink ${mono ? "font-mono text-[0.86rem]" : "data-value text-[0.92rem]"}`}
+        className={`text-fg ${mono ? "mono text-[0.84rem]" : "data-value text-[0.88rem]"}`}
       >
         {v}
       </span>

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { Wordmark } from "../components/Wordmark";
+import { useT } from "../i18n";
 import { authUrl } from "../lib/api-client";
 import { useAuthStore } from "../state/auth-store";
 
@@ -17,59 +18,55 @@ const discordIcon = (
 );
 
 export function LoginPage() {
+  const t = useT();
   const status = useAuthStore((s) => s.status);
 
   return (
-    <section className="shell grid min-h-[70vh] place-items-center py-16">
-      <div className="grid w-full max-w-[760px] gap-10 md:grid-cols-[1fr_0.9fr] md:items-center">
+    <section className="shell grid min-h-[78vh] place-items-center py-12">
+      <div className="grid w-full max-w-[840px] gap-10 md:grid-cols-[1fr_1fr] md:items-center">
         <div className="grid gap-5 rise-in">
-          <p className="eyebrow">
-            <span className="callout-mark" />
-            Credentialing desk
-          </p>
+          <span className="kicker">{t.login.eyebrow}</span>
           <h1 className="display-lg">
-            Sign in to the <span className="italic-accent">observatory.</span>
+            {t.login.h1Part1} <span className="accent">{t.login.h1Accent}</span>
           </h1>
-          <p className="max-w-[44ch] text-[1rem] leading-relaxed text-ink-dim">
-            A session is required to keep a watchlist, flag a repo with
-            evidence, or connect an MCP agent. Reading the discovery register
-            is open — no account needed.
+          <p className="max-w-[44ch] text-[0.98rem] leading-relaxed text-fg-dim">
+            {t.login.body}
           </p>
           <Link
             to="/discover"
-            className="link-underline w-fit text-[0.95rem] text-ink-dim"
+            className="link-underline w-fit text-[0.92rem] text-fg-dim hover:text-accent"
           >
-            Browse without signing in <span className="arrow">→</span>
+            {t.login.browseWithoutSignIn} <span className="arrow">→</span>
           </Link>
         </div>
 
-        <div className="card rise-in rise-in-delay-1">
-          <div className="border-b border-line px-6 py-4 flex items-center justify-between">
+        <div className="surface relative overflow-hidden rise-in rise-in-d1">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <Wordmark scale="sm" />
-            <span className="kicker">
-              {status === "loading" ? "checking" : "ready"}
+            <span className="inline-flex items-center gap-1.5 mono text-[0.7rem] text-fg-muted">
+              <span className="dot text-accent" />
+              {status === "loading"
+                ? t.common.checkingStatus
+                : t.common.readyStatus}
             </span>
           </div>
           <div className="grid gap-3 px-6 py-7">
             <a
               href={authUrl("/api/auth/github/start")}
-              className="inline-flex items-center justify-center gap-3 border border-ink bg-ink px-5 py-3.5 text-paper-soft text-[0.95rem] font-semibold transition-colors hover:bg-ink-dim"
-              style={{ borderRadius: 2 }}
+              className="inline-flex items-center justify-center gap-3 rounded-[6px] border border-line-strong bg-surface px-5 py-3.5 text-[0.92rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
             >
               {githubIcon}
-              Continue with GitHub
+              {t.login.continueGithub}
             </a>
             <a
               href={authUrl("/api/auth/discord/start")}
-              className="inline-flex items-center justify-center gap-3 border border-line px-5 py-3.5 text-ink text-[0.95rem] font-semibold transition-colors hover:border-ink"
-              style={{ borderRadius: 2 }}
+              className="inline-flex items-center justify-center gap-3 rounded-[6px] border border-line-strong bg-surface px-5 py-3.5 text-[0.92rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
             >
               {discordIcon}
-              Continue with Discord
+              {t.login.continueDiscord}
             </a>
-            <p className="pt-3 text-[0.82rem] leading-relaxed text-ink-muted">
-              No emails are sent, no marketing list. OAuth is the entire
-              handshake — we learn your username and avatar, nothing more.
+            <p className="pt-3 text-[0.8rem] leading-relaxed text-fg-muted">
+              {t.login.privacy}
             </p>
           </div>
         </div>

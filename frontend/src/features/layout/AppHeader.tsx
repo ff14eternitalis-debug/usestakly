@@ -1,27 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
+import { LocaleSwitch } from "../../components/LocaleSwitch";
 import { Wordmark } from "../../components/Wordmark";
+import { useT } from "../../i18n";
 import { apiGet, authUrl } from "../../lib/api-client";
 import type { UnreadCount } from "../../lib/types";
 import { useAuthStore } from "../../state/auth-store";
 import { logout } from "../auth/hooks";
 
-function Clock() {
-  const now = new Date();
-  const fmt = now.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
-  return (
-    <span className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-muted">
-      Vol. 1 · {fmt}
-    </span>
-  );
-}
-
 export function AppHeader() {
+  const t = useT();
   const { status, user } = useAuthStore();
   const isAuthed = status === "authenticated";
 
@@ -36,77 +25,91 @@ export function AppHeader() {
   const unread = unreadQuery.data?.unread ?? 0;
 
   return (
-    <header className="relative z-20">
-      <div className="shell flex items-center justify-between py-3">
-        <Clock />
-        <span className="kicker hidden md:inline">
-          the open-source observatory
-        </span>
-        {isAuthed ? (
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-muted hover:text-ember transition-colors"
-          >
-            sign out
-          </button>
-        ) : (
-          <Link
-            to="/login"
-            className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-muted hover:text-ink transition-colors"
-          >
-            sign in
-          </Link>
-        )}
-      </div>
+    <header className="sticky top-0 z-30 border-b border-line bg-[color:var(--color-bg)]/80 backdrop-blur-xl backdrop-saturate-150">
+      <div className="shell flex h-[62px] items-center justify-between gap-6">
+        <Link to="/" className="group inline-flex items-center gap-2">
+          <Wordmark scale="md" />
+        </Link>
 
-      <div className="masthead-rule" />
-
-      <div className="shell py-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <Link to="/" className="group inline-flex items-end gap-3">
-            <Wordmark scale="md" />
+        <nav className="hidden md:flex items-center gap-7">
+          <Link to="/discover" className="nav-link">
+            {t.nav.discover}
           </Link>
-          <nav className="flex flex-wrap items-center gap-7 font-sans text-[0.94rem]">
-            <Link to="/discover" className="nav-link">
-              Discover
-            </Link>
-            {isAuthed ? (
-              <>
-                <Link to="/watchlist" className="nav-link">
-                  Watchlist
-                </Link>
-                <Link
-                  to="/notifications"
-                  className="nav-link inline-flex items-center gap-2"
-                >
-                  Notifications
-                  {unread > 0 ? (
-                    <span className="inline-flex min-w-[22px] items-center justify-center rounded-sm bg-ember px-1.5 py-[1px] font-mono text-[0.66rem] font-semibold text-paper-soft">
-                      {unread > 99 ? "99+" : unread}
-                    </span>
-                  ) : null}
-                </Link>
-                <span
-                  className="font-mono text-[0.74rem] uppercase tracking-[0.18em] text-ink-muted"
-                  title={user?.email ?? undefined}
-                >
-                  @{user?.username ?? "anon"}
-                </span>
-              </>
-            ) : (
-              <a
-                href={authUrl("/api/auth/github/start")}
-                className="nav-link"
+          {isAuthed ? (
+            <>
+              <Link to="/watchlist" className="nav-link">
+                {t.nav.watchlist}
+              </Link>
+              <Link
+                to="/notifications"
+                className="nav-link inline-flex items-center gap-1.5"
               >
-                Sign in with GitHub
-              </a>
-            )}
-          </nav>
+                {t.nav.notifications}
+                {unread > 0 ? (
+                  <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 py-[1px] font-mono text-[0.64rem] font-semibold text-[color:var(--color-accent-ink)] leading-none">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                ) : null}
+              </Link>
+            </>
+          ) : null}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <LocaleSwitch />
+          {isAuthed ? (
+            <>
+              <span
+                className="hidden sm:inline mono text-[0.78rem] text-fg-muted"
+                title={user?.email ?? undefined}
+              >
+                @{user?.username ?? "anon"}
+              </span>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="mono text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted hover:text-fg transition-colors"
+              >
+                {t.nav.signOut}
+              </button>
+            </>
+          ) : (
+            <a
+              href={authUrl("/api/auth/github/start")}
+              className="inline-flex items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3.5 py-1.5 text-[0.84rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
+            >
+              {t.header.signIn}
+            </a>
+          )}
         </div>
       </div>
 
-      <hr className="rule-dashed" />
+      {/* Mobile nav */}
+      <nav className="md:hidden border-t border-line">
+        <div className="shell flex items-center gap-5 overflow-x-auto py-2.5">
+          <Link to="/discover" className="nav-link">
+            {t.nav.discover}
+          </Link>
+          {isAuthed ? (
+            <>
+              <Link to="/watchlist" className="nav-link">
+                {t.nav.watchlist}
+              </Link>
+              <Link
+                to="/notifications"
+                className="nav-link inline-flex items-center gap-1.5"
+              >
+                {t.nav.notifications}
+                {unread > 0 ? (
+                  <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 py-[1px] font-mono text-[0.64rem] font-semibold text-[color:var(--color-accent-ink)] leading-none">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                ) : null}
+              </Link>
+            </>
+          ) : null}
+        </div>
+      </nav>
     </header>
   );
 }

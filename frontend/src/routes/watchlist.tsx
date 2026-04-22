@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { buttonClass } from "../components/Button";
 import { Chip } from "../components/Chip";
+import { useT } from "../i18n";
 import { apiDelete, apiGet, apiPatch } from "../lib/api-client";
 import {
   abandonmentTone,
@@ -13,7 +15,15 @@ import {
 } from "../lib/format";
 import type { WatchedRepo } from "../lib/types";
 
+function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
+  if (tone === "danger") return "var(--color-danger)";
+  if (tone === "warn") return "var(--color-warn)";
+  if (tone === "ok") return "var(--color-accent)";
+  return "var(--color-fg-muted)";
+}
+
 export function WatchlistPage() {
+  const t = useT();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -35,23 +45,19 @@ export function WatchlistPage() {
   const items = query.data ?? [];
 
   return (
-    <section className="shell grid gap-10 py-12 md:py-16">
+    <section className="shell grid gap-8 py-10 md:py-14">
       <header className="grid gap-4">
-        <p className="eyebrow">
-          <span className="callout-mark" />
-          Your watchlist
-        </p>
+        <span className="kicker">{t.watchlist.eyebrow}</span>
         <div className="grid gap-4 md:grid-cols-[1.3fr_1fr] md:items-end">
           <h1 className="display-lg max-w-[22ch]">
-            The short list,
+            {t.watchlist.h1Part1}
             <br />
-            <span className="italic-accent">under observation.</span>
+            <span className="accent">{t.watchlist.h1Accent}</span>
           </h1>
-          <p className="max-w-[44ch] text-[1rem] leading-relaxed text-ink-dim md:justify-self-end md:text-right">
-            We diff scores between recomputes. If a repo drifts, you'll see it
-            in{" "}
-            <Link to="/notifications" className="link-underline">
-              notifications
+          <p className="max-w-[44ch] text-[0.96rem] leading-relaxed text-fg-dim md:text-right">
+            {t.watchlist.intro}{" "}
+            <Link to="/notifications" className="link-underline text-accent">
+              {t.watchlist.notifications}
             </Link>
             .
           </p>
@@ -59,46 +65,53 @@ export function WatchlistPage() {
       </header>
 
       {query.isLoading ? (
-        <div className="py-10 text-center text-ink-muted">
-          <span className="kicker">Pulling the file…</span>
+        <div className="py-10 text-center">
+          <span className="kicker">{t.watchlist.loading}</span>
         </div>
       ) : items.length === 0 ? (
-        <div className="grid gap-4 border-t border-line pt-10 text-ink-dim">
-          <p className="display-md">Nothing on watch yet.</p>
-          <p className="max-w-[52ch] text-[1rem] leading-relaxed">
-            Open a repo's profile from the{" "}
-            <Link to="/discover" className="link-underline">
-              register
-            </Link>{" "}
-            and tap <em>Add to watchlist</em>. You'll be pinged here when a score drops, abandonment rises, or a severe flag lands.
+        <div className="surface grid gap-4 p-10 text-center">
+          <p className="display-md !text-[1.3rem]">{t.watchlist.emptyTitle}</p>
+          <p className="max-w-[52ch] mx-auto text-[0.96rem] leading-relaxed text-fg-dim">
+            {t.watchlist.emptyBody}
           </p>
+          <Link
+            to="/discover"
+            className={`${buttonClass("primary")} justify-self-center mt-2`}
+          >
+            {t.watchlist.emptyAction}
+            <span className="arrow">→</span>
+          </Link>
         </div>
       ) : (
-        <ul className="grid gap-8">
+        <ul className="grid gap-3">
           {items.map((w, i) => {
             const overallTone = scoreTone(w.overall);
+            const abTone = abandonmentTone(w.abandonment);
             return (
               <li
                 key={w.id}
-                className="grid gap-5 border-t border-line pt-6 md:grid-cols-[1fr_auto]"
+                className="group grid gap-4 rounded-[10px] border border-line bg-surface/40 p-5 transition-colors hover:border-line-strong md:grid-cols-[40px_1fr_auto_auto] md:items-center md:gap-6"
               >
-                <div className="grid gap-3">
+                <span className="kicker data-value md:self-center">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
+                <div className="grid gap-2 min-w-0">
                   <Link
                     to="/repos/$id"
                     params={{ id: w.artifactId }}
-                    className="group inline-flex items-baseline gap-3"
+                    className="inline-flex items-baseline gap-1 flex-wrap"
                   >
-                    <span className="kicker data-value">
-                      {String(i + 1).padStart(2, "0")}.
-                    </span>
-                    <h2 className="display-md font-display">
-                      <span className="font-mono text-[0.78em] text-ink-muted mr-1">
+                    <h2 className="display-md !text-[1.1rem] truncate">
+                      <span className="mono text-[0.82em] font-normal text-fg-muted mr-0.5">
                         {w.owner}/
                       </span>
-                      <span className="italic-accent">{w.name}</span>
+                      <span className="group-hover:text-accent transition-colors">
+                        {w.name}
+                      </span>
                     </h2>
                   </Link>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {w.language ? <Chip tone="info">{w.language}</Chip> : null}
                     {w.archived ? <Chip tone="warn">archived</Chip> : null}
                     {w.muted ? <Chip tone="neutral">muted</Chip> : null}
@@ -114,73 +127,54 @@ export function WatchlistPage() {
                         {flagLabel(f)}
                       </Chip>
                     ))}
-                    <span className="kicker">
-                      watched {formatRelative(w.watchedAt)}
-                    </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-6 pt-1 font-mono text-[0.84rem] text-ink-dim">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mono text-[0.8rem] text-fg-muted">
                     <span>★ {formatStars(w.starsCount)}</span>
                     <span>
-                      abandonment{" "}
+                      ab{" "}
                       <span
                         className="data-value"
-                        style={{
-                          color:
-                            abandonmentTone(w.abandonment) === "danger"
-                              ? "var(--color-ember)"
-                              : abandonmentTone(w.abandonment) === "warn"
-                                ? "var(--color-ochre)"
-                                : "var(--color-ink)"
-                        }}
+                        style={{ color: scoreColor(abTone) }}
                       >
                         {formatScore(w.abandonment)}
                       </span>
                     </span>
                     <span>
-                      commits · {formatRelative(w.lastCommitAt).replace(" ago", "")}
+                      {formatRelative(w.lastCommitAt).replace(" ago", "")}
+                    </span>
+                    <span>
+                      {t.watchlist.watched} {formatRelative(w.watchedAt)}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid gap-3 md:justify-items-end md:text-right">
-                  <div>
-                    <p className="kicker">Overall</p>
-                    <p
-                      className="font-display italic-accent data-value text-[3.2rem] leading-none"
-                      style={{
-                        color:
-                          overallTone === "danger"
-                            ? "var(--color-ember)"
-                            : overallTone === "warn"
-                              ? "var(--color-ochre)"
-                              : overallTone === "ok"
-                                ? "var(--color-ink)"
-                                : "var(--color-ink-muted)"
-                      }}
-                    >
-                      {formatScore(w.overall)}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        toggleMute.mutate({ id: w.artifactId, muted: !w.muted })
-                      }
-                      className="border border-line px-3 py-1.5 font-mono text-[0.78rem] uppercase tracking-[0.14em] text-ink-dim hover:border-ink-dim hover:text-ink"
-                      style={{ borderRadius: 2 }}
-                    >
-                      {w.muted ? "unmute" : "mute"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove.mutate(w.artifactId)}
-                      className="border border-ember/40 px-3 py-1.5 font-mono text-[0.78rem] uppercase tracking-[0.14em] text-ember hover:bg-ember hover:text-paper-soft"
-                      style={{ borderRadius: 2 }}
-                    >
-                      remove
-                    </button>
-                  </div>
+                <div className="grid gap-0.5 md:text-right">
+                  <span className="kicker">{t.watchlist.overall}</span>
+                  <span
+                    className="data-value text-[2.6rem] leading-none tracking-tight"
+                    style={{ color: scoreColor(overallTone) }}
+                  >
+                    {formatScore(w.overall)}
+                  </span>
+                </div>
+
+                <div className="flex gap-2 md:flex-col md:items-stretch">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toggleMute.mutate({ id: w.artifactId, muted: !w.muted })
+                    }
+                    className="rounded-[6px] border border-line px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-fg-dim hover:border-line-strong hover:text-fg transition-colors"
+                  >
+                    {w.muted ? t.watchlist.unmute : t.watchlist.mute}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove.mutate(w.artifactId)}
+                    className="rounded-[6px] border border-[color:var(--color-danger)]/30 px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-danger)] hover:bg-[color:var(--color-danger)]/10 transition-colors"
+                  >
+                    {t.watchlist.remove}
+                  </button>
                 </div>
               </li>
             );

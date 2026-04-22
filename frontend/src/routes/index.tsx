@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
-import { Chip } from "../components/Chip";
 import { buttonClass } from "../components/Button";
 import { RepoCard } from "../components/RepoCard";
+import { useT } from "../i18n";
 import { apiGet } from "../lib/api-client";
 import {
   formatRelative,
@@ -15,121 +15,214 @@ import type { RepoSearchResponse } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
 
 function Hero() {
+  const t = useT();
   const isAuthed = useAuthStore((s) => s.status === "authenticated");
   return (
-    <section className="shell relative pt-10 pb-16 md:pt-16 md:pb-24">
-      <div className="grid gap-10 md:grid-cols-[1.55fr_1fr] md:gap-16 items-end">
-        <div className="grid gap-7 rise-in">
-          <div className="flex items-center gap-3">
-            <span className="callout-mark" />
-            <p className="eyebrow">Issue&nbsp;No.&nbsp;001 · Field notes</p>
+    <section className="shell relative pt-16 pb-20 md:pt-24 md:pb-28">
+      <div className="grid gap-12 md:grid-cols-[1.3fr_1fr] md:items-center md:gap-16">
+        <div className="grid gap-8 rise-in">
+          <div className="inline-flex items-center gap-2.5 self-start">
+            <span className="dot dot-pulse text-accent" />
+            <span className="mono text-[0.74rem] uppercase tracking-[0.18em] text-fg-dim">
+              {t.landing.eyebrow}
+            </span>
           </div>
 
           <h1 className="display-xl">
-            The verdict on a repo
+            {t.landing.h1Part1}
             <br />
-            <span className="italic-accent">isn't its star count.</span>
+            <span className="accent">{t.landing.h1Part2}</span>
           </h1>
 
-          <p className="max-w-[52ch] text-[1.1rem] md:text-[1.22rem] leading-[1.55] text-ink-dim">
-            UseStakly observes public open-source repositories through signals
-            of <em className="italic-accent text-ink">actual usage</em> —
-            freshness, adoption, reliability, abandonment — and raises its hand
-            when a project you depend on starts to drift.
+          <p className="max-w-[56ch] text-[1.08rem] md:text-[1.15rem] leading-[1.55] text-fg-dim">
+            {t.landing.intro}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <Link to="/discover" className={buttonClass("primary")}>
-              Open the observatory
+              {t.landing.openObservatory}
               <span className="arrow">→</span>
             </Link>
             {!isAuthed ? (
-              <Link
-                to="/login"
-                className="link-underline font-sans text-[0.98rem] text-ink-dim"
-              >
-                or sign in to build a watchlist
+              <Link to="/login" className={buttonClass("outline")}>
+                {t.landing.signInForWatchlist}
               </Link>
             ) : (
-              <Link
-                to="/watchlist"
-                className="link-underline font-sans text-[0.98rem] text-ink-dim"
-              >
-                straight to your watchlist
+              <Link to="/watchlist" className={buttonClass("outline")}>
+                {t.landing.myWatchlist}
+                <span className="arrow">→</span>
               </Link>
             )}
           </div>
 
-          <div className="grid max-w-xl grid-cols-3 gap-4 pt-8 rise-in rise-in-delay-2">
-            <FigureStat k="4" label="Quality dimensions" />
-            <FigureStat k="v1" label="Public formula" />
-            <FigureStat k="0%" label="Proprietary magic" />
+          <div className="mt-6 grid grid-cols-3 gap-5 border-t border-line pt-6 rise-in rise-in-d2">
+            <Kpi k="4" label={t.landing.kpi1} />
+            <Kpi k="v1" label={t.landing.kpi2} />
+            <Kpi k="0%" label={t.landing.kpi3} />
           </div>
         </div>
 
-        <aside className="card relative rise-in rise-in-delay-1">
-          <div className="flex items-center justify-between border-b border-line px-5 py-3">
-            <p className="kicker">Dispatch</p>
-            <p className="kicker">live</p>
-          </div>
-          <blockquote className="px-6 py-7">
-            <p className="display-md italic-accent font-display">
-              “Stars measure interest.
-              <br />
-              Commits measure belief.
-              <br />
-              <span className="text-ember">Regret</span> measures truth.”
-            </p>
-            <footer className="mt-5 flex items-center gap-3">
-              <span className="h-px w-10 bg-ink" />
-              <span className="kicker">The editor's desk</span>
-            </footer>
-          </blockquote>
-          <div className="border-t border-line px-5 py-3 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-ink-muted flex justify-between">
-            <span>formula_v1</span>
-            <span className="text-ember">transparent · versioned · local</span>
-          </div>
-        </aside>
+        <HeroPanel />
       </div>
     </section>
   );
 }
 
-function FigureStat({ k, label }: { k: string; label: string }) {
+function HeroPanel() {
+  const t = useT();
   return (
-    <div className="border-t-2 border-ink pt-3">
-      <p className="font-display italic-accent text-[2.4rem] leading-none">{k}</p>
-      <p className="kicker mt-2">{label}</p>
+    <aside className="surface relative overflow-hidden rise-in rise-in-d1">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+        <span className="kicker">{t.landing.panelLive}</span>
+        <span className="inline-flex items-center gap-1.5 mono text-[0.7rem] text-fg-muted">
+          <span className="dot dot-pulse text-accent" />
+          {t.common.observingStatus}
+        </span>
+      </div>
+
+      <div className="grid gap-5 px-6 py-7">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="mono text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted">
+              {t.landing.panelSample}
+            </p>
+            <p className="display-md !text-[1.1rem] mt-1">
+              <span className="mono text-fg-muted">facebook/</span>
+              <span>react</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="kicker">{t.landing.panelOverall}</p>
+            <p className="data-value text-[3.6rem] leading-none text-accent tracking-tight">
+              ·65
+            </p>
+          </div>
+        </div>
+
+        <HeroChart />
+
+        <div className="grid grid-cols-2 gap-3 text-[0.84rem]">
+          <MiniStat label={t.footer.freshness} value="0.89" tone="ok" />
+          <MiniStat label={t.footer.adoption} value="0.72" tone="ok" />
+          <MiniStat label={t.footer.reliability} value="0.51" tone="warn" />
+          <MiniStat label={t.footer.abandonment} value="0.11" tone="ok" />
+        </div>
+      </div>
+
+      <div className="border-t border-line px-5 py-3 flex justify-between text-[0.74rem]">
+        <span className="mono text-fg-muted">formula_v1</span>
+      </div>
+    </aside>
+  );
+}
+
+function HeroChart() {
+  const points = [0.41, 0.46, 0.52, 0.55, 0.58, 0.62, 0.61, 0.64, 0.63, 0.65];
+  const w = 300;
+  const h = 60;
+  const max = 1;
+  const step = w / (points.length - 1);
+  const path = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - (p / max) * h}`)
+    .join(" ");
+  const area = `${path} L ${w} ${h} L 0 ${h} Z`;
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full h-[56px]"
+      preserveAspectRatio="none"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#sparkGrad)" />
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--color-accent)"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  tone
+}: {
+  label: string;
+  value: string;
+  tone: "ok" | "warn" | "danger" | "neutral";
+}) {
+  const color =
+    tone === "ok"
+      ? "var(--color-accent)"
+      : tone === "warn"
+        ? "var(--color-warn)"
+        : tone === "danger"
+          ? "var(--color-danger)"
+          : "var(--color-fg-muted)";
+  return (
+    <div className="grid gap-1 border-t border-line pt-2">
+      <span className="mono text-[0.68rem] uppercase tracking-[0.14em] text-fg-muted">
+        {label}
+      </span>
+      <span className="data-value text-[0.94rem]" style={{ color }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Kpi({ k, label }: { k: string; label: string }) {
+  return (
+    <div className="grid gap-1.5">
+      <p className="data-value text-[2rem] leading-none tracking-tight text-fg">
+        {k}
+      </p>
+      <p className="text-[0.78rem] text-fg-muted">{label}</p>
     </div>
   );
 }
 
 function PillarsSection() {
+  const t = useT();
   return (
-    <section className="shell grid gap-10 py-14 md:py-20">
-      <header className="grid gap-4">
-        <p className="eyebrow">Two columns · one beat</p>
-        <h2 className="display-lg max-w-[22ch]">
-          What the register was missing, <span className="italic-accent">in two movements.</span>
-        </h2>
+    <section className="shell py-16 md:py-24">
+      <header className="grid gap-4 mb-12 md:mb-16">
+        <span className="kicker">{t.landing.pillarsEyebrow}</span>
+        <h2 className="display-lg max-w-[24ch]">{t.landing.pillarsH2}</h2>
       </header>
 
-      <hr className="rule-double" />
-
-      <div className="grid gap-10 md:grid-cols-2 md:gap-14">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
         <Pillar
-          ordinal="I."
-          title="Discovery, scored by usage."
-          body="Searches don't return hype. Each repo is measured against a transparent formula that combines commit cadence, adoption, build reliability, and signs of abandonment. The auto filter hides broken or unmaintained projects; explore mode shows everything with its receipts."
-          artifactLabel="filter"
-          artifactValue="auto / strict / explore"
+          index="01"
+          pillarLabel={t.landing.pillar}
+          title={t.landing.pillar1Title}
+          body={t.landing.pillar1Body}
+          cta={{ to: "/discover", label: t.landing.pillar1Cta }}
+          artifact={{
+            label: t.landing.pillar1Artifact,
+            value: "auto / strict / explore"
+          }}
         />
         <Pillar
-          ordinal="II."
-          title="Watchlist, with real alerts."
-          body="Keep a short list of repositories you actually depend on. UseStakly diffs scores between recomputes and raises in-app notifications when abandonment rises, a severe flag lands, or overall quality drops below a threshold. No pull-request RSS, no maintainer silence going unnoticed."
-          artifactLabel="triggers"
-          artifactValue="score_drop · abandonment_up · flag_severe"
+          index="02"
+          pillarLabel={t.landing.pillar}
+          title={t.landing.pillar2Title}
+          body={t.landing.pillar2Body}
+          cta={{ to: "/watchlist", label: t.landing.pillar2Cta }}
+          artifact={{
+            label: t.landing.pillar2Artifact,
+            value: "score_drop · abandonment_up · flag_severe"
+          }}
         />
       </div>
     </section>
@@ -137,74 +230,93 @@ function PillarsSection() {
 }
 
 function Pillar({
-  ordinal,
+  index,
+  pillarLabel,
   title,
   body,
-  artifactLabel,
-  artifactValue
+  cta,
+  artifact
 }: {
-  ordinal: string;
+  index: string;
+  pillarLabel: string;
   title: string;
   body: string;
-  artifactLabel: string;
-  artifactValue: string;
+  cta: { to: "/discover" | "/watchlist"; label: string };
+  artifact: { label: string; value: string };
 }) {
   return (
-    <article className="grid gap-5 border-t border-line pt-8">
-      <div className="flex items-baseline justify-between">
-        <span className="font-display italic-accent text-[2.6rem] leading-none text-ember">
-          {ordinal}
+    <article className="surface p-6 md:p-8 grid gap-4 hover:border-line-strong transition-colors">
+      <div className="flex items-center justify-between">
+        <span className="data-value text-accent text-[0.86rem] tracking-wider">
+          {index}
         </span>
-        <span className="kicker">Pillar</span>
+        <span className="kicker">{pillarLabel}</span>
       </div>
-      <h3 className="display-md font-display">{title}</h3>
-      <p className="text-[1rem] leading-[1.65] text-ink-dim">{body}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-dashed border-line-strong pt-4">
-        <span className="kicker">{artifactLabel}</span>
-        <code className="font-mono text-[0.85rem] text-ink">{artifactValue}</code>
+      <h3 className="display-md">{title}</h3>
+      <p className="text-[0.98rem] leading-[1.65] text-fg-dim">{body}</p>
+      <div className="flex items-baseline gap-3 border-t border-line pt-4 mt-2">
+        <span className="kicker">{artifact.label}</span>
+        <code className="mono text-[0.82rem] text-fg-dim">
+          {artifact.value}
+        </code>
       </div>
+      <Link
+        to={cta.to}
+        className="inline-flex items-center gap-1.5 mt-2 text-accent text-[0.92rem] font-medium hover:gap-2.5 transition-all"
+      >
+        {cta.label}
+        <span className="arrow">→</span>
+      </Link>
     </article>
   );
 }
 
 function FormulaSection() {
+  const t = useT();
   return (
-    <section className="shell grid gap-8 rounded-sm border border-ink bg-ink/95 px-8 py-14 text-paper-soft md:grid-cols-[1fr_1.1fr] md:gap-16 md:px-14 md:py-20">
-      <div className="grid gap-6">
-        <p
-          className="kicker"
-          style={{ color: "rgba(242, 236, 223, 0.6)" }}
-        >
-          formula_v1.toml · open, audited, local
-        </p>
-        <h2 className="display-lg font-display text-paper-soft">
-          The score is a <span className="italic-accent">statement</span>, not a black box.
-        </h2>
-        <p
-          className="max-w-[48ch] text-[1.02rem] leading-[1.7]"
-          style={{ color: "rgba(242, 236, 223, 0.78)" }}
-        >
-          Each dimension is a named equation with a known half-life, threshold
-          or log-saturation. Every score carries the formula version that
-          produced it, so tomorrow's v2 doesn't quietly rewrite yesterday's
-          verdict.
-        </p>
-      </div>
+    <section className="shell py-16 md:py-24">
+      <div className="surface relative overflow-hidden">
+        <div
+          className="absolute -top-20 -right-20 h-[280px] w-[280px] rounded-full opacity-30"
+          style={{
+            background:
+              "radial-gradient(closest-side, var(--color-accent-glow), transparent)"
+          }}
+          aria-hidden
+        />
+        <div className="relative grid gap-10 p-8 md:grid-cols-[1fr_1.1fr] md:gap-16 md:p-14">
+          <div className="grid gap-5 content-start">
+            <span className="kicker accent">{t.landing.formulaEyebrow}</span>
+            <h2 className="display-lg">{t.landing.formulaH2}</h2>
+            <p className="max-w-[48ch] text-[0.98rem] leading-[1.7] text-fg-dim">
+              {t.landing.formulaBody}
+            </p>
+          </div>
 
-      <div className="grid gap-3 font-mono text-[0.82rem] leading-relaxed">
-        <FormulaLine dim="freshness" weight="0.20" expr="0.5 ^ (age_days / 180)" />
-        <FormulaLine dim="adoption" weight="0.15" expr="ln(r + 1) / ln(1001)" />
-        <FormulaLine
-          dim="reliability"
-          weight="0.40"
-          expr="success / (success + failure)"
-        />
-        <FormulaLine
-          dim="abandonment"
-          weight="0.25"
-          expr="1 − freshness + regret_bump"
-          tone="ember"
-        />
+          <div className="grid gap-2 mono text-[0.84rem] leading-relaxed">
+            <FormulaLine
+              dim={t.footer.freshness.toLowerCase()}
+              weight="0.20"
+              expr="0.5 ^ (age_days / 180)"
+            />
+            <FormulaLine
+              dim={t.footer.adoption.toLowerCase()}
+              weight="0.15"
+              expr="ln(r + 1) / ln(1001)"
+            />
+            <FormulaLine
+              dim={t.footer.reliability.toLowerCase()}
+              weight="0.40"
+              expr="success / (success + failure)"
+            />
+            <FormulaLine
+              dim={t.footer.abandonment.toLowerCase()}
+              weight="0.25"
+              expr="1 − freshness + regret_bump"
+              highlight
+            />
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -214,27 +326,28 @@ function FormulaLine({
   dim,
   weight,
   expr,
-  tone
+  highlight = false
 }: {
   dim: string;
   weight: string;
   expr: string;
-  tone?: "ember";
+  highlight?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[120px_80px_1fr] items-baseline gap-3 border-b border-dashed border-[color:rgba(242,236,223,0.15)] pb-2">
-      <span
-        className={tone === "ember" ? "text-ember-soft" : "text-paper-soft"}
-      >
-        {dim}
-      </span>
-      <span style={{ color: "rgba(242, 236, 223, 0.5)" }}>w={weight}</span>
-      <span style={{ color: "rgba(242, 236, 223, 0.82)" }}>{expr}</span>
+    <div
+      className={`grid grid-cols-[110px_72px_1fr] items-baseline gap-3 border-b border-line py-2 ${
+        highlight ? "text-accent" : ""
+      }`}
+    >
+      <span className={highlight ? "text-accent" : "text-fg"}>{dim}</span>
+      <span className="text-fg-muted">w={weight}</span>
+      <span className={highlight ? "text-accent" : "text-fg-dim"}>{expr}</span>
     </div>
   );
 }
 
 function LivePreview() {
+  const t = useT();
   const query = useQuery({
     queryKey: ["search", "explore", "landing"],
     queryFn: ({ signal }) =>
@@ -245,34 +358,39 @@ function LivePreview() {
   });
 
   return (
-    <section className="shell grid gap-10 py-14 md:py-20">
-      <header className="grid gap-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <p className="eyebrow">From the current issue</p>
-          <Link to="/discover" className="link-underline text-[0.92rem]">
-            See all entries <span className="arrow">→</span>
+    <section className="shell py-16 md:py-24">
+      <header className="grid gap-4 mb-10 md:mb-12">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="grid gap-3">
+            <span className="kicker">{t.landing.previewEyebrow}</span>
+            <h2 className="display-lg max-w-[22ch]">{t.landing.previewH2}</h2>
+          </div>
+          <Link
+            to="/discover"
+            className="link-underline text-[0.92rem] text-fg-dim hover:text-accent"
+          >
+            {t.landing.previewSeeAll} <span className="arrow">→</span>
           </Link>
         </div>
-        <h2 className="display-lg max-w-[24ch]">
-          Dispatches from the
-          <span className="italic-accent"> observation deck.</span>
-        </h2>
       </header>
 
       <Ticker />
 
-      <div className="grid gap-6">
+      <div className="grid gap-5 pt-10">
         {query.isLoading ? (
-          <div className="grid gap-4 py-10 text-center text-ink-muted">
-            <span className="kicker">Tuning the instruments…</span>
+          <div className="py-16 text-center">
+            <span className="kicker">{t.common.tuning}</span>
           </div>
         ) : query.isError ? (
-          <div className="grid gap-2 border-t border-line py-10 text-ink-muted">
-            <p className="kicker text-ember">Observatory offline</p>
-            <p className="text-[0.98rem]">
-              The backend isn't responding. Start it with{" "}
-              <code className="font-mono text-ink">cargo run</code> from{" "}
-              <code className="font-mono text-ink">backend/</code>.
+          <div className="surface grid gap-2 p-8">
+            <p className="kicker" style={{ color: "var(--color-danger)" }}>
+              {t.common.offline}
+            </p>
+            <p className="text-[0.94rem] text-fg-dim">
+              {t.common.offlineHint}{" "}
+              <code className="inline">{t.common.cargoRun}</code>{" "}
+              {t.common.offlineFrom}{" "}
+              <code className="inline">{t.common.backendDir}</code>.
             </p>
           </div>
         ) : (
@@ -286,6 +404,7 @@ function LivePreview() {
 }
 
 function Ticker() {
+  const t = useT();
   const query = useQuery({
     queryKey: ["search", "explore", "ticker"],
     queryFn: ({ signal }) =>
@@ -299,45 +418,43 @@ function Ticker() {
 
   if (!items.length) {
     return (
-      <div className="overflow-hidden border-y border-line py-3 text-center font-mono text-[0.8rem] uppercase tracking-[0.2em] text-ink-muted">
-        ————— tuning ————— tuning ————— tuning —————
+      <div className="overflow-hidden rounded-[6px] border border-line bg-surface/40 py-3 text-center mono text-[0.78rem] uppercase tracking-[0.18em] text-fg-muted">
+        {t.landing.tickerTuning}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden border-y border-line py-3">
-      <div className="ticker-track gap-8 whitespace-nowrap">
+    <div className="overflow-hidden rounded-[6px] border border-line bg-surface/40 py-3">
+      <div className="marquee-track gap-10 whitespace-nowrap">
         {doubled.map((repo, i) => {
           const tone = scoreTone(repo.quality?.overall);
+          const color =
+            tone === "danger"
+              ? "var(--color-danger)"
+              : tone === "warn"
+                ? "var(--color-warn)"
+                : tone === "ok"
+                  ? "var(--color-accent)"
+                  : "var(--color-fg-dim)";
           return (
             <span
               key={`${repo.artifactId}-${i}`}
-              className="inline-flex items-baseline gap-2 font-mono text-[0.86rem]"
+              className="inline-flex items-baseline gap-2 mono text-[0.84rem]"
             >
-              <span className="text-ink-muted">
+              <span className="text-fg-dim">
                 {repo.owner}/{repo.name}
               </span>
-              <span
-                className="data-value"
-                style={{
-                  color:
-                    tone === "danger"
-                      ? "var(--color-ember)"
-                      : tone === "warn"
-                        ? "var(--color-ochre)"
-                        : tone === "ok"
-                          ? "var(--color-moss)"
-                          : "var(--color-ink)"
-                }}
-              >
+              <span className="data-value" style={{ color }}>
                 {formatScore(repo.quality?.overall)}
               </span>
-              <span className="text-ink-muted">★{formatStars(repo.starsCount)}</span>
-              <span className="text-ink-muted">
+              <span className="text-fg-muted">
+                ★{formatStars(repo.starsCount)}
+              </span>
+              <span className="text-fg-muted">
                 · {formatRelative(repo.lastCommitAt).replace(" ago", "")}
               </span>
-              <span className="text-line-strong">·</span>
+              <span className="text-fg-faint">·</span>
             </span>
           );
         })}
@@ -347,40 +464,45 @@ function Ticker() {
 }
 
 function ClosingCTA() {
+  const t = useT();
   const isAuthed = useAuthStore((s) => s.status === "authenticated");
   return (
-    <section className="shell grid gap-6 py-16 md:py-24">
-      <hr className="rule-double" />
-      <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">
-        <div className="grid gap-3">
-          <p className="eyebrow">End of dispatch</p>
-          <h2 className="display-lg max-w-[22ch]">
-            Keep a short list. <span className="italic-accent">We'll keep watch.</span>
-          </h2>
-        </div>
-        <div className="flex flex-wrap gap-3 md:justify-end">
-          <Link to="/discover" className={buttonClass("outline")}>
-            Browse repositories
-            <span className="arrow">→</span>
-          </Link>
-          {isAuthed ? (
-            <Link to="/watchlist" className={buttonClass("primary")}>
-              Open watchlist
-              <span className="arrow">→</span>
+    <section className="shell py-20 md:py-28">
+      <div className="surface relative overflow-hidden p-8 md:p-14">
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(800px 240px at 50% 100%, var(--color-accent-glow), transparent 70%)"
+          }}
+          aria-hidden
+        />
+        <div className="relative grid gap-8 md:grid-cols-[1.5fr_1fr] md:items-end">
+          <div className="grid gap-4">
+            <span className="kicker">{t.landing.closingEyebrow}</span>
+            <h2 className="display-lg max-w-[20ch]">
+              {t.landing.closingH2Part1}
+              <br />
+              <span className="accent">{t.landing.closingH2Part2}</span>
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-3 md:justify-end">
+            <Link to="/discover" className={buttonClass("outline")}>
+              {t.landing.closingBrowse}
             </Link>
-          ) : (
-            <Link to="/login" className={buttonClass("primary")}>
-              Sign in
-              <span className="arrow">→</span>
-            </Link>
-          )}
+            {isAuthed ? (
+              <Link to="/watchlist" className={buttonClass("primary")}>
+                {t.landing.closingWatchlist}
+                <span className="arrow">→</span>
+              </Link>
+            ) : (
+              <Link to="/login" className={buttonClass("primary")}>
+                {t.landing.closingStart}
+                <span className="arrow">→</span>
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
-
-      <div className="grid gap-3 pt-6 md:grid-cols-3">
-        <Chip tone="neutral">self-hosted</Chip>
-        <Chip tone="info">no SaaS lock-in</Chip>
-        <Chip tone="ok">embeddings run local</Chip>
       </div>
     </section>
   );
