@@ -1,40 +1,85 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include"
-  });
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "ApiError";
   }
-  return response.json() as Promise<T>;
 }
 
-export async function apiPost(path: string): Promise<Response> {
-  return fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    credentials: "include"
-  });
-}
-
-export async function apiPostJson<TResponse>(
+async function request<T>(
   path: string,
-  body: unknown
-): Promise<TResponse> {
+  init: RequestInit & { parseJson?: boolean } = {}
+): Promise<T> {
+  const { parseJson = true, ...rest } = init;
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
     credentials: "include",
+    ...rest,
     headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(body)
+      ...(rest.body instanceof FormData
+        ? {}
+        : rest.body
+          ? { "Content-Type": "application/json" }
+          : {}),
+      ...rest.headers
+    }
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    let detail = "";
+    try {
+      detail = (await response.text()).slice(0, 200);
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(
+      response.status,
+      detail || `Request failed with ${response.status}`
+    );
   }
 
-  return response.json() as Promise<TResponse>;
+  if (!parseJson || response.status === 204) {
+    return undefined as T;
+  }
+  return (await response.json()) as T;
+}
+
+export function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, { method: "GET", signal });
+}
+
+export function apiPost<T>(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal
+): Promise<T> {
+  return request<T>(path, {
+    method: "POST",
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal
+  });
+}
+
+export function apiPatch<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal
+): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+    signal
+  });
+}
+
+export function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, {
+    method: "DELETE",
+    parseJson: false,
+    signal
+  });
 }
 
 export function authUrl(path: string): string {

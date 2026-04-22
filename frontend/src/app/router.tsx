@@ -1,0 +1,94 @@
+import {
+  Outlet,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  redirect
+} from "@tanstack/react-router";
+
+import { AppHeader } from "../features/layout/AppHeader";
+import { SiteFooter } from "../features/layout/SiteFooter";
+import { DiscoverPage } from "../routes/discover";
+import { LandingPage } from "../routes/index";
+import { LoginPage } from "../routes/login";
+import { NotificationsPage } from "../routes/notifications";
+import { RepoDetailPage } from "../routes/repo-detail";
+import { WatchlistPage } from "../routes/watchlist";
+import { useAuthStore } from "../state/auth-store";
+
+const rootRoute = createRootRoute({
+  component: () => (
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <SiteFooter />
+    </div>
+  )
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: LandingPage
+});
+
+const discoverRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/discover",
+  component: DiscoverPage
+});
+
+const repoDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/repos/$id",
+  component: RepoDetailPage
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: LoginPage
+});
+
+function requireAuth() {
+  const { status } = useAuthStore.getState();
+  if (status === "anonymous") {
+    throw redirect({ to: "/login" });
+  }
+}
+
+const watchlistRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/watchlist",
+  beforeLoad: requireAuth,
+  component: WatchlistPage
+});
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/notifications",
+  beforeLoad: requireAuth,
+  component: NotificationsPage
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  discoverRoute,
+  repoDetailRoute,
+  loginRoute,
+  watchlistRoute,
+  notificationsRoute
+]);
+
+export const router = createRouter({
+  routeTree,
+  defaultPreload: "intent"
+});
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
