@@ -233,7 +233,7 @@ async fn recompute_snippets(db: &PgPool, formula: &Formula, now: DateTime<Utc>) 
 #[derive(sqlx::FromRow)]
 struct ExternalMetricsRow {
     id: Uuid,
-    priors_last_commit_at: Option<DateTime<Utc>>,
+    last_commit_at: Option<DateTime<Utc>>,
     resolve_count: i64,
     build_success_count: i64,
     build_failure_count: i64,
@@ -246,7 +246,7 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
         r#"
         SELECT
           e.id AS id,
-          (e.priors ->> 'last_commit_at')::timestamptz AS priors_last_commit_at,
+          e.last_commit_at AS last_commit_at,
           COUNT(*) FILTER (WHERE qs.signal = 'resolve') AS resolve_count,
           COUNT(*) FILTER (WHERE qs.signal = 'build_success') AS build_success_count,
           COUNT(*) FILTER (WHERE qs.signal = 'build_failure') AS build_failure_count,
@@ -259,7 +259,7 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
           ) AS active_flags
         FROM external_artifacts e
         LEFT JOIN quality_signals qs ON qs.external_artifact_id = e.id
-        GROUP BY e.id, e.priors
+        GROUP BY e.id, e.last_commit_at
         "#,
     )
     .fetch_all(db)
@@ -273,7 +273,7 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
             build_success_count: row.build_success_count as i32,
             build_failure_count: row.build_failure_count as i32,
             regret_count: row.regret_count as i32,
-            last_update: row.priors_last_commit_at.unwrap_or(now),
+            last_update: row.last_commit_at.unwrap_or(now),
             flags: normalize_flags(row.active_flags),
         };
         let score = compute_score(&metrics, formula, now);

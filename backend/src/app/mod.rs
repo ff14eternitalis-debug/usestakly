@@ -10,7 +10,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{
     config::AppConfig,
-    handlers::{admin, auth, health, libraries, me, resolve, search, signals, snippets},
+    handlers::{admin, auth, health, libraries, me, repos, resolve, search, signals, snippets},
 };
 
 #[derive(Clone)]
@@ -67,6 +67,8 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
         .route("/api/resolve", get(resolve::resolve))
         .route("/api/search", get(search::search))
+        .route("/api/repos/search", get(repos::search_repos))
+        .route("/api/repos/{repo_id}", get(repos::get_repo))
         .layer(
             CorsLayer::new()
                 .allow_origin(frontend_origin)
