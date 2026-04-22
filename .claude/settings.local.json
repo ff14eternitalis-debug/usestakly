@@ -24,7 +24,8 @@
       "Bash(awk *)",
       "Bash(cargo run *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(docker exec usestakly-db *)"
     ]
   }
 }
