@@ -47,15 +47,15 @@ pub async fn search_github_repos(
           e.forks_count          AS forks_count,
           e.open_issues_count    AS open_issues_count,
           e.archived             AS archived,
-          e.last_commit_at       AS last_commit_at,
-          ascore.formula_version AS quality_formula_version,
-          ascore.freshness       AS quality_freshness,
-          ascore.adoption        AS quality_adoption,
-          ascore.reliability     AS quality_reliability,
-          ascore.abandonment     AS quality_abandonment,
-          ascore.overall         AS quality_overall,
-          ascore.flags           AS quality_flags,
-          ascore.computed_at     AS quality_computed_at
+          e.last_commit_at            AS last_commit_at,
+          ascore.formula_version      AS quality_formula_version,
+          ascore.freshness::float8    AS quality_freshness,
+          ascore.adoption::float8     AS quality_adoption,
+          ascore.reliability::float8  AS quality_reliability,
+          ascore.abandonment::float8  AS quality_abandonment,
+          ascore.overall::float8      AS quality_overall,
+          ascore.flags                AS quality_flags,
+          ascore.computed_at          AS quality_computed_at
         FROM external_artifacts e
         LEFT JOIN artifact_scores ascore
           ON ascore.external_artifact_id = e.id
@@ -135,17 +135,17 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
           e.open_issues_count    AS open_issues_count,
           e.archived             AS archived,
           e.last_commit_at       AS last_commit_at,
-          e.subscribers_count    AS subscribers_count,
-          e.default_branch       AS default_branch,
-          e.priors_fetched_at    AS priors_fetched_at,
-          ascore.formula_version AS quality_formula_version,
-          ascore.freshness       AS quality_freshness,
-          ascore.adoption        AS quality_adoption,
-          ascore.reliability     AS quality_reliability,
-          ascore.abandonment     AS quality_abandonment,
-          ascore.overall         AS quality_overall,
-          ascore.flags           AS quality_flags,
-          ascore.computed_at     AS quality_computed_at
+          e.subscribers_count         AS subscribers_count,
+          e.default_branch            AS default_branch,
+          e.priors_fetched_at         AS priors_fetched_at,
+          ascore.formula_version      AS quality_formula_version,
+          ascore.freshness::float8    AS quality_freshness,
+          ascore.adoption::float8     AS quality_adoption,
+          ascore.reliability::float8  AS quality_reliability,
+          ascore.abandonment::float8  AS quality_abandonment,
+          ascore.overall::float8      AS quality_overall,
+          ascore.flags                AS quality_flags,
+          ascore.computed_at          AS quality_computed_at
         FROM external_artifacts e
         LEFT JOIN artifact_scores ascore
           ON ascore.external_artifact_id = e.id

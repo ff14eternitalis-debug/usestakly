@@ -28,14 +28,14 @@ pub async fn search_snippets(
           s.description          AS description,
           s.language             AS language,
           sv.version             AS current_version,
-          ascore.formula_version AS quality_formula_version,
-          ascore.freshness       AS quality_freshness,
-          ascore.adoption        AS quality_adoption,
-          ascore.reliability     AS quality_reliability,
-          ascore.abandonment     AS quality_abandonment,
-          ascore.overall         AS quality_overall,
-          ascore.flags           AS quality_flags,
-          ascore.computed_at     AS quality_computed_at
+          ascore.formula_version      AS quality_formula_version,
+          ascore.freshness::float8    AS quality_freshness,
+          ascore.adoption::float8     AS quality_adoption,
+          ascore.reliability::float8  AS quality_reliability,
+          ascore.abandonment::float8  AS quality_abandonment,
+          ascore.overall::float8      AS quality_overall,
+          ascore.flags                AS quality_flags,
+          ascore.computed_at          AS quality_computed_at
         FROM snippets s
         JOIN libraries l ON l.id = s.library_id
         LEFT JOIN snippet_versions sv ON sv.id = s.current_version_id

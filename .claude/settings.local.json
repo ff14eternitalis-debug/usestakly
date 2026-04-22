@@ -21,7 +21,10 @@
       "Bash(git check-ignore *)",
       "Bash(cargo check *)",
       "Bash(cargo add *)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "Bash(cargo run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
