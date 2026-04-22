@@ -3,3 +3,4 @@ pub mod quality;
 pub mod reference;
 pub mod repo;
 pub mod snippet;
+pub mod watchlist;

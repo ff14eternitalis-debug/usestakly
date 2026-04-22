@@ -10,7 +10,10 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{
     config::AppConfig,
-    handlers::{admin, auth, health, libraries, me, repos, resolve, search, signals, snippets},
+    handlers::{
+        admin, auth, health, libraries, me, notifications, repos, resolve, search, signals,
+        snippets, watchlist,
+    },
 };
 
 #[derive(Clone)]
@@ -69,6 +72,27 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/search", get(search::search))
         .route("/api/repos/search", get(repos::search_repos))
         .route("/api/repos/{repo_id}", get(repos::get_repo))
+        .route(
+            "/api/watchlist",
+            get(watchlist::list_watchlist).post(watchlist::add_to_watchlist),
+        )
+        .route(
+            "/api/watchlist/{artifact_id}",
+            axum::routing::patch(watchlist::update_watch).delete(watchlist::remove_from_watchlist),
+        )
+        .route("/api/notifications", get(notifications::list_notifications))
+        .route(
+            "/api/notifications/unread-count",
+            get(notifications::unread_count),
+        )
+        .route(
+            "/api/notifications/read-all",
+            post(notifications::mark_all_read),
+        )
+        .route(
+            "/api/notifications/{notification_id}/read",
+            post(notifications::mark_notification_read),
+        )
         .layer(
             CorsLayer::new()
                 .allow_origin(frontend_origin)

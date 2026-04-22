@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::services::notifications::{self, ScoreSnapshot};
+
 const FORMULA_V1_TOML: &str = include_str!("../../../scoring/formula_v1.toml");
 
 #[derive(Debug, Clone, Deserialize)]
@@ -277,7 +279,21 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
             flags: normalize_flags(row.active_flags),
         };
         let score = compute_score(&metrics, formula, now);
+
+        let prev = notifications::fetch_prev_snapshot(db, row.id, &formula.meta.version)
+            .await
+            .context("fetching previous score snapshot")?;
         upsert_external_score(db, row.id, &score, &metrics, &formula.meta.version).await?;
+        let new_snapshot = ScoreSnapshot {
+            overall: score.overall,
+            abandonment: score.abandonment,
+            flags: metrics.flags.clone(),
+        };
+        if let Err(e) =
+            notifications::detect_and_emit(db, row.id, prev.as_ref(), &new_snapshot).await
+        {
+            tracing::warn!(artifact_id = %row.id, error = ?e, "failed to emit notifications");
+        }
         processed += 1;
     }
     Ok(processed)
