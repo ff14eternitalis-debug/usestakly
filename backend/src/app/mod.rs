@@ -64,6 +64,7 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             "/api/admin/scoring/recompute",
             post(admin::recompute_scores),
         )
+        .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
         .route("/api/resolve", get(resolve::resolve))
         .route("/api/search", get(search::search))
         .layer(

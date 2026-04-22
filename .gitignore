@@ -12,3 +12,6 @@ playwright-report/
 test-results/
 *.excalidraw
 *.tsbuildinfo
+
+# Private business docs — kept local, not pushed
+docs/business/business-model-exploration.md

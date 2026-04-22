@@ -1,0 +1,59 @@
+# Seed set for GitHub ingestion pipeline validation.
+#
+# Two buckets on purpose:
+#   - Abandoned / deprecated — expected to score LOW on freshness + reliability.
+#     Showcases that stars alone don't save a dying repo.
+#   - Actively maintained    — expected to score HIGH.
+#     Baseline of what a healthy OSS project looks like.
+#
+# Extend freely — the ingest handler is idempotent (ON CONFLICT DO UPDATE).
+
+[[repos]]
+owner = "request"
+name  = "request"
+note  = "archived 2020 — HTTP client, replaced by node-fetch/axios"
+
+[[repos]]
+owner = "moment"
+name  = "moment"
+note  = "maintenance mode since 2020 — authors recommend alternatives"
+
+[[repos]]
+owner = "lodash"
+name  = "lodash"
+note  = "maintenance-only, very low commit cadence"
+
+[[repos]]
+owner = "facebook"
+name  = "react"
+note  = "active — UI library reference"
+
+[[repos]]
+owner = "vercel"
+name  = "next.js"
+note  = "active — React meta-framework"
+
+[[repos]]
+owner = "expressjs"
+name  = "express"
+note  = "active but slow cadence — web framework"
+
+[[repos]]
+owner = "axios"
+name  = "axios"
+note  = "active — HTTP client"
+
+[[repos]]
+owner = "vitest-dev"
+name  = "vitest"
+note  = "active — test runner"
+
+[[repos]]
+owner = "colinhacks"
+name  = "zod"
+note  = "active — schema validation"
+
+[[repos]]
+owner = "trpc"
+name  = "trpc"
+note  = "active — end-to-end typesafe APIs"

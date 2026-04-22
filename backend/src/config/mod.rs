@@ -20,11 +20,16 @@ pub struct AppConfig {
     pub discord_client_id: Option<String>,
     pub discord_client_secret: Option<String>,
     pub admin_api_token: Option<String>,
+    pub github_token: Option<String>,
 }
 
 impl AppConfig {
     pub fn from_env() -> Result<Self> {
-        dotenvy::dotenv().ok();
+        if let Err(e) = dotenvy::dotenv()
+            && !matches!(&e, dotenvy::Error::Io(io) if io.kind() == std::io::ErrorKind::NotFound)
+        {
+            tracing::warn!(error = ?e, "failed to load .env");
+        }
 
         let host = env::var("APP_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
         let port = env::var("APP_PORT")
@@ -53,6 +58,9 @@ impl AppConfig {
         let discord_client_id = env::var("DISCORD_CLIENT_ID").ok();
         let discord_client_secret = env::var("DISCORD_CLIENT_SECRET").ok();
         let admin_api_token = env::var("ADMIN_API_TOKEN").ok();
+        let github_token = env::var("GITHUB_TOKEN")
+            .ok()
+            .filter(|s| !s.trim().is_empty());
 
         Ok(Self {
             host,
@@ -71,6 +79,7 @@ impl AppConfig {
             discord_client_id,
             discord_client_secret,
             admin_api_token,
+            github_token,
         })
     }
 

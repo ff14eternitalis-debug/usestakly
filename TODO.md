@@ -1,172 +1,162 @@
 # UseStakly — TODO MVP
 
-> Version : 4.0 — 2026-04-20
-> **Angle produit retenu** : registry qualité-scored pour agents IA — `docs/strategy-quality-scored-registry.md`
-> Référence architecture : `docs/plans/mvp-one-shot-blueprint.md` (à reconcilier avec le pivot)
-> Référence exécution : `docs/plans/mvp-file-by-file-checklist.md` (idem)
-
-> `UseStakly` est le nom produit retenu. `Project-K` reste l'ancien nom de travail encore présent dans certaines surfaces techniques.
-
-## ✅ Décision stratégique (2026-04-20)
-
-Pivot acté : on part sur le **registry qualité-scored** — les agents IA filtrent par signaux d'usage réel (résolutions, builds, regrets, flags) plutôt que par popularité ou stars.
-
-Implications structurelles :
-- **Phases 0–5** : acquis, inchangés.
-- **Phase 6 (Quality signals)** : nouvelle phase, prioritaire — capter la data dès le jour 1 est irréversible.
-- **Phase 7 (Search / Resolve)** : enrichie d'un param `filter` (auto / strict / explore).
-- **Phase 8 (MCP)** : `get_snippet` renvoie `quality_context` natif, provenance signée `slug@v + score@t`.
-- **Phase 9 (Safety / Quality gates)** : remonte au cœur produit — politiques de flags toxiques, process modéré security.
-- **Phase 10 (Bootstrap corpus)** : seed curé 200–500 snippets + priors externes pour éviter cold start brutal.
-
-### Décisions de scope
-
-Tranchées (2026-04-21) :
-
-- [x] **Annotation code public dès MVP — mode hybride lazy.** Référencement par slug canonique (`npm:request@2.88`, `github:owner/repo@sha`), priors externes (downloads, last_commit, stars) ingérés **à la demande** via MCP puis cachés. Pas de table miroir de tout npm. Débloquer la démo killer Phase 10 sans la machinerie d'ingestion massive.
-- [x] **Formule de scoring publique et versionnée.** Poids exacts dans `backend/scoring/formula_v1.toml`, chaque score stocké tagué `formula_version`. Anti-gaming via réputation owner + evidence obligatoire, pas via opacité. Transparence > obscurité — un agent doit pouvoir expliquer pourquoi il rejette un artefact.
-
-Encore à trancher :
-
-- [ ] Extension IDE / CLI en parallèle du MCP, ou tout miser sur MCP ? (reportable en Phase 10)
-- [ ] Seed corpus : qui cure les 200 premiers snippets, selon quels critères ? (reportable en Phase 10)
-
-## Mode d'emploi
-
-Cette checklist ne remplace pas les documents détaillés.
-Elle sert de feuille de route courte pendant l'implémentation.
-
-Ordre recommandé :
-1. `docs/strategy-quality-scored-registry.md` (angle produit)
-2. `docs/plans/mvp-one-shot-blueprint.md` (à relire avec lunettes pivot)
-3. `docs/plans/mvp-file-by-file-checklist.md` (idem)
-4. cette checklist
+> Version : 5.0 — 2026-04-21
+> **Pivot produit acté** : on abandonne la bibliothèque de snippets.
+> Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
+> Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
+> Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 
 ---
 
-## Phase 0 — Repo
+## Vision produit recentrée
 
-- [x] Doc centralisée dans `docs/`
-- [x] Ajouter `.gitignore`
-- [x] Ajouter `.editorconfig`
-- [x] Ajouter `.env.example`
-- [x] Ajouter `docker-compose.yml`
-- [x] Ajouter CI GitHub Actions initiale
-- [x] Mettre à jour le `README.md`
+Deux fonctions noyau :
 
-## Phase 1 — Backend bootstrap
+1. **Discovery qualité-scored** — un dev cherche un outil (ex: « date picker React timezone »), UseStakly retourne les repos GitHub scorés par **usage réel** (reliability, abandonment, freshness), pas par stars. Réduit le bruit de la recherche GitHub où les repos hypés masquent les vrais choix techniques.
+2. **Suivi des repos** — un dev met des repos dans sa watchlist et est notifié quand un score bouge significativement (abandonment up, nouveau flag `security-issue`, maintainer silencieux 90 j, etc.). GitHub ne fournit pas ce suivi qualité.
 
-- [x] Créer `backend/Cargo.toml`
-- [x] Créer `backend/src/main.rs`
-- [x] Créer `backend/src/app/mod.rs`
-- [x] Créer `backend/src/config/mod.rs`
-- [x] Créer `backend/src/db/mod.rs`
-- [x] Créer `backend/src/telemetry/mod.rs`
-- [x] Créer route `GET /health`
-- [x] Créer route `GET /api/me`
+Les agents IA consomment la même data via MCP.
 
-## Phase 2 — Base de données
+---
 
-- [x] Ajouter migration `0001_init_extensions.sql`
-- [x] Ajouter migration `0002_users_auth.sql`
-- [x] Ajouter migration `0003_libraries.sql`
-- [x] Ajouter migration `0004_snippet_kinds.sql`
-- [x] Ajouter migration `0005_snippets.sql`
-- [x] Ajouter migration `0006_snippet_versions.sql`
-- [x] Ajouter migration `0007_tags_and_rule_sets.sql`
-- [x] Ajouter migration `0008_permissions_and_reports.sql`
-- [x] Ajouter migration `0009_generations_and_indexes.sql`
+## ⚠ Ce qui est retiré du produit
 
-## Phase 3 — Frontend bootstrap
+| Retiré | Devenir |
+|---|---|
+| Libraries / snippets (CRUD, UI, discovery publique) | Schéma DB conservé (tables non droppées), **endpoints + UI dormants**. Réactivables plus tard si un use-case émerge. |
+| Tier Team / registry privé | Retiré du roadmap. Le scope est 100 % repos GitHub publics OSS. |
+| Couverture npm / crates.io / shadcn | Reporté. MVP = GitHub uniquement. |
+| Seed corpus manuel de 200–500 snippets (ancienne Phase 10) | Remplacé par ingestion automatique des repos GitHub. |
 
-- [x] Créer `frontend/package.json`
-- [x] Créer `frontend/vite.config.ts`
-- [x] Créer `frontend/tsconfig.json`
-- [x] Créer `frontend/index.html`
-- [x] Créer `frontend/src/main.tsx`
-- [x] Créer `frontend/src/app/providers.tsx`
-- [x] Créer `frontend/src/components/layout/AppShell.tsx`
-- [x] Créer `frontend/src/lib/api-client.ts`
-- [x] Retirer `frontend/src/lib/supabase.ts` et la dépendance `@supabase/supabase-js` du `package.json` (décision VPS, plus d'auth SaaS)
-- [x] Créer stores Zustand minimaux
+## ✅ Acquis techniques réutilisables (phases 0–6)
 
-## Phase 4 — Auth
+Ce qui est déjà fait est **agnostique au scope** et reste pertinent :
 
-> App auto-hébergée sur VPS → **OAuth direct côté backend**, pas de Supabase / SaaS d'auth.
+- Repo + CI + Postgres + Docker compose (Phase 0)
+- Backend bootstrap Axum + SQLx + config + migrations (Phase 1)
+- Migrations 0001–0009 (users, libraries, snippets, versions, generations) — certaines deviennent dormantes, aucune à rollback
+- **Auth OAuth GitHub + Discord avec session JWT cookie** (Phase 4) — essentielle pour le nouveau flow (watchlist, réputation)
+- **Migration 0010 `quality_signals`** avec table `external_artifacts`, `quality_signals`, `artifact_scores` — **exactement** ce qu'il faut pour le nouveau produit
+- **`scoring/formula_v1.toml`** + service `capture::record_signal` + service `scoring::recompute_all_scores` — gardent leur valeur, cible à ajuster
+- **Endpoint `POST /api/snippets/:id/signals`** — sera refactoré pour viser `external_artifacts`
+- **Endpoints `/api/resolve` et `/api/search` avec filter auto/strict/explore** — filtres OK, source à repointer sur `external_artifacts`
+- **Endpoint admin `/api/admin/scoring/recompute`** — OK
+- Audit sécu commit `4e16c0a` validé (voir `docs/security-audit-2026-04-21.md`)
 
-- [x] Implémenter OAuth GitHub (callback + session JWT cookie)
-- [x] Implémenter OAuth Discord (callback + session JWT cookie)
-- [x] Implémenter synchronisation `users` / `auth_identities`
-- [ ] Ajouter UI login GitHub / Discord réelle dans le frontend
-- [x] Connecter `GET /api/me` à l'utilisateur courant en mode dev temporaire
+Frontend (Phase 3) : le shell, l'auth, le theme, la providers tree **restent utiles**. Les vues libraries/snippets sont à retirer (Phase R6).
 
-## Phase 5 — Libraries / Snippets
+---
 
-- [x] Implémenter modèles métier libraries
-- [x] Implémenter CRUD libraries
-- [x] Implémenter modèles métier snippets
-- [x] Implémenter CRUD snippets
-- [x] Implémenter versioning append-only
-- [x] Implémenter références canoniques
+## Nouvelles phases (R = refactor vers le pivot)
 
-## Phase 6 — Quality signals (fondation)
+### Phase R1 — Ingestion GitHub ⏫ PRIORITÉ
 
-> Prérequis de tout le reste — toutes les phases suivantes consomment ce schéma et cette télémétrie.
+Pipeline neuf. C'est le cœur du nouveau produit : sans repos ingérés, rien à scorer.
 
-- [x] Migration `0010_quality_signals.sql` — `external_artifacts`, `quality_signals` polymorphique, `artifact_scores` tagués `formula_version`
-- [x] `scoring/formula_v1.toml` — dimensions et poids publics et versionnés
-- [x] Domain `quality` + service `capture::record_signal` (evidence enforcement par `SignalKind`)
-- [x] Endpoint `POST /api/snippets/:id/signals` — signaux actifs uniquement (les passifs viendront du MCP)
-- [x] Service `scoring::recompute_all_scores` (formule pure + agrégation SQL, upsert sur `formula_version`)
-- [x] Endpoint admin `POST /api/admin/scoring/recompute` (gardé par `ADMIN_API_TOKEN`)
-- [x] Tests unitaires sur les fonctions pures du scoring (5/5)
-- [ ] Capture passive au `resolve_reference` — bloquée sur Phase 8 (MCP)
-- [ ] Pondération réputation owner (anti-gaming : compte neuf = poids 0) — prévue formula_v2
-- [ ] Politique de flags toxiques (`deprecated`, `broken-on-X`, `security-issue`) : evidence + consensus N users + appel auteur
+- [ ] Migration `0011_github_artifacts.sql` — colonnes GitHub-specific sur `external_artifacts` (owner, name, default_branch, stars, forks, license, archived, language, last_commit_at, open_issues_count)
+- [ ] Service `ingestion::github` — client REST (octocrab ou reqwest direct), auth via GitHub App (préféré) ou PAT fallback
+- [ ] Rate-limit handling : conditional requests (ETags), backoff, quota monitoring
+- [ ] Ingestion priors snapshot : stars, forks, subscribers, last_commit_at, open_issues, archived, language, license
+- [ ] Computation priors dérivés : `freshness` (via `last_commit_at` + formula), `owner_inactive_days` (via events API)
+- [ ] Refresh cadence : daily par défaut, horaire pour repos watchés
+- [ ] Critère de corpus v1 : **à trancher** — top N par langage, sur demande, ou quand un user watch ?
+- [ ] Endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé
+- [ ] Endpoint `POST /api/repos/add` — user propose un repo à ingérer
+- [ ] Tests unitaires sur parsing réponses GitHub
+- [ ] Mapping `github.com/owner/repo` → UUID `external_artifact_id` (idempotent)
 
-## Phase 7 — Search / Resolve (avec filtres qualité)
+### Phase R2 — Discovery qualité-scored
 
-- [x] Parser `@library:snippet@version` (`domain::reference::parse_reference`, pur + testé)
-- [x] Implémenter `/api/resolve` — JOIN `artifact_scores`, auth optionnelle (public + own)
-- [x] Implémenter `/api/search?q=&filter=auto|strict|explore`
-  - `auto` : `reliability >= 0.9 AND abandonment <= 0.3 AND flags NOT IN (security-issue, broken)`
-  - `strict` : `reliability >= 0.95 AND abandonment <= 0.2 AND overall >= 0.85 AND flags = []`
-  - `explore` : aucun filtre, snippets non scorés inclus
-- [ ] Recherche hybride (lexical + vector) — vector reporté (fastembed)
-- [ ] Embedding `fastembed` (local)
-- [ ] Signal `stack-match` calculé au moment de la query (contre `package.json` / `Cargo.toml` client)
+Remplace la search snippets par la search repos GitHub.
 
-## Phase 8 — MCP (avec quality context natif)
+- [ ] `/api/search` repointé : cherche dans `external_artifacts` (repos GitHub), plus dans `snippets`
+- [ ] Filtres existants conservés : `filter=auto|strict|explore` (définis dans formula_v1)
+- [ ] Filtres nouveaux : langage, license, stars min/max, freshness min
+- [ ] Recherche lexicale : ILIKE sur `name` + `description` + topics GitHub
+- [ ] Recherche sémantique (Phase R2b) : `fastembed` local, embedding des descriptions, pgvector
+- [ ] Ranking combiné : lexical + sémantique + score qualité
+- [ ] Endpoint `GET /api/repos/:id` — profil complet (dimensions, flags, historique scores, derniers signaux)
+- [ ] UX d'explication : « pourquoi ce repo est proposé, pourquoi request@2.88 est exclu en mode auto »
 
-- [ ] Ajouter route MCP
-- [ ] Implémenter `resolve_reference` — logge outcome pour `resolve_count`
-- [ ] Implémenter `search_library` avec param `filter`
-- [ ] Implémenter `get_snippet_with_quality_context` — renvoie score multi-dim + flags + provenance signée `slug@v + score@t`
-- [ ] Implémenter `check_dependencies`
-- [ ] Implémenter `assemble_plan`
-- [ ] Implémenter `log_generation` avec outcome post-insertion (T+1h) pour alimenter `build_success_rate` / `regret_rate`
+### Phase R3 — Watchlist & suivi
 
-## Phase 9 — Safety / Quality gates (cœur produit)
+Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 
-- [ ] Sanitize de contenu texte
-- [ ] Classification de risque
-- [ ] Exclure `flagged` / `quarantined` en mode `auto` (par défaut du MCP)
-- [ ] Provenance obligatoire dans toute réponse MCP (`// Assemblé depuis: slug@v, score: X.XX`)
-- [ ] Process modéré pour `security-issue` (pas de publication avant validation, historique transparent)
-- [ ] Graphe Sybil-resistant basé sur OAuth GitHub/Discord (pondération par historique)
+- [ ] Migration `0012_watchlists.sql` — `watchlists`, `watched_artifacts`, `notifications`
+- [ ] Endpoints `/api/watchlist` — CRUD + ajouter / retirer un repo
+- [ ] Détection de changement significatif : diff score T vs T-1, nouveaux flags, dernière activité owner
+- [ ] Règles d'alerte défaut : abandonment +0.2, nouveau flag `security-issue` / `broken`, maintainer silencieux 90 j, score `overall` qui descend sous seuil
+- [ ] Règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
+- [ ] Canal notification v1 : **in-app** seulement (centre de notifications côté frontend)
+- [ ] Canal notification v2 : email (via service transactionnel), webhook pour devs avancés
+- [ ] Worker cron : job quotidien qui diff les scores et génère les notifications
+- [ ] Digest email hebdomadaire pour les watchers actifs
 
-## Phase 10 — Bootstrap corpus
+### Phase R4 — Signaux actifs / flags toxiques (cœur produit)
 
-> Contre le cold start : sans 6 mois d'usage, les signaux sont faibles. Nécessite une phase de seed soutenue.
+Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 
-- [ ] Curer 200–500 snippets seed high-quality (critères à définir — cf. décision de scope)
-- [ ] Import de priors externes (stars GitHub, downloads npm, freshness des repos) comme base de scoring jour 1
-- [ ] Démo killer : agent qui refuse `request@2.88` pour cause de `abandonment: 0.92` en mode `auto` (avant/après visible en 30 s)
+- [ ] Endpoint `POST /api/repos/:id/signals` — refactor de `/api/snippets/:id/signals`, évidence obligatoire
+- [ ] Politique flags toxiques — `deprecated`, `broken-on-X`, `security-issue` : evidence + **consensus N users distincts** avec réputation > seuil
+- [ ] Processus modéré pour `security-issue` — publication retardée, appel possible par owner
+- [ ] Appel / dispute par l'owner (via OAuth GitHub matching login)
+- [ ] Historique transparent public des flags (timeline affichable sur le profil repo)
+- [ ] Pondération réputation owner — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
+- [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 
-## Phase 11 — Validation
+### Phase R5 — MCP adapté aux repos
 
-- [x] Lancer `cargo check`
-- [ ] Lancer `cargo test`
-- [x] Lancer `npm install`
-- [x] Lancer `npm run build`
-- [ ] Vérifier le flow local complet (auth → création snippet → signal passif loggé → search avec filter → MCP resolve avec quality_context)
+Plus des snippets — des repos GitHub.
+
+- [ ] Route MCP SSE / WebSocket
+- [ ] Auth agent : token dédié distinct de la session web (pour éviter qu'un client web détourné spamme `build_success`)
+- [ ] Outil `search_github_repos(query, filter, language?, stack?)` → candidats scorés
+- [ ] Outil `get_repo_quality_context(owner/repo)` → profil complet signé (`repo@sha + score@t + formula_version`)
+- [ ] Outil `log_usage(repo, outcome)` → alimente `build_success_rate` et `regret_rate` passifs
+- [ ] Outil `watch_repo(repo)` — ajoute à la watchlist du user agent
+- [ ] Provenance obligatoire dans toutes les réponses : `// Evalué: github.com/owner/repo@sha, score: 0.92, formula_v1, t=...`
+
+### Phase R6 — Refonte frontend complète
+
+Le frontend actuel est centré snippets. À démolir en grande partie, à rebâtir autour de discovery + watchlist.
+
+- [ ] **Garder** : shell global, providers, theme, auth flow OAuth, layout base
+- [ ] **Retirer** (ou mettre en feature flag off) : pages libraries, pages snippets, discovery snippets publics, creator flow snippets
+- [ ] **Nouveau** : landing orientée outil de veille — pitch, démo visible, CTA « watch your first repo »
+- [ ] **Nouveau** : page recherche / discovery — barre de recherche + résultats scorés + filtres latéraux + explications du scoring
+- [ ] **Nouveau** : page profil repo — header avec meta GitHub + barres de dimensions + liste flags + graph historique score + bouton `Watch` + timeline signaux
+- [ ] **Nouveau** : dashboard watchlist — grid ou liste avec mini-score + diff récent + accès rapide au profil
+- [ ] **Nouveau** : centre de notifications (in-app) — changements scores, nouveaux flags, digests
+- [ ] **Nouveau** : page compte — réputation user (basée sur ses signaux validés), historique contributions, règles d'alerte perso
+- [ ] TanStack Query à câbler (déjà installé) pour gérer le cache / revalidation des profils repos
+- [ ] Router : rester sur hash routing ou basculer TanStack Router ? **à trancher**
+
+### Phase R7 — Validation e2e
+
+- [ ] Flow user : login OAuth → search « date picker react » → voit résultats scorés → ouvre profil repo → clique Watch → (24 h plus tard en simu) reçoit notif de changement
+- [ ] Flow agent : MCP search → get_repo_quality_context → log_usage → signal propagé
+- [ ] Tests E2E Playwright sur les flows critiques
+- [ ] Vérification sécu : l'audit `docs/security-audit-2026-04-21.md` reste valide sur les briques existantes, **refaire un audit** après R1 + R2 + R3 (surface d'attaque étendue : clients GitHub externes, queue de notifications, webhook)
+
+---
+
+## Décisions encore ouvertes
+
+- [ ] **R1** — critère de corpus initial : top N / sur demande / via watchlist uniquement ?
+- [ ] **R3** — canal notification v1 : in-app suffit, ou email obligatoire dès le MVP ?
+- [ ] **R5** — token agent : JWT dédié généré par l'user, ou OAuth device flow ?
+- [ ] **R6** — router frontend : garder hash custom ou migrer TanStack Router ?
+- [ ] **R6** — faut-il garder les vues libraries/snippets cachées (réactivables) ou les dégommer net ?
+- [ ] **Intuition couche 2** : POC quand ? Jamais, post-MVP, post-traction ?
+
+---
+
+## Ordre d'exécution recommandé
+
+1. **R1** (ingestion GitHub) — sans ça rien ne tourne
+2. **R2** (search repos) — débloque la démo killer
+3. **R6 partiel** (landing + search UI) — donne un produit visible aux users
+4. **R3** (watchlist + notifs) — le deuxième pilier, passer du « je cherche une fois » à « je reviens »
+5. **R5** (MCP) — débloque les signaux passifs, alimente le flywheel
+6. **R4** (flags toxiques) — avant ouverture publique (sinon review-bombing immédiat)
+7. **R6 reste** + **R7** (validation) — polish et launch

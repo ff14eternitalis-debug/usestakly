@@ -1,18 +1,7 @@
-mod app;
-mod auth;
-mod config;
-mod db;
-mod domain;
-mod handlers;
-mod mcp;
-mod search;
-mod security;
-mod services;
-mod telemetry;
-
 use anyhow::Context;
 use tokio::net::TcpListener;
 use tracing::info;
+use usestakly_backend::{app, config, db, telemetry};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

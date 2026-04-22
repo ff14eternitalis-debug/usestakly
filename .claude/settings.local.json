@@ -17,7 +17,11 @@
       "Bash(sc query *)",
       "Bash(cargo clippy *)",
       "Bash(cargo test *)",
-      "Bash(cargo fmt *)"
+      "Bash(cargo fmt *)",
+      "Bash(git check-ignore *)",
+      "Bash(cargo check *)",
+      "Bash(cargo add *)",
+      "Bash(awk *)"
     ]
   }
 }
