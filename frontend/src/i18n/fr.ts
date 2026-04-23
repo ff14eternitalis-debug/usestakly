@@ -3,6 +3,7 @@ import type { Dict } from "./en";
 export const fr: Dict = {
   nav: {
     discover: "Explorer",
+    mcpGuide: "Guide MCP",
     watchlist: "Veille",
     notifications: "Notifications",
     account: "Compte",
@@ -219,6 +220,11 @@ export const fr: Dict = {
     continueDiscord: "Continuer avec Discord",
     privacy:
       "Aucun e-mail envoyé, aucune liste marketing. OAuth est toute la poignée de main — on apprend ton pseudo et ton avatar, rien de plus."
+  },
+  mcpGuide: {
+    eyebrow: "Guide MCP",
+    h1: "Installer UseStakly dans ton agent",
+    wip: "en construction"
   },
   account: {
     eyebrow: "Compte",

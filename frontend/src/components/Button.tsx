@@ -30,7 +30,7 @@ const variants: Record<Variant, string> = {
   danger:
     "bg-transparent text-[color:var(--color-danger)] border border-[color:var(--color-danger)]/40 hover:bg-[color:var(--color-danger)]/10 hover:border-[color:var(--color-danger)]",
   outline:
-    "bg-transparent text-fg-dim border border-line hover:border-line-strong hover:text-fg"
+    "bg-transparent text-fg-dim border border-line hover:border-accent hover:text-accent"
 };
 
 export function buttonClass(

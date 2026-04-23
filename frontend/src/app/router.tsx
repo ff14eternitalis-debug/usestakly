@@ -12,6 +12,7 @@ import { AccountPage } from "../routes/account";
 import { DiscoverPage } from "../routes/discover";
 import { LandingPage } from "../routes/index";
 import { LoginPage } from "../routes/login";
+import { McpGuidePage } from "../routes/mcp-guide";
 import { NotificationsPage } from "../routes/notifications";
 import { RepoDetailPage } from "../routes/repo-detail";
 import { WatchlistPage } from "../routes/watchlist";
@@ -39,6 +40,12 @@ const discoverRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/discover",
   component: DiscoverPage
+});
+
+const mcpGuideRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/mcp-guide",
+  component: McpGuidePage
 });
 
 const repoDetailRoute = createRoute({
@@ -84,6 +91,7 @@ const accountRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
+  mcpGuideRoute,
   repoDetailRoute,
   loginRoute,
   watchlistRoute,

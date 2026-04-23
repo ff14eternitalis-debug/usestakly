@@ -1,6 +1,7 @@
 export const en = {
   nav: {
     discover: "Discover",
+    mcpGuide: "MCP guide",
     watchlist: "Watchlist",
     notifications: "Notifications",
     account: "Account",
@@ -216,6 +217,11 @@ export const en = {
     continueDiscord: "Continue with Discord",
     privacy:
       "No emails are sent, no marketing list. OAuth is the entire handshake — we learn your username and avatar, nothing more."
+  },
+  mcpGuide: {
+    eyebrow: "MCP guide",
+    h1: "Install UseStakly in your agent",
+    wip: "work in progress"
   },
   account: {
     eyebrow: "Account",

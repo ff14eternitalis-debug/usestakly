@@ -280,7 +280,7 @@ button:hover .arrow {
 }
 
 .nav-link:hover {
-  color: var(--color-fg);
+  color: var(--color-accent);
 }
 
 .nav-link.active {
