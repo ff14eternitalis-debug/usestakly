@@ -5,6 +5,7 @@ export const fr: Dict = {
     discover: "Explorer",
     watchlist: "Veille",
     notifications: "Notifications",
+    account: "Compte",
     signIn: "Connexion",
     signOut: "déconnexion"
   },
@@ -110,6 +111,14 @@ export const fr: Dict = {
     starsMinLabel: "Étoiles min",
     starsMinPlaceholder: "0",
     hintLabel: "Indice",
+    addRepoLabel: "Ajouter un dépôt GitHub",
+    addRepoPlaceholder: "owner/repo ou https://github.com/owner/repo",
+    addRepoAction: "Ingérer le dépôt",
+    addRepoPending: "Ingestion…",
+    addRepoHelp: "Colle une URL GitHub ou owner/repo pour l'indexer maintenant.",
+    addRepoSuccess: "Dépôt ajouté au registre :",
+    addRepoExists: "Dépôt déjà indexé. Métadonnées et score rafraîchis :",
+    addRepoOpen: "Ouvrir le profil",
     measuring: "mesure en cours…",
     entriesSingle: "entrée",
     entriesPlural: "entrées",
@@ -208,5 +217,65 @@ export const fr: Dict = {
     continueDiscord: "Continuer avec Discord",
     privacy:
       "Aucun e-mail envoyé, aucune liste marketing. OAuth est toute la poignée de main — on apprend ton pseudo et ton avatar, rien de plus."
+  },
+  account: {
+    eyebrow: "Compte",
+    h1Part1: "Tokens agent,",
+    h1Accent: "sous contrôle.",
+    intro:
+      "Crée des tokens MCP pour tes agents de code, révoque ceux que tu ne veux plus garder, et garde une écriture bornée. Les tokens ne sont affichés en clair qu'une seule fois.",
+    tokenLabel: "Label du nouveau token",
+    tokenPlaceholder: "ex. claude-desktop, cursor, codex",
+    create: "Créer le token",
+    creating: "Création…",
+    activeTokens: "Tokens MCP actifs",
+    emptyTitle: "Aucun token MCP pour l'instant.",
+    emptyBody:
+      "Crée un token par agent ou machine pour que la révocation reste chirurgicale. Tous les write tools sont limités par token.",
+    createdNow: "Créé à l'instant",
+    lastUsedNever: "Jamais utilisé",
+    lastUsed: "Dernier usage",
+    createdAt: "Créé",
+    revoke: "révoquer",
+    revoking: "révocation…",
+    tokenShownOnce: "Token en clair",
+    tokenShownOnceHint: "Cette valeur n'est affichée qu'une fois. Enregistre-la maintenant dans ton client MCP.",
+    copy: "copier",
+    copied: "copié",
+    quotaTitle: "Sécurité d'écriture",
+    quotaBody:
+      "Les write tools MCP sont limités par token, les appels log_usage dupliqués sont ralentis, et les outcomes négatifs répétés sont refroidis pour réduire le poisoning.",
+    reputation: "Réputation",
+    passiveSignals: "Signaux passifs",
+    eligibility: "Signals actifs",
+    eligible: "éligible",
+    notEligible: "pas encore éligible",
+    adminTitle: "File de modération",
+    adminTokenLabel: "Token admin",
+    adminTokenPlaceholder: "Colle x-admin-token",
+    adminLoad: "Charger les pending",
+    adminApprove: "approuver",
+    adminReject: "rejeter",
+    adminEmpty: "Aucun signal repo en attente.",
+    adminReviewing: "review…"
+  },
+  signals: {
+    title: "Signaler un problème",
+    hint:
+      "Les signals actifs demandent une preuve et assez de réputation. Les flags sévères ne sortent publiquement qu'après accord de plusieurs comptes de confiance.",
+    signalLabel: "Signal",
+    evidenceUrlLabel: "URL de preuve",
+    evidenceDescriptionLabel: "Résumé de la preuve",
+    submit: "Envoyer le signal",
+    submitting: "Envoi…",
+    success: "Signal enregistré. Les flags publics ne bougent qu'après consensus de comptes fiables.",
+    ownerTitle: "Review owner",
+    ownerHint:
+      "Si ce repo appartient à ton compte GitHub, tu peux contester ici un signal actif pending ou accepté.",
+    disputeReasonLabel: "Raison de la contestation",
+    dispute: "Contester le signal",
+    disputing: "Contestation…",
+    disputed: "Signal contesté. Il repasse en review.",
+    status: "statut"
   }
 };

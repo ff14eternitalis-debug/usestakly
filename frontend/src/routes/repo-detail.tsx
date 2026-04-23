@@ -1,4 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button, buttonClass } from "../components/Button";
@@ -19,7 +20,7 @@ import {
   formatStars,
   scoreTone
 } from "../lib/format";
-import type { RepoProfile, WatchedRepo } from "../lib/types";
+import type { RepoProfile, RepoViewerState, WatchedRepo } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
 
 function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
@@ -41,6 +42,10 @@ export function RepoDetailPage() {
   const { id } = useParams({ from: "/repos/$id" });
   const isAuthed = useAuthStore((s) => s.status === "authenticated");
   const queryClient = useQueryClient();
+  const [signal, setSignal] = useState("deprecated");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [evidenceDescription, setEvidenceDescription] = useState("");
+  const [disputeReason, setDisputeReason] = useState("");
 
   const profile = useQuery({
     queryKey: ["repo", id],
@@ -50,6 +55,13 @@ export function RepoDetailPage() {
   const watchlistQuery = useQuery({
     queryKey: ["watchlist"],
     queryFn: ({ signal }) => apiGet<WatchedRepo[]>("/api/watchlist", signal),
+    enabled: isAuthed
+  });
+
+  const viewerState = useQuery({
+    queryKey: ["repo-viewer-state", id],
+    queryFn: ({ signal }) =>
+      apiGet<RepoViewerState>(`/api/repos/${id}/viewer-state`, signal),
     enabled: isAuthed
   });
 
@@ -68,6 +80,32 @@ export function RepoDetailPage() {
     mutationFn: () => apiDelete(`/api/watchlist/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    }
+  });
+
+  const createSignal = useMutation({
+    mutationFn: () =>
+      apiPost(`/api/repos/${id}/signals`, {
+        signal,
+        evidenceUrl: evidenceUrl.trim() || undefined,
+        evidenceDescription: evidenceDescription.trim() || undefined
+      }),
+    onSuccess: async () => {
+      setEvidenceUrl("");
+      setEvidenceDescription("");
+      await queryClient.invalidateQueries({ queryKey: ["repo", id] });
+    }
+  });
+
+  const disputeSignal = useMutation({
+    mutationFn: (signalId: string) =>
+      apiPost(`/api/repos/${id}/signals/${signalId}/dispute`, {
+        reason: disputeReason.trim()
+      }),
+    onSuccess: async () => {
+      setDisputeReason("");
+      await queryClient.invalidateQueries({ queryKey: ["repo-viewer-state", id] });
+      await queryClient.invalidateQueries({ queryKey: ["repo", id] });
     }
   });
 
@@ -110,6 +148,10 @@ export function RepoDetailPage() {
   const repo = profile.data;
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
+  const signalError =
+    createSignal.error instanceof ApiError ? createSignal.error.message : null;
+  const disputeError =
+    disputeSignal.error instanceof ApiError ? disputeSignal.error.message : null;
 
   return (
     <article className="shell grid gap-10 py-10 md:py-14">
@@ -305,6 +347,19 @@ export function RepoDetailPage() {
                       {signal.evidenceDescription}
                     </p>
                   ) : null}
+                  {signal.reviewStatus !== "accepted" || signal.events.length > 0 ? (
+                    <div className="grid gap-1 pt-1">
+                      <p className="mono text-[0.76rem] text-fg-muted">
+                        {t.signals.status}: {signal.reviewStatus}
+                      </p>
+                      {signal.events.slice(0, 3).map((event, idx) => (
+                        <p key={idx} className="mono text-[0.74rem] text-fg-muted">
+                          {event.eventKind} · {formatRelative(event.createdAt)}
+                          {event.note ? ` · ${event.note}` : ""}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <span className="kicker whitespace-nowrap">
                   {formatRelative(signal.createdAt)}
@@ -314,6 +369,124 @@ export function RepoDetailPage() {
           </ul>
         )}
       </section>
+
+      {isAuthed ? (
+        <>
+          <hr className="hairline" />
+          <section className="grid gap-4">
+            <h2 className="display-md">{t.signals.title}</h2>
+            <p className="max-w-[66ch] text-[0.94rem] leading-relaxed text-fg-dim">
+              {t.signals.hint}
+            </p>
+            <div className="surface grid gap-4 p-5 md:grid-cols-2">
+              <label className="grid gap-1.5">
+                <span className="kicker">{t.signals.signalLabel}</span>
+                <select
+                  value={signal}
+                  onChange={(e) => setSignal(e.target.value)}
+                  className="input"
+                >
+                  <option value="deprecated">deprecated</option>
+                  <option value="broken">broken</option>
+                  <option value="security_issue">security_issue</option>
+                  <option value="doesnt_match_claim">doesnt_match_claim</option>
+                </select>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="kicker">{t.signals.evidenceUrlLabel}</span>
+                <input
+                  type="url"
+                  value={evidenceUrl}
+                  onChange={(e) => setEvidenceUrl(e.target.value)}
+                  className="input"
+                  placeholder="https://..."
+                />
+              </label>
+              <label className="grid gap-1.5 md:col-span-2">
+                <span className="kicker">{t.signals.evidenceDescriptionLabel}</span>
+                <textarea
+                  value={evidenceDescription}
+                  onChange={(e) => setEvidenceDescription(e.target.value)}
+                  className="input min-h-[120px]"
+                />
+              </label>
+              <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => createSignal.mutate()}
+                  disabled={createSignal.isPending}
+                >
+                  {createSignal.isPending ? t.signals.submitting : t.signals.submit}
+                </Button>
+                {signalError ? (
+                  <p className="text-[0.86rem]" style={{ color: "var(--color-danger)" }}>
+                    {signalError}
+                  </p>
+                ) : createSignal.isSuccess ? (
+                  <p className="text-[0.86rem] text-fg-dim">{t.signals.success}</p>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {isAuthed && viewerState.data?.canDisputeSignals ? (
+        <>
+          <hr className="hairline" />
+          <section className="grid gap-4">
+            <h2 className="display-md">{t.signals.ownerTitle}</h2>
+            <p className="max-w-[66ch] text-[0.94rem] leading-relaxed text-fg-dim">
+              {t.signals.ownerHint}
+            </p>
+            <div className="grid gap-3">
+              {viewerState.data.visibleSignals
+                .filter((item) => !item.isPassive)
+                .map((item) => (
+                  <div key={item.id} className="surface grid gap-3 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Chip tone="info" mono>
+                        {item.signal}
+                      </Chip>
+                      <span className="kicker">
+                        {t.signals.status}: {item.reviewStatus}
+                      </span>
+                    </div>
+                    {item.evidenceDescription ? (
+                      <p className="text-[0.9rem] text-fg-dim">{item.evidenceDescription}</p>
+                    ) : null}
+                    <label className="grid gap-1.5">
+                      <span className="kicker">{t.signals.disputeReasonLabel}</span>
+                      <textarea
+                        value={disputeReason}
+                        onChange={(e) => setDisputeReason(e.target.value)}
+                        className="input min-h-[96px]"
+                      />
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => disputeSignal.mutate(item.id)}
+                        disabled={disputeSignal.isPending || disputeReason.trim().length < 10}
+                      >
+                        {disputeSignal.isPending ? t.signals.disputing : t.signals.dispute}
+                      </Button>
+                      {disputeError ? (
+                        <p className="text-[0.86rem]" style={{ color: "var(--color-danger)" }}>
+                          {disputeError}
+                        </p>
+                      ) : disputeSignal.isSuccess ? (
+                        <p className="text-[0.86rem] text-fg-dim">{t.signals.disputed}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
+        </>
+      ) : null}
     </article>
   );
 }

@@ -26,12 +26,26 @@ pub struct RepoSearchResult {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct RepoSignalEvent {
+    pub event_kind: String,
+    pub note: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RepoSignal {
+    pub id: Uuid,
     pub signal: String,
     pub is_passive: bool,
     pub evidence_url: Option<String>,
     pub evidence_description: Option<String>,
+    pub review_status: String,
+    pub review_note: Option<String>,
+    pub disputed_at: Option<DateTime<Utc>>,
+    pub dispute_reason: Option<String>,
     pub created_at: DateTime<Utc>,
+    pub events: Vec<RepoSignalEvent>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -30,7 +30,13 @@ async function request<T>(
   if (!response.ok) {
     let detail = "";
     try {
-      detail = (await response.text()).slice(0, 200);
+      const contentType = response.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const body = (await response.json()) as { error?: string };
+        detail = body.error ?? "";
+      } else {
+        detail = (await response.text()).slice(0, 200);
+      }
     } catch {
       /* ignore */
     }
@@ -50,6 +56,13 @@ export function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   return request<T>(path, { method: "GET", signal });
 }
 
+export function apiGetWithInit<T>(
+  path: string,
+  init: RequestInit & { parseJson?: boolean } = {}
+): Promise<T> {
+  return request<T>(path, { method: "GET", ...init });
+}
+
 export function apiPost<T>(
   path: string,
   body?: unknown,
@@ -59,6 +72,18 @@ export function apiPost<T>(
     method: "POST",
     body: body === undefined ? undefined : JSON.stringify(body),
     signal
+  });
+}
+
+export function apiPostWithInit<T>(
+  path: string,
+  body?: unknown,
+  init: RequestInit & { parseJson?: boolean } = {}
+): Promise<T> {
+  return request<T>(path, {
+    method: "POST",
+    body: body === undefined ? undefined : JSON.stringify(body),
+    ...init
   });
 }
 

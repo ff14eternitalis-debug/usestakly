@@ -1,10 +1,18 @@
+use std::collections::{HashMap, HashSet};
+
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::services::notifications::{self, ScoreSnapshot};
+use crate::{
+    config::AppConfig,
+    services::{
+        notifications::{self, ScoreSnapshot},
+        reputation,
+    },
+};
 
 const FORMULA_V1_TOML: &str = include_str!("../../../scoring/formula_v1.toml");
 
@@ -159,77 +167,28 @@ fn abandonment_score(freshness: f64, regret_rate: f64, regret_threshold: f64) ->
 #[serde(rename_all = "camelCase")]
 pub struct ScoringReport {
     pub formula_version: String,
-    pub snippets_processed: usize,
     pub externals_processed: usize,
     pub computed_at: DateTime<Utc>,
 }
 
 pub async fn recompute_all_scores(db: &PgPool) -> Result<ScoringReport> {
+    recompute_all_scores_with_config(db, None).await
+}
+
+pub async fn recompute_all_scores_with_config(
+    db: &PgPool,
+    config: Option<&AppConfig>,
+) -> Result<ScoringReport> {
     let formula = load_v1()?;
     let now = Utc::now();
 
-    let snippets_processed = recompute_snippets(db, &formula, now).await?;
-    let externals_processed = recompute_externals(db, &formula, now).await?;
+    let externals_processed = recompute_externals_with_config(db, &formula, now, config).await?;
 
     Ok(ScoringReport {
         formula_version: formula.meta.version,
-        snippets_processed,
         externals_processed,
         computed_at: now,
     })
-}
-
-#[derive(sqlx::FromRow)]
-struct SnippetMetricsRow {
-    id: Uuid,
-    updated_at: DateTime<Utc>,
-    resolve_count: i64,
-    build_success_count: i64,
-    build_failure_count: i64,
-    regret_count: i64,
-    active_flags: Vec<String>,
-}
-
-async fn recompute_snippets(db: &PgPool, formula: &Formula, now: DateTime<Utc>) -> Result<usize> {
-    let rows: Vec<SnippetMetricsRow> = sqlx::query_as(
-        r#"
-        SELECT
-          s.id AS id,
-          s.updated_at AS updated_at,
-          COUNT(*) FILTER (WHERE qs.signal = 'resolve') AS resolve_count,
-          COUNT(*) FILTER (WHERE qs.signal = 'build_success') AS build_success_count,
-          COUNT(*) FILTER (WHERE qs.signal = 'build_failure') AS build_failure_count,
-          COUNT(*) FILTER (WHERE qs.signal = 'regret') AS regret_count,
-          COALESCE(
-            ARRAY_AGG(DISTINCT qs.signal::text) FILTER (
-              WHERE qs.signal IN ('broken', 'security_issue', 'deprecated')
-            ),
-            ARRAY[]::text[]
-          ) AS active_flags
-        FROM snippets s
-        LEFT JOIN quality_signals qs ON qs.snippet_id = s.id
-        GROUP BY s.id, s.updated_at
-        "#,
-    )
-    .fetch_all(db)
-    .await
-    .context("loading snippet metrics")?;
-
-    let mut processed = 0;
-    for row in rows {
-        let metrics = ArtifactMetrics {
-            resolve_count: row.resolve_count as i32,
-            build_success_count: row.build_success_count as i32,
-            build_failure_count: row.build_failure_count as i32,
-            regret_count: row.regret_count as i32,
-            last_update: row.updated_at,
-            flags: normalize_flags(row.active_flags),
-        };
-        let score = compute_score(&metrics, formula, now);
-        upsert_snippet_score(db, row.id, &score, &metrics, &formula.meta.version).await?;
-        processed += 1;
-    }
-    Ok(processed)
 }
 
 #[derive(sqlx::FromRow)]
@@ -243,7 +202,12 @@ struct ExternalMetricsRow {
     active_flags: Vec<String>,
 }
 
-async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>) -> Result<usize> {
+async fn recompute_externals_with_config(
+    db: &PgPool,
+    formula: &Formula,
+    now: DateTime<Utc>,
+    config: Option<&AppConfig>,
+) -> Result<usize> {
     let rows: Vec<ExternalMetricsRow> = sqlx::query_as(
         r#"
         SELECT
@@ -253,12 +217,7 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
           COUNT(*) FILTER (WHERE qs.signal = 'build_success') AS build_success_count,
           COUNT(*) FILTER (WHERE qs.signal = 'build_failure') AS build_failure_count,
           COUNT(*) FILTER (WHERE qs.signal = 'regret') AS regret_count,
-          COALESCE(
-            ARRAY_AGG(DISTINCT qs.signal::text) FILTER (
-              WHERE qs.signal IN ('broken', 'security_issue', 'deprecated')
-            ),
-            ARRAY[]::text[]
-          ) AS active_flags
+          ARRAY[]::text[] AS active_flags
         FROM external_artifacts e
         LEFT JOIN quality_signals qs ON qs.external_artifact_id = e.id
         GROUP BY e.id, e.last_commit_at
@@ -267,6 +226,10 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
     .fetch_all(db)
     .await
     .context("loading external artifact metrics")?;
+    let reputations = reputation::list_user_reputations(db)
+        .await
+        .map_err(|e| anyhow::anyhow!("loading user reputations: {}", e.message))?;
+    let approved_flags = load_active_flag_consensus(db, &reputations, config).await?;
 
     let mut processed = 0;
     for row in rows {
@@ -276,7 +239,10 @@ async fn recompute_externals(db: &PgPool, formula: &Formula, now: DateTime<Utc>)
             build_failure_count: row.build_failure_count as i32,
             regret_count: row.regret_count as i32,
             last_update: row.last_commit_at.unwrap_or(now),
-            flags: normalize_flags(row.active_flags),
+            flags: approved_flags
+                .get(&row.id)
+                .cloned()
+                .unwrap_or_else(|| normalize_flags(row.active_flags)),
         };
         let score = compute_score(&metrics, formula, now);
 
@@ -309,59 +275,76 @@ fn normalize_flags(signals: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-async fn upsert_snippet_score(
+async fn load_active_flag_consensus(
     db: &PgPool,
-    snippet_id: Uuid,
-    score: &ComputedScore,
-    metrics: &ArtifactMetrics,
-    formula_version: &str,
-) -> Result<()> {
-    sqlx::query(
+    reputations: &HashMap<Uuid, reputation::UserReputation>,
+    config: Option<&AppConfig>,
+) -> Result<HashMap<Uuid, Vec<String>>> {
+    let rows: Vec<ActiveSignalRow> = sqlx::query_as(
         r#"
-        INSERT INTO artifact_scores (
-          artifact_kind, snippet_id, formula_version,
-          freshness, adoption, reliability, abandonment, overall,
-          resolve_count, build_success_count, build_failure_count, regret_count,
-          flags, computed_at
-        )
-        VALUES (
-          'snippet', $1, $2,
-          $3, $4, $5, $6, $7,
-          $8, $9, $10, $11,
-          $12, NOW()
-        )
-        ON CONFLICT (snippet_id, formula_version)
-          WHERE snippet_id IS NOT NULL
-        DO UPDATE SET
-          freshness = EXCLUDED.freshness,
-          adoption = EXCLUDED.adoption,
-          reliability = EXCLUDED.reliability,
-          abandonment = EXCLUDED.abandonment,
-          overall = EXCLUDED.overall,
-          resolve_count = EXCLUDED.resolve_count,
-          build_success_count = EXCLUDED.build_success_count,
-          build_failure_count = EXCLUDED.build_failure_count,
-          regret_count = EXCLUDED.regret_count,
-          flags = EXCLUDED.flags,
-          computed_at = EXCLUDED.computed_at
+        SELECT external_artifact_id, signal::text AS signal, actor_user_id
+        FROM quality_signals
+        WHERE external_artifact_id IS NOT NULL
+          AND is_passive = FALSE
+          AND review_status = 'accepted'
+          AND signal IN ('broken', 'security_issue', 'deprecated')
         "#,
     )
-    .bind(snippet_id)
-    .bind(formula_version)
-    .bind(score.freshness)
-    .bind(score.adoption)
-    .bind(score.reliability)
-    .bind(score.abandonment)
-    .bind(score.overall)
-    .bind(metrics.resolve_count)
-    .bind(metrics.build_success_count)
-    .bind(metrics.build_failure_count)
-    .bind(metrics.regret_count)
-    .bind(&metrics.flags)
-    .execute(db)
+    .fetch_all(db)
     .await
-    .context("upserting snippet score")?;
-    Ok(())
+    .context("loading active signals for consensus")?;
+
+    let min_reputation = config.map(|c| c.active_signal_min_reputation).unwrap_or(0.45);
+    let default_consensus = config.map(|c| c.active_signal_default_consensus).unwrap_or(2);
+    let severe_consensus = config.map(|c| c.active_signal_severe_consensus).unwrap_or(3);
+
+    let mut per_artifact: HashMap<Uuid, HashMap<String, HashSet<Uuid>>> = HashMap::new();
+    for row in rows {
+        let Some(artifact_id) = row.external_artifact_id else {
+            continue;
+        };
+        let Some(user_id) = row.actor_user_id else {
+            continue;
+        };
+        let Some(rep) = reputations.get(&user_id) else {
+            continue;
+        };
+        if !rep.active_signal_eligible(min_reputation) {
+            continue;
+        }
+
+        per_artifact
+            .entry(artifact_id)
+            .or_default()
+            .entry(row.signal)
+            .or_default()
+            .insert(user_id);
+    }
+
+    Ok(per_artifact
+        .into_iter()
+        .map(|(artifact_id, by_signal)| {
+            let flags = by_signal
+                .into_iter()
+                .filter_map(|(signal, users)| {
+                    let needed = if signal == "security_issue" || signal == "broken" {
+                        severe_consensus
+                    } else {
+                        default_consensus
+                    };
+                    (users.len() as u32 >= needed).then(|| signal)
+                })
+                .collect::<Vec<_>>();
+            (artifact_id, normalize_flags(flags))
+        })
+        .collect())
+}
+
+#[derive(sqlx::FromRow)]
+struct ActiveSignalRow {
+    external_artifact_id: Option<Uuid>,
+    signal: String,
+    actor_user_id: Option<Uuid>,
 }
 
 async fn upsert_external_score(

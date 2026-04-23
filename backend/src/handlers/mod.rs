@@ -1,13 +1,10 @@
+pub mod account;
 pub mod admin;
 pub mod agent_tokens;
 pub mod auth;
 pub mod health;
-pub mod libraries;
 pub mod me;
 pub mod notifications;
 pub mod repos;
-pub mod resolve;
 pub mod search;
-pub mod signals;
-pub mod snippets;
 pub mod watchlist;

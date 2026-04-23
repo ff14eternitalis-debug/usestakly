@@ -8,11 +8,34 @@ use crate::{
         reference::{QualityContext, SearchFilter},
         repo::{RepoProfile, RepoSearchResult, RepoSignal},
     },
-    services::quality::scoring::load_v1,
+    services::{quality::scoring::load_v1, signal_events},
 };
 
 const DEFAULT_LIMIT: i64 = 50;
 const MAX_LIMIT: i64 = 200;
+
+pub async fn find_github_artifact_id(
+    db: &PgPool,
+    owner: &str,
+    name: &str,
+) -> Result<Option<Uuid>, ApiError> {
+    let row: Option<(Uuid,)> = sqlx::query_as(
+        r#"
+        SELECT id
+        FROM external_artifacts
+        WHERE source = 'github'
+          AND github_owner = $1
+          AND github_repo = $2
+        LIMIT 1
+        "#,
+    )
+    .bind(owner)
+    .bind(name)
+    .fetch_optional(db)
+    .await?;
+
+    Ok(row.map(|(id,)| id))
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct RepoSearchFilters {
@@ -160,13 +183,24 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
     .await?
     .ok_or_else(|| ApiError::not_found("Repo not found"))?;
 
+    let signals = get_repo_signals(db, artifact_id).await?;
+
+    Ok(row.into_profile(signals))
+}
+
+pub async fn get_repo_signals(db: &PgPool, artifact_id: Uuid) -> Result<Vec<RepoSignal>, ApiError> {
     let signals: Vec<SignalRow> = sqlx::query_as(
         r#"
         SELECT
+          id                      AS id,
           signal::text            AS signal,
           is_passive              AS is_passive,
           evidence_url            AS evidence_url,
           evidence_description    AS evidence_description,
+          review_status           AS review_status,
+          review_note             AS review_note,
+          disputed_at             AS disputed_at,
+          dispute_reason          AS dispute_reason,
           created_at              AS created_at
         FROM quality_signals
         WHERE external_artifact_id = $1
@@ -177,8 +211,17 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
     .bind(artifact_id)
     .fetch_all(db)
     .await?;
+    let ids = signals.iter().map(|s| s.id).collect::<Vec<_>>();
+    let events = signal_events::list_events_for_signals(db, &ids).await?;
 
-    Ok(row.into_profile(signals.into_iter().map(SignalRow::into_signal).collect()))
+    Ok(signals
+        .into_iter()
+        .map(|signal| {
+            let signal_id = signal.id;
+            let event_list = events.get(&signal_id).cloned().unwrap_or_default();
+            signal.into_signal(event_list)
+        })
+        .collect())
 }
 
 #[derive(FromRow)]
@@ -281,6 +324,7 @@ struct ProfileRow {
 
 impl ProfileRow {
     fn into_profile(self, recent_signals: Vec<RepoSignal>) -> RepoProfile {
+        let approved_flags = self.quality_flags.clone().unwrap_or_default();
         let repo = RepoRow {
             artifact_id: self.artifact_id,
             owner: self.owner,
@@ -310,28 +354,54 @@ impl ProfileRow {
             subscribers_count: self.subscribers_count,
             default_branch: self.default_branch,
             priors_fetched_at: self.priors_fetched_at,
-            recent_signals,
+            recent_signals: recent_signals
+                .into_iter()
+                .filter(|signal| {
+                    signal.is_passive
+                        || approved_flags
+                            .iter()
+                            .any(|flag| flag == &normalize_public_signal(&signal.signal))
+                })
+                .collect(),
         }
     }
 }
 
 #[derive(FromRow)]
 struct SignalRow {
+    id: Uuid,
     signal: String,
     is_passive: bool,
     evidence_url: Option<String>,
     evidence_description: Option<String>,
+    review_status: String,
+    review_note: Option<String>,
+    disputed_at: Option<DateTime<Utc>>,
+    dispute_reason: Option<String>,
     created_at: DateTime<Utc>,
 }
 
 impl SignalRow {
-    fn into_signal(self) -> RepoSignal {
+    fn into_signal(self, events: Vec<crate::domain::repo::RepoSignalEvent>) -> RepoSignal {
         RepoSignal {
+            id: self.id,
             signal: self.signal,
             is_passive: self.is_passive,
             evidence_url: self.evidence_url,
             evidence_description: self.evidence_description,
+            review_status: self.review_status,
+            review_note: self.review_note,
+            disputed_at: self.disputed_at,
+            dispute_reason: self.dispute_reason,
             created_at: self.created_at,
+            events,
         }
+    }
+}
+
+fn normalize_public_signal(signal: &str) -> String {
+    match signal {
+        "security_issue" => "security-issue".to_string(),
+        other => other.to_string(),
     }
 }

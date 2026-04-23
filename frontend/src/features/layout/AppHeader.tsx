@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LocaleSwitch } from "../../components/LocaleSwitch";
 import { Wordmark } from "../../components/Wordmark";
 import { useT } from "../../i18n";
-import { apiGet, authUrl } from "../../lib/api-client";
+import { apiGet } from "../../lib/api-client";
 import type { UnreadCount } from "../../lib/types";
 import { useAuthStore } from "../../state/auth-store";
 import { logout } from "../auth/hooks";
@@ -51,6 +51,9 @@ export function AppHeader() {
                   </span>
                 ) : null}
               </Link>
+              <Link to="/account" className="nav-link">
+                {t.nav.account}
+              </Link>
             </>
           ) : null}
         </nav>
@@ -74,12 +77,12 @@ export function AppHeader() {
               </button>
             </>
           ) : (
-            <a
-              href={authUrl("/api/auth/github/start")}
+            <Link
+              to="/login"
               className="inline-flex items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3.5 py-1.5 text-[0.84rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
             >
               {t.header.signIn}
-            </a>
+            </Link>
           )}
         </div>
       </div>
@@ -105,6 +108,9 @@ export function AppHeader() {
                     {unread > 99 ? "99+" : unread}
                   </span>
                 ) : null}
+              </Link>
+              <Link to="/account" className="nav-link">
+                {t.nav.account}
               </Link>
             </>
           ) : null}

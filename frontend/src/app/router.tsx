@@ -8,6 +8,7 @@ import {
 
 import { AppHeader } from "../features/layout/AppHeader";
 import { SiteFooter } from "../features/layout/SiteFooter";
+import { AccountPage } from "../routes/account";
 import { DiscoverPage } from "../routes/discover";
 import { LandingPage } from "../routes/index";
 import { LoginPage } from "../routes/login";
@@ -73,13 +74,21 @@ const notificationsRoute = createRoute({
   component: NotificationsPage
 });
 
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/account",
+  beforeLoad: requireAuth,
+  component: AccountPage
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
   repoDetailRoute,
   loginRoute,
   watchlistRoute,
-  notificationsRoute
+  notificationsRoute,
+  accountRoute
 ]);
 
 export const router = createRouter({

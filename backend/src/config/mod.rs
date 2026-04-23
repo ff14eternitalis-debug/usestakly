@@ -23,6 +23,12 @@ pub struct AppConfig {
     pub github_token: Option<String>,
     pub scheduler_enabled: bool,
     pub recompute_interval_secs: u64,
+    pub mcp_write_limit_per_hour: u32,
+    pub mcp_log_usage_cooldown_secs: u64,
+    pub mcp_negative_signal_window_hours: u64,
+    pub active_signal_min_reputation: f64,
+    pub active_signal_default_consensus: u32,
+    pub active_signal_severe_consensus: u32,
 }
 
 impl AppConfig {
@@ -75,6 +81,59 @@ impl AppConfig {
                 "APP_RECOMPUTE_INTERVAL_SECS must be >= 60 (got {recompute_interval_secs})"
             ));
         }
+        let mcp_write_limit_per_hour = env::var("APP_MCP_WRITE_LIMIT_PER_HOUR")
+            .unwrap_or_else(|_| "60".to_string())
+            .parse::<u32>()
+            .map_err(|_| anyhow!("APP_MCP_WRITE_LIMIT_PER_HOUR must be a valid u32"))?;
+        if mcp_write_limit_per_hour == 0 {
+            return Err(anyhow!("APP_MCP_WRITE_LIMIT_PER_HOUR must be >= 1"));
+        }
+        let mcp_log_usage_cooldown_secs = env::var("APP_MCP_LOG_USAGE_COOLDOWN_SECS")
+            .unwrap_or_else(|_| "900".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_MCP_LOG_USAGE_COOLDOWN_SECS must be a valid u64"))?;
+        if mcp_log_usage_cooldown_secs < 60 {
+            return Err(anyhow!(
+                "APP_MCP_LOG_USAGE_COOLDOWN_SECS must be >= 60 (got {mcp_log_usage_cooldown_secs})"
+            ));
+        }
+        let mcp_negative_signal_window_hours =
+            env::var("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS")
+                .unwrap_or_else(|_| "24".to_string())
+                .parse::<u64>()
+                .map_err(|_| anyhow!("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be a valid u64"))?;
+        if mcp_negative_signal_window_hours == 0 {
+            return Err(anyhow!(
+                "APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be >= 1"
+            ));
+        }
+        let active_signal_min_reputation = env::var("APP_ACTIVE_SIGNAL_MIN_REPUTATION")
+            .unwrap_or_else(|_| "0.45".to_string())
+            .parse::<f64>()
+            .map_err(|_| anyhow!("APP_ACTIVE_SIGNAL_MIN_REPUTATION must be a valid number"))?;
+        if !(0.0..=1.0).contains(&active_signal_min_reputation) {
+            return Err(anyhow!(
+                "APP_ACTIVE_SIGNAL_MIN_REPUTATION must be between 0 and 1"
+            ));
+        }
+        let active_signal_default_consensus = env::var("APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS")
+            .unwrap_or_else(|_| "2".to_string())
+            .parse::<u32>()
+            .map_err(|_| anyhow!("APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS must be a valid u32"))?;
+        if active_signal_default_consensus == 0 {
+            return Err(anyhow!(
+                "APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS must be >= 1"
+            ));
+        }
+        let active_signal_severe_consensus = env::var("APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS")
+            .unwrap_or_else(|_| "3".to_string())
+            .parse::<u32>()
+            .map_err(|_| anyhow!("APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS must be a valid u32"))?;
+        if active_signal_severe_consensus < active_signal_default_consensus {
+            return Err(anyhow!(
+                "APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS must be >= APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS"
+            ));
+        }
 
         Ok(Self {
             host,
@@ -96,6 +155,12 @@ impl AppConfig {
             github_token,
             scheduler_enabled,
             recompute_interval_secs,
+            mcp_write_limit_per_hour,
+            mcp_log_usage_cooldown_secs,
+            mcp_negative_signal_window_hours,
+            active_signal_min_reputation,
+            active_signal_default_consensus,
+            active_signal_severe_consensus,
         })
     }
 

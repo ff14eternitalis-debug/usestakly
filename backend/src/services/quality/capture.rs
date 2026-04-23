@@ -12,6 +12,7 @@ pub struct RecordSignalInput {
     pub snippet_id: Option<Uuid>,
     pub external_artifact_id: Option<Uuid>,
     pub signal: SignalKind,
+    pub review_status: String,
     pub actor_user_id: Option<Uuid>,
     pub evidence_url: Option<String>,
     pub evidence_description: Option<String>,
@@ -33,6 +34,7 @@ pub async fn record_signal(
           external_artifact_id,
           signal,
           is_passive,
+          review_status,
           actor_user_id,
           agent_context,
           evidence_url,
@@ -47,7 +49,8 @@ pub async fn record_signal(
           $6,
           $7,
           $8,
-          $9
+          $9,
+          $10
         )
         RETURNING
           id,
@@ -60,6 +63,13 @@ pub async fn record_signal(
           agent_context,
           evidence_url,
           evidence_description,
+          review_status,
+          reviewed_by_user_id,
+          reviewed_at,
+          review_note,
+          disputed_by_user_id,
+          disputed_at,
+          dispute_reason,
           created_at
         "#,
     )
@@ -68,6 +78,7 @@ pub async fn record_signal(
     .bind(input.external_artifact_id)
     .bind(input.signal.as_str())
     .bind(input.signal.is_passive())
+    .bind(input.review_status)
     .bind(input.actor_user_id)
     .bind(input.agent_context)
     .bind(input.evidence_url)

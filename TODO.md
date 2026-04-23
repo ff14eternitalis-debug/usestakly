@@ -1,6 +1,6 @@
 # UseStakly — TODO MVP
 
-> Version : 5.1 — 2026-04-23
+> Version : 5.2 — 2026-04-23
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
@@ -100,17 +100,20 @@ Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 
 Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 
-- [ ] Endpoint `POST /api/repos/:id/signals` — refactor de `/api/snippets/:id/signals`, évidence obligatoire
-- [ ] Politique flags toxiques — `deprecated`, `broken-on-X`, `security-issue` : evidence + **consensus N users distincts** avec réputation > seuil
-- [ ] Processus modéré pour `security-issue` — publication retardée, appel possible par owner
-- [ ] Appel / dispute par l'owner (via OAuth GitHub matching login)
-- [ ] Historique transparent public des flags (timeline affichable sur le profil repo)
-- [ ] Pondération réputation owner — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
+- [x] Endpoint `POST /api/repos/:id/signals` — refactor de `/api/snippets/:id/signals`, évidence obligatoire
+- [x] Politique flags toxiques v1 — `deprecated`, `broken`, `security_issue` : evidence + **consensus N users distincts** avec réputation > seuil avant exposition publique
+- [x] Processus modéré v1 pour `security_issue` — création en `pending`, publication retardée jusqu'à review admin
+- [x] Appel / dispute par l'owner (via OAuth GitHub matching login)
+- [x] Support owner v1 pour org GitHub : membre public de l'organisation reconnu comme owner éligible à la dispute
+- [x] Historique transparent v1 des transitions de signal (submitted / reviewed / disputed) affiché sur le profil repo
+- [x] Réputation utilisateur v1 exposée en API/UI compte + seuil minimal avant signals actifs
+- [x] Consensus v1 sur les flags publics : seuls les signaux actifs venant de users éligibles comptent dans `artifact_scores.flags`
+- [ ] Pondération réputation owner / reporter — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 
 ### Phase R5 — MCP adapté aux repos
 
-Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-23) / R5b (write tools + signaux passifs).
+Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-23) / R5b (write tools + signaux passifs, livré partiellement le 2026-04-23).
 
 **R5a — livrée 2026-04-23**
 
@@ -123,13 +126,15 @@ Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-
 - [x] Provenance dans chaque output : `{ source: "usestakly://registry/github[/owner/name]", formula_version, scored_at }`
 - [x] Doc v2 post-pivot dans `docs/mcp-protocol.md` (l'ancienne v1 pré-pivot est remplacée)
 
-**R5b — reste à faire**
+**R5b — livré partiellement 2026-04-23**
 
-- [ ] Outil `log_usage(repo, outcome)` → crée un `quality_signal` passif avec `user_id` du token
-- [ ] Outil `watch_repo(repo)` — ajoute à la watchlist du user propriétaire du token
-- [ ] Rate-limit par token (quota requêtes/heure, à adapter selon usage constaté)
-- [ ] Poisoning-resistance sur `log_usage` : seuil réputation user, consensus N distinct users pour flags toxiques
-- [ ] UI de gestion des tokens côté frontend (dépend R6 page compte)
+- [x] Outil `log_usage(repo, outcome)` → crée un `quality_signal` passif avec `user_id` du token
+- [x] Outil `watch_repo(repo)` — ajoute à la watchlist du user propriétaire du token
+- [x] Ingestion à la volée d'un repo manquant avant `log_usage` / `watch_repo` si `GITHUB_TOKEN` est configuré
+- [x] Rate-limit par token (quota write/heure configurable) via `agent_token_events` (migration `0014`)
+- [x] Garde-fous anti-spam sur `log_usage` : cooldown par token + fenêtre de refroidissement sur outcomes négatifs répétés
+- [x] UI de gestion des tokens côté frontend : page `/account` (création, liste, révocation)
+- [ ] Poisoning-resistance avancée sur `log_usage` : réputation user explicite, pondération par ancienneté/usage réel, consensus N distinct users pour flags toxiques
 
 ### Phase R6 — Refonte frontend complète ✅ LIVRÉE partiellement (commits b1221c8, 9fec584)
 
@@ -144,6 +149,7 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [x] **Nouveau** : centre de notifications in-app (`routes/notifications.tsx`)
 - [x] Composant i18n EN/FR livré (`LocaleSwitch`, `locale-store`)
 - [ ] **Reste à faire** : page compte complète — réputation user, historique contributions, règles d'alerte perso
+- [x] UI v1 de modération légère : file pending/disputed dans `/account`, review admin, dispute owner, timeline locale sur le profil repo
 - [ ] **Reste à faire** : TanStack Query à câbler (toujours installé mais fetch direct via `api-client`)
 - [ ] **Reste à faire** : trancher router — hash custom ou TanStack Router
 - [ ] **Reste à faire** : UX d'explication du scoring sur la page discovery (barres de dimensions, flags, « pourquoi ce résultat »)
@@ -154,7 +160,7 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [ ] Flow user : login OAuth → search « date picker react » → voit résultats scorés → ouvre profil repo → clique Watch → (24 h plus tard en simu) reçoit notif de changement
 - [ ] Flow agent : MCP search → get_repo_quality_context → log_usage → signal propagé
 - [ ] Tests E2E Playwright sur les flows critiques
-- [ ] Vérification sécu : l'audit `docs/security-audit-2026-04-21.md` reste valide sur les briques existantes, **refaire un audit** après R1 + R2 + R3 (surface d'attaque étendue : clients GitHub externes, queue de notifications, webhook)
+- [x] Vérification sécu : audit mis à jour post-pivot dans `docs/security-audit-2026-04-21.md`
 
 ---
 
@@ -211,16 +217,13 @@ Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, 
 ~~1. **R3 finition — worker cron quotidien**~~ ✅ livré 2026-04-23 — scheduler tokio::spawn dans `services::scheduler`, opt-in via `APP_SCHEDULER_ENABLED`.
 ~~2. **R5a — MCP read-only**~~ ✅ livré 2026-04-23 — transport Streamable HTTP + 2 tools (`search_github_repos`, `get_repo_quality_context`) + auth Bearer via `agent_tokens`. Doc : `docs/mcp-protocol.md` v2.
 
-1. **R5b (MCP write tools + poisoning-resistance)** — le flywheel
-   `log_usage` et `watch_repo` sont ce qui rend le scoring auto-amélioré par l'usage des agents. Nécessite rate-limit + seuil réputation avant d'ouvrir l'écriture sans risque.
+1. **R4/R5b finition (reputation v2 + moderation plus fine)** — avant ouverture publique large
+   Les garde-fous v1 sont là (quota MCP, réputation, consensus, review admin, dispute owner, audit trail). La vraie suite est la pondération réputation plus riche et le support des memberships GitHub privés / rôles fins.
 
-2. **R4 (flags toxiques)** — avant ouverture publique uniquement
-   Sinon review-bombing immédiat. Tant que c'est fermé / early access, pas urgent. Dépend partiellement de R5b (consensus N distinct users).
-
-3. **Audit parcours utilisateur** — qualité visible, secondaire pré-launch
+2. **Audit parcours utilisateur** — qualité visible, secondaire pré-launch
    Incohérence Connexion/login agaçante mais non-bloquante. À reprendre quand il y aura des vrais users à observer, ou juste avant ouverture publique. L'utilisateur a explicitement demandé « pas maintenant » au 2026-04-23.
 
-4. **R2b (recherche sémantique)** — quand le corpus justifiera le coût
+3. **R2b (recherche sémantique)** — quand le corpus justifiera le coût
    Inutile tant que le corpus est petit : le lexical ILIKE suffit.
 
-5. **R6 reste** (compte user + UI gestion tokens MCP, TanStack Query, router) + **R7** (validation E2E) — polish et launch
+4. **R6 reste** (compte user plus riche, TanStack Query, router) + **R7** (validation E2E) — polish et launch

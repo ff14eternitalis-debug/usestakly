@@ -15,17 +15,24 @@ use rmcp::{
     },
 };
 use schemars::JsonSchema;
+use serde_json::json;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
     app::AppState,
-    domain::reference::SearchFilter,
-    mcp::auth::verify_bearer,
+    domain::{
+        quality::{ArtifactKind, SignalKind},
+        reference::SearchFilter,
+    },
+    mcp::auth::{verify_agent, verify_bearer},
     services::{
-        quality::scoring::load_v1,
+        agent_token_events,
+        ingestion::github::{build_client, ingest_repo},
+        quality::{record_signal, recompute_all_scores_with_config, scoring::load_v1, RecordSignalInput},
         repos::{self as repos_service, RepoSearchFilters},
+        watchlist,
     },
 };
 
@@ -125,6 +132,40 @@ pub struct SignalSummary {
     pub is_passive: bool,
     pub evidence_url: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct LogUsageParams {
+    pub owner: String,
+    pub name: String,
+    /// Allowed outcomes: resolve, build_success, build_failure, regret, re_resolve
+    pub outcome: String,
+    #[serde(default)]
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct LogUsageOutput {
+    pub provenance: Provenance,
+    pub owner: String,
+    pub name: String,
+    pub signal: String,
+    pub recorded_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct WatchRepoParams {
+    pub owner: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct WatchRepoOutput {
+    pub provenance: Provenance,
+    pub owner: String,
+    pub name: String,
+    pub artifact_id: String,
+    pub watching: bool,
 }
 
 // ---------- Server handler ----------
@@ -247,6 +288,154 @@ impl McpServer {
         let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
         Ok(Json(into_context_output(profile, formula_version)))
     }
+
+    #[tool(
+        name = "log_usage",
+        description = "Record passive usage feedback for one GitHub repo after the agent tried it. \
+                       Allowed outcomes are passive-only: resolve, build_success, build_failure, \
+                       regret, re_resolve."
+    )]
+    async fn log_usage(
+        &self,
+        Parameters(p): Parameters<LogUsageParams>,
+        Extension(parts): Extension<Parts>,
+    ) -> Result<Json<LogUsageOutput>, ErrorData> {
+        let agent = verify_agent(&self.state.db, &parts).await?;
+        let owner = p.owner.trim();
+        let name = p.name.trim();
+        if owner.is_empty() || name.is_empty() {
+            return Err(ErrorData::invalid_params(
+                "owner and name are required",
+                None,
+            ));
+        }
+
+        let signal = parse_passive_outcome(&p.outcome)?;
+        agent_token_events::enforce_write_quota(
+            &self.state.db,
+            agent.token_id,
+            self.state.config.mcp_write_limit_per_hour,
+        )
+        .await
+        .map_err(map_api_error)?;
+        agent_token_events::enforce_log_usage_guards(
+            &self.state.db,
+            agent.token_id,
+            agent.user_id,
+            owner,
+            name,
+            signal,
+            self.state.config.mcp_log_usage_cooldown_secs,
+            self.state.config.mcp_negative_signal_window_hours,
+        )
+        .await
+        .map_err(map_api_error)?;
+        let artifact_id = ensure_github_artifact(&self.state, owner, name).await?;
+        let notes = p.notes.as_deref().map(str::trim).filter(|s| !s.is_empty());
+
+        let record = record_signal(
+            &self.state.db,
+            RecordSignalInput {
+                artifact_kind: ArtifactKind::External,
+                snippet_id: None,
+                external_artifact_id: Some(artifact_id),
+                signal,
+                review_status: "accepted".to_string(),
+                actor_user_id: Some(agent.user_id),
+                evidence_url: None,
+                evidence_description: None,
+                agent_context: Some(json!({
+                    "source": "mcp",
+                    "token_id": agent.token_id,
+                    "notes": notes,
+                })),
+            },
+        )
+        .await
+        .map_err(map_api_error)?;
+        agent_token_events::record_log_usage(
+            &self.state.db,
+            agent.token_id,
+            agent.user_id,
+            owner,
+            name,
+            signal,
+            notes,
+        )
+        .await
+        .map_err(map_api_error)?;
+        recompute_all_scores_with_config(&self.state.db, Some(&self.state.config))
+            .await
+            .map_err(map_anyhow)?;
+
+        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        Ok(Json(LogUsageOutput {
+            provenance: Provenance {
+                source: format!("usestakly://registry/github/{owner}/{name}"),
+                formula_version,
+                scored_at: None,
+            },
+            owner: owner.to_string(),
+            name: name.to_string(),
+            signal: record.signal,
+            recorded_at: record.created_at,
+        }))
+    }
+
+    #[tool(
+        name = "watch_repo",
+        description = "Add one GitHub repo to the authenticated user's watchlist so UseStakly can \
+                       notify them when quality drops, abandonment rises, or severe flags appear."
+    )]
+    async fn watch_repo(
+        &self,
+        Parameters(p): Parameters<WatchRepoParams>,
+        Extension(parts): Extension<Parts>,
+    ) -> Result<Json<WatchRepoOutput>, ErrorData> {
+        let agent = verify_agent(&self.state.db, &parts).await?;
+        let owner = p.owner.trim();
+        let name = p.name.trim();
+        if owner.is_empty() || name.is_empty() {
+            return Err(ErrorData::invalid_params(
+                "owner and name are required",
+                None,
+            ));
+        }
+
+        agent_token_events::enforce_write_quota(
+            &self.state.db,
+            agent.token_id,
+            self.state.config.mcp_write_limit_per_hour,
+        )
+        .await
+        .map_err(map_api_error)?;
+        let artifact_id = ensure_github_artifact(&self.state, owner, name).await?;
+        watchlist::add_watch(&self.state.db, agent.user_id, artifact_id)
+            .await
+            .map_err(map_api_error)?;
+        agent_token_events::record_watch_repo(
+            &self.state.db,
+            agent.token_id,
+            agent.user_id,
+            owner,
+            name,
+        )
+        .await
+        .map_err(map_api_error)?;
+
+        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        Ok(Json(WatchRepoOutput {
+            provenance: Provenance {
+                source: format!("usestakly://registry/github/{owner}/{name}"),
+                formula_version,
+                scored_at: None,
+            },
+            owner: owner.to_string(),
+            name: name.to_string(),
+            artifact_id: artifact_id.to_string(),
+            watching: true,
+        }))
+    }
 }
 
 #[tool_handler(
@@ -254,7 +443,10 @@ impl McpServer {
     instructions = "UseStakly MCP — query a scored registry of public GitHub repos. \
                     Always call `search_github_repos` before generating code that pulls in \
                     a dependency, then `get_repo_quality_context` to confirm the pick. \
-                    Include the returned provenance string when you write the code."
+                    After trying a repo, call `log_usage`. Use `watch_repo` when the user wants \
+                    ongoing monitoring. Write calls are rate-limited per token and duplicate \
+                    `log_usage` events are intentionally throttled. Include the returned provenance \
+                    string when you write the code."
 )]
 impl ServerHandler for McpServer {}
 
@@ -281,21 +473,50 @@ async fn resolve_artifact_id(
     owner: &str,
     name: &str,
 ) -> Result<Option<Uuid>, ErrorData> {
-    let row: Option<(Uuid,)> = sqlx::query_as(
-        r#"
-        SELECT id FROM external_artifacts
-        WHERE source = 'github'
-          AND github_owner = $1
-          AND github_repo = $2
-        LIMIT 1
-        "#,
-    )
-    .bind(owner)
-    .bind(name)
-    .fetch_optional(db)
-    .await
-    .map_err(|e| ErrorData::internal_error(format!("db error: {e}"), None))?;
-    Ok(row.map(|(id,)| id))
+    repos_service::find_github_artifact_id(db, owner, name)
+        .await
+        .map_err(map_api_error)
+}
+
+async fn ensure_github_artifact(
+    state: &AppState,
+    owner: &str,
+    name: &str,
+) -> Result<Uuid, ErrorData> {
+    if let Some(id) = resolve_artifact_id(&state.db, owner, name).await? {
+        return Ok(id);
+    }
+
+    let token = state
+        .config
+        .github_token
+        .as_deref()
+        .ok_or_else(|| {
+            ErrorData::invalid_params(
+                format!("repo not ingested: {owner}/{name} and GITHUB_TOKEN is not configured"),
+                None,
+            )
+        })?;
+
+    let client = build_client(token).map_err(map_api_error)?;
+    let (id, _) = ingest_repo(&client, &state.db, owner, name)
+        .await
+        .map_err(map_api_error)?;
+    Ok(id)
+}
+
+fn parse_passive_outcome(input: &str) -> Result<SignalKind, ErrorData> {
+    match input.trim().to_ascii_lowercase().as_str() {
+        "resolve" => Ok(SignalKind::Resolve),
+        "build_success" => Ok(SignalKind::BuildSuccess),
+        "build_failure" => Ok(SignalKind::BuildFailure),
+        "regret" => Ok(SignalKind::Regret),
+        "re_resolve" => Ok(SignalKind::ReResolve),
+        _ => Err(ErrorData::invalid_params(
+            "outcome must be one of: resolve, build_success, build_failure, regret, re_resolve",
+            None,
+        )),
+    }
 }
 
 fn into_context_output(

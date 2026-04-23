@@ -1,9 +1,12 @@
+pub mod agent_token_events;
 pub mod agent_tokens;
 pub mod ingestion;
 pub mod notifications;
 pub mod quality;
+pub mod reputation;
+pub mod repo_owners;
 pub mod repos;
-pub mod resolution;
 pub mod scheduler;
-pub mod search;
+pub mod signal_events;
+pub mod signal_reviews;
 pub mod watchlist;

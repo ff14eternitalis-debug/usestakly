@@ -11,8 +11,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use crate::{
     config::AppConfig,
     handlers::{
-        admin, agent_tokens, auth, health, libraries, me, notifications, repos, resolve, search,
-        signals, snippets, watchlist,
+        account, admin, agent_tokens, auth, health, me, notifications, repos, search, watchlist,
     },
     mcp::server as mcp_server,
 };
@@ -40,41 +39,27 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/auth/discord/callback", get(auth::discord_callback))
         .route("/api/auth/logout", post(auth::logout))
         .route("/api/me", get(me::me))
-        .route(
-            "/api/libraries",
-            get(libraries::list_libraries).post(libraries::create_library),
-        )
-        .route(
-            "/api/libraries/{library_id}",
-            get(libraries::get_library).patch(libraries::update_library),
-        )
-        .route(
-            "/api/snippets",
-            get(snippets::list_snippets).post(snippets::create_snippet),
-        )
-        .route(
-            "/api/snippets/{snippet_id}",
-            get(snippets::get_snippet)
-                .patch(snippets::update_snippet)
-                .delete(snippets::delete_snippet),
-        )
-        .route(
-            "/api/snippets/{snippet_id}/versions",
-            get(snippets::list_snippet_versions).post(snippets::create_snippet_version),
-        )
-        .route(
-            "/api/snippets/{snippet_id}/signals",
-            post(signals::create_snippet_signal),
-        )
+        .route("/api/account/summary", get(account::account_summary))
         .route(
             "/api/admin/scoring/recompute",
             post(admin::recompute_scores),
         )
         .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
-        .route("/api/resolve", get(resolve::resolve))
+        .route("/api/admin/repo-signals/pending", get(admin::list_pending_repo_signals))
+        .route(
+            "/api/admin/repo-signals/{signal_id}/review",
+            post(admin::review_repo_signal),
+        )
         .route("/api/search", get(search::search))
+        .route("/api/repos/add", post(repos::add_repo))
         .route("/api/repos/search", get(repos::search_repos))
         .route("/api/repos/{repo_id}", get(repos::get_repo))
+        .route("/api/repos/{repo_id}/viewer-state", get(repos::get_repo_viewer_state))
+        .route("/api/repos/{repo_id}/signals", post(repos::create_repo_signal))
+        .route(
+            "/api/repos/{repo_id}/signals/{signal_id}/dispute",
+            post(repos::dispute_repo_signal),
+        )
         .route(
             "/api/watchlist",
             get(watchlist::list_watchlist).post(watchlist::add_to_watchlist),

@@ -37,12 +37,24 @@ export type RepoSearchResult = {
   quality: QualityContext | null;
 };
 
+export type RepoSignalEvent = {
+  eventKind: string;
+  note: string | null;
+  createdAt: string;
+};
+
 export type RepoSignal = {
+  id: string;
   signal: string;
   isPassive: boolean;
   evidenceUrl: string | null;
   evidenceDescription: string | null;
+  reviewStatus: string;
+  reviewNote: string | null;
+  disputedAt: string | null;
+  disputeReason: string | null;
   createdAt: string;
+  events: RepoSignalEvent[];
 };
 
 export type RepoProfile = RepoSearchResult & {
@@ -52,9 +64,77 @@ export type RepoProfile = RepoSearchResult & {
   recentSignals: RepoSignal[];
 };
 
+export type RepoViewerState = {
+  canDisputeSignals: boolean;
+  visibleSignals: RepoSignal[];
+};
+
 export type RepoSearchResponse = {
   filter: SearchFilter;
   items: RepoSearchResult[];
+};
+
+export type AddRepoResponse = {
+  artifactId: string;
+  alreadyIndexed: boolean;
+  owner: string;
+  name: string;
+  fullName: string;
+  htmlUrl: string;
+  description: string | null;
+  language: string | null;
+  licenseSpdx: string | null;
+  topics: string[];
+  starsCount: number;
+  forksCount: number;
+  openIssuesCount: number;
+  subscribersCount: number;
+  archived: boolean;
+  defaultBranch: string | null;
+  lastCommitAt: string | null;
+  formulaVersion: string;
+};
+
+export type AgentTokenSummary = {
+  id: string;
+  label: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
+export type AgentTokenCreated = AgentTokenSummary & {
+  token: string;
+};
+
+export type UserReputationSummary = {
+  userId: string;
+  score: number;
+  accountAgeDays: number;
+  passiveSignalCount: number;
+  resolveCount: number;
+  buildSuccessCount: number;
+  buildFailureCount: number;
+  regretCount: number;
+  activeSignalEligible: boolean;
+};
+
+export type AccountSummary = {
+  reputation: UserReputationSummary;
+  activeSignalMinReputation: number;
+  activeSignalDefaultConsensus: number;
+  activeSignalSevereConsensus: number;
+};
+
+export type PendingRepoSignal = {
+  id: string;
+  repoId: string;
+  owner: string;
+  name: string;
+  signal: string;
+  reviewStatus: string;
+  evidenceUrl: string | null;
+  evidenceDescription: string | null;
+  createdAt: string;
 };
 
 export type WatchedRepo = {

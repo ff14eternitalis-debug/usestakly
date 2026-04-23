@@ -1,140 +1,212 @@
-# Audit de sécurité — pipeline quality signals
+# Audit de sécurité — post-pivot GitHub observability
 
-> Date : 2026-04-21
-> Portée : commit `4e16c0a` — « feat: add quality scoring pipeline with resolve and filtered search »
+> Version : 2 — mise à jour le 2026-04-23  
+> Portée : produit vivant **UseStakly** après pivot GitHub, incluant `repos/add`, watchlist, MCP read/write, signaux actifs, modération, dispute owner et audit trail.  
 > Branche : `main`
-> Auditeur : Claude (Opus 4.7), méthodologie `/security-review`
 
 ## Résumé
 
-**Verdict : aucune vulnérabilité HIGH ou MEDIUM de confiance ≥ 0.8.**
+Le socle actuel est **raisonnablement sûr pour un MVP fermé / early access**, avec des garde-fous désormais présents sur les surfaces les plus risquées :
 
-Le pipeline qualité-scoré (Phase 6) et les endpoints `resolve`/`search` (Phase 7) sont mergeable en l'état. Les contrôles d'autorisation, les requêtes paramétrées et la gestion du token admin respectent les pratiques attendues.
+- auth OAuth côté backend, session cookie HttpOnly
+- MCP Bearer tokens hashés en base
+- quotas write MCP par token
+- réputation minimale avant signaux actifs
+- consensus multi-users avant exposition publique des flags
+- review admin pour `security_issue`
+- dispute owner sans suppression silencieuse
+- audit trail des transitions de signal
 
-## Portée de l'audit
+Je ne vois pas de vulnérabilité évidente de niveau critique dans l’état actuel du code. En revanche, il reste des **risques produit / trust** importants avant ouverture large, surtout autour de l’identité GitHub d’organisation et de la modération humaine.
 
-### Fichiers analysés
+## Changements de sécurité significatifs depuis l’audit initial
 
-**Migration DB**
-- `backend/migrations/0010_quality_signals.sql`
+### 1. Surface snippets retirée du runtime
 
-**Domaine / types**
-- `backend/src/domain/quality.rs`
-- `backend/src/domain/reference.rs`
+Les anciennes routes snippets/libraries/resolve publiques ne participent plus au produit vivant. Cela réduit la surface HTTP exposée et supprime une source de confusion entre ancien et nouveau modèle.
 
-**Services**
-- `backend/src/services/quality/capture.rs`
-- `backend/src/services/quality/scoring.rs`
-- `backend/src/services/resolution.rs`
-- `backend/src/services/search.rs`
+### 2. `/api/repos/add` et ingestion GitHub
 
-**Handlers**
-- `backend/src/handlers/admin.rs`
-- `backend/src/handlers/signals.rs`
-- `backend/src/handlers/resolve.rs`
-- `backend/src/handlers/search.rs`
+Le flow public d’ingestion de repo existe maintenant. Les points positifs :
 
-**Wiring**
-- `backend/src/app/mod.rs` (nouvelles routes)
-- `backend/src/config/mod.rs` (`ADMIN_API_TOKEN`)
-- `backend/src/app/error.rs` (`ApiError::internal`)
+- parsing strict de `owner/repo` ou URL GitHub
+- erreurs GitHub mieux typées
+- dépendance explicite à `GITHUB_TOKEN`
 
-### Hors scope (exclusions standard)
+Risques restants :
 
-- DOS / rate limiting / épuisement de ressources
-- Secrets au repos (gérés par le playbook dédié)
-- Memory safety (Rust, impossible)
-- Log spoofing
-- SSRF qui ne contrôle que le path
-- Regex injection / regex DOS
-- Code pré-existant non modifié par le commit
+- pas encore de backoff/ETag/gestion de quota GitHub avancée
+- un utilisateur peut proposer des repos arbitraires, ce qui est acceptable produit, mais peut créer du bruit si la gouvernance corpus reste floue
 
-## Contrôles effectués
+### 3. MCP write tools durcis
+
+`log_usage` et `watch_repo` sont désormais protégés par :
+
+- quota write par token
+- cooldown anti-doublon
+- fenêtre de refroidissement sur outcomes négatifs
+
+Cela réduit le spam et le poisoning trivial. Le point faible restant est la **qualité de la réputation v1** : elle est correcte pour un MVP, mais encore trop simple pour une ouverture publique agressive.
+
+### 4. Signaux actifs et flags toxiques
+
+Le risque le plus important du produit était ici. L’état actuel est bien meilleur :
+
+- evidence obligatoire pour les signaux actifs sensibles
+- seuil réputation minimal avant soumission
+- `security_issue` démarre en `pending`
+- seuls les signaux `accepted` et portés par assez de users éligibles alimentent les flags publics
+- une dispute owner ajoute une contestation mais ne retire pas magiquement un signal accepté
+
+Cette partie est maintenant défendable pour un MVP fermé.
+
+## Contrôles revérifiés
+
+### Auth web — OK
+
+- session cookie `usestakly_session`
+- fallback dev user toujours présent mais connu et documenté
+- pas de secret hardcodé ajouté
+
+### Auth MCP — OK
+
+- tokens `usk_<64 hex>`
+- hash SHA-256 en base
+- plaintext montré une seule fois
+- révocation disponible
+
+### Admin API — Correcte mais encore sensible
+
+Le token admin reste simple et efficace. C’est acceptable tant que :
+
+- le token est long et rotaté
+- son usage reste limité
+- les actions admin sont monitorées
+
+Le panneau admin léger dans `/account` n’ajoute pas un nouveau modèle de sécurité : il ne fait qu’exposer la même API admin déjà existante. Le vrai risque reste donc la compromission du token admin lui-même.
 
 ### SQL injection — OK
 
-Toutes les requêtes SQLx utilisent des bindings `$N` paramétrés. Aucun `format!`, `concat!` ou interpolation dans les strings SQL.
+Les requêtes restent paramétrées via SQLx. Aucun signe de concat SQL dangereuse dans les nouvelles briques de réputation, modération ou audit trail.
 
-**Cas notables** :
-- `services/search.rs` : le pattern ILIKE est construit avec `'%' || $3 || '%'` côté SQL, param lié — safe.
-- `services/quality/capture.rs` : casts d'enum via `CAST($1 AS signal_kind)` forcent le typage côté Postgres.
-- `services/quality/scoring.rs` : agrégations avec `COUNT(*) FILTER (WHERE qs.signal = 'resolve')` — littéraux SQL, pas de contamination possible.
+### Contrôle owner GitHub — Partiellement OK
 
-### Autorisation resolve / search — OK
+Un repo peut maintenant être contesté par :
 
-Les endpoints publics appliquent un prédicat d'autorisation correct :
+- son owner GitHub direct
+- ou un membre **public** de l’organisation GitHub propriétaire
 
-```sql
-WHERE s.visibility = 'public' OR s.owner_id = $user_id
-```
+C’est une bonne amélioration MVP, mais cela ne couvre pas :
 
-Quand l'utilisateur n'est pas authentifié, `$user_id` est `NULL` — la seconde branche du `OR` échoue systématiquement (NULL != NULL), donc seules les lignes `visibility='public'` remontent. Pas de fuite de snippets privés via utilisateur anonyme.
+- membres privés d’org
+- maintainers/collaborators sans membership public
+- rôles fins côté org
 
-### Admin token — OK
+Donc le contrôle owner n’est pas “faux”, mais il est **incomplet par design**.
 
-`backend/src/handlers/admin.rs` :
-- Comparaison constant-time via XOR masqué par la longueur (pas de timing leak).
-- Token vérifié **avant** tout accès DB (pas d'oracle par temps de réponse).
-- Token absent et token incorrect renvoient tous deux `403` avec le même corps — pas de différenciation.
-- `ADMIN_API_TOKEN` chargé depuis l'env, jamais loggé.
+## Risques restants
 
-### Endpoint signals — OK
+### 1. Membership GitHub d’organisation incomplète
 
-`backend/src/handlers/signals.rs` :
-- `actor_user_id` fixé côté serveur depuis la session — non contrôlable par le client.
-- Signaux passifs (`resolve`, `build_success`, `build_failure`, `regret`, `re_resolve`) rejetés en REST : ne peuvent venir que du MCP (Phase 8). Empêche un user de truquer sa reliability en spammant `build_success`.
-- Seuls les snippets `visibility='public'` acceptent des signaux — pas de leak de snippet privé via erreur 404/403 distincte.
-- `evidence_url` validé par `validator::url` avant insertion.
+C’est le principal point de fragilité trust actuel.
 
-### JSONB agent_context — OK
+Conséquences :
 
-Stocké comme `serde_json::Value`. Postgres parse en JSONB : pas de vecteur d'injection SQL via le contenu JSON. Contenu arbitraire accepté par design (agent peut y mettre son stack, sa version, son prompt).
+- un vrai maintainer d’org avec membership privé peut être bloqué à tort
+- inversement, la notion “owner” est encore plus proche de “owner ou membre public d’org” que de “maintainer métier”
 
-### Formula TOML — OK
+Recommandation :
 
-`backend/scoring/formula_v1.toml` chargé via `include_str!` à la compilation. Pas user-controllable au runtime. La stratégie « formule publique versionnée » est un choix produit assumé (`docs/strategy-quality-scored-registry.md`).
+- documenter explicitement cette limite
+- prévoir une v2 avec vérification GitHub plus riche si le produit s’ouvre
 
-### IDOR via UUID — OK
+### 2. Modération humaine centralisée
 
-Les path params `snippet_id` sont des UUIDs v4, donc inguessables. Les contrôles de visibilité restent en place de toute façon.
+Le process `pending -> accepted/rejected` repose encore sur un admin unique. Cela crée un risque opérationnel :
 
-### Secrets hardcodés — Aucun
+- erreur humaine
+- décisions inconsistantes
+- pression sociale si l’outil s’ouvre
 
-Zéro secret en dur introduit par le commit. `ADMIN_API_TOKEN` est optionnel (absent → endpoint 403 systématique).
+Recommandation :
 
-## Observations non-bloquantes
+- journaliser systématiquement les reviews
+- éventuellement double validation pour `security_issue`
 
-### Trust model public — by design
+### 3. Réputation v1 encore simple
 
-N'importe quel utilisateur authentifié peut signaler un snippet public avec un flag toxique (`broken`, `security-issue`, `deprecated`). C'est **intentionnel** — c'est la mécanique de réputation du registry. L'anti-gaming est prévu en formula_v2 (pondération réputation owner, consensus N users, appel auteur). Cette phase est listée en tâche ouverte dans `TODO.md` — Phase 6, dernière ligne.
+La réputation actuelle suffit pour filtrer le bruit grossier, mais pas encore pour résister à une attaque sociale ou coordonnée à plus grande échelle.
 
-Surveillance recommandée :
-- Logs des flags toxiques créés (volume, auteurs).
-- Alerte si un auteur unique émet plus de N flags toxiques sur une fenêtre de 24 h.
+Recommandation :
 
-### Dev user fallback
+- enrichir avec plus de signaux GitHub
+- pondérer davantage les historiques de contribution fiables
+- différencier reporter / reviewer / owner
 
-Quand `APP_SESSION_SECRET` ou les credentials OAuth sont absents, `resolve_current_user` retombe sur le dev user injecté via env. **Comportement pré-existant**, pas introduit par ce commit. À ne pas activer en production — vérification possible au boot via une feature flag dédiée.
+### 4. Dev user fallback
 
-## Recommandations de suivi
+Toujours acceptable en local, toujours dangereux en prod si mal configuré. Rien de nouveau ici, mais le risque reste réel.
 
-1. **Phase 6 (reste)** : implémenter la politique de flags toxiques (evidence + consensus + appel auteur) avant ouverture publique du registry.
-2. **Phase 8 (MCP)** : les signaux passifs arrivent par MCP — s'assurer que le MCP authentifie l'agent (token dédié, distinct de la session web) pour éviter qu'un client web détourné puisse spammer `build_success`.
-3. **Déploiement Coolify** : vérifier que `ADMIN_API_TOKEN` est défini avec ≥ 32 octets aléatoires et rotationné selon le playbook `docs/security-secrets-playbook.md`.
-4. **Monitoring** : loguer les appels `/api/admin/scoring/recompute` (auteur IP, durée) — l'endpoint est long et coûteux.
+## État des garde-fous par surface
 
-## Checklist pré-production
+### `/api/repos/{id}/signals`
 
-- [ ] `ADMIN_API_TOKEN` rotationné et stocké dans le secret manager Coolify
-- [ ] `APP_SESSION_SECRET` défini (désactive le fallback dev user)
-- [ ] `DEV_USER_*` non définis en prod
-- [ ] CORS `FRONTEND_BASE_URL` pointe sur le domaine prod uniquement
-- [ ] Politique flags toxiques implémentée avant ouverture du registry public
-- [ ] Logs d'audit sur les endpoints admin activés
+État : **beaucoup mieux maîtrisé**
 
-## Références
+- auth requise
+- seuil réputation
+- evidence
+- `security_issue` en pending
+- dispute owner
+- audit trail
 
-- Commit audité : `4e16c0a`
-- Stratégie produit : `docs/strategy-quality-scored-registry.md`
-- Playbook secrets : `docs/security-secrets-playbook.md`
-- Plan MVP : `TODO.md` (Phase 6, Phase 9)
+### `/mcp`
+
+État : **acceptable pour early access**
+
+- token dédié
+- quota
+- cooldown
+- write guardrails
+
+Reste à renforcer :
+
+- réputation plus robuste côté write
+- observabilité d’abus par token
+
+### `/api/admin/*`
+
+État : **fonctionnel mais sensible**
+
+Le risque n’est pas dans le code métier, mais dans la gouvernance du token admin.
+
+## Recommandations prioritaires
+
+1. Documenter clairement la limite actuelle sur les owners d’organisation GitHub.
+2. Ajouter des logs/metrics d’usage sur :
+   - reviews admin
+   - disputes owner
+   - quotas MCP dépassés
+3. Prévoir une v2 de réputation avant ouverture large.
+4. Envisager une double review ou une checklist explicite pour `security_issue`.
+5. Désactiver strictement le fallback dev user en prod.
+
+## Checklist pré-ouverture
+
+- [ ] `APP_SESSION_SECRET` défini en prod
+- [ ] `ADMIN_API_TOKEN` rotaté et stocké côté secrets manager
+- [ ] `GITHUB_TOKEN` avec droits minimaux nécessaires
+- [ ] monitoring des reviews admin activé
+- [ ] documentation claire sur la limite “owner org = membership public seulement”
+- [ ] politique opérationnelle pour `security_issue` définie
+
+## Conclusion
+
+Le projet est passé d’un socle prometteur à un **MVP techniquement cohérent avec des garde-fous crédibles**.  
+La sécurité applicative n’est plus le principal blocage immédiat. Le vrai enjeu restant est la **gouvernance trust** :
+
+- qualité de la réputation
+- qualité des reviews admin
+- qualité de la preuve d’ownership GitHub pour les organisations
+
+Pour un cercle restreint d’utilisateurs, c’est acceptable. Pour une ouverture large, il faudra une v2 de cette couche trust.

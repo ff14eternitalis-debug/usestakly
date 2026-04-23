@@ -39,6 +39,13 @@ impl ApiError {
         }
     }
 
+    pub fn too_many_requests(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::TOO_MANY_REQUESTS,
+            message: message.into(),
+        }
+    }
+
     pub fn unauthorized(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::UNAUTHORIZED,

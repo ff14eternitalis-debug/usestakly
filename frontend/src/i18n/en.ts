@@ -3,6 +3,7 @@ export const en = {
     discover: "Discover",
     watchlist: "Watchlist",
     notifications: "Notifications",
+    account: "Account",
     signIn: "Sign in",
     signOut: "sign out"
   },
@@ -108,6 +109,14 @@ export const en = {
     starsMinLabel: "Stars min",
     starsMinPlaceholder: "0",
     hintLabel: "Hint",
+    addRepoLabel: "Add GitHub repo",
+    addRepoPlaceholder: "owner/repo or https://github.com/owner/repo",
+    addRepoAction: "Ingest repo",
+    addRepoPending: "Ingesting…",
+    addRepoHelp: "Paste a GitHub URL or owner/repo to index it now.",
+    addRepoSuccess: "Repo added to the registry:",
+    addRepoExists: "Repo already indexed. Refreshed its metadata and score:",
+    addRepoOpen: "Open profile",
     measuring: "measuring…",
     entriesSingle: "entry",
     entriesPlural: "entries",
@@ -205,6 +214,66 @@ export const en = {
     continueDiscord: "Continue with Discord",
     privacy:
       "No emails are sent, no marketing list. OAuth is the entire handshake — we learn your username and avatar, nothing more."
+  },
+  account: {
+    eyebrow: "Account",
+    h1Part1: "Agent tokens,",
+    h1Accent: "under control.",
+    intro:
+      "Create MCP tokens for your coding agents, revoke the ones you no longer trust, and keep write access constrained. Tokens are shown in plaintext once.",
+    tokenLabel: "New token label",
+    tokenPlaceholder: "e.g. claude-desktop, cursor, codex",
+    create: "Create token",
+    creating: "Creating…",
+    activeTokens: "Active MCP tokens",
+    emptyTitle: "No MCP token yet.",
+    emptyBody:
+      "Create one token per agent or machine so revocation stays surgical. All write tools are rate-limited per token.",
+    createdNow: "Created just now",
+    lastUsedNever: "Never used",
+    lastUsed: "Last used",
+    createdAt: "Created",
+    revoke: "revoke",
+    revoking: "revoking…",
+    tokenShownOnce: "Plaintext token",
+    tokenShownOnceHint: "This value is shown once. Store it in your MCP client now.",
+    copy: "copy",
+    copied: "copied",
+    quotaTitle: "Write safety",
+    quotaBody:
+      "MCP write tools are limited per token, duplicate log_usage calls are throttled, and repeated negative outcomes are cooled down to reduce poisoning.",
+    reputation: "Reputation",
+    passiveSignals: "Passive signals",
+    eligibility: "Active signals",
+    eligible: "eligible",
+    notEligible: "not yet eligible",
+    adminTitle: "Moderation queue",
+    adminTokenLabel: "Admin token",
+    adminTokenPlaceholder: "Paste x-admin-token",
+    adminLoad: "Load pending",
+    adminApprove: "approve",
+    adminReject: "reject",
+    adminEmpty: "No pending repo signal.",
+    adminReviewing: "reviewing…"
+  },
+  signals: {
+    title: "Report a signal",
+    hint:
+      "Active signals require evidence and enough reputation. Severe flags only surface publicly once multiple trusted users agree.",
+    signalLabel: "Signal",
+    evidenceUrlLabel: "Evidence URL",
+    evidenceDescriptionLabel: "Evidence summary",
+    submit: "Submit signal",
+    submitting: "Submitting…",
+    success: "Signal recorded. Public flags update only after trusted consensus.",
+    ownerTitle: "Owner review",
+    ownerHint:
+      "If this repo belongs to your GitHub account, you can dispute a pending or accepted active signal here.",
+    disputeReasonLabel: "Dispute reason",
+    dispute: "Dispute signal",
+    disputing: "Disputing…",
+    disputed: "Signal disputed. It now waits for review.",
+    status: "status"
   }
 } as const;
 

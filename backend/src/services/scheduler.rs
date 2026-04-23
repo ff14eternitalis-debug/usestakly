@@ -32,7 +32,6 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
         Ok(report) => tracing::info!(
             refreshed,
             externals_processed = report.externals_processed,
-            snippets_processed = report.snippets_processed,
             formula_version = %report.formula_version,
             elapsed_ms = start.elapsed().as_millis() as u64,
             "scheduler: cycle done"

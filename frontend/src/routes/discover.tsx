@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 
+import { Button } from "../components/Button";
 import { RepoCard } from "../components/RepoCard";
 import { useT } from "../i18n";
-import { apiGet } from "../lib/api-client";
-import type { RepoSearchResponse, SearchFilter } from "../lib/types";
+import { ApiError, apiGet, apiPost } from "../lib/api-client";
+import type { AddRepoResponse, RepoSearchResponse, SearchFilter } from "../lib/types";
 
 const SearchIcon = (
   <svg
@@ -29,6 +31,10 @@ export function DiscoverPage() {
   const [filter, setFilter] = useState<SearchFilter>("explore");
   const [language, setLanguage] = useState("");
   const [starsMin, setStarsMin] = useState<number | "">("");
+  const [repoInput, setRepoInput] = useState("");
+  const [addedRepo, setAddedRepo] = useState<AddRepoResponse | null>(null);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const FILTERS: { value: SearchFilter; label: string; hint: string }[] = [
     { value: "explore", label: t.discover.modeExplore, hint: t.discover.hintExplore },
@@ -53,8 +59,21 @@ export function DiscoverPage() {
     placeholderData: (prev) => prev
   });
 
+  const addRepo = useMutation({
+    mutationFn: () =>
+      apiPost<AddRepoResponse>("/api/repos/add", { repo: repoInput.trim() }),
+    onSuccess: async (data) => {
+      setAddedRepo(data);
+      setRepoInput("");
+      await queryClient.invalidateQueries({ queryKey: ["search"] });
+      void navigate({ to: "/repos/$id", params: { id: data.artifactId } });
+    }
+  });
+
   const count = results.data?.items.length ?? 0;
   const activeFilter = FILTERS.find((f) => f.value === filter);
+  const addRepoError =
+    addRepo.error instanceof ApiError ? addRepo.error.message : null;
 
   return (
     <section className="shell grid gap-8 py-10 md:py-14">
@@ -140,6 +159,61 @@ export function DiscoverPage() {
             </p>
           </div>
         </div>
+
+        <div className="grid gap-3 border-t border-line pt-4 md:grid-cols-[1fr_auto] md:items-end">
+          <label className="grid gap-1.5">
+            <span className="kicker">{t.discover.addRepoLabel}</span>
+            <input
+              type="text"
+              placeholder={t.discover.addRepoPlaceholder}
+              value={repoInput}
+              onChange={(e) => setRepoInput(e.target.value)}
+              className="input"
+            />
+          </label>
+          <div className="grid gap-1.5">
+            <span className="kicker">&nbsp;</span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => addRepo.mutate()}
+              disabled={addRepo.isPending || !repoInput.trim()}
+            >
+              {addRepo.isPending ? t.discover.addRepoPending : t.discover.addRepoAction}
+            </Button>
+          </div>
+        </div>
+
+        <p className="text-[0.84rem] text-fg-dim">{t.discover.addRepoHelp}</p>
+
+        {addRepoError ? (
+          <p className="text-[0.86rem]" style={{ color: "var(--color-danger)" }}>
+            {addRepoError}
+          </p>
+        ) : null}
+
+        {addedRepo ? (
+          <div className="rounded-[6px] border border-line bg-surface/40 px-4 py-3 text-[0.9rem] text-fg-dim">
+            {(addedRepo.alreadyIndexed
+              ? t.discover.addRepoExists
+              : t.discover.addRepoSuccess)}{" "}
+            <Link
+              to="/repos/$id"
+              params={{ id: addedRepo.artifactId }}
+              className="text-accent hover:underline"
+            >
+              {addedRepo.fullName}
+            </Link>
+            {" · "}
+            <Link
+              to="/repos/$id"
+              params={{ id: addedRepo.artifactId }}
+              className="text-accent hover:underline"
+            >
+              {t.discover.addRepoOpen}
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between border-b border-line pb-3">

@@ -3,6 +3,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AgentTokenSummary {
     pub id: Uuid,
     pub label: String,
@@ -11,6 +12,7 @@ pub struct AgentTokenSummary {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AgentTokenCreated {
     pub id: Uuid,
     pub label: String,

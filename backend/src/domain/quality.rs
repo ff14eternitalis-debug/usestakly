@@ -87,6 +87,13 @@ pub struct QualitySignalRecord {
     pub agent_context: Option<Value>,
     pub evidence_url: Option<String>,
     pub evidence_description: Option<String>,
+    pub review_status: String,
+    pub reviewed_by_user_id: Option<Uuid>,
+    pub reviewed_at: Option<DateTime<Utc>>,
+    pub review_note: Option<String>,
+    pub disputed_by_user_id: Option<Uuid>,
+    pub disputed_at: Option<DateTime<Utc>>,
+    pub dispute_reason: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
