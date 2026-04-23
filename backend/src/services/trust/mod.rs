@@ -1,4 +1,5 @@
 pub mod agent_token_events;
+pub mod mcp_metrics;
 pub mod repo_owners;
 pub mod reputation;
 pub mod signal_events;

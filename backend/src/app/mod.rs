@@ -49,6 +49,7 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             "/api/admin/embeddings/backfill",
             post(admin::backfill_repo_embeddings),
         )
+        .route("/api/admin/mcp/metrics", get(admin::mcp_metrics_report))
         .route(
             "/api/admin/repo-signals/pending",
             get(admin::list_pending_repo_signals),

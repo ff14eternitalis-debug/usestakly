@@ -236,8 +236,7 @@ struct ReputationMetrics {
 impl ReputationMetrics {
     fn from_row(row: &UserReputationRow, account_age_days: i64) -> Self {
         let age_factor = (account_age_days as f64 / ACCOUNT_AGE_SATURATION_DAYS).clamp(0.0, 1.0);
-        let passive_factor =
-            (row.passive_signal_count as f64 / PASSIVE_SATURATION).clamp(0.0, 1.0);
+        let passive_factor = (row.passive_signal_count as f64 / PASSIVE_SATURATION).clamp(0.0, 1.0);
         let usage_count = row.resolve_count
             + row.re_resolve_count
             + row.build_success_count

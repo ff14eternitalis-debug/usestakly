@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../lib/api-client";
-import { getPendingRepoSignals, reviewPendingRepoSignal } from "../lib/api/admin";
+import { getMcpMetrics, getPendingRepoSignals, reviewPendingRepoSignal } from "../lib/api/admin";
 import {
   createAgentToken,
   getAccountSummary,
@@ -10,9 +10,10 @@ import {
   revokeAgentToken
 } from "../lib/api/account";
 import { useT } from "../i18n";
-import type { AgentTokenCreated } from "../lib/types";
+import type { AgentTokenCreated, McpMetricsWindow } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
 import { AccountIdentityCard } from "../features/account/components/AccountIdentityCard";
+import { AdminMcpObservabilityPanel } from "../features/account/components/AdminMcpObservabilityPanel";
 import { AdminModerationPanel } from "../features/account/components/AdminModerationPanel";
 import { AgentTokensPanel } from "../features/account/components/AgentTokensPanel";
 import { ReputationCard } from "../features/account/components/ReputationCard";
@@ -25,6 +26,7 @@ export function AccountPage() {
   const [created, setCreated] = useState<AgentTokenCreated | null>(null);
   const [copied, setCopied] = useState(false);
   const [adminToken, setAdminToken] = useState("");
+  const [mcpWindow, setMcpWindow] = useState<McpMetricsWindow>("7d");
 
   const summary = useQuery({
     queryKey: ["account-summary"],
@@ -39,6 +41,12 @@ export function AccountPage() {
   const pendingSignals = useQuery({
     queryKey: ["admin-pending-signals"],
     queryFn: () => getPendingRepoSignals(adminToken),
+    enabled: adminToken.trim().length > 0
+  });
+
+  const mcpMetrics = useQuery({
+    queryKey: ["admin-mcp-metrics", mcpWindow],
+    queryFn: () => getMcpMetrics(adminToken, mcpWindow),
     enabled: adminToken.trim().length > 0
   });
 
@@ -170,6 +178,35 @@ export function AccountPage() {
         rejectLabel={t.account.adminReject}
         reviewingLabel={t.account.adminReviewing}
         emptyLabel={t.account.adminEmpty}
+      />
+
+      <AdminMcpObservabilityPanel
+        adminToken={adminToken}
+        window={mcpWindow}
+        onWindowChange={setMcpWindow}
+        loading={mcpMetrics.isLoading}
+        report={mcpMetrics.data}
+        labels={{
+          title: t.account.mcpObservabilityTitle,
+          intro: t.account.mcpObservabilityIntro,
+          windowLabel: t.account.mcpWindowLabel,
+          window24h: t.account.mcpWindow24h,
+          window7d: t.account.mcpWindow7d,
+          window30d: t.account.mcpWindow30d,
+          loading: t.account.mcpLoading,
+          totalLogUsage: t.account.mcpTotalLogUsage,
+          totalWatchRepo: t.account.mcpTotalWatchRepo,
+          totalRejections: t.account.mcpTotalRejections,
+          distinctTokens: t.account.mcpDistinctTokens,
+          distinctUsers: t.account.mcpDistinctUsers,
+          distinctRepos: t.account.mcpDistinctRepos,
+          outcomeTitle: t.account.mcpOutcomeTitle,
+          rejectionTitle: t.account.mcpRejectionTitle,
+          topReposTitle: t.account.mcpTopReposTitle,
+          topUsersTitle: t.account.mcpTopUsersTitle,
+          dailyTitle: t.account.mcpDailyTitle,
+          empty: t.account.mcpEmpty
+        }}
       />
     </section>
   );

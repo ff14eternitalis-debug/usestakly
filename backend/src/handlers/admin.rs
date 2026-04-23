@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::HeaderMap,
 };
 use chrono::{DateTime, Utc};
@@ -14,7 +14,10 @@ use crate::{
         ingestion::github::{build_client, ingest_repo},
         quality::{ScoringReport, recompute_all_scores_with_config},
         semantic_search,
-        trust::{reputation, signal_events, signal_reviews},
+        trust::{
+            mcp_metrics::{self, McpMetricsReport, MetricsWindow},
+            reputation, signal_events, signal_reviews,
+        },
     },
 };
 
@@ -207,6 +210,22 @@ pub async fn review_repo_signal(
     .await?;
     let _ = recompute_all_scores_with_config(&state.db, Some(&state.config)).await?;
     Ok(Json(record))
+}
+
+#[derive(Deserialize)]
+pub struct McpMetricsQuery {
+    pub window: Option<String>,
+}
+
+pub async fn mcp_metrics_report(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(q): Query<McpMetricsQuery>,
+) -> Result<Json<McpMetricsReport>, ApiError> {
+    require_admin_token(&state, &headers)?;
+    let window = MetricsWindow::parse(q.window.as_deref())?;
+    let report = mcp_metrics::gather_metrics(&state.db, window).await?;
+    Ok(Json(report))
 }
 
 pub async fn list_pending_repo_signals(

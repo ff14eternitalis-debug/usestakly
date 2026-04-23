@@ -264,7 +264,27 @@ export const fr: Dict = {
     adminApprove: "approuver",
     adminReject: "rejeter",
     adminEmpty: "Aucun signal repo en attente.",
-    adminReviewing: "review…"
+    adminReviewing: "review…",
+    mcpObservabilityTitle: "Observabilité MCP",
+    mcpObservabilityIntro:
+      "Vue agrégée des events agent_token_events : volume log_usage, watch_repo et refus des guards sur une fenêtre choisie.",
+    mcpWindowLabel: "Fenêtre",
+    mcpWindow24h: "24 h",
+    mcpWindow7d: "7 j",
+    mcpWindow30d: "30 j",
+    mcpLoading: "Chargement des metrics…",
+    mcpTotalLogUsage: "log_usage",
+    mcpTotalWatchRepo: "watch_repo",
+    mcpTotalRejections: "Refus guards",
+    mcpDistinctTokens: "Tokens distincts",
+    mcpDistinctUsers: "Users distincts",
+    mcpDistinctRepos: "Repos touchés",
+    mcpOutcomeTitle: "Distribution des outcomes log_usage",
+    mcpRejectionTitle: "Refus par raison",
+    mcpTopReposTitle: "Top repos",
+    mcpTopUsersTitle: "Top users",
+    mcpDailyTitle: "Volume quotidien",
+    mcpEmpty: "Aucune activité MCP sur cette fenêtre."
   },
   signals: {
     title: "Signaler un problème",

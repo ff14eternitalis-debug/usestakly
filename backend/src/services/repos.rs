@@ -59,9 +59,10 @@ pub async fn search_github_repos(
     let formula_version = load_v1()?.meta.version;
     let limit = filters.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
     let query_tokens = tokenize_query(filters.query.as_deref());
-    let semantic_query = semantic_search::embed_query(filters.query.as_deref().unwrap_or(""), config)
-        .await?
-        .map(|embedding| semantic_search::to_pgvector_literal(&embedding));
+    let semantic_query =
+        semantic_search::embed_query(filters.query.as_deref().unwrap_or(""), config)
+            .await?
+            .map(|embedding| semantic_search::to_pgvector_literal(&embedding));
 
     let rows: Vec<RepoRow> = sqlx::query_as(
         r#"

@@ -58,7 +58,10 @@ async fn github_login_for_user(db: &PgPool, user_id: Uuid) -> Result<Option<Stri
     Ok(login.filter(|value| !value.trim().is_empty()))
 }
 
-async fn github_repo_identity(db: &PgPool, repo_id: Uuid) -> Result<Option<GithubRepoIdentity>, ApiError> {
+async fn github_repo_identity(
+    db: &PgPool,
+    repo_id: Uuid,
+) -> Result<Option<GithubRepoIdentity>, ApiError> {
     let row: Option<GithubRepoIdentity> = sqlx::query_as(
         r#"
         SELECT github_owner AS owner, github_repo AS name
@@ -135,7 +138,9 @@ async fn is_private_org_member(
         .bearer_auth(token)
         .send()
         .await
-        .map_err(|err| ApiError::bad_request(format!("GitHub private membership lookup failed: {err}")))?;
+        .map_err(|err| {
+            ApiError::bad_request(format!("GitHub private membership lookup failed: {err}"))
+        })?;
 
     match response.status() {
         StatusCode::OK => Ok(true),
@@ -172,22 +177,29 @@ async fn has_repo_write_permissions(
         .bearer_auth(token)
         .send()
         .await
-        .map_err(|err| ApiError::bad_request(format!("GitHub collaborator permission lookup failed: {err}")))?;
+        .map_err(|err| {
+            ApiError::bad_request(format!(
+                "GitHub collaborator permission lookup failed: {err}"
+            ))
+        })?;
 
     match response.status() {
         StatusCode::OK => {
-            let body = response.json::<CollaboratorPermissionResponse>().await.map_err(|err| {
-                ApiError::bad_request(format!(
-                    "Invalid GitHub collaborator permission response: {err}"
-                ))
-            })?;
-            Ok(matches!(
-                body.permission.as_deref(),
-                Some("admin") | Some("write")
-            ) || matches!(
-                body.role_name.as_deref(),
-                Some("admin") | Some("write") | Some("maintain")
-            ))
+            let body = response
+                .json::<CollaboratorPermissionResponse>()
+                .await
+                .map_err(|err| {
+                    ApiError::bad_request(format!(
+                        "Invalid GitHub collaborator permission response: {err}"
+                    ))
+                })?;
+            Ok(
+                matches!(body.permission.as_deref(), Some("admin") | Some("write"))
+                    || matches!(
+                        body.role_name.as_deref(),
+                        Some("admin") | Some("write") | Some("maintain")
+                    ),
+            )
         }
         StatusCode::NOT_FOUND | StatusCode::FORBIDDEN | StatusCode::UNAUTHORIZED => Ok(false),
         StatusCode::TOO_MANY_REQUESTS => Err(ApiError::forbidden(

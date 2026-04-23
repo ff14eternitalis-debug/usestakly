@@ -1,5 +1,5 @@
 import { apiGetWithInit, apiPostWithInit } from "../api-client";
-import type { PendingRepoSignal } from "../types";
+import type { McpMetricsReport, McpMetricsWindow, PendingRepoSignal } from "../types";
 
 export function getPendingRepoSignals(adminToken: string): Promise<PendingRepoSignal[]> {
   return apiGetWithInit<PendingRepoSignal[]>("/api/admin/repo-signals/pending", {
@@ -15,6 +15,18 @@ export function reviewPendingRepoSignal(
   return apiPostWithInit(
     `/api/admin/repo-signals/${id}/review`,
     { action },
+    {
+      headers: { "x-admin-token": adminToken.trim() }
+    }
+  );
+}
+
+export function getMcpMetrics(
+  adminToken: string,
+  window: McpMetricsWindow
+): Promise<McpMetricsReport> {
+  return apiGetWithInit<McpMetricsReport>(
+    `/api/admin/mcp/metrics?window=${window}`,
     {
       headers: { "x-admin-token": adminToken.trim() }
     }

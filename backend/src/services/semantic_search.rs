@@ -147,9 +147,7 @@ async fn embed_text(text: String) -> Result<Vec<f32>> {
         let mut guard = model
             .lock()
             .map_err(|_| anyhow::anyhow!("embedding model lock poisoned"))?;
-        let embeddings = guard
-            .embed(vec![text], None)
-            .context("embedding text")?;
+        let embeddings = guard.embed(vec![text], None).context("embedding text")?;
         let vector = embeddings
             .into_iter()
             .next()

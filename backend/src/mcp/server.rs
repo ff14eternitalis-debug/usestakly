@@ -209,9 +209,10 @@ impl McpServer {
             limit: Some(p.limit.unwrap_or(20).clamp(1, 50)),
         };
 
-        let results = repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
-            .await
-            .map_err(map_api_error)?;
+        let results =
+            repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
+                .await
+                .map_err(map_api_error)?;
 
         let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
         let scored_at = results
@@ -315,6 +316,10 @@ impl McpServer {
         agent_token_events::enforce_write_quota(
             &self.state.db,
             agent.token_id,
+            agent.user_id,
+            agent_token_events::REJECTION_TOOL_LOG_USAGE,
+            owner,
+            name,
             self.state.config.mcp_write_limit_per_hour,
         )
         .await
@@ -406,6 +411,10 @@ impl McpServer {
         agent_token_events::enforce_write_quota(
             &self.state.db,
             agent.token_id,
+            agent.user_id,
+            agent_token_events::REJECTION_TOOL_WATCH_REPO,
+            owner,
+            name,
             self.state.config.mcp_write_limit_per_hour,
         )
         .await

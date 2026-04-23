@@ -192,3 +192,57 @@ export type Notification = {
 export type UnreadCount = {
   unread: number;
 };
+
+export type McpMetricsWindow = "24h" | "7d" | "30d";
+
+export type McpMetricsTotals = {
+  logUsage: number;
+  watchRepo: number;
+  rejections: number;
+  distinctTokens: number;
+  distinctUsers: number;
+  distinctRepos: number;
+};
+
+export type McpOutcomeBucket = {
+  outcome: string;
+  count: number;
+};
+
+export type McpRejectionBucket = {
+  tool: string;
+  reason: string;
+  count: number;
+};
+
+export type McpRepoVolume = {
+  owner: string;
+  name: string;
+  logUsage: number;
+  watchRepo: number;
+  rejections: number;
+};
+
+export type McpUserVolume = {
+  userId: string;
+  logUsage: number;
+  watchRepo: number;
+  rejections: number;
+};
+
+export type McpDailyBucket = {
+  bucket: string;
+  logUsage: number;
+  watchRepo: number;
+  rejections: number;
+};
+
+export type McpMetricsReport = {
+  window: McpMetricsWindow;
+  totals: McpMetricsTotals;
+  outcomeDistribution: McpOutcomeBucket[];
+  rejectionBreakdown: McpRejectionBucket[];
+  topRepos: McpRepoVolume[];
+  topUsers: McpUserVolume[];
+  dailyVolume: McpDailyBucket[];
+};

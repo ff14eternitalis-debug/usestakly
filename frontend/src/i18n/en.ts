@@ -261,7 +261,27 @@ export const en = {
     adminApprove: "approve",
     adminReject: "reject",
     adminEmpty: "No pending repo signal.",
-    adminReviewing: "reviewing…"
+    adminReviewing: "reviewing…",
+    mcpObservabilityTitle: "MCP observability",
+    mcpObservabilityIntro:
+      "Aggregated view of agent_token_events: log_usage, watch_repo and guard rejection volume over the chosen window.",
+    mcpWindowLabel: "Window",
+    mcpWindow24h: "24h",
+    mcpWindow7d: "7d",
+    mcpWindow30d: "30d",
+    mcpLoading: "Loading metrics…",
+    mcpTotalLogUsage: "log_usage",
+    mcpTotalWatchRepo: "watch_repo",
+    mcpTotalRejections: "Guard rejections",
+    mcpDistinctTokens: "Distinct tokens",
+    mcpDistinctUsers: "Distinct users",
+    mcpDistinctRepos: "Repos touched",
+    mcpOutcomeTitle: "log_usage outcome distribution",
+    mcpRejectionTitle: "Rejections by reason",
+    mcpTopReposTitle: "Top repos",
+    mcpTopUsersTitle: "Top users",
+    mcpDailyTitle: "Daily volume",
+    mcpEmpty: "No MCP activity in this window."
   },
   signals: {
     title: "Report a signal",
