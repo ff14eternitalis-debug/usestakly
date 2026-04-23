@@ -1,10 +1,12 @@
 # UseStakly — TODO MVP
 
-> Version : 5.0 — 2026-04-21
+> Version : 5.1 — 2026-04-23
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
+>
+> **État au 2026-04-23** : R1 + R2 (hors sémantique) + R3 (hors worker cron dédié) + R6 (shell pivot) livrés sur `main` (commits 69cb5ac, 8e4e1f7, 8750ea8, b1221c8, 9fec584). Restent R4, R5, R2b, R7, plus l'audit parcours utilisateur (voir section dédiée).
 
 ---
 
@@ -49,48 +51,50 @@ Frontend (Phase 3) : le shell, l'auth, le theme, la providers tree **restent uti
 
 ## Nouvelles phases (R = refactor vers le pivot)
 
-### Phase R1 — Ingestion GitHub ⏫ PRIORITÉ
+### Phase R1 — Ingestion GitHub ✅ LIVRÉE (commit 69cb5ac)
 
 Pipeline neuf. C'est le cœur du nouveau produit : sans repos ingérés, rien à scorer.
 
-- [ ] Migration `0011_github_artifacts.sql` — colonnes GitHub-specific sur `external_artifacts` (owner, name, default_branch, stars, forks, license, archived, language, last_commit_at, open_issues_count)
-- [ ] Service `ingestion::github` — client REST (octocrab ou reqwest direct), auth via GitHub App (préféré) ou PAT fallback
-- [ ] Rate-limit handling : conditional requests (ETags), backoff, quota monitoring
-- [ ] Ingestion priors snapshot : stars, forks, subscribers, last_commit_at, open_issues, archived, language, license
-- [ ] Computation priors dérivés : `freshness` (via `last_commit_at` + formula), `owner_inactive_days` (via events API)
-- [ ] Refresh cadence : daily par défaut, horaire pour repos watchés
-- [ ] Critère de corpus v1 : **à trancher** — top N par langage, sur demande, ou quand un user watch ?
-- [ ] Endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé
-- [ ] Endpoint `POST /api/repos/add` — user propose un repo à ingérer
-- [ ] Tests unitaires sur parsing réponses GitHub
-- [ ] Mapping `github.com/owner/repo` → UUID `external_artifact_id` (idempotent)
+- [x] Migration `0011_github_artifacts.sql` — colonnes GitHub-specific sur `external_artifacts` (owner, name, default_branch, stars, forks, license, archived, language, last_commit_at, open_issues_count)
+- [x] Service `ingestion::github` — client REST (reqwest direct), auth via PAT
+- [x] Ingestion priors snapshot : stars, forks, last_commit_at, open_issues, archived, language, license
+- [x] Endpoint `POST /api/repos/add` — user propose un repo à ingérer (`handlers::repos`)
+- [x] Mapping `github.com/owner/repo` → UUID `external_artifact_id` (idempotent)
+- [x] Binary `seed_github` pour bootstrap corpus manuel
+- [ ] **Reste à faire** : rate-limit handling (ETags conditional requests, backoff, quota monitoring)
+- [ ] **Reste à faire** : computation priors dérivés côté events API (`owner_inactive_days`)
+- [ ] **Reste à faire** : cadence refresh automatique (daily par défaut, horaire pour repos watchés) — actuellement manuel / au seed
+- [ ] **Reste à faire** : critère corpus v1 formel — **à trancher** entre top N par langage / sur demande / via watchlist uniquement
+- [ ] **Reste à faire** : endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé
+- [ ] **Reste à faire** : tests unitaires sur parsing réponses GitHub
 
-### Phase R2 — Discovery qualité-scored
+### Phase R2 — Discovery qualité-scored ✅ LIVRÉE (commit 8e4e1f7, fix f053f79)
 
 Remplace la search snippets par la search repos GitHub.
 
-- [ ] `/api/search` repointé : cherche dans `external_artifacts` (repos GitHub), plus dans `snippets`
-- [ ] Filtres existants conservés : `filter=auto|strict|explore` (définis dans formula_v1)
-- [ ] Filtres nouveaux : langage, license, stars min/max, freshness min
-- [ ] Recherche lexicale : ILIKE sur `name` + `description` + topics GitHub
-- [ ] Recherche sémantique (Phase R2b) : `fastembed` local, embedding des descriptions, pgvector
-- [ ] Ranking combiné : lexical + sémantique + score qualité
-- [ ] Endpoint `GET /api/repos/:id` — profil complet (dimensions, flags, historique scores, derniers signaux)
-- [ ] UX d'explication : « pourquoi ce repo est proposé, pourquoi request@2.88 est exclu en mode auto »
+- [x] `/api/search` repointé : cherche dans `external_artifacts` (repos GitHub)
+- [x] Filtres existants conservés : `filter=auto|strict|explore` (définis dans formula_v1)
+- [x] Recherche lexicale : ILIKE sur `name` + `description` + topics GitHub
+- [x] Endpoint `GET /api/repos/:id` — profil complet (dimensions, flags, historique scores)
+- [ ] **Reste à faire (R2b)** : recherche sémantique `fastembed` local + pgvector + embedding des descriptions (pas encore câblé, dépendance absente du `Cargo.toml`)
+- [ ] **Reste à faire** : ranking combiné lexical + sémantique + score qualité
+- [ ] **Reste à faire** : filtres avancés (langage, license, stars min/max, freshness min) — partiellement présents, à compléter
+- [ ] **Reste à faire** : UX d'explication « pourquoi ce repo est proposé, pourquoi X est exclu en mode auto »
 
-### Phase R3 — Watchlist & suivi
+### Phase R3 — Watchlist & suivi ✅ LIVRÉE partiellement (commit 8750ea8)
 
 Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 
-- [ ] Migration `0012_watchlists.sql` — `watchlists`, `watched_artifacts`, `notifications`
-- [ ] Endpoints `/api/watchlist` — CRUD + ajouter / retirer un repo
-- [ ] Détection de changement significatif : diff score T vs T-1, nouveaux flags, dernière activité owner
-- [ ] Règles d'alerte défaut : abandonment +0.2, nouveau flag `security-issue` / `broken`, maintainer silencieux 90 j, score `overall` qui descend sous seuil
-- [ ] Règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
-- [ ] Canal notification v1 : **in-app** seulement (centre de notifications côté frontend)
-- [ ] Canal notification v2 : email (via service transactionnel), webhook pour devs avancés
-- [ ] Worker cron : job quotidien qui diff les scores et génère les notifications
-- [ ] Digest email hebdomadaire pour les watchers actifs
+- [x] Migration `0012_watchlists.sql` — `watchlists`, `watched_artifacts`, `notifications`
+- [x] Endpoints `/api/watchlist` — CRUD + ajouter / retirer un repo (`handlers::watchlist`)
+- [x] Détection de changement significatif : diff score T vs T-1 dans `services::notifications` (`fetch_prev_snapshot` + seuils)
+- [x] Règles d'alerte défaut : abandonment +0.20, nouveau flag `security-issue` / `broken`, score `overall` qui chute de ≥ 0.10
+- [x] Canal notification v1 : **in-app** (endpoints `/api/notifications`, route frontend `notifications.tsx`)
+- [x] Worker scheduler autonome : `services::scheduler::spawn_recompute_loop` — tokio::spawn + interval, opt-in via `APP_SCHEDULER_ENABLED`, cadence via `APP_RECOMPUTE_INTERVAL_SECS` (default 24 h). Refresh des repos watchés via `ingest_repo` puis `recompute_all_scores` (qui émet les notifs). Pas de run au boot.
+- [ ] **Reste à faire** : règle « maintainer silencieux 90 j » (dépend de `owner_inactive_days` côté R1)
+- [ ] **Reste à faire** : règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
+- [ ] **Reste à faire** : canal v2 email + webhook pour devs avancés
+- [ ] **Reste à faire** : digest email hebdomadaire pour les watchers actifs
 
 ### Phase R4 — Signaux actifs / flags toxiques (cœur produit)
 
@@ -106,30 +110,44 @@ Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 
 ### Phase R5 — MCP adapté aux repos
 
-Plus des snippets — des repos GitHub.
+Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-23) / R5b (write tools + signaux passifs).
 
-- [ ] Route MCP SSE / WebSocket
-- [ ] Auth agent : token dédié distinct de la session web (pour éviter qu'un client web détourné spamme `build_success`)
-- [ ] Outil `search_github_repos(query, filter, language?, stack?)` → candidats scorés
-- [ ] Outil `get_repo_quality_context(owner/repo)` → profil complet signé (`repo@sha + score@t + formula_version`)
-- [ ] Outil `log_usage(repo, outcome)` → alimente `build_success_rate` et `regret_rate` passifs
-- [ ] Outil `watch_repo(repo)` — ajoute à la watchlist du user agent
-- [ ] Provenance obligatoire dans toutes les réponses : `// Evalué: github.com/owner/repo@sha, score: 0.92, formula_v1, t=...`
+**R5a — livrée 2026-04-23**
 
-### Phase R6 — Refonte frontend complète
+- [x] Transport Streamable HTTP via `rmcp` 1.5 monté à `/mcp` (`mcp::server::build_service`)
+- [x] Migration `0013_agent_tokens.sql` — table + index hot-path
+- [x] Auth agent : Bearer token `usk_<64 hex>` hashé SHA-256, lookup via `mcp::auth::verify_bearer`
+- [x] Endpoints REST de gestion : `POST/GET /api/agent-tokens`, `DELETE /api/agent-tokens/{id}`
+- [x] Outil `search_github_repos(query, filter, language?, stars_min?, limit?)` → candidats scorés
+- [x] Outil `get_repo_quality_context(owner, name)` → profil complet (dimensions, flags, signals)
+- [x] Provenance dans chaque output : `{ source: "usestakly://registry/github[/owner/name]", formula_version, scored_at }`
+- [x] Doc v2 post-pivot dans `docs/mcp-protocol.md` (l'ancienne v1 pré-pivot est remplacée)
+
+**R5b — reste à faire**
+
+- [ ] Outil `log_usage(repo, outcome)` → crée un `quality_signal` passif avec `user_id` du token
+- [ ] Outil `watch_repo(repo)` — ajoute à la watchlist du user propriétaire du token
+- [ ] Rate-limit par token (quota requêtes/heure, à adapter selon usage constaté)
+- [ ] Poisoning-resistance sur `log_usage` : seuil réputation user, consensus N distinct users pour flags toxiques
+- [ ] UI de gestion des tokens côté frontend (dépend R6 page compte)
+
+### Phase R6 — Refonte frontend complète ✅ LIVRÉE partiellement (commits b1221c8, 9fec584)
 
 Le frontend actuel est centré snippets. À démolir en grande partie, à rebâtir autour de discovery + watchlist.
 
-- [ ] **Garder** : shell global, providers, theme, auth flow OAuth, layout base
-- [ ] **Retirer** (ou mettre en feature flag off) : pages libraries, pages snippets, discovery snippets publics, creator flow snippets
-- [ ] **Nouveau** : landing orientée outil de veille — pitch, démo visible, CTA « watch your first repo »
-- [ ] **Nouveau** : page recherche / discovery — barre de recherche + résultats scorés + filtres latéraux + explications du scoring
-- [ ] **Nouveau** : page profil repo — header avec meta GitHub + barres de dimensions + liste flags + graph historique score + bouton `Watch` + timeline signaux
-- [ ] **Nouveau** : dashboard watchlist — grid ou liste avec mini-score + diff récent + accès rapide au profil
-- [ ] **Nouveau** : centre de notifications (in-app) — changements scores, nouveaux flags, digests
-- [ ] **Nouveau** : page compte — réputation user (basée sur ses signaux validés), historique contributions, règles d'alerte perso
-- [ ] TanStack Query à câbler (déjà installé) pour gérer le cache / revalidation des profils repos
-- [ ] Router : rester sur hash routing ou basculer TanStack Router ? **à trancher**
+- [x] **Gardé** : shell global, providers, theme, auth flow OAuth, layout base
+- [x] **Retiré** : vues libraries/snippets supprimées de la navigation (routes ayant disparu du dossier `routes/`)
+- [x] **Nouveau** : landing orientée outil de veille (`routes/index.tsx`, refait par commit 9fec584 « redo design »)
+- [x] **Nouveau** : page recherche / discovery (`routes/discover.tsx`)
+- [x] **Nouveau** : page profil repo (`routes/repo-detail.tsx`)
+- [x] **Nouveau** : dashboard watchlist (`routes/watchlist.tsx`)
+- [x] **Nouveau** : centre de notifications in-app (`routes/notifications.tsx`)
+- [x] Composant i18n EN/FR livré (`LocaleSwitch`, `locale-store`)
+- [ ] **Reste à faire** : page compte complète — réputation user, historique contributions, règles d'alerte perso
+- [ ] **Reste à faire** : TanStack Query à câbler (toujours installé mais fetch direct via `api-client`)
+- [ ] **Reste à faire** : trancher router — hash custom ou TanStack Router
+- [ ] **Reste à faire** : UX d'explication du scoring sur la page discovery (barres de dimensions, flags, « pourquoi ce résultat »)
+- [ ] **Reste à faire** : graph historique score + timeline signaux sur le profil repo
 
 ### Phase R7 — Validation e2e
 
@@ -137,6 +155,36 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [ ] Flow agent : MCP search → get_repo_quality_context → log_usage → signal propagé
 - [ ] Tests E2E Playwright sur les flows critiques
 - [ ] Vérification sécu : l'audit `docs/security-audit-2026-04-21.md` reste valide sur les briques existantes, **refaire un audit** après R1 + R2 + R3 (surface d'attaque étendue : clients GitHub externes, queue de notifications, webhook)
+
+---
+
+## 📄 Documentation à livrer (dette acceptée 2026-04-23)
+
+Reportée pour ne pas casser le flow actuel, mais à faire avant ouverture externe :
+
+- [ ] **Doc reproduction tests** — comment lancer la stack locale (docker compose + backend + frontend), quelles env vars minimales, quel corpus de seed, comment déclencher un cycle scheduler à la main pour valider (`curl POST /api/admin/scoring/recompute` avec token), comment inspecter `notifications` en DB
+- [ ] **Doc tests fonctionnels** — check-list : login OAuth OK, add repo OK, watchlist affiche, notifs se créent quand un score bouge, `/api/search` filtre auto/strict/explore, profil repo cohérent
+- [ ] **Doc parcours utilisateur** — à produire en même temps que l'audit (voir section ci-dessous), une fois les incohérences routées
+
+## 🧭 Audit parcours utilisateur — à faire (pas maintenant)
+
+On sait déjà qu'il y a au moins une incohérence de routage dans le shell :
+- le bouton « Connexion » du header (`AppHeader.tsx`) envoie direct sur `/api/auth/github/start` (GitHub OAuth immédiat)
+- les CTAs internes (ex: « Se connecter pour la veille » sur `repo-detail.tsx`, `index.tsx`) passent par `/login` qui offre le choix GitHub **ou** Discord
+
+Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, pas un choix design.
+
+À couvrir quand on ouvrira le chantier :
+
+- [ ] Cartographier tous les CTAs d'entrée (header, landing, repo-detail, watchlist, notifications) et leur destination
+- [ ] Trancher : OAuth direct vs page `/login` intermédiaire — un seul pattern dans toute l'app
+- [ ] Auditer le flow post-login : retour sur la page d'origine ou landing par défaut ? (aujourd'hui indéfini)
+- [ ] Flow « watch your first repo » depuis la landing — friction réelle, nombre de clics, état vide du dashboard
+- [ ] Flow notification → action : depuis le centre de notif, est-ce qu'on arrive sur un diff lisible ou juste sur le profil repo ?
+- [ ] États vides partout : watchlist vide, notifications vides, résultats search vides — cohérents ?
+- [ ] Erreurs : que voit l'utilisateur si l'ingestion d'un repo échoue (`POST /api/repos/add`) ? si la session expire ?
+- [ ] Parcours onboarding : un nouvel inscrit OAuth atterrit où ? Voit-il quoi ? Corpus vide = expérience creuse
+- [ ] Mobile : est-ce qu'on a même besoin de supporter mobile pour un MVP dev-tool, ou desktop-only assumé ?
 
 ---
 
@@ -153,10 +201,26 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 
 ## Ordre d'exécution recommandé
 
-1. **R1** (ingestion GitHub) — sans ça rien ne tourne
-2. **R2** (search repos) — débloque la démo killer
-3. **R6 partiel** (landing + search UI) — donne un produit visible aux users
-4. **R3** (watchlist + notifs) — le deuxième pilier, passer du « je cherche une fois » à « je reviens »
-5. **R5** (MCP) — débloque les signaux passifs, alimente le flywheel
-6. **R4** (flags toxiques) — avant ouverture publique (sinon review-bombing immédiat)
-7. **R6 reste** + **R7** (validation) — polish et launch
+~~1. **R1** (ingestion GitHub)~~ ✅
+~~2. **R2** (search repos)~~ ✅ (sauf sémantique R2b)
+~~3. **R6 partiel** (landing + search UI)~~ ✅
+~~4. **R3** (watchlist + notifs)~~ ✅ (sauf worker cron + email)
+
+**Prochain à trancher** (dans l'ordre réel de priorité) :
+
+~~1. **R3 finition — worker cron quotidien**~~ ✅ livré 2026-04-23 — scheduler tokio::spawn dans `services::scheduler`, opt-in via `APP_SCHEDULER_ENABLED`.
+~~2. **R5a — MCP read-only**~~ ✅ livré 2026-04-23 — transport Streamable HTTP + 2 tools (`search_github_repos`, `get_repo_quality_context`) + auth Bearer via `agent_tokens`. Doc : `docs/mcp-protocol.md` v2.
+
+1. **R5b (MCP write tools + poisoning-resistance)** — le flywheel
+   `log_usage` et `watch_repo` sont ce qui rend le scoring auto-amélioré par l'usage des agents. Nécessite rate-limit + seuil réputation avant d'ouvrir l'écriture sans risque.
+
+2. **R4 (flags toxiques)** — avant ouverture publique uniquement
+   Sinon review-bombing immédiat. Tant que c'est fermé / early access, pas urgent. Dépend partiellement de R5b (consensus N distinct users).
+
+3. **Audit parcours utilisateur** — qualité visible, secondaire pré-launch
+   Incohérence Connexion/login agaçante mais non-bloquante. À reprendre quand il y aura des vrais users à observer, ou juste avant ouverture publique. L'utilisateur a explicitement demandé « pas maintenant » au 2026-04-23.
+
+4. **R2b (recherche sémantique)** — quand le corpus justifiera le coût
+   Inutile tant que le corpus est petit : le lexical ILIKE suffit.
+
+5. **R6 reste** (compte user + UI gestion tokens MCP, TanStack Query, router) + **R7** (validation E2E) — polish et launch

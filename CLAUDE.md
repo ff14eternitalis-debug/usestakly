@@ -96,3 +96,5 @@ Aucun service Postgres n'est provisionné dans la CI ; tout test backend nécess
 - Les cookies de session exigent `APP_SESSION_SECRET` ; sans lui, `auth_enabled()` renvoie `false` et seul le dev user fonctionne.
 - CORS est strictement limité à `FRONTEND_BASE_URL` avec `allow_credentials(true)` — changer l'URL frontend casse l'auth.
 - `docker-compose.yml` ne démarre **que** Postgres : le backend et le frontend tournent en local hors Docker.
+- Scheduler R3 (refresh watched repos + recompute + notifs) est **opt-in** : `APP_SCHEDULER_ENABLED=true` pour l'activer, `APP_RECOMPUTE_INTERVAL_SECS` pour la cadence (default 86400). Laissé off en dev pour ne pas taper l'API GitHub au démarrage. Spawn via `tokio::spawn` dans `services::scheduler` — pas de crate cron externe.
+- Serveur MCP R5a monté à `/mcp` via `rmcp::StreamableHttpService` (Tower service, `route_service` dans `app::build_app`). Auth Bearer via la table `agent_tokens` (migration 0013) — tokens au format `usk_<64 hex>`, hashés SHA-256 en DB, plaintext affiché une seule fois à la création via `POST /api/agent-tokens`. Doc exhaustive : `docs/mcp-protocol.md` v2.

@@ -11,9 +11,10 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use crate::{
     config::AppConfig,
     handlers::{
-        admin, auth, health, libraries, me, notifications, repos, resolve, search, signals,
-        snippets, watchlist,
+        admin, agent_tokens, auth, health, libraries, me, notifications, repos, resolve, search,
+        signals, snippets, watchlist,
     },
+    mcp::server as mcp_server,
 };
 
 #[derive(Clone)]
@@ -28,8 +29,10 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .parse::<HeaderValue>()
         .unwrap_or_else(|_| HeaderValue::from_static("http://localhost:5173"));
     let state = AppState { config, db };
+    let mcp_service = mcp_server::build_service(state.clone());
 
     Router::new()
+        .route_service("/mcp", mcp_service)
         .route("/health", get(health::health))
         .route("/api/auth/github/start", get(auth::github_start))
         .route("/api/auth/github/callback", get(auth::github_callback))
@@ -92,6 +95,14 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route(
             "/api/notifications/{notification_id}/read",
             post(notifications::mark_notification_read),
+        )
+        .route(
+            "/api/agent-tokens",
+            get(agent_tokens::list_agent_tokens).post(agent_tokens::create_agent_token),
+        )
+        .route(
+            "/api/agent-tokens/{token_id}",
+            axum::routing::delete(agent_tokens::revoke_agent_token),
         )
         .layer(
             CorsLayer::new()

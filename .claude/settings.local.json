@@ -25,7 +25,10 @@
       "Bash(cargo run *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(docker exec usestakly-db *)"
+      "Bash(docker exec usestakly-db *)",
+      "Bash(cargo search *)",
+      "Bash(cargo info *)",
+      "mcp__context7__query-docs"
     ]
   }
 }
