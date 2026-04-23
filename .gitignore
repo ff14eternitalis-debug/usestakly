@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 target/
+.fastembed_cache/
 .DS_Store
 .idea/
 .vscode/
