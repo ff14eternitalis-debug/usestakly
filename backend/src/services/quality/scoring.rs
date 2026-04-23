@@ -332,7 +332,7 @@ async fn load_active_flag_consensus(
                     } else {
                         default_consensus
                     };
-                    (users.len() as u32 >= needed).then(|| signal)
+                    (users.len() as u32 >= needed).then_some(signal)
                 })
                 .collect::<Vec<_>>();
             (artifact_id, normalize_flags(flags))

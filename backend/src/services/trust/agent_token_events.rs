@@ -37,6 +37,7 @@ pub async fn enforce_write_quota(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn enforce_log_usage_guards(
     db: &PgPool,
     token_id: Uuid,
