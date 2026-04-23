@@ -21,6 +21,8 @@ pub struct AppConfig {
     pub discord_client_secret: Option<String>,
     pub admin_api_token: Option<String>,
     pub github_token: Option<String>,
+    pub scheduler_enabled: bool,
+    pub recompute_interval_secs: u64,
 }
 
 impl AppConfig {
@@ -61,6 +63,18 @@ impl AppConfig {
         let github_token = env::var("GITHUB_TOKEN")
             .ok()
             .filter(|s| !s.trim().is_empty());
+        let scheduler_enabled = env::var("APP_SCHEDULER_ENABLED")
+            .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
+            .unwrap_or(false);
+        let recompute_interval_secs = env::var("APP_RECOMPUTE_INTERVAL_SECS")
+            .unwrap_or_else(|_| "86400".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_RECOMPUTE_INTERVAL_SECS must be a valid u64"))?;
+        if recompute_interval_secs < 60 {
+            return Err(anyhow!(
+                "APP_RECOMPUTE_INTERVAL_SECS must be >= 60 (got {recompute_interval_secs})"
+            ));
+        }
 
         Ok(Self {
             host,
@@ -80,6 +94,8 @@ impl AppConfig {
             discord_client_secret,
             admin_api_token,
             github_token,
+            scheduler_enabled,
+            recompute_interval_secs,
         })
     }
 
