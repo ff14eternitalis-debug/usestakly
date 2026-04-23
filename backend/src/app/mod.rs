@@ -46,6 +46,10 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         )
         .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
         .route(
+            "/api/admin/embeddings/backfill",
+            post(admin::backfill_repo_embeddings),
+        )
+        .route(
             "/api/admin/repo-signals/pending",
             get(admin::list_pending_repo_signals),
         )

@@ -2,7 +2,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{app::error::ApiError, domain::quality::SignalKind};
+use crate::{app::error::ApiError, domain::quality::SignalKind, services::trust::reputation};
 
 const EVENT_LOG_USAGE: &str = "mcp_log_usage";
 const EVENT_WATCH_REPO: &str = "mcp_watch_repo";
@@ -42,6 +42,7 @@ pub async fn enforce_log_usage_guards(
     owner: &str,
     name: &str,
     outcome: SignalKind,
+    notes: Option<&str>,
     cooldown_secs: u64,
     negative_window_hours: u64,
 ) -> Result<(), ApiError> {
@@ -79,6 +80,7 @@ pub async fn enforce_log_usage_guards(
     if !is_negative_outcome(outcome) {
         return Ok(());
     }
+    enforce_negative_outcome_reputation(db, user_id, outcome, notes).await?;
 
     let negative_window_hours = i32::try_from(negative_window_hours)
         .map_err(|_| ApiError::bad_request("negative window is too large"))?;
@@ -187,4 +189,35 @@ fn is_negative_outcome(outcome: SignalKind) -> bool {
         outcome,
         SignalKind::BuildFailure | SignalKind::Regret | SignalKind::ReResolve
     )
+}
+
+async fn enforce_negative_outcome_reputation(
+    db: &PgPool,
+    user_id: Uuid,
+    outcome: SignalKind,
+    notes: Option<&str>,
+) -> Result<(), ApiError> {
+    let rep = reputation::get_user_reputation(db, user_id).await?;
+    let notes_len = notes.map(str::trim).map(str::len).unwrap_or(0);
+
+    if rep.review_weight() < 0.55 {
+        return Err(ApiError::forbidden(format!(
+            "negative MCP usage signals require a more established trust profile (current tier: {})",
+            rep.tier.as_str()
+        )));
+    }
+
+    if rep.usage_signal_count() < 5 || rep.successful_outcome_ratio() < 0.35 || rep.regret_ratio() > 0.45 {
+        return Err(ApiError::forbidden(
+            "negative MCP usage signals are temporarily restricted until the account builds a healthier usage history",
+        ));
+    }
+
+    if matches!(outcome, SignalKind::Regret | SignalKind::ReResolve) && notes_len < 12 {
+        return Err(ApiError::bad_request(
+            "negative MCP usage signals need short notes (12+ chars) for review context",
+        ));
+    }
+
+    Ok(())
 }

@@ -29,6 +29,7 @@ pub struct AppConfig {
     pub active_signal_min_reputation: f64,
     pub active_signal_default_consensus: u32,
     pub active_signal_severe_consensus: u32,
+    pub semantic_search_enabled: bool,
 }
 
 impl AppConfig {
@@ -129,6 +130,9 @@ impl AppConfig {
                 "APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS must be >= APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS"
             ));
         }
+        let semantic_search_enabled = env::var("APP_SEMANTIC_SEARCH_ENABLED")
+            .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
+            .unwrap_or(false);
 
         Ok(Self {
             host,
@@ -156,6 +160,7 @@ impl AppConfig {
             active_signal_min_reputation,
             active_signal_default_consensus,
             active_signal_severe_consensus,
+            semantic_search_enabled,
         })
     }
 

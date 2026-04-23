@@ -2,7 +2,7 @@
 
 > Portee : produit vivant **UseStakly** apres pivot GitHub OSS.  
 > Objectif : reduire la dette de structure avant qu'elle ne ralentisse les prochaines features (recherche semantique, E2E, reputation v2, moderation plus riche).  
-> Statut : plan en cours d'execution. Sprint 1 + Sprint 2 termines le 2026-04-23. Sprints 3-4 ouverts.
+> Statut : plan execute. Sprints 1 + 2 + 3 + 4 termines le 2026-04-23.
 
 ## Verdict rapide
 
@@ -271,14 +271,20 @@ Derives : `mod.rs` re-exporte les symboles publics pour minimiser le churn des c
 
 ### Sprint 3
 
-- decouper `repo-detail.tsx`
-- decouper `account.tsx`
-- introduire des clients API metier
+Statut : termine.
+
+- [x] decouper `repo-detail.tsx` en sous-composants (`RepoHeader`, `RepoMetricsPanel`, `RepoSignalsList`, `ReportSignalForm`, `OwnerDisputePanel`)
+- [x] decouper `account.tsx` en sous-composants (`AccountIdentityCard`, `ReputationCard`, `AgentTokensPanel`, `AdminModerationPanel`)
+- [x] introduire des clients API metier (`lib/api/account.ts`, `repos.ts`, `watchlist.ts`, `admin.ts`)
 
 ### Sprint 4
 
-- cleanup doc (notamment `docs/README.md` + `CLAUDE.md` deja aligne 2026-04-23)
-- petit audit de coherence final
+Statut : termine.
+
+- [x] cleanup doc (`docs/README.md`, `README.md`, `TODO.md`, docs agents)
+- [x] ajout d'une doc courte `architecture-backend-current.md`
+- [x] ajout d'une doc courte `trust-model-v1.md`
+- [x] audit final de coherence (`docs/coherence-audit-2026-04-23.md`)
 
 ## Definition of Done
 

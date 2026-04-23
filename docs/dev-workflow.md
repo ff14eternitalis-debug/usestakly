@@ -61,6 +61,36 @@ curl http://localhost:4000/api/me | jq
 
 `/api/me` doit retourner le dev user (`usestakly-dev`) tant que `APP_SESSION_SECRET` n'est pas un vrai secret et que les credentials OAuth sont vides.
 
+## Recherche sémantique locale (R2b)
+
+La recherche sémantique est **opt-in**.
+
+Dans `.env` :
+
+```powershell
+APP_SEMANTIC_SEARCH_ENABLED=true
+```
+
+Quand elle est activée :
+
+- les nouveaux repos ingérés reçoivent un embedding local via `fastembed`
+- le ranking search devient hybride lexical + sémantique + score qualité
+
+Pour backfiller le corpus déjà présent :
+
+```powershell
+curl -X POST http://localhost:4000/api/admin/embeddings/backfill `
+  -H "Content-Type: application/json" `
+  -H "x-admin-token: <ADMIN_API_TOKEN>" `
+  -d "{""limit"":100,""onlyMissing"":true}"
+```
+
+Notes :
+
+- `onlyMissing=true` évite de retraiter les repos déjà embeddés
+- lancer plusieurs batches si le corpus est large
+- le premier lancement télécharge le modèle local `fastembed`, donc il peut être plus lent
+
 ## Commandes courantes (à taper à la main)
 
 Ces commandes **n'ont pas de script dédié** par choix (voir section *Principes d'automatisation*).

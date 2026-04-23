@@ -38,17 +38,32 @@ function Hero() {
             {t.landing.intro}
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link to="/discover" className={buttonClass("primary")}>
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <Link
+              to="/discover"
+              className={buttonClass(
+                "primary",
+                "md",
+                "px-5 py-3 text-[0.96rem] shadow-[0_0_0_1px_var(--color-line-strong)]"
+              )}
+            >
               {t.landing.openObservatory}
               <span className="arrow">→</span>
             </Link>
             {!isAuthed ? (
-              <Link to="/login" className={buttonClass("outline")}>
-                {t.landing.signInForWatchlist}
-              </Link>
+              <p className="text-[0.9rem] text-fg-dim">
+                <Link
+                  to="/login"
+                  className="link-underline text-fg-dim hover:text-accent"
+                >
+                  {t.landing.signInForWatchlist}
+                </Link>
+              </p>
             ) : (
-              <Link to="/watchlist" className={buttonClass("outline")}>
+              <Link
+                to="/watchlist"
+                className="inline-flex items-center gap-1.5 text-[0.92rem] text-fg-dim hover:text-accent transition-colors"
+              >
                 {t.landing.myWatchlist}
                 <span className="arrow">→</span>
               </Link>

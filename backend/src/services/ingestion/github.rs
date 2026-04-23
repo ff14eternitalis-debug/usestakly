@@ -3,7 +3,7 @@ use octocrab::Octocrab;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::app::error::ApiError;
+use crate::{app::error::ApiError, config::AppConfig, services::semantic_search};
 
 pub struct GitHubRepoMetadata {
     pub github_id: i64,
@@ -164,11 +164,26 @@ pub async fn upsert_github_artifact(
 pub async fn ingest_repo(
     client: &Octocrab,
     db: &PgPool,
+    config: &AppConfig,
     owner: &str,
     name: &str,
 ) -> Result<(Uuid, GitHubRepoMetadata), ApiError> {
     let meta = fetch_repo(client, owner, name).await?;
     let id = upsert_github_artifact(db, &meta).await?;
+    if let Some(embedding) = semantic_search::embed_passage(
+        semantic_search::build_search_document(
+            &meta.owner,
+            &meta.name,
+            meta.description.as_deref(),
+            meta.language.as_deref(),
+            &meta.topics,
+        ),
+        config,
+    )
+    .await?
+    {
+        semantic_search::update_repo_embedding(db, id, &embedding).await?;
+    }
     Ok((id, meta))
 }
 

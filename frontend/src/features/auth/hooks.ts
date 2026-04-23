@@ -4,8 +4,9 @@ import { apiGet, apiPost, ApiError } from "../../lib/api-client";
 import type { CurrentUser } from "../../lib/types";
 import { useAuthStore } from "../../state/auth-store";
 
-export function useHydrateAuth(): void {
+export function useHydrateAuth(): boolean {
   const setUser = useAuthStore((s) => s.setUser);
+  const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -25,6 +26,8 @@ export function useHydrateAuth(): void {
     })();
     return () => controller.abort();
   }, [setUser]);
+
+  return hydrated;
 }
 
 export async function logout(): Promise<void> {

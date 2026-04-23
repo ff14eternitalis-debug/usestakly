@@ -4,5 +4,6 @@ pub mod notifications;
 pub mod quality;
 pub mod repos;
 pub mod scheduler;
+pub mod semantic_search;
 pub mod trust;
 pub mod watchlist;

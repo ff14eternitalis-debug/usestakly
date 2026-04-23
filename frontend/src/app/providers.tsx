@@ -15,15 +15,28 @@ const queryClient = new QueryClient({
 });
 
 function HydrateAuth() {
-  useHydrateAuth();
-  return null;
+  const hydrated = useHydrateAuth();
+
+  if (hydrated) {
+    return <RouterProvider router={router} />;
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-[color:var(--color-bg)] px-6 text-center">
+      <div className="grid gap-3">
+        <span className="kicker">AUTH</span>
+        <p className="mono text-[0.82rem] uppercase tracking-[0.14em] text-fg-dim">
+          Checking session…
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export function AppProviders() {
   return (
     <QueryClientProvider client={queryClient}>
       <HydrateAuth />
-      <RouterProvider router={router} />
     </QueryClientProvider>
   );
 }

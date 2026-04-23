@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-04-23** : R1 + R2 (hors sémantique) + R3 (hors worker cron dédié) + R6 (shell pivot) livrés sur `main` (commits 69cb5ac, 8e4e1f7, 8750ea8, b1221c8, 9fec584). Restent R4, R5, R2b, R7, plus l'audit parcours utilisateur (voir section dédiée).
+> **État au 2026-04-23** : R1 + R2 + R2b + R3 (hors email / règles custom) + gros morceau de R4/R5 + R6 sont désormais en place sur `main`. Restent surtout : finition trust/modération avancée, UX d'explication scoring, E2E, et second audit parcours utilisateur connecté.
 
 ---
 
@@ -76,8 +76,10 @@ Remplace la search snippets par la search repos GitHub.
 - [x] Filtres existants conservés : `filter=auto|strict|explore` (définis dans formula_v1)
 - [x] Recherche lexicale : ILIKE sur `name` + `description` + topics GitHub
 - [x] Endpoint `GET /api/repos/:id` — profil complet (dimensions, flags, historique scores)
-- [ ] **Reste à faire (R2b)** : recherche sémantique `fastembed` local + pgvector + embedding des descriptions (pas encore câblé, dépendance absente du `Cargo.toml`)
-- [ ] **Reste à faire** : ranking combiné lexical + sémantique + score qualité
+- [x] **R2b** : recherche sémantique locale branchée — `fastembed` + `pgvector`, embeddings des repos GitHub à l'ingestion, query embedding au search, ranking hybride avec le score qualité
+- [x] Endpoint admin de backfill embeddings corpus existant — `POST /api/admin/embeddings/backfill`
+- [x] Calibration initiale du ranking hybride sur corpus local réel — `auto` ne vide plus artificiellement les résultats, score lexical tokenisé + blend lexical / sémantique / qualité branché
+- [ ] **Reste à faire** : affiner encore le weighting lexical / sémantique / score qualité sur corpus plus large et requêtes réelles variées
 - [ ] **Reste à faire** : filtres avancés (langage, license, stars min/max, freshness min) — partiellement présents, à compléter
 - [ ] **Reste à faire** : UX d'explication « pourquoi ce repo est proposé, pourquoi X est exclu en mode auto »
 
@@ -108,7 +110,10 @@ Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 - [x] Historique transparent v1 des transitions de signal (submitted / reviewed / disputed) affiché sur le profil repo
 - [x] Réputation utilisateur v1 exposée en API/UI compte + seuil minimal avant signals actifs
 - [x] Consensus v1 sur les flags publics : seuls les signaux actifs venant de users éligibles comptent dans `artifact_scores.flags`
-- [ ] Pondération réputation owner / reporter — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
+- [x] Réputation utilisateur v2 runtime — score pondéré par usage réel, outcomes positifs, fiabilité build et pénalité regret ; éligibilité active exige désormais un minimum de vrai usage
+- [x] Pondération réputation reporter v2 dans le workflow de modération — reporters faibles sur signaux actifs sévères (`broken`, `doesnt_match_claim`, `security_issue`) passent en review stricte/pending au lieu d'une acceptation automatique
+- [x] Pondération trust owner v1 dans les disputes/reviews — la file admin remonte maintenant aussi le contexte trust du compte owner qui conteste, et les signaux acceptés puis disputés reviennent dans la boucle de review
+- [ ] Pondération réputation owner / reporter plus riche dans les reviews elles-mêmes — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 
 ### Phase R5 — MCP adapté aux repos
@@ -134,7 +139,10 @@ Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-
 - [x] Rate-limit par token (quota write/heure configurable) via `agent_token_events` (migration `0014`)
 - [x] Garde-fous anti-spam sur `log_usage` : cooldown par token + fenêtre de refroidissement sur outcomes négatifs répétés
 - [x] UI de gestion des tokens côté frontend : page `/account` (création, liste, révocation)
-- [ ] Poisoning-resistance avancée sur `log_usage` : réputation user explicite, pondération par ancienneté/usage réel, consensus N distinct users pour flags toxiques
+- [x] Poisoning-resistance v2 partielle sur `log_usage` / trust : réputation user explicite, pondération par ancienneté + usage réel + regret/build reliability
+- [x] Support owner GitHub v2 best effort : owner direct, membre public d'org, membre privé d'org si `GITHUB_TOKEN` le permet, ou collaborateur/maintainer repo si l'API GitHub peut confirmer le rôle
+- [x] Poisoning-resistance avancée v2 sur `log_usage` : outcomes négatifs désormais filtrés par réputation trust, historique d'usage sain et notes minimales pour les cas les plus sensibles
+- [ ] Poisoning-resistance avancée suivante sur `log_usage` : observabilité dédiée et pondération encore plus fine par type d'outcome / historique par repo
 
 ### Phase R6 — Refonte frontend complète ✅ LIVRÉE partiellement (commits b1221c8, 9fec584)
 
@@ -148,12 +156,14 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [x] **Nouveau** : dashboard watchlist (`routes/watchlist.tsx`)
 - [x] **Nouveau** : centre de notifications in-app (`routes/notifications.tsx`)
 - [x] Composant i18n EN/FR livré (`LocaleSwitch`, `locale-store`)
-- [ ] **Reste à faire** : page compte complète — réputation user, historique contributions, règles d'alerte perso
+- [x] Page compte v1 utile — tokens MCP, réputation user, file de modération admin légère
+- [ ] **Reste à faire** : page compte plus complète — historique contributions, règles d'alerte perso, settings plus riches
 - [x] UI v1 de modération légère : file pending/disputed dans `/account`, review admin, dispute owner, timeline locale sur le profil repo
-- [ ] **Reste à faire** : TanStack Query à câbler (toujours installé mais fetch direct via `api-client`)
-- [ ] **Reste à faire** : trancher router — hash custom ou TanStack Router
+- [x] TanStack Query câblé via `frontend/src/app/providers.tsx` et utilisé sur les routes actives
+- [x] Router tranché : TanStack Router en usage sur l'app active
 - [ ] **Reste à faire** : UX d'explication du scoring sur la page discovery (barres de dimensions, flags, « pourquoi ce résultat »)
 - [ ] **Reste à faire** : graph historique score + timeline signaux sur le profil repo
+- [x] Correctifs UX v1 post-audit : garde auth avant montage du routeur, CTA `add repo` moins technique, CTA repo non-auth orienté bénéfice, hiérarchie CTA landing resserrée
 
 ### Phase R7 — Validation e2e
 
@@ -172,25 +182,27 @@ Reportée pour ne pas casser le flow actuel, mais à faire avant ouverture exter
 - [ ] **Doc tests fonctionnels** — check-list : login OAuth OK, add repo OK, watchlist affiche, notifs se créent quand un score bouge, `/api/search` filtre auto/strict/explore, profil repo cohérent
 - [ ] **Doc parcours utilisateur** — à produire en même temps que l'audit (voir section ci-dessous), une fois les incohérences routées
 
-## 🧭 Audit parcours utilisateur — à faire (pas maintenant)
+## 🧭 Audit parcours utilisateur — phase 1 faite, phase 2 à faire
 
-On sait déjà qu'il y a au moins une incohérence de routage dans le shell :
-- le bouton « Connexion » du header (`AppHeader.tsx`) envoie direct sur `/api/auth/github/start` (GitHub OAuth immédiat)
-- les CTAs internes (ex: « Se connecter pour la veille » sur `repo-detail.tsx`, `index.tsx`) passent par `/login` qui offre le choix GitHub **ou** Discord
+Un premier audit réel a été mené et documenté dans `docs/audits/user-journey-audit-2026-04-23.md`.
 
-Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, pas un choix design.
+Points déjà traités suite à cet audit :
 
-À couvrir quand on ouvrira le chantier :
+- [x] garde auth corrigée : `/watchlist`, `/notifications`, `/account` redirigent désormais proprement vers `/login` pour un user anonyme
+- [x] CTA discovery `add repo` clarifié (`Ingest repo` retiré)
+- [x] CTA repo non-auth clarifié avec promesse de valeur
+- [x] hiérarchie CTA landing resserrée
+- [x] pattern login unifié côté shell actif : le header passe aussi par `/login`
 
-- [ ] Cartographier tous les CTAs d'entrée (header, landing, repo-detail, watchlist, notifications) et leur destination
-- [ ] Trancher : OAuth direct vs page `/login` intermédiaire — un seul pattern dans toute l'app
-- [ ] Auditer le flow post-login : retour sur la page d'origine ou landing par défaut ? (aujourd'hui indéfini)
-- [ ] Flow « watch your first repo » depuis la landing — friction réelle, nombre de clics, état vide du dashboard
-- [ ] Flow notification → action : depuis le centre de notif, est-ce qu'on arrive sur un diff lisible ou juste sur le profil repo ?
-- [ ] États vides partout : watchlist vide, notifications vides, résultats search vides — cohérents ?
-- [ ] Erreurs : que voit l'utilisateur si l'ingestion d'un repo échoue (`POST /api/repos/add`) ? si la session expire ?
-- [ ] Parcours onboarding : un nouvel inscrit OAuth atterrit où ? Voit-il quoi ? Corpus vide = expérience creuse
-- [ ] Mobile : est-ce qu'on a même besoin de supporter mobile pour un MVP dev-tool, ou desktop-only assumé ?
+Reste à couvrir dans un second audit, connecté cette fois :
+
+- [ ] auditer le flow post-login réel : retour sur page d'origine ou destination par défaut
+- [ ] flow « watch your first repo » depuis la landing jusqu'à la watchlist réelle
+- [ ] flow notification → action : depuis le centre de notif, arrive-t-on sur un contexte assez lisible
+- [ ] états vides connectés : watchlist vide, notifications vides, compte sans token
+- [ ] erreurs réelles côté UI : échec `POST /api/repos/add`, session expirée, refus auth
+- [ ] parcours onboarding connecté complet : login OAuth → discover → repo detail → watchlist → notifications → account/tokens
+- [ ] passage mobile / responsive dédié si on veut assumer autre chose que desktop-first
 
 ---
 
@@ -199,7 +211,7 @@ Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, 
 - [ ] **R1** — critère de corpus initial : top N / sur demande / via watchlist uniquement ?
 - [ ] **R3** — canal notification v1 : in-app suffit, ou email obligatoire dès le MVP ?
 - [ ] **R5** — token agent : JWT dédié généré par l'user, ou OAuth device flow ?
-- [ ] **R6** — router frontend : garder hash custom ou migrer TanStack Router ?
+- [x] **R6** — router frontend : TanStack Router retenu pour l'app active
 - [ ] **R6** — faut-il garder les vues libraries/snippets cachées (réactivables) ou les dégommer net ?
 - [ ] **Intuition couche 2** : POC quand ? Jamais, post-MVP, post-traction ?
 
@@ -208,9 +220,9 @@ Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, 
 ## Ordre d'exécution recommandé
 
 ~~1. **R1** (ingestion GitHub)~~ ✅
-~~2. **R2** (search repos)~~ ✅ (sauf sémantique R2b)
+~~2. **R2** (search repos)~~ ✅
 ~~3. **R6 partiel** (landing + search UI)~~ ✅
-~~4. **R3** (watchlist + notifs)~~ ✅ (sauf worker cron + email)
+~~4. **R3** (watchlist + notifs)~~ ✅ (sauf email / règles custom)
 
 **Prochain à trancher** (dans l'ordre réel de priorité) :
 
@@ -220,10 +232,10 @@ Donc selon d'où on clique, Discord est accessible ou non — c'est arbitraire, 
 1. **R4/R5b finition (reputation v2 + moderation plus fine)** — avant ouverture publique large
    Les garde-fous v1 sont là (quota MCP, réputation, consensus, review admin, dispute owner, audit trail). La vraie suite est la pondération réputation plus riche et le support des memberships GitHub privés / rôles fins.
 
-2. **Audit parcours utilisateur** — qualité visible, secondaire pré-launch
-   Incohérence Connexion/login agaçante mais non-bloquante. À reprendre quand il y aura des vrais users à observer, ou juste avant ouverture publique. L'utilisateur a explicitement demandé « pas maintenant » au 2026-04-23.
+2. **Second audit parcours utilisateur (connecté)** — qualité visible, secondaire pré-launch
+   Le premier audit public est fait et ses frictions principales ont été corrigées. Il reste à valider le vrai parcours connecté de bout en bout.
 
-3. **R2b (recherche sémantique)** — quand le corpus justifiera le coût
-   Inutile tant que le corpus est petit : le lexical ILIKE suffit.
+3. **R2b approfondi (recherche sémantique)** — calibration sur corpus plus large
+   La brique est maintenant en place et calibrée une première fois. La suite utile n'est plus de la brancher, mais de l'affiner sur plus de données.
 
-4. **R6 reste** (compte user plus riche, TanStack Query, router) + **R7** (validation E2E) — polish et launch
+4. **R6 reste** (compte user plus riche, explication scoring) + **R7** (validation E2E) — polish et launch

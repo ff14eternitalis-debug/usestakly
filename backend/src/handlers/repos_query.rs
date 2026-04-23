@@ -47,7 +47,7 @@ pub async fn search_repos(
         include_archived: query.include_archived,
         limit: query.limit,
     };
-    let items = search_github_repos(&state.db, &filters).await?;
+    let items = search_github_repos(&state.db, &state.config, &filters).await?;
     Ok(Json(RepoSearchResponse {
         filter: filters.filter,
         items,

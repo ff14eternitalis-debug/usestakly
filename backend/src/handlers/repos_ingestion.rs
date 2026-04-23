@@ -56,7 +56,7 @@ pub async fn add_repo(
         .await?
         .is_some();
     let client = build_client(token)?;
-    let (artifact_id, meta) = ingest_repo(&client, &state.db, &owner, &name).await?;
+    let (artifact_id, meta) = ingest_repo(&client, &state.db, &state.config, &owner, &name).await?;
     let report = recompute_all_scores_with_config(&state.db, Some(&state.config)).await?;
 
     Ok(Json(AddRepoResponse {

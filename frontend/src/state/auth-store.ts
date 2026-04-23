@@ -6,6 +6,7 @@ type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 type AuthState = {
   status: AuthStatus;
+  hydrated: boolean;
   user: CurrentUser | null;
   setUser: (user: CurrentUser | null) => void;
   setLoading: () => void;
@@ -14,12 +15,14 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set) => ({
   status: "loading",
+  hydrated: false,
   user: null,
   setUser: (user) =>
     set({
       user,
-      status: user ? "authenticated" : "anonymous"
+      status: user ? "authenticated" : "anonymous",
+      hydrated: true
     }),
-  setLoading: () => set({ status: "loading" }),
-  reset: () => set({ status: "anonymous", user: null })
+  setLoading: () => set({ status: "loading", hydrated: false }),
+  reset: () => set({ status: "anonymous", hydrated: true, user: null })
 }));

@@ -4,15 +4,18 @@ use uuid::Uuid;
 
 use crate::{
     app::error::ApiError,
+    config::AppConfig,
     domain::{
         reference::{QualityContext, SearchFilter},
         repo::{RepoProfile, RepoSearchResult, RepoSignal},
     },
-    services::{quality::load_v1, trust::signal_events},
+    services::{quality::load_v1, semantic_search, trust::signal_events},
 };
 
 const DEFAULT_LIMIT: i64 = 50;
 const MAX_LIMIT: i64 = 200;
+const LEXICAL_MIN_SCORE: f64 = 0.35;
+const SEMANTIC_MIN_SCORE: f64 = 0.2;
 
 pub async fn find_github_artifact_id(
     db: &PgPool,
@@ -50,78 +53,134 @@ pub struct RepoSearchFilters {
 
 pub async fn search_github_repos(
     db: &PgPool,
+    config: &AppConfig,
     filters: &RepoSearchFilters,
 ) -> Result<Vec<RepoSearchResult>, ApiError> {
     let formula_version = load_v1()?.meta.version;
     let limit = filters.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
+    let query_tokens = tokenize_query(filters.query.as_deref());
+    let semantic_query = semantic_search::embed_query(filters.query.as_deref().unwrap_or(""), config)
+        .await?
+        .map(|embedding| semantic_search::to_pgvector_literal(&embedding));
 
     let rows: Vec<RepoRow> = sqlx::query_as(
         r#"
-        SELECT
-          e.id                   AS artifact_id,
-          e.github_owner         AS owner,
-          e.github_repo          AS name,
-          e.html_url             AS html_url,
-          e.description          AS description,
-          e.language             AS language,
-          e.license_spdx         AS license_spdx,
-          e.topics               AS topics,
-          e.stars_count          AS stars_count,
-          e.forks_count          AS forks_count,
-          e.open_issues_count    AS open_issues_count,
-          e.archived             AS archived,
-          e.last_commit_at            AS last_commit_at,
-          ascore.formula_version      AS quality_formula_version,
-          ascore.freshness::float8    AS quality_freshness,
-          ascore.adoption::float8     AS quality_adoption,
-          ascore.reliability::float8  AS quality_reliability,
-          ascore.abandonment::float8  AS quality_abandonment,
-          ascore.overall::float8      AS quality_overall,
-          ascore.flags                AS quality_flags,
-          ascore.computed_at          AS quality_computed_at
-        FROM external_artifacts e
-        LEFT JOIN artifact_scores ascore
-          ON ascore.external_artifact_id = e.id
-          AND ascore.formula_version = $1
-        WHERE e.source = 'github'
-          AND e.github_owner IS NOT NULL
-          AND e.github_repo IS NOT NULL
-          AND (
+        WITH repo_candidates AS (
+          SELECT
+            e.id                   AS artifact_id,
+            e.github_owner         AS owner,
+            e.github_repo          AS name,
+            e.html_url             AS html_url,
+            e.description          AS description,
+            e.language             AS language,
+            e.license_spdx         AS license_spdx,
+            e.topics               AS topics,
+            e.stars_count          AS stars_count,
+            e.forks_count          AS forks_count,
+            e.open_issues_count    AS open_issues_count,
+            e.archived             AS archived,
+            e.last_commit_at       AS last_commit_at,
+            ascore.formula_version      AS quality_formula_version,
+            ascore.freshness::float8    AS quality_freshness,
+            ascore.adoption::float8     AS quality_adoption,
+            ascore.reliability::float8  AS quality_reliability,
+            ascore.abandonment::float8  AS quality_abandonment,
+            ascore.overall::float8      AS quality_overall,
+            ascore.flags                AS quality_flags,
+            ascore.computed_at          AS quality_computed_at,
+            CASE
+              WHEN $9::text IS NULL OR e.embedding IS NULL THEN NULL
+              ELSE (1 - (e.embedding <=> CAST($9 AS vector(384))))::float8
+            END AS semantic_score,
+            CASE
+              WHEN $2::text IS NULL THEN NULL
+              ELSE LEAST(
+                1.0::float8,
+                COALESCE((
+                  SELECT AVG(
+                    CASE
+                      WHEN e.github_owner ILIKE '%' || token || '%'
+                        OR e.github_repo ILIKE '%' || token || '%'
+                        OR (e.github_owner || '/' || e.github_repo) ILIKE '%' || token || '%'
+                        THEN 1.0::float8
+                      WHEN EXISTS (SELECT 1 FROM unnest(e.topics) topic WHERE topic ILIKE '%' || token || '%')
+                        THEN 0.95::float8
+                      WHEN COALESCE(e.language, '') ILIKE '%' || token || '%'
+                        THEN 0.75::float8
+                      WHEN COALESCE(e.description, '') ILIKE '%' || token || '%'
+                        THEN 0.60::float8
+                      ELSE 0.0::float8
+                    END
+                  )
+                  FROM unnest(COALESCE($10::text[], ARRAY[]::text[])) token
+                ), 0.0)
+                + CASE
+                    WHEN (e.github_owner || '/' || e.github_repo) ILIKE '%' || $2 || '%' THEN 0.35::float8
+                    WHEN e.github_repo ILIKE '%' || $2 || '%' THEN 0.25::float8
+                    WHEN COALESCE(e.description, '') ILIKE '%' || $2 || '%' THEN 0.15::float8
+                    ELSE 0.0::float8
+                  END
+              )::float8
+            END AS lexical_score
+          FROM external_artifacts e
+          LEFT JOIN artifact_scores ascore
+            ON ascore.external_artifact_id = e.id
+            AND ascore.formula_version = $1
+          WHERE e.source = 'github'
+            AND e.github_owner IS NOT NULL
+            AND e.github_repo IS NOT NULL
+            AND ($4::text IS NULL OR e.language ILIKE $4)
+            AND ($5::text IS NULL OR e.license_spdx = $5)
+            AND ($6::int  IS NULL OR e.stars_count >= $6)
+            AND ($7 OR e.archived = FALSE)
+        )
+        SELECT *
+        FROM repo_candidates
+        WHERE (
             $2::text IS NULL
-            OR e.github_owner ILIKE '%' || $2 || '%'
-            OR e.github_repo  ILIKE '%' || $2 || '%'
-            OR COALESCE(e.description, '') ILIKE '%' || $2 || '%'
-            OR EXISTS (SELECT 1 FROM unnest(e.topics) t WHERE t ILIKE '%' || $2 || '%')
+            OR owner ILIKE '%' || $2 || '%'
+            OR name ILIKE '%' || $2 || '%'
+            OR COALESCE(description, '') ILIKE '%' || $2 || '%'
+            OR EXISTS (SELECT 1 FROM unnest(topics) t WHERE t ILIKE '%' || $2 || '%')
+            OR COALESCE(lexical_score, 0.0) >= $11
+            OR COALESCE(semantic_score, 0.0) >= $12
           )
-          AND ($4::text IS NULL OR e.language ILIKE $4)
-          AND ($5::text IS NULL OR e.license_spdx = $5)
-          AND ($6::int  IS NULL OR e.stars_count >= $6)
-          AND ($7 OR e.archived = FALSE)
           AND (
             $3 = 'explore'
             OR (
-              ascore.id IS NOT NULL
+              quality_formula_version IS NOT NULL
               AND (
                 (
                   $3 = 'auto'
-                  AND ascore.reliability >= 0.9
-                  AND ascore.abandonment <= 0.3
-                  AND NOT ('security-issue' = ANY(ascore.flags))
-                  AND NOT ('broken' = ANY(ascore.flags))
+                  AND COALESCE(quality_overall, 0.0) >= 0.45
+                  AND COALESCE(quality_abandonment, 1.0) <= 0.35
+                  AND NOT ('security-issue' = ANY(COALESCE(quality_flags, ARRAY[]::text[])))
+                  AND NOT ('broken' = ANY(COALESCE(quality_flags, ARRAY[]::text[])))
                 )
                 OR (
                   $3 = 'strict'
-                  AND ascore.reliability >= 0.95
-                  AND ascore.abandonment <= 0.2
-                  AND ascore.overall >= 0.85
-                  AND COALESCE(array_length(ascore.flags, 1), 0) = 0
+                  AND COALESCE(quality_overall, 0.0) >= 0.60
+                  AND COALESCE(quality_freshness, 0.0) >= 0.75
+                  AND COALESCE(quality_abandonment, 1.0) <= 0.20
+                  AND COALESCE(array_length(quality_flags, 1), 0) = 0
                 )
               )
             )
           )
-        ORDER BY ascore.overall DESC NULLS LAST,
-                 e.stars_count DESC,
-                 e.last_commit_at DESC NULLS LAST
+        ORDER BY
+                 CASE
+                   WHEN $2::text IS NULL THEN quality_overall
+                   ELSE (
+                     COALESCE(quality_overall, 0.0) * 0.35
+                     + COALESCE(lexical_score, 0.0) * 0.40
+                     + COALESCE(semantic_score, 0.0) * 0.25
+                   )
+                 END DESC NULLS LAST,
+                 COALESCE(lexical_score, 0.0) DESC NULLS LAST,
+                 COALESCE(semantic_score, 0.0) DESC NULLS LAST,
+                 quality_overall DESC NULLS LAST,
+                 stars_count DESC,
+                 last_commit_at DESC NULLS LAST
         LIMIT $8
         "#,
     )
@@ -133,6 +192,10 @@ pub async fn search_github_repos(
     .bind(filters.stars_min)
     .bind(filters.include_archived)
     .bind(limit)
+    .bind(semantic_query)
+    .bind(&query_tokens)
+    .bind(LEXICAL_MIN_SCORE)
+    .bind(SEMANTIC_MIN_SCORE)
     .fetch_all(db)
     .await?;
 
@@ -247,6 +310,10 @@ struct RepoRow {
     quality_overall: Option<f64>,
     quality_flags: Option<Vec<String>>,
     quality_computed_at: Option<DateTime<Utc>>,
+    #[allow(dead_code)]
+    lexical_score: Option<f64>,
+    #[allow(dead_code)]
+    semantic_score: Option<f64>,
 }
 
 impl RepoRow {
@@ -347,6 +414,8 @@ impl ProfileRow {
             quality_overall: self.quality_overall,
             quality_flags: self.quality_flags,
             quality_computed_at: self.quality_computed_at,
+            lexical_score: None,
+            semantic_score: None,
         }
         .into_search_result();
         RepoProfile {
@@ -403,5 +472,37 @@ fn normalize_public_signal(signal: &str) -> String {
     match signal {
         "security_issue" => "security-issue".to_string(),
         other => other.to_string(),
+    }
+}
+
+fn tokenize_query(query: Option<&str>) -> Vec<String> {
+    let mut tokens = Vec::new();
+    for token in query
+        .unwrap_or_default()
+        .split(|c: char| !c.is_alphanumeric())
+        .map(|token| token.trim().to_lowercase())
+        .filter(|token| token.len() >= 2)
+    {
+        if !tokens.contains(&token) {
+            tokens.push(token);
+        }
+    }
+    tokens
+}
+
+#[cfg(test)]
+mod tests {
+    use super::tokenize_query;
+
+    #[test]
+    fn tokenize_query_normalizes_and_deduplicates() {
+        let tokens = tokenize_query(Some("React UI, react  typescript"));
+        assert_eq!(tokens, vec!["react", "ui", "typescript"]);
+    }
+
+    #[test]
+    fn tokenize_query_drops_short_empty_tokens() {
+        let tokens = tokenize_query(Some("a / c++ / rpc"));
+        assert_eq!(tokens, vec!["rpc"]);
     }
 }

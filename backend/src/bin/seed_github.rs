@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
     let mut failed = 0usize;
     for (idx, repo) in seed.repos.iter().enumerate() {
         let slug = format!("{}/{}", repo.owner, repo.name);
-        match ingest_repo(&client, &pool, &repo.owner, &repo.name).await {
+        match ingest_repo(&client, &pool, &config, &repo.owner, &repo.name).await {
             Ok((id, meta)) => {
                 info!(
                     slug = %slug,

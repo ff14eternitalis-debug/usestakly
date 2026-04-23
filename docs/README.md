@@ -11,12 +11,13 @@
 ### Fondations
 - [**strategy-pivot-2026-04-21.md**](./strategy-pivot-2026-04-21.md) — **Scope produit actuel** : repos GitHub publics OSS uniquement
 - [**strategy-quality-scored-registry.md**](./strategy-quality-scored-registry.md) — Moat et principes de scoring qualité
+- [**architecture-backend-current.md**](./architecture-backend-current.md) — Vue backend actuelle post-refacto
+- [**trust-model-v1.md**](./trust-model-v1.md) — Règles de réputation, consensus, review et dispute
 - [**business/competitive-analysis.md**](./business/competitive-analysis.md) — Analyse concurrentielle
 - [**business/market-analysis-2026.md**](./business/market-analysis-2026.md) — Analyse du marché (Contexte 2026)
 - [**business/financial-study.md**](./business/financial-study.md) — Étude de rentabilité financière
 - [**user-journey.md**](./user-journey.md) — Parcours utilisateur *(à relire avec le pivot en tête)*
 - [**tech-stack.md**](./tech-stack.md) — Choix techniques
-- [**data-model.md**](./data-model.md) — Schéma PostgreSQL historique + qualité *(partiellement legacy)*
 
 ### Systèmes
 - [**mcp-protocol.md**](./mcp-protocol.md) — Protocole MCP GitHub post-pivot
@@ -36,6 +37,7 @@ Les documents centrés sur l'ancien produit snippets ont été déplacés dans [
 
 ### Suivi
 - [**../TODO.md**](../TODO.md) — Checklist globale d'exécution **(source de vérité exécution post-pivot)**
+- [**coherence-audit-2026-04-23.md**](./coherence-audit-2026-04-23.md) — Audit final de cohérence après sprints 1 à 4 de refacto
 
 ## 🧭 Comment lire cette doc
 

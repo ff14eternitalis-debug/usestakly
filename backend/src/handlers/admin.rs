@@ -13,7 +13,8 @@ use crate::{
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::{ScoringReport, recompute_all_scores_with_config},
-        trust::{signal_events, signal_reviews},
+        semantic_search,
+        trust::{reputation, signal_events, signal_reviews},
     },
 };
 
@@ -58,6 +59,22 @@ pub struct IngestGithubResponse {
     pub topics: Vec<String>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackfillEmbeddingsRequest {
+    pub limit: Option<i64>,
+    #[serde(default = "default_true")]
+    pub only_missing: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackfillEmbeddingsResponse {
+    pub updated: usize,
+    pub limit: i64,
+    pub only_missing: bool,
+}
+
 #[derive(Serialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct PendingRepoSignalResponse {
@@ -67,9 +84,20 @@ pub struct PendingRepoSignalResponse {
     pub name: String,
     pub signal: String,
     pub review_status: String,
+    pub actor_user_id: Option<Uuid>,
+    pub disputed_by_user_id: Option<Uuid>,
     pub evidence_url: Option<String>,
     pub evidence_description: Option<String>,
     pub created_at: DateTime<Utc>,
+    pub reporter_score: Option<f64>,
+    pub reporter_tier: Option<String>,
+    pub reporter_usage_signal_count: Option<i64>,
+    pub owner_dispute_score: Option<f64>,
+    pub owner_dispute_tier: Option<String>,
+    pub owner_dispute_usage_signal_count: Option<i64>,
+    pub has_owner_dispute: bool,
+    pub needs_strict_review: bool,
+    pub suggested_action: String,
 }
 
 pub async fn ingest_github_repo(
@@ -97,7 +125,7 @@ pub async fn ingest_github_repo(
         .ok_or_else(|| ApiError::forbidden("GitHub ingestion disabled (set GITHUB_TOKEN)"))?;
 
     let client = build_client(token)?;
-    let (id, meta) = ingest_repo(&client, &state.db, owner, name).await?;
+    let (id, meta) = ingest_repo(&client, &state.db, &state.config, owner, name).await?;
 
     Ok(Json(IngestGithubResponse {
         id,
@@ -113,6 +141,29 @@ pub async fn ingest_github_repo(
         default_branch: meta.default_branch,
         last_commit_at: meta.last_commit_at,
         topics: meta.topics,
+    }))
+}
+
+pub async fn backfill_repo_embeddings(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<BackfillEmbeddingsRequest>,
+) -> Result<Json<BackfillEmbeddingsResponse>, ApiError> {
+    require_admin_token(&state, &headers)?;
+
+    let limit = req.limit.unwrap_or(100).clamp(1, 500);
+    let updated = semantic_search::backfill_repo_embeddings(
+        &state.db,
+        &state.config,
+        limit,
+        req.only_missing,
+    )
+    .await?;
+
+    Ok(Json(BackfillEmbeddingsResponse {
+        updated,
+        limit,
+        only_missing: req.only_missing,
     }))
 }
 
@@ -164,7 +215,7 @@ pub async fn list_pending_repo_signals(
 ) -> Result<Json<Vec<PendingRepoSignalResponse>>, ApiError> {
     require_admin_token(&state, &headers)?;
 
-    let rows: Vec<PendingRepoSignalResponse> = sqlx::query_as(
+    let mut rows: Vec<PendingRepoSignalResponse> = sqlx::query_as(
         r#"
         SELECT
           qs.id AS id,
@@ -173,19 +224,77 @@ pub async fn list_pending_repo_signals(
           COALESCE(e.github_repo, '') AS name,
           qs.signal::text AS signal,
           qs.review_status AS review_status,
+          qs.actor_user_id AS actor_user_id,
+          qs.disputed_by_user_id AS disputed_by_user_id,
           qs.evidence_url AS evidence_url,
           qs.evidence_description AS evidence_description,
-          qs.created_at AS created_at
+          qs.created_at AS created_at,
+          NULL::float8 AS reporter_score,
+          NULL::text AS reporter_tier,
+          NULL::bigint AS reporter_usage_signal_count,
+          NULL::float8 AS owner_dispute_score,
+          NULL::text AS owner_dispute_tier,
+          NULL::bigint AS owner_dispute_usage_signal_count,
+          FALSE AS has_owner_dispute,
+          FALSE AS needs_strict_review,
+          ''::text AS suggested_action
         FROM quality_signals qs
         JOIN external_artifacts e ON e.id = qs.external_artifact_id
         WHERE qs.is_passive = FALSE
-          AND qs.review_status IN ('pending', 'disputed')
+          AND (
+            qs.review_status IN ('pending', 'disputed')
+            OR qs.disputed_at IS NOT NULL
+          )
         ORDER BY qs.created_at DESC
         LIMIT 50
         "#,
     )
     .fetch_all(&state.db)
     .await?;
+
+    let reputations = reputation::list_user_reputations(&state.db).await?;
+    for row in &mut rows {
+        if let Some(actor_user_id) = row.actor_user_id {
+            if let Some(rep) = reputations.get(&actor_user_id) {
+                row.reporter_score = Some(rep.score);
+                row.reporter_tier = Some(rep.tier.as_str().to_string());
+                row.reporter_usage_signal_count = Some(rep.usage_signal_count());
+                row.needs_strict_review = rep.requires_strict_active_review()
+                    || matches!(row.signal.as_str(), "security_issue");
+                row.suggested_action = if rep.requires_strict_active_review() {
+                    "needs_manual_review".to_string()
+                } else if matches!(row.signal.as_str(), "security_issue") {
+                    "review_with_evidence".to_string()
+                } else {
+                    "standard_review".to_string()
+                };
+            } else {
+                row.needs_strict_review = true;
+                row.suggested_action = "needs_manual_review".to_string();
+            }
+        } else {
+            row.needs_strict_review = true;
+            row.suggested_action = "needs_manual_review".to_string();
+        }
+
+        if let Some(disputed_by_user_id) = row.disputed_by_user_id {
+            row.has_owner_dispute = true;
+            if let Some(rep) = reputations.get(&disputed_by_user_id) {
+                row.owner_dispute_score = Some(rep.score);
+                row.owner_dispute_tier = Some(rep.tier.as_str().to_string());
+                row.owner_dispute_usage_signal_count = Some(rep.usage_signal_count());
+                row.suggested_action = if rep.review_weight() >= 0.8 {
+                    "review_owner_dispute_priority".to_string()
+                } else if rep.requires_strict_active_review() {
+                    "review_owner_dispute_low_trust".to_string()
+                } else {
+                    "review_owner_dispute_standard".to_string()
+                };
+            } else {
+                row.suggested_action = "review_owner_dispute_standard".to_string();
+            }
+        }
+    }
 
     Ok(Json(rows))
 }
@@ -215,4 +324,8 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
         diff |= x ^ y;
     }
     diff == 0
+}
+
+fn default_true() -> bool {
+    true
 }

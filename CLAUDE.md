@@ -62,10 +62,10 @@ Séparation à respecter pour tout nouveau code : `handler` (I/O) → `service` 
 
 - Entrée `frontend/src/main.tsx` → `AppProviders` → `AppShell`.
 - Le routing passe par **TanStack Router** (`frontend/src/app/router.tsx`). L'ancien hash routing custom a été retiré.
-- Routes actives : `/` (landing), `/discover`, `/repo/$owner/$name` (repo-detail), `/watchlist`, `/notifications`, `/account`, `/login`.
-- Organisation par *features* (`src/features/{auth,layout}/`) ; le gros de la logique de page vit aujourd'hui dans `src/routes/` et va être extrait en sous-composants (voir `docs/plans/refactor-plan-2026-04-23.md` Sprint 3).
-- État global : Zustand (`src/state/{auth-store,locale-store}.ts`). Réseau : fetch direct via `src/lib/api-client.ts` (`credentials: "include"`, base `VITE_API_BASE_URL`).
-- `@tanstack/react-query` est installé mais **pas encore câblé** (dette connue).
+- Routes actives : `/` (landing), `/discover`, `/repos/$id` (repo-detail), `/watchlist`, `/notifications`, `/account`, `/login`.
+- Organisation par *features* (`src/features/{auth,layout,repos,account}/`) ; les routes `repo-detail` et `account` ont déjà été découpées en sous-composants au sprint 3 du plan de refacto.
+- État global : Zustand (`src/state/{auth-store,locale-store}.ts`). Réseau : fetch via `src/lib/api-client.ts` et clients métier `src/lib/api/*.ts` (`credentials: "include"`, base `VITE_API_BASE_URL`).
+- `@tanstack/react-query` est câblé dans `frontend/src/app/providers.tsx` et utilisé sur les routes actives.
 
 ## Conventions critiques
 

@@ -209,7 +209,7 @@ impl McpServer {
             limit: Some(p.limit.unwrap_or(20).clamp(1, 50)),
         };
 
-        let results = repos_service::search_github_repos(&self.state.db, &filters)
+        let results = repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
             .await
             .map_err(map_api_error)?;
 
@@ -311,6 +311,7 @@ impl McpServer {
         }
 
         let signal = parse_passive_outcome(&p.outcome)?;
+        let notes = p.notes.as_deref().map(str::trim).filter(|s| !s.is_empty());
         agent_token_events::enforce_write_quota(
             &self.state.db,
             agent.token_id,
@@ -325,13 +326,13 @@ impl McpServer {
             owner,
             name,
             signal,
+            notes,
             self.state.config.mcp_log_usage_cooldown_secs,
             self.state.config.mcp_negative_signal_window_hours,
         )
         .await
         .map_err(map_api_error)?;
         let artifact_id = ensure_github_artifact(&self.state, owner, name).await?;
-        let notes = p.notes.as_deref().map(str::trim).filter(|s| !s.is_empty());
 
         let record = record_signal(
             &self.state.db,
@@ -495,7 +496,7 @@ async fn ensure_github_artifact(
     })?;
 
     let client = build_client(token).map_err(map_api_error)?;
-    let (id, _) = ingest_repo(&client, &state.db, owner, name)
+    let (id, _) = ingest_repo(&client, &state.db, &state.config, owner, name)
         .await
         .map_err(map_api_error)?;
     Ok(id)

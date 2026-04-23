@@ -109,12 +109,18 @@ export type AgentTokenCreated = AgentTokenSummary & {
 export type UserReputationSummary = {
   userId: string;
   score: number;
+  tier: string;
   accountAgeDays: number;
   passiveSignalCount: number;
   resolveCount: number;
+  reResolveCount: number;
   buildSuccessCount: number;
   buildFailureCount: number;
   regretCount: number;
+  usageSignalCount: number;
+  successfulOutcomeRatio: number;
+  buildReliabilityRatio: number;
+  regretRatio: number;
   activeSignalEligible: boolean;
 };
 
@@ -132,9 +138,20 @@ export type PendingRepoSignal = {
   name: string;
   signal: string;
   reviewStatus: string;
+  actorUserId: string | null;
+  disputedByUserId: string | null;
   evidenceUrl: string | null;
   evidenceDescription: string | null;
   createdAt: string;
+  reporterScore: number | null;
+  reporterTier: string | null;
+  reporterUsageSignalCount: number | null;
+  ownerDisputeScore: number | null;
+  ownerDisputeTier: string | null;
+  ownerDisputeUsageSignalCount: number | null;
+  hasOwnerDispute: boolean;
+  needsStrictReview: boolean;
+  suggestedAction: string;
 };
 
 export type WatchedRepo = {

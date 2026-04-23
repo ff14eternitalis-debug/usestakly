@@ -82,7 +82,7 @@ async fn refresh_watched_repos(db: &PgPool, config: &AppConfig) -> usize {
 
     let mut refreshed = 0usize;
     for (owner, name) in &rows {
-        match ingest_repo(&client, db, owner, name).await {
+                match ingest_repo(&client, db, config, owner, name).await {
             Ok(_) => refreshed += 1,
             Err(e) => tracing::warn!(
                 owner = %owner,

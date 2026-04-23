@@ -24,6 +24,8 @@ L'ancien produit snippets a ete retire du runtime. Le schema SQL historique exis
 - MCP read + write (`search_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`)
 - tokens agents en UI (`/account`)
 - reputation utilisateur v1
+- reputation utilisateur v2 runtime + moderation trust pondérée
+- recherche sémantique locale `fastembed` + `pgvector`
 - consensus multi-users avant exposition des flags publics
 - review admin pour `security_issue`
 - dispute owner GitHub avec audit trail
@@ -98,7 +100,10 @@ Pour reprendre rapidement le projet :
 
 - [docs/README.md](./docs/README.md)
 - [TODO.md](./TODO.md)
+- [docs/architecture-backend-current.md](./docs/architecture-backend-current.md)
+- [docs/trust-model-v1.md](./docs/trust-model-v1.md)
 - [docs/mcp-protocol.md](./docs/mcp-protocol.md)
 - [docs/security-audit-2026-04-21.md](./docs/security-audit-2026-04-21.md)
+- [docs/coherence-audit-2026-04-23.md](./docs/coherence-audit-2026-04-23.md)
 
 Les anciennes docs snippets ont ete deplacees dans `docs/archive/snippets/` et ne sont plus la source de verite du produit actuel.

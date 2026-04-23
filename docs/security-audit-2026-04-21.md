@@ -62,6 +62,17 @@ Cette partie est maintenant défendable pour un MVP fermé.
 
 ## Contrôles revérifiés
 
+### Secrets en clair — repo Git OK, machine locale à assainir
+
+- aucun secret réel évident n'a été trouvé dans les fichiers suivis par git
+- `.env` local est bien ignoré par git
+- en revanche, le `.env` local contient encore des secrets en clair, ce qui est acceptable techniquement pour du local mais **pas acceptable du point de vue compromission** si ces valeurs ont été vues pendant une session d'assistance
+
+Conséquence :
+
+- il faut considérer comme à faire tourner au minimum les secrets locaux réellement exposés pendant les sessions passées
+- le playbook [docs/security-secrets-playbook.md](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/docs/security-secrets-playbook.md) reste la procédure de référence
+
 ### Auth web — OK
 
 - session cookie `usestakly_session`
@@ -85,40 +96,46 @@ Le token admin reste simple et efficace. C’est acceptable tant que :
 
 Le panneau admin léger dans `/account` n’ajoute pas un nouveau modèle de sécurité : il ne fait qu’exposer la même API admin déjà existante. Le vrai risque reste donc la compromission du token admin lui-même.
 
+Durcissement revérifié :
+
+- le champ admin côté frontend est masqué (`type="password"`)
+- le token admin n'est plus injecté dans la `queryKey` React Query, donc il ne se retrouve plus recopié inutilement dans l'état de cache client
+
 ### SQL injection — OK
 
 Les requêtes restent paramétrées via SQLx. Aucun signe de concat SQL dangereuse dans les nouvelles briques de réputation, modération ou audit trail.
 
-### Contrôle owner GitHub — Partiellement OK
+### Contrôle owner GitHub — Mieux couvert, toujours best effort
 
 Un repo peut maintenant être contesté par :
 
 - son owner GitHub direct
 - ou un membre **public** de l’organisation GitHub propriétaire
+- ou, quand le `GITHUB_TOKEN` serveur le permet, un membre **privé** de l'organisation
+- ou, quand GitHub peut le confirmer, un collaborateur / maintainer du repo avec permission suffisante
 
-C’est une bonne amélioration MVP, mais cela ne couvre pas :
+C’est une amélioration nette, mais cela ne couvre pas parfaitement :
 
-- membres privés d’org
-- maintainers/collaborators sans membership public
-- rôles fins côté org
+- tous les cas où le `GITHUB_TOKEN` n'a pas assez de droits pour interroger GitHub
+- la distinction produit exacte entre owner, maintainer, team grant et rôle fin d'organisation
 
-Donc le contrôle owner n’est pas “faux”, mais il est **incomplet par design**.
+Donc le contrôle owner est plus riche qu’avant, mais reste **best effort et conservateur**.
 
 ## Risques restants
 
-### 1. Membership GitHub d’organisation incomplète
+### 1. Membership GitHub d’organisation dépendante du token serveur
 
 C’est le principal point de fragilité trust actuel.
 
 Conséquences :
 
-- un vrai maintainer d’org avec membership privé peut être bloqué à tort
-- inversement, la notion “owner” est encore plus proche de “owner ou membre public d’org” que de “maintainer métier”
+- un vrai maintainer peut encore être bloqué si GitHub ne laisse pas confirmer sa permission avec le token serveur
+- inversement, la notion “owner légitime pour disputer” reste encore une approximation contrôlée, pas une autorité GitHub parfaite
 
 Recommandation :
 
-- documenter explicitement cette limite
-- prévoir une v2 avec vérification GitHub plus riche si le produit s’ouvre
+- documenter explicitement cette dépendance aux droits du `GITHUB_TOKEN`
+- envisager une v2 plus riche si le produit a besoin d'une autorité GitHub plus forte
 
 ### 2. Modération humaine centralisée
 

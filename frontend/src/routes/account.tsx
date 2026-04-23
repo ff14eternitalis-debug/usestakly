@@ -1,24 +1,21 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { Button } from "../components/Button";
+import { ApiError } from "../lib/api-client";
+import { getPendingRepoSignals, reviewPendingRepoSignal } from "../lib/api/admin";
+import {
+  createAgentToken,
+  getAccountSummary,
+  getAgentTokens,
+  revokeAgentToken
+} from "../lib/api/account";
 import { useT } from "../i18n";
-import { ApiError, apiDelete, apiGet, apiGetWithInit, apiPost, apiPostWithInit } from "../lib/api-client";
-import { formatRelative } from "../lib/format";
-import type {
-  AccountSummary,
-  AgentTokenCreated,
-  AgentTokenSummary,
-  PendingRepoSignal
-} from "../lib/types";
+import type { AgentTokenCreated } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
-
-function formatTimestamp(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
-}
+import { AccountIdentityCard } from "../features/account/components/AccountIdentityCard";
+import { AdminModerationPanel } from "../features/account/components/AdminModerationPanel";
+import { AgentTokensPanel } from "../features/account/components/AgentTokensPanel";
+import { ReputationCard } from "../features/account/components/ReputationCard";
 
 export function AccountPage() {
   const t = useT();
@@ -28,28 +25,25 @@ export function AccountPage() {
   const [created, setCreated] = useState<AgentTokenCreated | null>(null);
   const [copied, setCopied] = useState(false);
   const [adminToken, setAdminToken] = useState("");
+
   const summary = useQuery({
     queryKey: ["account-summary"],
-    queryFn: ({ signal }) => apiGet<AccountSummary>("/api/account/summary", signal)
+    queryFn: ({ signal }) => getAccountSummary(signal)
   });
 
   const tokens = useQuery({
     queryKey: ["agent-tokens"],
-    queryFn: ({ signal }) => apiGet<AgentTokenSummary[]>("/api/agent-tokens", signal)
+    queryFn: ({ signal }) => getAgentTokens(signal)
   });
 
   const pendingSignals = useQuery({
-    queryKey: ["admin-pending-signals", adminToken],
-    queryFn: () =>
-      apiGetWithInit<PendingRepoSignal[]>("/api/admin/repo-signals/pending", {
-        headers: { "x-admin-token": adminToken.trim() }
-      }),
+    queryKey: ["admin-pending-signals"],
+    queryFn: () => getPendingRepoSignals(adminToken),
     enabled: adminToken.trim().length > 0
   });
 
   const createToken = useMutation({
-    mutationFn: () =>
-      apiPost<AgentTokenCreated>("/api/agent-tokens", { label: label.trim() }),
+    mutationFn: () => createAgentToken(label.trim()),
     onSuccess: async (token) => {
       setCreated(token);
       setCopied(false);
@@ -59,7 +53,7 @@ export function AccountPage() {
   });
 
   const revokeToken = useMutation({
-    mutationFn: (id: string) => apiDelete(`/api/agent-tokens/${id}`),
+    mutationFn: (id: string) => revokeAgentToken(id),
     onSuccess: async (_, id) => {
       if (created?.id === id) {
         setCreated(null);
@@ -71,15 +65,9 @@ export function AccountPage() {
 
   const reviewSignal = useMutation({
     mutationFn: ({ id, action }: { id: string; action: "approve" | "reject" }) =>
-      apiPostWithInit(
-        `/api/admin/repo-signals/${id}/review`,
-        { action },
-        {
-          headers: { "x-admin-token": adminToken.trim() }
-        }
-      ),
+      reviewPendingRepoSignal(id, action, adminToken),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin-pending-signals", adminToken] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-pending-signals"] });
     }
   });
 
@@ -89,7 +77,6 @@ export function AccountPage() {
       : revokeToken.error instanceof ApiError
         ? revokeToken.error.message
         : null;
-  const items = tokens.data ?? [];
 
   async function copyToken(): Promise<void> {
     if (!created?.token) return;
@@ -113,206 +100,77 @@ export function AccountPage() {
               {t.account.intro}
             </p>
           </div>
-          <div className="surface grid gap-2 p-4">
-            <span className="kicker">{user?.username ? `@${user.username}` : "@"}</span>
-            <p className="text-[0.9rem] text-fg-dim">{user?.email}</p>
-          </div>
+          <AccountIdentityCard user={user} />
         </div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-        <div className="surface grid gap-4 p-5">
-          <div className="grid gap-1.5">
-            <span className="kicker">{t.account.tokenLabel}</span>
-            <input
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder={t.account.tokenPlaceholder}
-              className="input"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => createToken.mutate()}
-              disabled={createToken.isPending || !label.trim()}
-            >
-              {createToken.isPending ? t.account.creating : t.account.create}
-            </Button>
-            {error ? (
-              <p className="text-[0.86rem]" style={{ color: "var(--color-danger)" }}>
-                {error}
-              </p>
-            ) : null}
-          </div>
+        <AgentTokensPanel
+          label={label}
+          onLabelChange={setLabel}
+          createPending={createToken.isPending}
+          revokePending={revokeToken.isPending}
+          created={created}
+          copied={copied}
+          error={error}
+          tokensLoading={tokens.isLoading}
+          tokens={tokens.data ?? []}
+          onCreate={() => createToken.mutate()}
+          onCopy={() => void copyToken()}
+          onRevoke={(id) => revokeToken.mutate(id)}
+          tokenLabel={t.account.tokenLabel}
+          tokenPlaceholder={t.account.tokenPlaceholder}
+          creatingLabel={t.account.creating}
+          createLabel={t.account.create}
+          tokenShownOnceLabel={t.account.tokenShownOnce}
+          tokenShownOnceHint={t.account.tokenShownOnceHint}
+          copiedLabel={t.account.copied}
+          copyLabel={t.account.copy}
+          createdNowLabel={t.account.createdNow}
+          activeTokensLabel={t.account.activeTokens}
+          emptyTitle={t.account.emptyTitle}
+          emptyBody={t.account.emptyBody}
+          createdAtLabel={t.account.createdAt}
+          lastUsedLabel={t.account.lastUsed}
+          lastUsedNeverLabel={t.account.lastUsedNever}
+          revokingLabel={t.account.revoking}
+          revokeLabel={t.account.revoke}
+          loadingLabel={t.common.tuning}
+        />
 
-          {created ? (
-            <div className="grid gap-3 rounded-[8px] border border-line bg-bg-subtle p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="grid gap-1">
-                  <span className="kicker">{t.account.tokenShownOnce}</span>
-                  <p className="text-[0.86rem] text-fg-dim">
-                    {t.account.tokenShownOnceHint}
-                  </p>
-                </div>
-                <Button type="button" size="sm" variant="ghost" onClick={() => void copyToken()}>
-                  {copied ? t.account.copied : t.account.copy}
-                </Button>
-              </div>
-              <code className="block overflow-x-auto rounded-[6px] border border-line bg-surface px-3 py-3 text-[0.84rem]">
-                {created.token}
-              </code>
-              <p className="mono text-[0.75rem] text-fg-muted">
-                {t.account.createdNow}
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="surface grid gap-2 p-5">
-          <span className="kicker">{t.account.quotaTitle}</span>
-          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
-            {t.account.quotaBody}
-          </p>
-          {summary.data ? (
-            <div className="grid gap-1 border-t border-line pt-3 text-[0.88rem] text-fg-dim">
-              <span>
-                {t.account.reputation}:{" "}
-                <span className="data-value text-fg">
-                  {summary.data.reputation.score.toFixed(2)}
-                </span>
-              </span>
-              <span>
-                {t.account.passiveSignals}: {summary.data.reputation.passiveSignalCount}
-              </span>
-              <span>
-                {t.account.eligibility}:{" "}
-                {summary.data.reputation.activeSignalEligible
-                  ? t.account.eligible
-                  : t.account.notEligible}
-              </span>
-            </div>
-          ) : null}
-        </div>
+        <ReputationCard
+          summary={summary.data}
+          quotaTitle={t.account.quotaTitle}
+          quotaBody={t.account.quotaBody}
+          reputationLabel={t.account.reputation}
+          tierLabel={t.account.tier}
+          usageSignalsLabel={t.account.usageSignals}
+          successRatioLabel={t.account.successRatio}
+          buildReliabilityLabel={t.account.buildReliability}
+          regretRatioLabel={t.account.regretRatio}
+          passiveSignalsLabel={t.account.passiveSignals}
+          eligibilityLabel={t.account.eligibility}
+          eligibleLabel={t.account.eligible}
+          notEligibleLabel={t.account.notEligible}
+        />
       </div>
 
-      <section className="grid gap-4">
-        <div className="flex items-center justify-between">
-          <span className="kicker">{t.account.activeTokens}</span>
-        </div>
-
-        {tokens.isLoading ? (
-          <div className="py-10 text-center">
-            <span className="kicker">{t.common.tuning}</span>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="surface grid gap-3 p-10 text-center">
-            <p className="display-md !text-[1.2rem]">{t.account.emptyTitle}</p>
-            <p className="mx-auto max-w-[52ch] text-[0.96rem] leading-relaxed text-fg-dim">
-              {t.account.emptyBody}
-            </p>
-          </div>
-        ) : (
-          <ul className="grid gap-3">
-            {items.map((token) => (
-              <li
-                key={token.id}
-                className="surface grid gap-3 p-5 md:grid-cols-[1fr_auto] md:items-center"
-              >
-                <div className="grid gap-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="display-md !text-[1.08rem]">{token.label}</h2>
-                    {created?.id === token.id ? (
-                      <span className="kicker text-accent">{t.account.createdNow}</span>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.86rem] text-fg-dim">
-                    <span>
-                      {t.account.createdAt} {formatTimestamp(token.createdAt)}
-                    </span>
-                    <span>
-                      {token.lastUsedAt
-                        ? `${t.account.lastUsed} ${formatRelative(token.lastUsedAt)}`
-                        : t.account.lastUsedNever}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  onClick={() => revokeToken.mutate(token.id)}
-                  disabled={revokeToken.isPending}
-                >
-                  {revokeToken.isPending ? t.account.revoking : t.account.revoke}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="grid gap-4">
-        <span className="kicker">{t.account.adminTitle}</span>
-        <div className="surface grid gap-4 p-5">
-          <label className="grid gap-1.5">
-            <span className="kicker">{t.account.adminTokenLabel}</span>
-            <input
-              type="password"
-              value={adminToken}
-              onChange={(e) => setAdminToken(e.target.value)}
-              placeholder={t.account.adminTokenPlaceholder}
-              className="input"
-            />
-          </label>
-
-          {!adminToken.trim() ? null : pendingSignals.isLoading ? (
-            <p className="text-[0.9rem] text-fg-dim">{t.common.tuning}</p>
-          ) : pendingSignals.data?.length ? (
-            <ul className="grid gap-3">
-              {pendingSignals.data.map((item) => (
-                <li key={item.id} className="grid gap-3 rounded-[8px] border border-line p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="mono text-[0.86rem] text-fg">
-                      {item.owner}/{item.name}
-                    </span>
-                    <span className="kicker">{item.signal}</span>
-                    <span className="kicker">{item.reviewStatus}</span>
-                  </div>
-                  {item.evidenceDescription ? (
-                    <p className="text-[0.9rem] text-fg-dim">{item.evidenceDescription}</p>
-                  ) : null}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => reviewSignal.mutate({ id: item.id, action: "approve" })}
-                      disabled={reviewSignal.isPending}
-                    >
-                      {reviewSignal.isPending ? t.account.adminReviewing : t.account.adminApprove}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="danger"
-                      onClick={() => reviewSignal.mutate({ id: item.id, action: "reject" })}
-                      disabled={reviewSignal.isPending}
-                    >
-                      {reviewSignal.isPending ? t.account.adminReviewing : t.account.adminReject}
-                    </Button>
-                    <span className="kicker">{formatRelative(item.createdAt)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[0.9rem] text-fg-dim">{t.account.adminEmpty}</p>
-          )}
-        </div>
-      </section>
+      <AdminModerationPanel
+        adminToken={adminToken}
+        onAdminTokenChange={setAdminToken}
+        loading={pendingSignals.isLoading}
+        items={pendingSignals.data}
+        reviewPending={reviewSignal.isPending}
+        onReview={(id, action) => reviewSignal.mutate({ id, action })}
+        title={t.account.adminTitle}
+        adminTokenLabel={t.account.adminTokenLabel}
+        adminTokenPlaceholder={t.account.adminTokenPlaceholder}
+        loadingLabel={t.common.tuning}
+        approveLabel={t.account.adminApprove}
+        rejectLabel={t.account.adminReject}
+        reviewingLabel={t.account.adminReviewing}
+        emptyLabel={t.account.adminEmpty}
+      />
     </section>
   );
 }
