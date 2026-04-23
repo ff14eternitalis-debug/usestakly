@@ -77,10 +77,9 @@ async fn is_public_org_member(
         request = request.bearer_auth(token);
     }
 
-    let response = request
-        .send()
-        .await
-        .map_err(|err| ApiError::bad_request(format!("GitHub org membership lookup failed: {err}")))?;
+    let response = request.send().await.map_err(|err| {
+        ApiError::bad_request(format!("GitHub org membership lookup failed: {err}"))
+    })?;
 
     match response.status() {
         StatusCode::NO_CONTENT => Ok(true),

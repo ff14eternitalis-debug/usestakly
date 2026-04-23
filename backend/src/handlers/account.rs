@@ -4,7 +4,7 @@ use crate::{
     app::{AppState, error::ApiError},
     auth::resolve_current_user,
     domain::account::AccountSummary,
-    services::reputation,
+    services::trust::reputation,
 };
 
 pub async fn account_summary(

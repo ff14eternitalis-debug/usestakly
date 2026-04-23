@@ -19,9 +19,9 @@ pub async fn enforce_write_quota(
         r#"
         SELECT COUNT(*)
         FROM agent_token_events
-        WHERE token_id = $1
-          AND created_at >= NOW() - INTERVAL '1 hour'
-          AND kind IN ('mcp_log_usage', 'mcp_watch_repo')
+          WHERE token_id = $1
+            AND created_at >= NOW() - INTERVAL '1 hour'
+            AND kind IN ('mcp_log_usage', 'mcp_watch_repo')
         "#,
     )
     .bind(token_id)

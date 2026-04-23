@@ -10,7 +10,7 @@ use crate::{
     config::AppConfig,
     services::{
         notifications::{self, ScoreSnapshot},
-        reputation,
+        trust::reputation,
     },
 };
 

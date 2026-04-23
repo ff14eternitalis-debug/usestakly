@@ -8,7 +8,7 @@ use crate::{
         reference::{QualityContext, SearchFilter},
         repo::{RepoProfile, RepoSearchResult, RepoSignal},
     },
-    services::{quality::scoring::load_v1, signal_events},
+    services::{quality::scoring::load_v1, trust::signal_events},
 };
 
 const DEFAULT_LIMIT: i64 = 50;

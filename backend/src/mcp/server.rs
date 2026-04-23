@@ -28,10 +28,10 @@ use crate::{
     },
     mcp::auth::{verify_agent, verify_bearer},
     services::{
-        agent_token_events,
         ingestion::github::{build_client, ingest_repo},
         quality::{record_signal, recompute_all_scores_with_config, scoring::load_v1, RecordSignalInput},
         repos::{self as repos_service, RepoSearchFilters},
+        trust::agent_token_events,
         watchlist,
     },
 };

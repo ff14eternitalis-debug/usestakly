@@ -9,8 +9,7 @@ use crate::{
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::{ScoringReport, recompute_all_scores_with_config},
-        signal_events,
-        signal_reviews,
+        trust::{signal_events, signal_reviews},
     },
 };
 
