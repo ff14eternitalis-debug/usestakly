@@ -28,7 +28,9 @@
       "Bash(docker exec usestakly-db *)",
       "Bash(cargo search *)",
       "Bash(cargo info *)",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Bash(git *)",
+      "Bash(cargo build *)"
     ]
   }
 }
