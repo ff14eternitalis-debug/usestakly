@@ -10,7 +10,7 @@ use crate::{
     app::{AppState, error::ApiError},
     auth::resolve_current_user,
     domain::watchlist::{AddWatchRequest, WatchedRepo},
-    services::{quality::scoring::load_v1, watchlist},
+    services::{quality::load_v1, watchlist},
 };
 
 pub async fn list_watchlist(

@@ -6,7 +6,7 @@ use crate::{
     config::AppConfig,
     services::{
         ingestion::github::{build_client, ingest_repo},
-        quality::scoring::recompute_all_scores,
+        quality::recompute_all_scores,
     },
 };
 

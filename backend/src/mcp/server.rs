@@ -15,8 +15,8 @@ use rmcp::{
     },
 };
 use schemars::JsonSchema;
-use serde_json::json;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -29,7 +29,7 @@ use crate::{
     mcp::auth::{verify_agent, verify_bearer},
     services::{
         ingestion::github::{build_client, ingest_repo},
-        quality::{record_signal, recompute_all_scores_with_config, scoring::load_v1, RecordSignalInput},
+        quality::{RecordSignalInput, load_v1, recompute_all_scores_with_config, record_signal},
         repos::{self as repos_service, RepoSearchFilters},
         trust::agent_token_events,
         watchlist,
@@ -487,16 +487,12 @@ async fn ensure_github_artifact(
         return Ok(id);
     }
 
-    let token = state
-        .config
-        .github_token
-        .as_deref()
-        .ok_or_else(|| {
-            ErrorData::invalid_params(
-                format!("repo not ingested: {owner}/{name} and GITHUB_TOKEN is not configured"),
-                None,
-            )
-        })?;
+    let token = state.config.github_token.as_deref().ok_or_else(|| {
+        ErrorData::invalid_params(
+            format!("repo not ingested: {owner}/{name} and GITHUB_TOKEN is not configured"),
+            None,
+        )
+    })?;
 
     let client = build_client(token).map_err(map_api_error)?;
     let (id, _) = ingest_repo(&client, &state.db, owner, name)
