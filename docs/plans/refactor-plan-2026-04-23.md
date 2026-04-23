@@ -2,7 +2,7 @@
 
 > Portee : produit vivant **UseStakly** apres pivot GitHub OSS.  
 > Objectif : reduire la dette de structure avant qu'elle ne ralentisse les prochaines features (recherche semantique, E2E, reputation v2, moderation plus riche).  
-> Statut : plan en cours d'execution. Sprint 1 termine le 2026-04-23.
+> Statut : plan en cours d'execution. Sprint 1 + Sprint 2 termines le 2026-04-23. Sprints 3-4 ouverts.
 
 ## Verdict rapide
 
@@ -253,16 +253,21 @@ Le projet a encore plus besoin de clarifier son decoupage actuel que d'introduir
 
 ### Sprint 1
 
-Statut : termine.
+Statut : termine (commit `dd18e91`).
 
-- [x] scinder `handlers/repos.rs`
+- [x] scinder `handlers/repos.rs` en 4 fichiers (`repos_query`, `repos_ingestion`, `repo_signals`, `repo_viewer`)
 - [x] creer `services/trust/`
-- [x] deplacer les helpers trust dedans
+- [x] deplacer `reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events` dedans
 
 ### Sprint 2
 
-- extraire le scoring pur vs pipeline
-- ajouter tests unitaires sur consensus / moderation / flags
+Statut : termine (commit `a4399f1`).
+
+- [x] scinder `scoring.rs` en 4 fichiers : `formula.rs` (types + TOML), `compute.rs` (fonctions pures), `flags.rs` (consensus), `pipeline.rs` (orchestration DB)
+- [x] extraire `compute_consensus_flags(rows, reputations, thresholds)` en fonction pure testable sans DB ; wrapper async `load_active_flag_consensus` conserve l'API
+- [x] ajouter 6 tests unitaires consensus / moderation / flags dans `flags.rs` (normalize security_issue, seuil reputation, consensus=2 deprecated, consensus=3 severe, dedup same user, age account < 7 jours)
+
+Derives : `mod.rs` re-exporte les symboles publics pour minimiser le churn des callsites ; 4 sites ajustes (`scheduler`, `services/repos`, `handlers/watchlist`, `mcp/server`).
 
 ### Sprint 3
 
@@ -272,7 +277,7 @@ Statut : termine.
 
 ### Sprint 4
 
-- cleanup doc
+- cleanup doc (notamment `docs/README.md` + `CLAUDE.md` deja aligne 2026-04-23)
 - petit audit de coherence final
 
 ## Definition of Done
