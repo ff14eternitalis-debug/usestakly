@@ -1,4 +1,8 @@
-use axum::{Json, extract::{Path, State}, http::HeaderMap};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::HeaderMap,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -126,7 +130,7 @@ pub async fn review_repo_signal(
         other => {
             return Err(ApiError::bad_request(format!(
                 "invalid action '{other}' (expected approve, reject, or pending)"
-            )))
+            )));
         }
     };
 

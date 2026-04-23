@@ -97,15 +97,12 @@ impl AppConfig {
                 "APP_MCP_LOG_USAGE_COOLDOWN_SECS must be >= 60 (got {mcp_log_usage_cooldown_secs})"
             ));
         }
-        let mcp_negative_signal_window_hours =
-            env::var("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS")
-                .unwrap_or_else(|_| "24".to_string())
-                .parse::<u64>()
-                .map_err(|_| anyhow!("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be a valid u64"))?;
+        let mcp_negative_signal_window_hours = env::var("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS")
+            .unwrap_or_else(|_| "24".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be a valid u64"))?;
         if mcp_negative_signal_window_hours == 0 {
-            return Err(anyhow!(
-                "APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be >= 1"
-            ));
+            return Err(anyhow!("APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS must be >= 1"));
         }
         let active_signal_min_reputation = env::var("APP_ACTIVE_SIGNAL_MIN_REPUTATION")
             .unwrap_or_else(|_| "0.45".to_string())
@@ -121,9 +118,7 @@ impl AppConfig {
             .parse::<u32>()
             .map_err(|_| anyhow!("APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS must be a valid u32"))?;
         if active_signal_default_consensus == 0 {
-            return Err(anyhow!(
-                "APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS must be >= 1"
-            ));
+            return Err(anyhow!("APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS must be >= 1"));
         }
         let active_signal_severe_consensus = env::var("APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS")
             .unwrap_or_else(|_| "3".to_string())

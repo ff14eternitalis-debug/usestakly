@@ -72,7 +72,9 @@ async fn is_public_org_member(
         org.trim(),
         login.trim()
     );
-    let mut request = client.get(url).header("Accept", "application/vnd.github+json");
+    let mut request = client
+        .get(url)
+        .header("Accept", "application/vnd.github+json");
     if let Some(token) = config.github_token.as_deref() {
         request = request.bearer_auth(token);
     }

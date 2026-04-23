@@ -6,10 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{AppState, error::ApiError},
-    domain::{
-        reference::SearchFilter,
-        repo::RepoSearchResult,
-    },
+    domain::{reference::SearchFilter, repo::RepoSearchResult},
     services::repos::{RepoSearchFilters, search_github_repos},
 };
 

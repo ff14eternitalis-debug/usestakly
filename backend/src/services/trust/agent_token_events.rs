@@ -2,10 +2,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{
-    app::error::ApiError,
-    domain::quality::SignalKind,
-};
+use crate::{app::error::ApiError, domain::quality::SignalKind};
 
 const EVENT_LOG_USAGE: &str = "mcp_log_usage";
 const EVENT_WATCH_REPO: &str = "mcp_watch_repo";
@@ -48,8 +45,8 @@ pub async fn enforce_log_usage_guards(
     cooldown_secs: u64,
     negative_window_hours: u64,
 ) -> Result<(), ApiError> {
-    let cooldown_secs = i32::try_from(cooldown_secs)
-        .map_err(|_| ApiError::bad_request("cooldown is too large"))?;
+    let cooldown_secs =
+        i32::try_from(cooldown_secs).map_err(|_| ApiError::bad_request("cooldown is too large"))?;
     let duplicate_recent: bool = sqlx::query_scalar(
         r#"
         SELECT EXISTS (

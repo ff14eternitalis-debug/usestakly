@@ -45,7 +45,10 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             post(admin::recompute_scores),
         )
         .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
-        .route("/api/admin/repo-signals/pending", get(admin::list_pending_repo_signals))
+        .route(
+            "/api/admin/repo-signals/pending",
+            get(admin::list_pending_repo_signals),
+        )
         .route(
             "/api/admin/repo-signals/{signal_id}/review",
             post(admin::review_repo_signal),
@@ -54,8 +57,14 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/repos/add", post(repos::add_repo))
         .route("/api/repos/search", get(repos::search_repos))
         .route("/api/repos/{repo_id}", get(repos::get_repo))
-        .route("/api/repos/{repo_id}/viewer-state", get(repos::get_repo_viewer_state))
-        .route("/api/repos/{repo_id}/signals", post(repos::create_repo_signal))
+        .route(
+            "/api/repos/{repo_id}/viewer-state",
+            get(repos::get_repo_viewer_state),
+        )
+        .route(
+            "/api/repos/{repo_id}/signals",
+            post(repos::create_repo_signal),
+        )
         .route(
             "/api/repos/{repo_id}/signals/{signal_id}/dispute",
             post(repos::dispute_repo_signal),
