@@ -272,3 +272,32 @@ test("authenticated MVP flow covers discovery, repo profile, watchlist, and noti
   await expect(page).toHaveURL(new RegExp(`/repos/${repoId}$`));
   await expect(page.getByRole("heading", { name: "timezone-picker" })).toBeVisible();
 });
+
+test("clicking an unread notification opens the repo and marks it read", async ({ page }) => {
+  await mockUseStaklyApi(page, { authenticated: true });
+
+  await page.goto("/notifications");
+  await expect(page.getByText("score drop")).toBeVisible();
+  await expect(page.getByRole("button", { name: /mark read/i })).toBeVisible();
+
+  const readRequest = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/api/notifications/${notificationId}/read`) &&
+      response.request().method() === "POST"
+  );
+
+  await page.getByRole("link", { name: /react-dates\/timezone-picker/i }).click();
+  await readRequest;
+
+  await expect(page).toHaveURL(new RegExp(`/repos/${repoId}$`));
+  await expect(page.getByRole("heading", { name: "timezone-picker" })).toBeVisible();
+
+  await page
+    .getByRole("navigation")
+    .getByRole("link", { name: /notifications/i })
+    .click();
+  await expect(page.getByRole("button", { name: /mark read/i })).toBeHidden();
+
+  await page.getByLabel(/unread only/i).check();
+  await expect(page.getByText("score drop")).toBeHidden();
+});

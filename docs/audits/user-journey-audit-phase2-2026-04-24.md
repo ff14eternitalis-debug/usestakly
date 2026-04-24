@@ -122,19 +122,19 @@ Cocher au fur et à mesure du passage en session réelle. Noter tout écart dans
 - [X] clic "Browse the observatory" → arrive sur `/discover`= oui
 - [X] search "zod" → résultats triables = oui
 - [X] clic repo → repo detail = oui
-- [X] clic "Add to watchlist" → feedback ? = pas de feedback toast.
+- [X] clic "Add to watchlist" → feedback ? = oui, bouton passe en état watched/unwatch. Pas de toast global.
 - [X] retour `/watchlist` → repo présent ? = oui
-- [X] mute / unmute → feedback ? = non, pas de toast
-- [X] remove → confirm ? annulable ? = pas de confirm, pas annulable.
+- [X] mute / unmute → feedback ? = oui, état visuel rapide. Pas de toast.
+- [X] remove → confirm ? annulable ? = oui, confirmation inline + annulation validées sur Coolify.
 
 ### S3. Notifications → action
 
 - [x] simuler une notif côté backend (insert manuel DB ou déclencher scheduler) = couvert en E2E mocké, reste à valider sur DB Coolify réelle.
 - [ ] `/notifications` affiche la notif
-- [x] clic le lien repo → repo detail ouvre = couvert en E2E.
-- [x] retour `/notifications` → notif encore unread ? = corrigé : clic repo marque maintenant read.
+- [x] clic le lien repo → repo detail ouvre = couvert en E2E dédié.
+- [x] retour `/notifications` → notif encore unread ? = corrigé et couvert : clic repo marque maintenant read.
 - [x] clic "mark read" explicite → passe en read ? = couvert en E2E.
-- [ ] filtre "unread only" → masque la notif lue ?
+- [x] filtre "unread only" → masque la notif lue ? = couvert en E2E dédié.
 - [ ] "mark all read" → feedback ?
 
 ### S4. États vides connectés
@@ -256,13 +256,14 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 
 ## What worked well
 
-- Le parcours discovery → repo detail → add watchlist → watchlist fonctionne.
+- Le parcours réel connecté discovery → repo detail → OAuth retour → add watchlist → watchlist fonctionne sur Coolify.
 - Les états vides connectés existent et sont globalement compréhensibles.
 - Le login OAuth GitHub et Discord fonctionne.
 - La lecture publique du registre sans compte reste possible, ce qui est cohérent avec le produit.
 - Le compte affiche les sections utiles : identité, réputation, tokens MCP, admin léger.
 - Les mutations watchlist sont rapides sur Coolify dans le test manuel.
 - Les E2E MVP couvrent déjà une bonne partie du parcours discovery, repo detail, watchlist, notifications.
+- Le clic notification → repo detail → mark read implicite est maintenant couvert par un E2E dédié.
 
 ## Priority plan
 
@@ -294,8 +295,8 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 - `backend/src/auth/mod.rs` : `OAuthStateClaims` contient maintenant `return_to`; garder les tests anti open-redirect si le flow évolue.
 - `frontend/src/lib/return-to.ts` : helper central pour garder les liens login cohérents.
 - `frontend/src/routes/watchlist.tsx` : confirmation inline suffisante pour MVP ; si l'app gagne un système de toast/modal partagé, migrer vers un pattern commun.
-- `frontend/src/routes/notifications.tsx` : vérifier la course éventuelle entre `markRead.mutate` et la navigation si latence forte ; acceptable pour MVP.
-- `frontend/e2e/mvp.spec.ts` : ajouter un test dédié "notification link marks read" si les notifications deviennent prioritaires.
+- `frontend/src/routes/notifications.tsx` : vérifier en production réelle la course éventuelle entre `markRead.mutate` et la navigation si latence forte ; l'E2E dédié couvre le contrat MVP.
+- `frontend/e2e/mvp.spec.ts` : test dédié ajouté pour "notification link marks read".
 
 ## Suggested next audit
 
