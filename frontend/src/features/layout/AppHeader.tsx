@@ -74,7 +74,7 @@ export function AppHeader() {
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="mono text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted hover:text-fg transition-colors"
+                className="mono rounded-[5px] border border-transparent px-2.5 py-1 text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)]"
               >
                 {t.nav.signOut}
               </button>
