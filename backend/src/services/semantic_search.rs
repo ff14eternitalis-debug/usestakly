@@ -1,20 +1,27 @@
+#[cfg(feature = "semantic-search")]
 use std::sync::{Mutex, OnceLock};
 
-use anyhow::{Context, Result};
+#[cfg(feature = "semantic-search")]
+use anyhow::Context;
+use anyhow::Result;
 use chrono::Utc;
+#[cfg(feature = "semantic-search")]
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use sqlx::{FromRow, PgPool};
+#[cfg(feature = "semantic-search")]
 use tokio::task;
 use uuid::Uuid;
 
 use crate::{app::error::ApiError, config::AppConfig};
 
+#[cfg(feature = "semantic-search")]
 const EMBEDDING_DIMENSIONS: usize = 384;
 
+#[cfg(feature = "semantic-search")]
 static MODEL: OnceLock<Mutex<TextEmbedding>> = OnceLock::new();
 
 pub fn enabled(config: &AppConfig) -> bool {
-    config.semantic_search_enabled
+    cfg!(feature = "semantic-search") && config.semantic_search_enabled
 }
 
 pub fn build_search_document(
@@ -142,6 +149,13 @@ fn map_anyhow(err: anyhow::Error) -> ApiError {
 }
 
 async fn embed_text(text: String) -> Result<Vec<f32>> {
+    #[cfg(not(feature = "semantic-search"))]
+    {
+        let _ = text;
+        anyhow::bail!("semantic search was not compiled into this build");
+    }
+
+    #[cfg(feature = "semantic-search")]
     task::spawn_blocking(move || {
         let model = model()?;
         let mut guard = model
@@ -165,6 +179,7 @@ async fn embed_text(text: String) -> Result<Vec<f32>> {
     .context("joining embedding task")?
 }
 
+#[cfg(feature = "semantic-search")]
 fn model() -> Result<&'static Mutex<TextEmbedding>> {
     if let Some(model) = MODEL.get() {
         return Ok(model);

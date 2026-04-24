@@ -4,12 +4,16 @@ version = "0.1.0"
 edition = "2024"
 default-run = "usestakly-backend"
 
+[features]
+default = []
+semantic-search = ["dep:fastembed"]
+
 [dependencies]
 anyhow = "1"
 axum = { version = "0.8", features = ["macros"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
-fastembed = "5"
+fastembed = { version = "5", optional = true }
 hex = "0.4"
 http = "1"
 jsonwebtoken = "9"
