@@ -37,7 +37,6 @@ export const fr: Dict = {
     signals: "Signaux",
     about: "À propos",
     mcp: "MCP",
-    mcpSoon: "(bientôt)",
     freshness: "Fraîcheur",
     adoption: "Adoption",
     reliability: "Fiabilité",
@@ -237,7 +236,74 @@ export const fr: Dict = {
   mcpGuide: {
     eyebrow: "Guide MCP",
     h1: "Installer UseStakly dans ton agent",
-    wip: "en construction"
+    intro:
+      "Branche un agent de code compatible MCP sur le même registre GitHub scoré que l'app web. Crée un token par agent, colle la config Streamable HTTP, puis demande des recommandations de repos avec provenance.",
+    createTokenAction: "Créer un token MCP",
+    createTokenHint:
+      "Les tokens vivent dans Compte, ne sont affichés qu'une fois et se révoquent sans toucher à ta session web.",
+    endpointLabel: "Endpoint serveur",
+    endpointBody:
+      "Utilise cette URL dans les clients qui supportent MCP Streamable HTTP. Envoie le token en Bearer sur chaque requête.",
+    stepsLabel: "Installation",
+    steps: [
+      {
+        title: "Connecte-toi et crée un token",
+        body:
+          "Ouvre Compte, choisis un label comme codex-local ou claude-desktop, puis crée un token. Copie tout de suite la valeur en clair."
+      },
+      {
+        title: "Ajoute UseStakly à ton client MCP",
+        body:
+          "Colle l'endpoint et le header Authorization dans la configuration du client. Garde un token par machine ou agent pour une révocation précise."
+      },
+      {
+        title: "Redémarre le client et teste une recherche",
+        body:
+          "Demande à ton agent de chercher une catégorie de repo via UseStakly, puis vérifie le score, la version de formule et la provenance retournés."
+      }
+    ],
+    clientConfigLabel: "Config client",
+    clientConfigTitle: "Configuration Streamable HTTP",
+    clientConfigBody:
+      "Les schémas varient selon les clients, mais les champs requis restent les mêmes : type Streamable HTTP, URL /mcp et header Authorization Bearer.",
+    smokeTestLabel: "Test rapide",
+    smokeTestTitle: "Vérifier le transport avant de brancher un agent",
+    smokeTestBody:
+      "Cette requête initialize doit renvoyer une réponse MCP. Si elle échoue, vérifie le préfixe du token, l'URL endpoint et l'accessibilité du backend.",
+    toolsLabel: "Outils disponibles",
+    toolsTitle: "Ce que l'agent peut faire",
+    toolsBody:
+      "Les outils read servent aux recommandations. Les outils write attachent des signaux d'usage ou des entrées de veille au user propriétaire du token.",
+    tools: [
+      {
+        name: "search_github_repos",
+        body:
+          "Cherche dans le registre scoré par requête, mode de filtre, langage, seuil d'étoiles et limite."
+      },
+      {
+        name: "get_repo_quality_context",
+        body:
+          "Retourne le profil qualité complet : dimensions, flags, signaux récents, version de formule et provenance."
+      },
+      {
+        name: "log_usage",
+        body:
+          "Enregistre un outcome d'usage passif comme build_success, build_failure, regret, resolve ou re_resolve."
+      },
+      {
+        name: "watch_repo",
+        body:
+          "Ajoute un repo à la veille du propriétaire du token pour que UseStakly alerte sur les futures dérives."
+      }
+    ],
+    securityLabel: "Sécurité",
+    securityTitle: "Gestion des tokens",
+    securityItems: [
+      "Les tokens utilisent le format usk_<64 hex> et sont stockés hashés côté serveur.",
+      "La valeur en clair n'est affichée qu'à la création. Stocke-la dans le client MCP, pas dans des captures ou docs partagées.",
+      "Révoque les anciens tokens depuis Compte quand une machine, un client ou un coéquipier n'a plus besoin d'accès.",
+      "Les outils write sont limités par token et protégés contre les doublons ou signaux négatifs répétés."
+    ]
   },
   account: {
     eyebrow: "Compte",

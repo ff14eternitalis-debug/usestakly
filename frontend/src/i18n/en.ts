@@ -35,7 +35,6 @@ export const en = {
     signals: "Signals",
     about: "About",
     mcp: "MCP",
-    mcpSoon: "(soon)",
     freshness: "Freshness",
     adoption: "Adoption",
     reliability: "Reliability",
@@ -234,7 +233,74 @@ export const en = {
   mcpGuide: {
     eyebrow: "MCP guide",
     h1: "Install UseStakly in your agent",
-    wip: "work in progress"
+    intro:
+      "Connect an MCP-capable coding agent to the same quality-scored GitHub registry used by the web app. Create one token per agent, paste the Streamable HTTP config, then ask for scored repo recommendations with provenance.",
+    createTokenAction: "Create MCP token",
+    createTokenHint:
+      "Tokens live in Account, are shown once, and can be revoked without touching your login session.",
+    endpointLabel: "Server endpoint",
+    endpointBody:
+      "Use this URL in clients that support MCP Streamable HTTP. Send the token as a Bearer credential on every request.",
+    stepsLabel: "Install flow",
+    steps: [
+      {
+        title: "Sign in and create a token",
+        body:
+          "Open Account, choose a label such as codex-local or claude-desktop, then create a token. Copy the plaintext value immediately."
+      },
+      {
+        title: "Add UseStakly to your MCP client",
+        body:
+          "Paste the endpoint and Authorization header into the client configuration. Keep one token per machine or agent so revocation stays precise."
+      },
+      {
+        title: "Restart the client and test a search",
+        body:
+          "Ask your agent to search UseStakly for a repo category, then inspect the returned score, formula version, and provenance."
+      }
+    ],
+    clientConfigLabel: "Client config",
+    clientConfigTitle: "Streamable HTTP configuration",
+    clientConfigBody:
+      "Client schemas vary, but the required fields are stable: type Streamable HTTP, the /mcp URL, and an Authorization Bearer header.",
+    smokeTestLabel: "Smoke test",
+    smokeTestTitle: "Check the transport before wiring an agent",
+    smokeTestBody:
+      "This initialize request should return an MCP response. If it fails, verify the token prefix, endpoint URL, and that the backend is reachable.",
+    toolsLabel: "Available tools",
+    toolsTitle: "What the agent can do",
+    toolsBody:
+      "Read tools are safe for recommendations. Write tools attach usage signals or watchlist entries to the user who owns the token.",
+    tools: [
+      {
+        name: "search_github_repos",
+        body:
+          "Searches the scored registry by query, filter mode, language, stars floor, and limit."
+      },
+      {
+        name: "get_repo_quality_context",
+        body:
+          "Returns the full repo quality profile: dimensions, flags, recent signals, formula version, and provenance."
+      },
+      {
+        name: "log_usage",
+        body:
+          "Records a passive usage outcome such as build_success, build_failure, regret, resolve, or re_resolve."
+      },
+      {
+        name: "watch_repo",
+        body:
+          "Adds a repo to the token owner's watchlist so UseStakly can alert on future drift."
+      }
+    ],
+    securityLabel: "Security",
+    securityTitle: "Token handling",
+    securityItems: [
+      "Tokens use the format usk_<64 hex> and are stored hashed server-side.",
+      "Plaintext is shown once at creation. Store it in the MCP client, not in screenshots or shared docs.",
+      "Revoke old tokens from Account when a machine, client, or teammate no longer needs access.",
+      "Write tools are rate-limited per token and guarded against duplicate or repeated negative signals."
+    ]
   },
   account: {
     eyebrow: "Account",
@@ -325,6 +391,8 @@ export const en = {
 
 type Loose<T> = T extends string
   ? string
+  : T extends readonly (infer U)[]
+    ? ReadonlyArray<Loose<U>>
   : { -readonly [K in keyof T]: Loose<T[K]> };
 
 export type Dict = Loose<typeof en>;

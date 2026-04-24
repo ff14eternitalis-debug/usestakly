@@ -20,10 +20,7 @@ export function SiteFooter() {
           <FooterLink to="/discover">{t.nav.discover}</FooterLink>
           <FooterLink to="/watchlist">{t.nav.watchlist}</FooterLink>
           <FooterLink to="/notifications">{t.nav.notifications}</FooterLink>
-          <FooterMuted>
-            {t.footer.mcp}{" "}
-            <span className="mono text-fg-muted">{t.footer.mcpSoon}</span>
-          </FooterMuted>
+          <FooterLink to="/mcp-guide">{t.footer.mcp}</FooterLink>
         </FooterCol>
 
         <FooterCol title={t.footer.signals}>
@@ -68,7 +65,7 @@ function FooterLink({
   to,
   children
 }: {
-  to: "/discover" | "/watchlist" | "/notifications";
+  to: "/discover" | "/watchlist" | "/notifications" | "/mcp-guide";
   children: React.ReactNode;
 }) {
   return (
