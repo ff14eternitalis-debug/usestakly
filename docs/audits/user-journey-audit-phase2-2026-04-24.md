@@ -129,10 +129,10 @@ Cocher au fur et à mesure du passage en session réelle. Noter tout écart dans
 
 ### S3. Notifications → action
 
-- [x] simuler une notif côté backend (insert manuel DB ou déclencher scheduler) = couvert en E2E mocké, reste à valider sur DB Coolify réelle.
-- [ ] `/notifications` affiche la notif
+- [x] simuler une notif côté backend (insert manuel DB ou déclencher scheduler) = validé sur DB locale réelle avec notification `score_drop` sur `colinhacks/zod`.
+- [x] `/notifications` affiche la notif = validé sur front local avec cookie de session dev.
 - [x] clic le lien repo → repo detail ouvre = couvert en E2E dédié.
-- [x] retour `/notifications` → notif encore unread ? = corrigé et couvert : clic repo marque maintenant read.
+- [x] retour `/notifications` → notif encore unread ? = corrigé, couvert en E2E, et validé en DB locale (`read_at` renseigné après clic repo).
 - [x] clic "mark read" explicite → passe en read ? = couvert en E2E.
 - [x] filtre "unread only" → masque la notif lue ? = couvert en E2E dédié.
 - [ ] "mark all read" → feedback ?
@@ -264,6 +264,7 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 - Les mutations watchlist sont rapides sur Coolify dans le test manuel.
 - Les E2E MVP couvrent déjà une bonne partie du parcours discovery, repo detail, watchlist, notifications.
 - Le clic notification → repo detail → mark read implicite est maintenant couvert par un E2E dédié.
+- Une notification réelle insérée en DB locale apparaît dans l'UI, ouvre le repo lié et passe bien en `read_at` après clic.
 
 ## Priority plan
 
@@ -279,7 +280,8 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 - [x] Clic notification → marque la notification comme lue.
 - [x] Feedback minimum des mutations watchlist / notifications (`disabled` + libellé pending).
 - [x] CTA explicite depuis notifications vides vers watchlist.
-- [ ] Tester une notification réelle sur DB Coolify, pas seulement en E2E mocké.
+- [x] Tester une notification réelle sur DB locale, pas seulement en E2E mocké.
+- [ ] Optionnel : répéter la même validation sur DB Coolify si on veut une preuve prod stricte.
 - [ ] Tester `POST /api/repos/add` erreurs réelles : URL invalide, repo inexistant, déjà indexé.
 - [ ] Tester création/révocation de token MCP avec un compte réel.
 
