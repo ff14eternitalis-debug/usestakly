@@ -43,7 +43,10 @@ pub async fn explain_scoring(
     require_admin_token(&state, &headers)?;
     let explain = explain_external_scoring(&state.db, Some(&state.config), repo_id)
         .await
-        .map_err(|e| ApiError::not_found(format!("explain failed: {e}")))?;
+        .map_err(|e| {
+            tracing::warn!(?repo_id, error = ?e, "explain_scoring failed");
+            ApiError::not_found("repo not found or explain unavailable")
+        })?;
     Ok(Json(explain))
 }
 
