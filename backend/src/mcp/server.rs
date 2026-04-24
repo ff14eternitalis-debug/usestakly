@@ -584,3 +584,123 @@ pub fn build_service(state: AppState) -> StreamableHttpService<McpServer, LocalS
         StreamableHttpServerConfig::default(),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::{TimeZone, Utc};
+    use uuid::Uuid;
+
+    use super::*;
+    use crate::domain::{
+        reference::{QualityContext, SearchFilter},
+        repo::{RepoProfile, RepoSearchResult, RepoSignal},
+    };
+
+    #[test]
+    fn parse_filter_defaults_to_auto_for_missing_or_unknown_values() {
+        assert_eq!(parse_filter(None), SearchFilter::Auto);
+        assert_eq!(parse_filter(Some("")), SearchFilter::Auto);
+        assert_eq!(parse_filter(Some("anything-else")), SearchFilter::Auto);
+    }
+
+    #[test]
+    fn parse_filter_accepts_case_insensitive_agent_values() {
+        assert_eq!(parse_filter(Some(" STRICT ")), SearchFilter::Strict);
+        assert_eq!(parse_filter(Some("explore")), SearchFilter::Explore);
+        assert_eq!(parse_filter(Some("Auto")), SearchFilter::Auto);
+    }
+
+    #[test]
+    fn parse_passive_outcome_accepts_only_mcp_write_outcomes() {
+        assert_eq!(
+            parse_passive_outcome("resolve").unwrap(),
+            SignalKind::Resolve
+        );
+        assert_eq!(
+            parse_passive_outcome(" BUILD_SUCCESS ").unwrap(),
+            SignalKind::BuildSuccess
+        );
+        assert_eq!(
+            parse_passive_outcome("build_failure").unwrap(),
+            SignalKind::BuildFailure
+        );
+        assert_eq!(parse_passive_outcome("regret").unwrap(), SignalKind::Regret);
+        assert_eq!(
+            parse_passive_outcome("re_resolve").unwrap(),
+            SignalKind::ReResolve
+        );
+
+        assert!(parse_passive_outcome("security_issue").is_err());
+        assert!(parse_passive_outcome("deprecated").is_err());
+        assert!(parse_passive_outcome("broken").is_err());
+    }
+
+    #[test]
+    fn context_output_preserves_provenance_quality_and_recent_signals() {
+        let computed_at = Utc.with_ymd_and_hms(2026, 4, 24, 8, 0, 0).unwrap();
+        let signal_at = Utc.with_ymd_and_hms(2026, 4, 24, 9, 0, 0).unwrap();
+        let artifact_id = Uuid::parse_str("11111111-1111-4111-8111-111111111111").unwrap();
+        let signal_id = Uuid::parse_str("22222222-2222-4222-8222-222222222222").unwrap();
+
+        let profile = RepoProfile {
+            repo: RepoSearchResult {
+                artifact_id,
+                owner: "facebook".to_string(),
+                name: "react".to_string(),
+                full_name: "facebook/react".to_string(),
+                html_url: "https://github.com/facebook/react".to_string(),
+                description: Some("The library for web and native user interfaces.".to_string()),
+                language: Some("JavaScript".to_string()),
+                license_spdx: Some("MIT".to_string()),
+                topics: vec!["ui".to_string(), "react".to_string()],
+                stars_count: 235_000,
+                forks_count: 48_000,
+                open_issues_count: 1_200,
+                archived: false,
+                last_commit_at: Some(computed_at),
+                quality: Some(QualityContext {
+                    formula_version: "v1.1".to_string(),
+                    freshness: Some(0.91),
+                    adoption: Some(0.98),
+                    reliability: Some(0.84),
+                    abandonment: Some(0.08),
+                    overall: Some(0.9),
+                    flags: vec!["deprecated".to_string()],
+                    computed_at,
+                }),
+            },
+            subscribers_count: 6_400,
+            default_branch: Some("main".to_string()),
+            priors_fetched_at: Some(computed_at),
+            recent_signals: vec![RepoSignal {
+                id: signal_id,
+                signal: "build_success".to_string(),
+                is_passive: true,
+                evidence_url: None,
+                evidence_description: Some("Smoke test passed.".to_string()),
+                review_status: "accepted".to_string(),
+                review_note: None,
+                disputed_at: None,
+                dispute_reason: None,
+                created_at: signal_at,
+                events: Vec::new(),
+            }],
+        };
+
+        let output = into_context_output(profile, "v1.1".to_string());
+
+        assert_eq!(
+            output.provenance.source,
+            "usestakly://registry/github/facebook/react"
+        );
+        assert_eq!(output.provenance.formula_version, "v1.1");
+        assert_eq!(output.provenance.scored_at, Some(computed_at));
+        assert_eq!(output.full_name, "facebook/react");
+        assert_eq!(output.quality_overall, Some(0.9));
+        assert_eq!(output.quality_abandonment, Some(0.08));
+        assert_eq!(output.flags, vec!["deprecated"]);
+        assert_eq!(output.recent_signals.len(), 1);
+        assert_eq!(output.recent_signals[0].signal, "build_success");
+        assert!(output.recent_signals[0].is_passive);
+    }
+}
