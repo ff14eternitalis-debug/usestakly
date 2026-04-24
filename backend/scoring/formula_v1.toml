@@ -6,8 +6,11 @@
 # pas par l'opacité.
 
 [meta]
-version = "v1"
+version = "v1.1"
 created = "2026-04-21"
+# v1.1 (2026-04-24) : agrégation pondérée par réputation du reporter,
+# par type d'outcome, et dédup douce par (reporter, repo).
+# Les dimensions ci-dessous ne changent pas; seul le comptage amont change.
 
 # --- Dimensions ---
 # Chaque dimension ∈ [0, 1]. overall = Σ (dim * weight), clampé à [0, 1].
@@ -47,5 +50,21 @@ regret_rate_threshold = 0.3
 blocking_in_auto = ["security-issue", "broken"]
 blocking_in_strict = ["security-issue", "broken", "deprecated", "unmaintained"]
 
-# Reputation weighting (anti-gaming) : prévu mais pas wiré en v1.
-# Sera ajouté en formula_v2 avec la table user_reputation.
+# --- Weighting (v1.1) ---
+# Poids attribué à chaque `quality_signal` avant agrégation en counts pondérés.
+# Formule : w = outcome_weight * reputation_multiplier * dedup(n_prev_same_user_same_repo)
+#   - outcome_weight : poids produit par type d'outcome (ci-dessous)
+#   - reputation_multiplier : UserReputation::review_weight() ∈ [0.30, 1.0]
+#   - dedup(n) = 1 / (1 + k * n) → 1er signal plein, 5e ~0.5, asymptote 0
+#
+# Les `re_resolve` sont bucketés dans weighted_resolve (re-choix = adoption renforcée).
+
+[weighting]
+dedup_k = 0.25
+
+[weighting.outcome]
+resolve = 1.0
+re_resolve = 1.5
+build_success = 1.2
+build_failure = 1.2
+regret = 2.0

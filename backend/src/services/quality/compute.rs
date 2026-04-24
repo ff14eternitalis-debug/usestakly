@@ -4,12 +4,46 @@ use super::formula::Formula;
 
 #[derive(Debug, Clone)]
 pub struct ArtifactMetrics {
+    /// Raw counts (persisted in `artifact_scores` for audit/display).
     pub resolve_count: i32,
     pub build_success_count: i32,
     pub build_failure_count: i32,
     pub regret_count: i32,
+    /// Weighted counts (used by `compute_score`). Equal to raw counts
+    /// only when every signal has weight 1 — e.g. pre-v1.1 legacy callers.
+    pub weighted_resolve: f64,
+    pub weighted_build_success: f64,
+    pub weighted_build_failure: f64,
+    pub weighted_regret: f64,
     pub last_update: DateTime<Utc>,
     pub flags: Vec<String>,
+}
+
+impl ArtifactMetrics {
+    /// Builder for callers (tests, legacy) that don't yet distinguish
+    /// raw and weighted — weighted takes the raw value.
+    #[cfg(test)]
+    pub fn unweighted(
+        resolve_count: i32,
+        build_success_count: i32,
+        build_failure_count: i32,
+        regret_count: i32,
+        last_update: DateTime<Utc>,
+        flags: Vec<String>,
+    ) -> Self {
+        Self {
+            resolve_count,
+            build_success_count,
+            build_failure_count,
+            regret_count,
+            weighted_resolve: f64::from(resolve_count),
+            weighted_build_success: f64::from(build_success_count),
+            weighted_build_failure: f64::from(build_failure_count),
+            weighted_regret: f64::from(regret_count),
+            last_update,
+            flags,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -32,17 +66,17 @@ pub fn compute_score(
         formula.dimensions.freshness.half_life_days,
     );
     let adoption = adoption_score(
-        metrics.resolve_count,
+        metrics.weighted_resolve,
         formula.dimensions.adoption.saturation,
     );
     let reliability = reliability_score(
-        metrics.build_success_count,
-        metrics.build_failure_count,
-        formula.dimensions.reliability.min_sample,
+        metrics.weighted_build_success,
+        metrics.weighted_build_failure,
+        f64::from(formula.dimensions.reliability.min_sample),
         formula.dimensions.reliability.neutral_default,
     );
-    let regret_rate = if metrics.resolve_count > 0 {
-        metrics.regret_count as f64 / metrics.resolve_count as f64
+    let regret_rate = if metrics.weighted_resolve > 0.0 {
+        metrics.weighted_regret / metrics.weighted_resolve
     } else {
         0.0
     };
@@ -72,21 +106,21 @@ fn freshness_score(last_update: DateTime<Utc>, now: DateTime<Utc>, half_life_day
     0.5_f64.powf(age_days / half_life_days).clamp(0.0, 1.0)
 }
 
-fn adoption_score(resolve_count: i32, saturation: f64) -> f64 {
-    if resolve_count <= 0 {
+fn adoption_score(weighted_resolve: f64, saturation: f64) -> f64 {
+    if weighted_resolve <= 0.0 {
         return 0.0;
     }
-    let numer = ((resolve_count as f64) + 1.0).ln();
+    let numer = (weighted_resolve + 1.0).ln();
     let denom = (saturation + 1.0).ln();
     (numer / denom).clamp(0.0, 1.0)
 }
 
-fn reliability_score(success: i32, failure: i32, min_sample: u32, neutral_default: f64) -> f64 {
-    let total = success.saturating_add(failure);
-    if (total as u32) < min_sample {
+fn reliability_score(success: f64, failure: f64, min_sample: f64, neutral_default: f64) -> f64 {
+    let total = success + failure;
+    if total < min_sample {
         return neutral_default;
     }
-    (success as f64 / total as f64).clamp(0.0, 1.0)
+    (success / total).clamp(0.0, 1.0)
 }
 
 fn abandonment_score(freshness: f64, regret_rate: f64, regret_threshold: f64) -> f64 {
@@ -122,19 +156,19 @@ mod tests {
 
     #[test]
     fn adoption_is_zero_for_no_resolves_and_grows_log() {
-        assert_eq!(adoption_score(0, 1000.0), 0.0);
-        let s10 = adoption_score(10, 1000.0);
-        let s100 = adoption_score(100, 1000.0);
-        let s1000 = adoption_score(1000, 1000.0);
+        assert_eq!(adoption_score(0.0, 1000.0), 0.0);
+        let s10 = adoption_score(10.0, 1000.0);
+        let s100 = adoption_score(100.0, 1000.0);
+        let s1000 = adoption_score(1000.0, 1000.0);
         assert!(s10 < s100 && s100 < s1000);
         assert!((s1000 - 1.0).abs() < 1e-9);
     }
 
     #[test]
     fn reliability_floors_on_small_sample() {
-        let r = reliability_score(2, 0, 5, 0.5);
+        let r = reliability_score(2.0, 0.0, 5.0, 0.5);
         assert_eq!(r, 0.5);
-        let r = reliability_score(9, 1, 5, 0.5);
+        let r = reliability_score(9.0, 1.0, 5.0, 0.5);
         assert!((r - 0.9).abs() < 1e-9);
     }
 
@@ -143,25 +177,11 @@ mod tests {
         let formula = test_formula();
         let now = Utc::now();
 
-        let perfect = ArtifactMetrics {
-            resolve_count: 1000,
-            build_success_count: 100,
-            build_failure_count: 0,
-            regret_count: 0,
-            last_update: now,
-            flags: vec![],
-        };
+        let perfect = ArtifactMetrics::unweighted(1000, 100, 0, 0, now, vec![]);
         let ps = compute_score(&perfect, &formula, now);
         assert!(ps.overall > 0.85);
 
-        let dead = ArtifactMetrics {
-            resolve_count: 0,
-            build_success_count: 0,
-            build_failure_count: 0,
-            regret_count: 0,
-            last_update: now - Duration::days(1800),
-            flags: vec![],
-        };
+        let dead = ArtifactMetrics::unweighted(0, 0, 0, 0, now - Duration::days(1800), vec![]);
         let ds = compute_score(&dead, &formula, now);
         assert!(ds.overall < 0.25);
     }

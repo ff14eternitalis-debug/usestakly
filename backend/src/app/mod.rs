@@ -44,6 +44,10 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             "/api/admin/scoring/recompute",
             post(admin::recompute_scores),
         )
+        .route(
+            "/api/admin/scoring/explain/{repo_id}",
+            get(admin::explain_scoring),
+        )
         .route("/api/admin/ingest/github", post(admin::ingest_github_repo))
         .route(
             "/api/admin/embeddings/backfill",

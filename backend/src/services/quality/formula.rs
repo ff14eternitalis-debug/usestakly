@@ -7,6 +7,7 @@ const FORMULA_V1_TOML: &str = include_str!("../../../scoring/formula_v1.toml");
 pub struct Formula {
     pub meta: FormulaMeta,
     pub dimensions: Dimensions,
+    pub weighting: Weighting,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -49,6 +50,21 @@ pub struct AbandonmentWeights {
     pub regret_rate_threshold: f64,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Weighting {
+    pub dedup_k: f64,
+    pub outcome: OutcomeWeights,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OutcomeWeights {
+    pub resolve: f64,
+    pub re_resolve: f64,
+    pub build_success: f64,
+    pub build_failure: f64,
+    pub regret: f64,
+}
+
 pub fn load_v1() -> Result<Formula> {
     toml::from_str(FORMULA_V1_TOML).context("parsing scoring/formula_v1.toml")
 }
@@ -60,11 +76,19 @@ mod tests {
     #[test]
     fn formula_v1_loads() {
         let f = load_v1().expect("formula v1 loads");
-        assert_eq!(f.meta.version, "v1");
+        assert_eq!(f.meta.version, "v1.1");
         let total: f64 = f.dimensions.freshness.weight
             + f.dimensions.adoption.weight
             + f.dimensions.reliability.weight
             + f.dimensions.abandonment.weight;
         assert!((total - 1.0).abs() < 1e-9, "dimension weights sum to 1");
+    }
+
+    #[test]
+    fn formula_v1_weighting_section_loads() {
+        let f = load_v1().expect("formula v1 loads");
+        assert!(f.weighting.dedup_k > 0.0);
+        assert!(f.weighting.outcome.regret > f.weighting.outcome.resolve);
+        assert!(f.weighting.outcome.re_resolve > f.weighting.outcome.resolve);
     }
 }

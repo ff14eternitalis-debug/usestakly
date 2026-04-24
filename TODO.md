@@ -1,6 +1,6 @@
 # UseStakly — TODO MVP
 
-> Version : 5.3 — 2026-04-23 (+ observabilité MCP v1)
+> Version : 5.4 — 2026-04-24 (+ pondération signal par signal, formula v1.1)
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
@@ -143,7 +143,7 @@ Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-
 - [x] Support owner GitHub v2 best effort : owner direct, membre public d'org, membre privé d'org si `GITHUB_TOKEN` le permet, ou collaborateur/maintainer repo si l'API GitHub peut confirmer le rôle
 - [x] Poisoning-resistance avancée v2 sur `log_usage` : outcomes négatifs désormais filtrés par réputation trust, historique d'usage sain et notes minimales pour les cas les plus sensibles
 - [x] Observabilité MCP v1 : refus des guards enregistrés comme `mcp_guard_rejection` dans `agent_token_events`, endpoint admin `GET /api/admin/mcp/metrics?window=24h|7d|30d` (totaux, distribution outcomes, breakdown refus par tool/raison, top repos, top users, daily volume), panel `AdminMcpObservabilityPanel` dans `/account`
-- [ ] Pondération encore plus fine par type d'outcome / historique par repo sur `log_usage` (exploitera la base observabilité v1)
+- [x] Pondération encore plus fine par type d'outcome / historique par repo sur `log_usage` (formula **v1.1** — 2026-04-24) : chaque signal passif est pondéré `outcome_weight × review_weight(reporter) × 1/(1 + k · n_prev_same_user_same_repo)` avant d'alimenter `compute_score`. Poids par outcome : resolve 1.0, build_success/failure 1.2, re_resolve 1.5, regret 2.0 ; `dedup_k = 0.25`. Paramètres dans `scoring/formula_v1.toml` section `[weighting]`. Endpoint admin `GET /api/admin/scoring/explain/{repo_id}` pour tracer la décomposition signal par signal. Les counts bruts restent persistés pour audit.
 
 ### Phase R6 — Refonte frontend complète ✅ LIVRÉE partiellement (commits b1221c8, 9fec584)
 

@@ -12,7 +12,10 @@ use crate::{
     app::{AppState, error::ApiError},
     services::{
         ingestion::github::{build_client, ingest_repo},
-        quality::{ScoringReport, recompute_all_scores_with_config},
+        quality::{
+            ScoringExplain, ScoringReport, explain_external_scoring,
+            recompute_all_scores_with_config,
+        },
         semantic_search,
         trust::{
             mcp_metrics::{self, McpMetricsReport, MetricsWindow},
@@ -30,6 +33,18 @@ pub async fn recompute_scores(
     require_admin_token(&state, &headers)?;
     let report = recompute_all_scores_with_config(&state.db, Some(&state.config)).await?;
     Ok(Json(report))
+}
+
+pub async fn explain_scoring(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(repo_id): Path<Uuid>,
+) -> Result<Json<ScoringExplain>, ApiError> {
+    require_admin_token(&state, &headers)?;
+    let explain = explain_external_scoring(&state.db, Some(&state.config), repo_id)
+        .await
+        .map_err(|e| ApiError::not_found(format!("explain failed: {e}")))?;
+    Ok(Json(explain))
 }
 
 #[derive(Deserialize)]
