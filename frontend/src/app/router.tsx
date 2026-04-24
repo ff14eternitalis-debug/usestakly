@@ -16,6 +16,7 @@ import { McpGuidePage } from "../routes/mcp-guide";
 import { NotificationsPage } from "../routes/notifications";
 import { RepoDetailPage } from "../routes/repo-detail";
 import { WatchlistPage } from "../routes/watchlist";
+import { currentReturnTo } from "../lib/return-to";
 import { useAuthStore } from "../state/auth-store";
 
 const rootRoute = createRootRoute({
@@ -63,7 +64,10 @@ const loginRoute = createRoute({
 function requireAuth() {
   const { status } = useAuthStore.getState();
   if (status === "anonymous") {
-    throw redirect({ to: "/login" });
+    throw redirect({
+      to: "/login",
+      search: { returnTo: currentReturnTo() }
+    });
   }
 }
 

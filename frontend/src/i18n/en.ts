@@ -177,6 +177,10 @@ export const en = {
     intro: "We diff scores between recomputes. If a repo drifts, you'll see it in",
     notifications: "notifications",
     loading: "Pulling the file…",
+    loadErrorTitle: "Watchlist unavailable.",
+    loadErrorBody:
+      "We could not load your watched repositories. Your list is still there; retry once the session or network is back.",
+    retry: "retry",
     emptyTitle: "Nothing on watch yet.",
     emptyBody:
       "Open a repo's profile from the register and tap Add to watchlist. You'll be pinged here when a score drops, abandonment rises, or a severe flag lands.",
@@ -185,7 +189,10 @@ export const en = {
     overall: "Overall",
     mute: "mute",
     unmute: "unmute",
-    remove: "remove"
+    remove: "remove",
+    removing: "removing…",
+    confirmRemove: "confirm remove",
+    cancelRemove: "cancel"
   },
   notifications: {
     eyebrow: "Notifications",
@@ -195,16 +202,22 @@ export const en = {
     markAllRead: "mark all read",
     markRead: "mark read",
     loading: "Sorting the mail…",
+    loadErrorTitle: "Notifications unavailable.",
+    loadErrorBody:
+      "We could not load your notifications. Retry once the session or network is back.",
+    retry: "retry",
     emptyTitle: "All quiet on the register.",
     emptyBodyUnread:
       "Nothing to report unread. Add repositories to your {watchlistLink} so the observatory can flag drift for you.",
     emptyBodyRecent:
       "Nothing to report recently. Add repositories to your {watchlistLink} so the observatory can flag drift for you.",
     watchlist: "watchlist",
+    watchlistAction: "Open watchlist",
     labelScoreDrop: "score drop",
     labelAbandonmentUp: "abandonment rising",
     labelFlagAdded: "new flag",
-    labelFlagSevere: "severe flag"
+    labelFlagSevere: "severe flag",
+    markingRead: "marking…"
   },
   login: {
     eyebrow: "Sign in",

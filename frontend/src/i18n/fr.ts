@@ -180,6 +180,10 @@ export const fr: Dict = {
       "On compare les scores entre recalculs. Si un dépôt dérive, tu le verras dans",
     notifications: "notifications",
     loading: "Récupération du dossier…",
+    loadErrorTitle: "Veille indisponible.",
+    loadErrorBody:
+      "Impossible de charger tes dépôts suivis. Ta liste existe toujours ; réessaie quand la session ou le réseau revient.",
+    retry: "réessayer",
     emptyTitle: "Rien en veille pour l'instant.",
     emptyBody:
       "Ouvre le profil d'un dépôt depuis le registre et clique Ajouter à la veille. Tu seras notifié ici quand un score chute, que l'abandon grimpe ou qu'un flag sévère tombe.",
@@ -188,7 +192,10 @@ export const fr: Dict = {
     overall: "Global",
     mute: "muter",
     unmute: "démuter",
-    remove: "retirer"
+    remove: "retirer",
+    removing: "retrait…",
+    confirmRemove: "confirmer le retrait",
+    cancelRemove: "annuler"
   },
   notifications: {
     eyebrow: "Notifications",
@@ -198,16 +205,22 @@ export const fr: Dict = {
     markAllRead: "tout marquer lu",
     markRead: "marquer lu",
     loading: "Tri du courrier…",
+    loadErrorTitle: "Notifications indisponibles.",
+    loadErrorBody:
+      "Impossible de charger tes notifications. Réessaie quand la session ou le réseau revient.",
+    retry: "réessayer",
     emptyTitle: "Tout est calme sur le registre.",
     emptyBodyUnread:
       "Rien de non lu à signaler. Ajoute des dépôts à ta {watchlistLink} pour que l'observatoire te signale les dérives.",
     emptyBodyRecent:
       "Rien de récent à signaler. Ajoute des dépôts à ta {watchlistLink} pour que l'observatoire te signale les dérives.",
     watchlist: "veille",
+    watchlistAction: "Ouvrir la veille",
     labelScoreDrop: "chute de score",
     labelAbandonmentUp: "abandon qui grimpe",
     labelFlagAdded: "nouveau flag",
-    labelFlagSevere: "flag sévère"
+    labelFlagSevere: "flag sévère",
+    markingRead: "marquage…"
   },
   login: {
     eyebrow: "Connexion",

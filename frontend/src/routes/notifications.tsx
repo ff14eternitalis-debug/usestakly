@@ -117,6 +117,22 @@ export function NotificationsPage() {
         <div className="py-10 text-center">
           <span className="kicker">{t.notifications.loading}</span>
         </div>
+      ) : query.isError ? (
+        <div className="surface grid gap-4 p-10 text-center">
+          <p className="display-md !text-[1.3rem]">
+            {t.notifications.loadErrorTitle}
+          </p>
+          <p className="max-w-[52ch] mx-auto text-[0.96rem] leading-relaxed text-fg-dim">
+            {t.notifications.loadErrorBody}
+          </p>
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className="justify-self-center rounded-[6px] border border-line-strong bg-surface px-3.5 py-1.5 text-[0.84rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
+          >
+            {t.notifications.retry}
+          </button>
+        </div>
       ) : items.length === 0 ? (
         <div className="surface grid gap-3 p-10 text-center">
           <p className="display-md !text-[1.3rem]">
@@ -137,6 +153,12 @@ export function NotificationsPage() {
               </Fragment>
             ))}
           </p>
+          <Link
+            to="/watchlist"
+            className="justify-self-center rounded-[6px] border border-line-strong bg-surface px-3.5 py-1.5 text-[0.84rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
+          >
+            {t.notifications.watchlistAction}
+          </Link>
         </div>
       ) : (
         <ul className="grid gap-2">
@@ -159,6 +181,11 @@ export function NotificationsPage() {
                       <Link
                         to="/repos/$id"
                         params={{ id: n.artifactId }}
+                        onClick={() => {
+                          if (unread) {
+                            markRead.mutate(n.id);
+                          }
+                        }}
                         className="font-medium text-fg hover:text-accent transition-colors truncate"
                       >
                         <span className="mono text-fg-muted">
@@ -187,9 +214,12 @@ export function NotificationsPage() {
                     <button
                       type="button"
                       onClick={() => markRead.mutate(n.id)}
-                      className="mono text-[0.7rem] uppercase tracking-[0.14em] text-fg-muted hover:text-accent transition-colors"
+                      disabled={markRead.isPending && markRead.variables === n.id}
+                      className="mono text-[0.7rem] uppercase tracking-[0.14em] text-fg-muted hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
                     >
-                      {t.notifications.markRead}
+                      {markRead.isPending && markRead.variables === n.id
+                        ? t.notifications.markingRead
+                        : t.notifications.markRead}
                     </button>
                   ) : null}
                 </div>

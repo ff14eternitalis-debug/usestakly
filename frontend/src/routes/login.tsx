@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Wordmark } from "../components/Wordmark";
 import { useT } from "../i18n";
 import { authUrl } from "../lib/api-client";
+import { authPath, loginReturnTo } from "../lib/return-to";
 import { useAuthStore } from "../state/auth-store";
 
 const githubIcon = (
@@ -20,6 +21,7 @@ const discordIcon = (
 export function LoginPage() {
   const t = useT();
   const status = useAuthStore((s) => s.status);
+  const returnTo = loginReturnTo();
 
   return (
     <section className="shell grid min-h-[78vh] place-items-center py-12">
@@ -52,14 +54,14 @@ export function LoginPage() {
           </div>
           <div className="grid gap-3 px-6 py-7">
             <a
-              href={authUrl("/api/auth/github/start")}
+              href={authUrl(authPath("/api/auth/github/start", returnTo))}
               className="inline-flex items-center justify-center gap-3 rounded-[6px] border border-line-strong bg-surface px-5 py-3.5 text-[0.92rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
             >
               {githubIcon}
               {t.login.continueGithub}
             </a>
             <a
-              href={authUrl("/api/auth/discord/start")}
+              href={authUrl(authPath("/api/auth/discord/start", returnTo))}
               className="inline-flex items-center justify-center gap-3 rounded-[6px] border border-line-strong bg-surface px-5 py-3.5 text-[0.92rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
             >
               {discordIcon}

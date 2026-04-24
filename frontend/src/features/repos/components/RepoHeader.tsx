@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Button, buttonClass } from "../../../components/Button";
 import { Chip } from "../../../components/Chip";
 import { flagLabel } from "../../../lib/format";
+import { loginSearch } from "../../../lib/return-to";
 import type { RepoProfile } from "../../../lib/types";
 
 function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
@@ -96,7 +97,11 @@ export function RepoHeader({
           )
         ) : (
           <div className="grid gap-1.5">
-            <Link to="/login" className={buttonClass("outline")}>
+            <Link
+              to="/login"
+              search={loginSearch()}
+              className={buttonClass("outline")}
+            >
               {signInToWatchLabel}
             </Link>
             <p className="text-[0.84rem] leading-snug text-fg-dim">

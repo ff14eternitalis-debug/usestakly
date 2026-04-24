@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -25,6 +26,7 @@ function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
 export function WatchlistPage() {
   const t = useT();
   const queryClient = useQueryClient();
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["watchlist"],
@@ -39,7 +41,10 @@ export function WatchlistPage() {
 
   const remove = useMutation({
     mutationFn: (id: string) => apiDelete(`/api/watchlist/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["watchlist"] })
+    onSuccess: () => {
+      setConfirmingRemoveId(null);
+      return queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    }
   });
 
   const items = query.data ?? [];
@@ -68,6 +73,20 @@ export function WatchlistPage() {
         <div className="py-10 text-center">
           <span className="kicker">{t.watchlist.loading}</span>
         </div>
+      ) : query.isError ? (
+        <div className="surface grid gap-4 p-10 text-center">
+          <p className="display-md !text-[1.3rem]">{t.watchlist.loadErrorTitle}</p>
+          <p className="max-w-[52ch] mx-auto text-[0.96rem] leading-relaxed text-fg-dim">
+            {t.watchlist.loadErrorBody}
+          </p>
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className={`${buttonClass("outline")} justify-self-center mt-2`}
+          >
+            {t.watchlist.retry}
+          </button>
+        </div>
       ) : items.length === 0 ? (
         <div className="surface grid gap-4 p-10 text-center">
           <p className="display-md !text-[1.3rem]">{t.watchlist.emptyTitle}</p>
@@ -87,6 +106,10 @@ export function WatchlistPage() {
           {items.map((w, i) => {
             const overallTone = scoreTone(w.overall);
             const abTone = abandonmentTone(w.abandonment);
+            const isMuting =
+              toggleMute.isPending && toggleMute.variables?.id === w.artifactId;
+            const isRemoving = remove.isPending && remove.variables === w.artifactId;
+            const wantsRemoveConfirm = confirmingRemoveId === w.artifactId;
             return (
               <li
                 key={w.id}
@@ -164,17 +187,38 @@ export function WatchlistPage() {
                     onClick={() =>
                       toggleMute.mutate({ id: w.artifactId, muted: !w.muted })
                     }
-                    className="rounded-[6px] border border-line px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-fg-dim hover:border-line-strong hover:text-fg transition-colors"
+                    disabled={isMuting || remove.isPending}
+                    className="rounded-[6px] border border-line px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-fg-dim hover:border-line-strong hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
                   >
                     {w.muted ? t.watchlist.unmute : t.watchlist.mute}
                   </button>
                   <button
                     type="button"
-                    onClick={() => remove.mutate(w.artifactId)}
-                    className="rounded-[6px] border border-[color:var(--color-danger)]/30 px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-danger)] hover:bg-[color:var(--color-danger)]/10 transition-colors"
+                    onClick={() => {
+                      if (wantsRemoveConfirm) {
+                        remove.mutate(w.artifactId);
+                      } else {
+                        setConfirmingRemoveId(w.artifactId);
+                      }
+                    }}
+                    disabled={isRemoving || toggleMute.isPending}
+                    className="rounded-[6px] border border-[color:var(--color-danger)]/30 px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-danger)] hover:bg-[color:var(--color-danger)]/10 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
                   >
-                    {t.watchlist.remove}
+                    {isRemoving
+                      ? t.watchlist.removing
+                      : wantsRemoveConfirm
+                        ? t.watchlist.confirmRemove
+                        : t.watchlist.remove}
                   </button>
+                  {wantsRemoveConfirm && !isRemoving ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingRemoveId(null)}
+                      className="rounded-[6px] border border-line px-3 py-1.5 mono text-[0.74rem] uppercase tracking-[0.12em] text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
+                    >
+                      {t.watchlist.cancelRemove}
+                    </button>
+                  ) : null}
                 </div>
               </li>
             );

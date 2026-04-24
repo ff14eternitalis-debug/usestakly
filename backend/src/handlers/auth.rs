@@ -10,7 +10,7 @@ use crate::{
     app::{AppState, error::ApiError},
     auth::{
         clear_session_cookie, discord_oauth_url, finish_discord_oauth, finish_github_oauth,
-        github_oauth_url, session_cookie,
+        github_oauth_url, oauth_return_to, session_cookie,
     },
 };
 
@@ -20,8 +20,16 @@ pub struct GithubCallbackQuery {
     state: String,
 }
 
-pub async fn github_start(State(state): State<AppState>) -> Result<Redirect, ApiError> {
-    let url = github_oauth_url(&state.config)?;
+#[derive(Deserialize)]
+pub struct OAuthStartQuery {
+    return_to: Option<String>,
+}
+
+pub async fn github_start(
+    State(state): State<AppState>,
+    Query(query): Query<OAuthStartQuery>,
+) -> Result<Redirect, ApiError> {
+    let url = github_oauth_url(&state.config, query.return_to.as_deref())?;
     Ok(Redirect::temporary(&url))
 }
 
@@ -32,8 +40,10 @@ pub async fn github_callback(
     let current_user =
         finish_github_oauth(&state.db, &state.config, &query.code, &query.state).await?;
     let cookie = session_cookie(&state.config, current_user.id)?;
+    let return_to = oauth_return_to(&state.config, &query.state)?;
 
-    let mut response = Redirect::to(&state.config.frontend_base_url).into_response();
+    let mut response =
+        Redirect::to(&format!("{}{}", state.config.frontend_base_url, return_to)).into_response();
     response.headers_mut().insert(
         header::SET_COOKIE,
         HeaderValue::from_str(&cookie)
@@ -42,8 +52,11 @@ pub async fn github_callback(
     Ok(response)
 }
 
-pub async fn discord_start(State(state): State<AppState>) -> Result<Redirect, ApiError> {
-    let url = discord_oauth_url(&state.config)?;
+pub async fn discord_start(
+    State(state): State<AppState>,
+    Query(query): Query<OAuthStartQuery>,
+) -> Result<Redirect, ApiError> {
+    let url = discord_oauth_url(&state.config, query.return_to.as_deref())?;
     Ok(Redirect::temporary(&url))
 }
 
@@ -54,8 +67,10 @@ pub async fn discord_callback(
     let current_user =
         finish_discord_oauth(&state.db, &state.config, &query.code, &query.state).await?;
     let cookie = session_cookie(&state.config, current_user.id)?;
+    let return_to = oauth_return_to(&state.config, &query.state)?;
 
-    let mut response = Redirect::to(&state.config.frontend_base_url).into_response();
+    let mut response =
+        Redirect::to(&format!("{}{}", state.config.frontend_base_url, return_to)).into_response();
     response.headers_mut().insert(
         header::SET_COOKIE,
         HeaderValue::from_str(&cookie)

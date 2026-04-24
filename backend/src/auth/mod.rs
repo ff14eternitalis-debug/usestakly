@@ -37,6 +37,7 @@ struct SessionClaims {
 struct OAuthStateClaims {
     nonce: String,
     exp: usize,
+    return_to: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -95,12 +96,12 @@ pub async fn resolve_current_user(
     resolve_dev_user(db, config, headers).await
 }
 
-pub fn github_oauth_url(config: &AppConfig) -> Result<String, ApiError> {
+pub fn github_oauth_url(config: &AppConfig, return_to: Option<&str>) -> Result<String, ApiError> {
     let client_id = config
         .github_client_id
         .as_ref()
         .ok_or_else(|| ApiError::bad_request("GitHub auth is not configured"))?;
-    let state = encode_oauth_state(config)?;
+    let state = encode_oauth_state(config, return_to)?;
 
     Ok(format!(
         "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email&state={}&allow_signup=true",
@@ -110,12 +111,12 @@ pub fn github_oauth_url(config: &AppConfig) -> Result<String, ApiError> {
     ))
 }
 
-pub fn discord_oauth_url(config: &AppConfig) -> Result<String, ApiError> {
+pub fn discord_oauth_url(config: &AppConfig, return_to: Option<&str>) -> Result<String, ApiError> {
     let client_id = config
         .discord_client_id
         .as_ref()
         .ok_or_else(|| ApiError::bad_request("Discord auth is not configured"))?;
-    let state = encode_oauth_state(config)?;
+    let state = encode_oauth_state(config, return_to)?;
 
     Ok(format!(
         "https://discord.com/oauth2/authorize?response_type=code&client_id={}&scope=identify%20email&state={}&redirect_uri={}&prompt=consent",
@@ -533,7 +534,7 @@ fn decode_session_token(config: &AppConfig, token: &str) -> Result<SessionClaims
     .map_err(|_| ApiError::unauthorized("Invalid session"))
 }
 
-fn encode_oauth_state(config: &AppConfig) -> Result<String, ApiError> {
+fn encode_oauth_state(config: &AppConfig, return_to: Option<&str>) -> Result<String, ApiError> {
     let secret = config
         .app_session_secret
         .as_ref()
@@ -541,6 +542,7 @@ fn encode_oauth_state(config: &AppConfig) -> Result<String, ApiError> {
     let claims = OAuthStateClaims {
         nonce: Uuid::new_v4().to_string(),
         exp: (Utc::now() + Duration::minutes(15)).timestamp() as usize,
+        return_to: return_to.and_then(sanitize_return_to),
     };
 
     encode(
@@ -566,6 +568,40 @@ fn validate_oauth_state(config: &AppConfig, state: &str) -> Result<(), ApiError>
     Ok(())
 }
 
+pub fn oauth_return_to(config: &AppConfig, state: &str) -> Result<String, ApiError> {
+    let secret = config
+        .app_session_secret
+        .as_ref()
+        .ok_or_else(|| ApiError::bad_request("APP_SESSION_SECRET is required"))?;
+    let validation = Validation::new(Algorithm::HS256);
+    let claims = decode::<OAuthStateClaims>(
+        state,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &validation,
+    )
+    .map_err(|_| ApiError::bad_request("Invalid OAuth state"))?
+    .claims;
+
+    Ok(claims
+        .return_to
+        .as_deref()
+        .and_then(sanitize_return_to)
+        .unwrap_or_else(|| "/".to_string()))
+}
+
+fn sanitize_return_to(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.starts_with('/')
+        && !trimmed.starts_with("//")
+        && !trimmed.contains('\\')
+        && !trimmed.chars().any(char::is_control)
+    {
+        Some(trimmed.to_string())
+    } else {
+        None
+    }
+}
+
 fn header_value(headers: &HeaderMap, name: &'static str) -> Option<String> {
     headers
         .get(name)
@@ -580,4 +616,25 @@ fn cookie_value(headers: &HeaderMap, name: &str) -> Option<String> {
         .find_map(|(cookie_name, cookie_value)| {
             (cookie_name == name).then(|| cookie_value.to_string())
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_return_to;
+
+    #[test]
+    fn sanitize_return_to_accepts_local_paths() {
+        assert_eq!(
+            sanitize_return_to("/repos/abc?tab=signals").as_deref(),
+            Some("/repos/abc?tab=signals")
+        );
+    }
+
+    #[test]
+    fn sanitize_return_to_rejects_external_or_ambiguous_targets() {
+        assert!(sanitize_return_to("https://example.com").is_none());
+        assert!(sanitize_return_to("//example.com").is_none());
+        assert!(sanitize_return_to("/\\example").is_none());
+        assert!(sanitize_return_to("/watchlist\nSet-Cookie: bad").is_none());
+    }
 }

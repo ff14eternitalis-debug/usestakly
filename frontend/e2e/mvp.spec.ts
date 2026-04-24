@@ -222,7 +222,7 @@ test("anonymous users can browse discovery but protected routes redirect to logi
   await mockUseStaklyApi(page, { authenticated: false });
 
   await page.goto("/watchlist");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?returnTo=%2Fwatchlist$/);
   await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
 
   await page.goto("/discover");
