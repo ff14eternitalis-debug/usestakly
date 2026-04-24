@@ -147,11 +147,12 @@ Cocher au fur et à mesure du passage en session réelle. Noter tout écart dans
 ### S5. Erreurs réelles
 
 - [x] supprimer cookie session via DevTools → refresh `/watchlist` → comportement ? = comportement attendu corrigé côté UI : erreur dédiée + retry au lieu d'un faux empty state. À refaire manuellement en phase 3.
-- [ ] `POST /api/repos/add` avec URL invalide → message d'erreur côté UI ?
-- [ ] `POST /api/repos/add` repo inexistant sur GitHub → message d'erreur ?
-- [ ] `POST /api/repos/add` déjà indexé → message (informatif, pas d'erreur agressive) ?
-- [ ] créer agent token avec label vide → bloque ? message ?
-- [ ] révoquer un token → confirm ? feedback ?
+- [x] `POST /api/repos/add` avec URL invalide → message d'erreur côté UI ? = validé local : API 400 `repo must include owner/repo`, message affiché sous le champ Discover.
+- [x] `POST /api/repos/add` repo inexistant sur GitHub → message d'erreur ? = validé local : API 404 `github repo not found: owner/repo`, message affiché sous le champ Discover.
+- [x] `POST /api/repos/add` déjà indexé → message (informatif, pas d'erreur agressive) ? = validé local : API 200 avec `alreadyIndexed=true`, navigation vers le repo detail.
+- [x] créer agent token avec label vide → bloque ? message ? = validé API : 400 `label is required`; UI : bouton create désactivé tant que le label est vide.
+- [x] créer agent token avec label valide → token affiché une seule fois ? = validé local : token `usk_...` affiché en plaintext dans Account, puis token listé dans les actifs.
+- [x] révoquer un token → confirm ? feedback ? = validé local : DELETE 204, token retiré de la liste active. Pas de confirm dédiée.
 
 ### S6. Onboarding complet
 
@@ -160,15 +161,15 @@ Cocher au fur et à mesure du passage en session réelle. Noter tout écart dans
 
 ### S7. Mobile / responsive
 
-- [ ] viewport iPhone 14 (390×844)
+- [x] viewport iPhone 14 (390×844) = smoke technique validé local.
 - [ ] landing : hiérarchie lisible ? CTAs accessibles ?
-- [ ] discover : search fonctionnelle pouce-friendly ?
-- [ ] repo detail : score readable, boutons pas collés ?
-- [ ] watchlist : liste scrollable, bouton remove pas piégé ?
-- [ ] notifications : cards lisibles ?
-- [ ] account : sections pas cassées ?
+- [x] discover : search fonctionnelle pouce-friendly ? = smoke technique validé : rendu OK, pas de scroll horizontal, pas d'erreur console.
+- [x] repo detail : score readable, boutons pas collés ? = smoke technique validé : rendu OK, pas de scroll horizontal, pas d'erreur console.
+- [x] watchlist : liste scrollable, bouton remove pas piégé ? = smoke technique validé : rendu OK, pas de scroll horizontal, pas d'erreur console.
+- [x] notifications : cards lisibles ? = smoke technique validé : rendu OK, pas de scroll horizontal, pas d'erreur console.
+- [x] account : sections pas cassées ? = smoke technique validé : rendu OK, pas de scroll horizontal, pas d'erreur console.
 - [ ] header : nav burger ou horizontal ?
-- [ ] footer : pas superposé au contenu ?
+- [x] footer : pas superposé au contenu ? = smoke technique validé sur les pages MVP testées.
 
 ## Findings
 
@@ -265,6 +266,8 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 - Les E2E MVP couvrent déjà une bonne partie du parcours discovery, repo detail, watchlist, notifications.
 - Le clic notification → repo detail → mark read implicite est maintenant couvert par un E2E dédié.
 - Une notification réelle insérée en DB locale apparaît dans l'UI, ouvre le repo lié et passe bien en `read_at` après clic.
+- Les erreurs réelles `repos/add` et le cycle MCP token create/list/revoke passent localement.
+- Le smoke responsive local ne montre ni scroll horizontal ni erreur console sur discover, repo detail, watchlist, notifications et account.
 
 ## Priority plan
 
@@ -282,8 +285,8 @@ Format par finding : **Impact** / **Constat** / **Référence code** / **Recomma
 - [x] CTA explicite depuis notifications vides vers watchlist.
 - [x] Tester une notification réelle sur DB locale, pas seulement en E2E mocké.
 - [ ] Optionnel : répéter la même validation sur DB Coolify si on veut une preuve prod stricte.
-- [ ] Tester `POST /api/repos/add` erreurs réelles : URL invalide, repo inexistant, déjà indexé.
-- [ ] Tester création/révocation de token MCP avec un compte réel.
+- [x] Tester `POST /api/repos/add` erreurs réelles : URL invalide, repo inexistant, déjà indexé.
+- [x] Tester création/révocation de token MCP avec un compte réel/dev local.
 
 ### P3 — nice-to-have
 
