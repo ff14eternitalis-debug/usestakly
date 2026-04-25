@@ -1,0 +1,20 @@
+{
+  "name": "usestakly-mcp",
+  "version": "0.1.0",
+  "description": "Install and test the UseStakly MCP server in local coding agents.",
+  "type": "module",
+  "bin": {
+    "usestakly-mcp": "bin/usestakly-mcp.mjs"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

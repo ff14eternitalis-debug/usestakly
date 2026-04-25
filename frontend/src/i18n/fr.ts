@@ -378,6 +378,12 @@ export const fr: Dict = {
     endpointLabel: "Endpoint serveur",
     endpointBody:
       "Utilise cette URL dans les clients qui supportent MCP Streamable HTTP. Envoie le token en Bearer sur chaque requête.",
+    cliLabel: "Installation en une commande",
+    cliTitle: "Laisse le CLI écrire la config client",
+    cliBody:
+      "L'installeur npm demande ton client et ton token, sauvegarde le fichier de config, écrit UseStakly, puis te laisse tester le transport.",
+    cliInstallCommand: "npx usestakly-mcp install",
+    cliTestCommand: "npx usestakly-mcp test",
     stepsLabel: "Installation",
     steps: [
       {

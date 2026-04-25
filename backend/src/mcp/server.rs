@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use http::request::Parts;
+use http::{Uri, request::Parts};
 use rmcp::{
     ErrorData, ServerHandler,
     handler::server::{
@@ -612,11 +612,44 @@ fn into_context_output(
 
 /// Build the tower service mounted by `app::build_app` at `/mcp`.
 pub fn build_service(state: AppState) -> StreamableHttpService<McpServer, LocalSessionManager> {
+    let config =
+        StreamableHttpServerConfig::default().with_allowed_hosts(mcp_allowed_hosts(&state.config));
     StreamableHttpService::new(
         move || Ok(McpServer::new(state.clone())),
         Arc::new(LocalSessionManager::default()),
-        StreamableHttpServerConfig::default(),
+        config,
     )
+}
+
+fn mcp_allowed_hosts(config: &crate::config::AppConfig) -> Vec<String> {
+    let mut hosts = vec![
+        "localhost".to_string(),
+        "127.0.0.1".to_string(),
+        "::1".to_string(),
+    ];
+
+    for value in [
+        config.app_base_url.as_str(),
+        config.frontend_base_url.as_str(),
+    ] {
+        if let Ok(uri) = value.parse::<Uri>()
+            && let Some(authority) = uri.authority()
+        {
+            push_unique(&mut hosts, authority.as_str().to_string());
+            push_unique(&mut hosts, authority.host().to_string());
+        }
+    }
+
+    push_unique(&mut hosts, config.host.clone());
+    hosts
+}
+
+fn push_unique(values: &mut Vec<String>, value: String) {
+    let value = value.trim().trim_matches(['[', ']']).to_string();
+    if value.is_empty() || values.iter().any(|existing| existing == &value) {
+        return;
+    }
+    values.push(value);
 }
 
 #[cfg(test)]
@@ -625,6 +658,7 @@ mod tests {
     use uuid::Uuid;
 
     use super::*;
+    use crate::config::AppConfig;
     use crate::domain::{
         reference::{QualityContext, SearchFilter},
         repo::{RepoProfile, RepoSearchResult, RepoSignal},
@@ -667,6 +701,21 @@ mod tests {
         assert!(parse_passive_outcome("security_issue").is_err());
         assert!(parse_passive_outcome("deprecated").is_err());
         assert!(parse_passive_outcome("broken").is_err());
+    }
+
+    #[test]
+    fn mcp_allowed_hosts_include_public_backend_authority() {
+        let config = test_config(
+            "https://xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io",
+            "https://gii8ev9tkvjffvoqdiyxp6p3.137.74.112.197.sslip.io",
+        );
+
+        let hosts = mcp_allowed_hosts(&config);
+
+        assert!(hosts.contains(&"localhost".to_string()));
+        assert!(hosts.contains(&"127.0.0.1".to_string()));
+        assert!(hosts.contains(&"xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io".to_string()));
+        assert!(hosts.contains(&"gii8ev9tkvjffvoqdiyxp6p3.137.74.112.197.sslip.io".to_string()));
     }
 
     #[test]
@@ -744,5 +793,36 @@ mod tests {
         assert_eq!(output.recent_signals.len(), 1);
         assert_eq!(output.recent_signals[0].signal, "build_success");
         assert!(output.recent_signals[0].is_passive);
+    }
+
+    fn test_config(app_base_url: &str, frontend_base_url: &str) -> AppConfig {
+        AppConfig {
+            host: "127.0.0.1".to_string(),
+            port: 4000,
+            database_url: "postgres://example".to_string(),
+            dev_user_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            dev_user_email: "dev@usestakly.local".to_string(),
+            dev_user_username: "dev".to_string(),
+            dev_user_display_name: None,
+            dev_user_avatar_url: None,
+            app_base_url: app_base_url.to_string(),
+            frontend_base_url: frontend_base_url.to_string(),
+            app_session_secret: None,
+            github_client_id: None,
+            github_client_secret: None,
+            discord_client_id: None,
+            discord_client_secret: None,
+            admin_api_token: None,
+            github_token: None,
+            scheduler_enabled: false,
+            recompute_interval_secs: 86_400,
+            mcp_write_limit_per_hour: 60,
+            mcp_log_usage_cooldown_secs: 900,
+            mcp_negative_signal_window_hours: 24,
+            active_signal_min_reputation: 0.45,
+            active_signal_default_consensus: 2,
+            active_signal_severe_consensus: 3,
+            semantic_search_enabled: false,
+        }
     }
 }

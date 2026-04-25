@@ -375,6 +375,12 @@ export const en = {
     endpointLabel: "Server endpoint",
     endpointBody:
       "Use this URL in clients that support MCP Streamable HTTP. Send the token as a Bearer credential on every request.",
+    cliLabel: "One-command install",
+    cliTitle: "Let the CLI write the client config",
+    cliBody:
+      "The npm installer asks for your client and token, backs up the config file, writes UseStakly, then lets you test the transport.",
+    cliInstallCommand: "npx usestakly-mcp install",
+    cliTestCommand: "npx usestakly-mcp test",
     stepsLabel: "Install flow",
     steps: [
       {

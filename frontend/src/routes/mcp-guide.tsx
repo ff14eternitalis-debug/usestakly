@@ -160,6 +160,22 @@ export function McpGuidePage() {
 
       <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
         <div className="grid content-start gap-3">
+          <span className="kicker">{t.mcpGuide.cliLabel}</span>
+          <h2 className="display-md !text-[1.35rem]">
+            {t.mcpGuide.cliTitle}
+          </h2>
+          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
+            {t.mcpGuide.cliBody}
+          </p>
+        </div>
+        <div className="grid gap-3">
+          <CodeBlock code={t.mcpGuide.cliInstallCommand} />
+          <CodeBlock code={t.mcpGuide.cliTestCommand} />
+        </div>
+      </section>
+
+      <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
+        <div className="grid content-start gap-3">
           <span className="kicker">{t.mcpGuide.chooseClientLabel}</span>
           <h2 className="display-md !text-[1.35rem]">
             {t.mcpGuide.configReadyTitle}
