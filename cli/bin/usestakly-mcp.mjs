@@ -5,8 +5,7 @@ import path from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
-const DEFAULT_ENDPOINT =
-  "https://xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io/mcp";
+const ENDPOINT_ENV = "USESTAKLY_MCP_ENDPOINT";
 const CLIENTS = ["codex", "cursor", "claude", "generic"];
 
 async function main() {
@@ -97,17 +96,17 @@ async function test(options) {
 }
 
 async function doctor(options) {
-  const endpoint = options.endpoint || DEFAULT_ENDPOINT;
-  output.write(`Endpoint: ${endpoint}\n`);
+  const endpoint = options.endpoint || process.env[ENDPOINT_ENV] || "";
+  output.write(`Endpoint: ${endpoint || `not configured (use --endpoint or ${ENDPOINT_ENV})`}\n`);
   for (const client of CLIENTS.filter((item) => item !== "generic")) {
     const target = configPathFor(client);
     const exists = fs.existsSync(target);
     const content = exists ? fs.readFileSync(target, "utf8") : "";
     const hasUseStakly = content.includes("usestakly");
-    const hasEndpoint = content.includes(endpoint);
+    const hasEndpoint = endpoint ? content.includes(endpoint) : false;
     output.write(
       `${client}: ${exists ? target : "not found"}${
-        exists ? ` (${hasUseStakly ? "configured" : "no usestakly server"}, ${hasEndpoint ? "endpoint ok" : "endpoint missing"})` : ""
+        exists ? ` (${hasUseStakly ? "configured" : "no usestakly server"}, ${endpoint ? (hasEndpoint ? "endpoint ok" : "endpoint missing") : "endpoint not checked"})` : ""
       }\n`
     );
   }
@@ -134,9 +133,12 @@ async function resolveClient(rl, rawClient) {
 
 async function resolveEndpoint(rl, rawEndpoint) {
   if (rawEndpoint) return validateEndpoint(String(rawEndpoint));
-  if (!input.isTTY) return DEFAULT_ENDPOINT;
-  const answer = await rl.question(`Endpoint [${DEFAULT_ENDPOINT}]: `);
-  return validateEndpoint(answer.trim() || DEFAULT_ENDPOINT);
+  if (process.env[ENDPOINT_ENV]) return validateEndpoint(process.env[ENDPOINT_ENV].trim());
+  if (!input.isTTY) {
+    throw new Error(`Missing endpoint. Use --endpoint https://.../mcp or set ${ENDPOINT_ENV}.`);
+  }
+  const answer = await rl.question("Endpoint (https://.../mcp): ");
+  return validateEndpoint(answer.trim());
 }
 
 async function resolveToken(rl, options) {
@@ -375,6 +377,7 @@ function printHelp(command) {
   --token usk_...
   --help
 
+You can also set ${ENDPOINT_ENV}=https://.../mcp.
 Prefer interactive input or --token-env over --token to avoid shell history leaks.
 `;
 

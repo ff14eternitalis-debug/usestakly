@@ -16,6 +16,7 @@ npx usestakly-mcp install
 - `test` command that sends MCP `initialize`, then calls a protected tool to validate the Bearer token.
 - `doctor` command that checks whether known client config files contain UseStakly.
 - Node built-in tests, no runtime dependencies.
+- No hard-coded production endpoint in the package; users pass the endpoint from UseStakly or set `USESTAKLY_MCP_ENDPOINT`.
 
 ## Local verification
 
@@ -45,12 +46,12 @@ npm publish
 
 ```bash
 npx usestakly-mcp --help
-npx usestakly-mcp install --client generic --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client generic --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
 ## Publication status
 
-`usestakly-mcp@0.1.0` is published on npm and can be installed with:
+`usestakly-mcp@0.1.3` removes the hard-coded Coolify endpoint from the package. It can be installed with:
 
 ```bash
 npx usestakly-mcp install

@@ -6,7 +6,7 @@ Install UseStakly in an MCP-capable coding client without editing config files b
 npx usestakly-mcp install
 ```
 
-The installer asks for a client, an endpoint, and a `usk_` token, then backs up and updates the matching local config file.
+The installer asks for a client, the MCP endpoint shown in UseStakly, and a `usk_` token, then backs up and updates the matching local config file.
 
 ## Commands
 
@@ -25,13 +25,13 @@ npx usestakly-mcp install
 Interactive flow. Asks for the client, endpoint, and token.
 
 ```bash
-npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
 Non-interactive flow. Safer for terminals and scripts because the token stays out of shell history.
 
 ```bash
-npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN --dry-run
+npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN --dry-run
 ```
 
 Prints the config without writing a file.
@@ -54,10 +54,11 @@ Runs MCP `initialize`, then calls a protected UseStakly tool so the Bearer token
 ## Non-interactive options
 
 ```bash
-npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN
-npx usestakly-mcp test --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp test --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
+Set `USESTAKLY_MCP_ENDPOINT=https://.../mcp` or pass `--endpoint https://.../mcp`.
 You can pass `--token`, but interactive input or `--token-env` is safer because tokens can otherwise remain in shell history.
 
 ## Publish checklist

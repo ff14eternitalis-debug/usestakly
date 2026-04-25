@@ -18,14 +18,34 @@ function run(args, env = {}) {
 }
 
 test("generic install prints MCP JSON", () => {
-  const output = run(["install", "--client", "generic", "--token", token]);
+  const output = run([
+    "install",
+    "--client",
+    "generic",
+    "--endpoint",
+    "https://example.com/mcp",
+    "--token",
+    token
+  ]);
   const parsed = JSON.parse(output);
   assert.equal(parsed.mcpServers.usestakly.type, "streamable-http");
-  assert.equal(
-    parsed.mcpServers.usestakly.url,
-    "https://xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io/mcp"
-  );
+  assert.equal(parsed.mcpServers.usestakly.url, "https://example.com/mcp");
   assert.equal(parsed.mcpServers.usestakly.headers.Authorization, `Bearer ${token}`);
+});
+
+test("generic install accepts endpoint from environment", () => {
+  const output = run(["install", "--client", "generic", "--token", token], {
+    USESTAKLY_MCP_ENDPOINT: "https://example.com/mcp"
+  });
+  const parsed = JSON.parse(output);
+  assert.equal(parsed.mcpServers.usestakly.url, "https://example.com/mcp");
+});
+
+test("non-interactive install requires an endpoint", () => {
+  assert.throws(
+    () => run(["install", "--client", "generic", "--token", token]),
+    /Missing endpoint/
+  );
 });
 
 test("codex install writes config and removes previous usestakly section", () => {
@@ -74,7 +94,16 @@ test("codex install writes config and removes previous usestakly section", () =>
 test("dry run does not write codex config", () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "usestakly-cli-"));
   const output = run(
-    ["install", "--client", "codex", "--token", token, "--dry-run"],
+    [
+      "install",
+      "--client",
+      "codex",
+      "--endpoint",
+      "https://example.com/mcp",
+      "--token",
+      token,
+      "--dry-run"
+    ],
     { CODEX_HOME: home }
   );
 
@@ -84,7 +113,16 @@ test("dry run does not write codex config", () => {
 
 test("invalid token exits with a clear error", () => {
   assert.throws(
-    () => run(["install", "--client", "generic", "--token", "usk_bad"]),
+    () =>
+      run([
+        "install",
+        "--client",
+        "generic",
+        "--endpoint",
+        "https://example.com/mcp",
+        "--token",
+        "usk_bad"
+      ]),
     /Expected a UseStakly token formatted as usk_<64 hex>/
   );
 });
