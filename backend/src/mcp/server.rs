@@ -94,6 +94,51 @@ pub struct SearchReposOutput {
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
+pub struct RecommendReposParams {
+    /// Natural-language need, package category, or dependency use case.
+    pub need: String,
+    /// Optional ecosystem hint, for example TypeScript, Python, Rust, Go, React.
+    #[serde(default)]
+    pub language: Option<String>,
+    /// Quality filter preset: auto (default), strict, or explore.
+    #[serde(default)]
+    pub filter: Option<String>,
+    /// Max recommendations to return (default 5, max 10).
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct RepoRecommendation {
+    pub rank: usize,
+    pub owner: String,
+    pub name: String,
+    pub full_name: String,
+    pub html_url: String,
+    pub description: Option<String>,
+    pub language: Option<String>,
+    pub stars_count: i32,
+    pub quality_overall: Option<f64>,
+    pub quality_freshness: Option<f64>,
+    pub quality_adoption: Option<f64>,
+    pub quality_reliability: Option<f64>,
+    pub quality_abandonment: Option<f64>,
+    pub flags: Vec<String>,
+    pub reasons: Vec<String>,
+    pub caveats: Vec<String>,
+    pub next_actions: Vec<String>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct RecommendReposOutput {
+    pub provenance: Provenance,
+    pub query_used: String,
+    pub filter_used: String,
+    pub count: usize,
+    pub recommendations: Vec<RepoRecommendation>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
 pub struct RepoContextParams {
     pub owner: String,
     pub name: String,
@@ -262,6 +307,60 @@ impl McpServer {
             filter_used: filter.as_str().to_string(),
             count: candidates.len(),
             results: candidates,
+        }))
+    }
+
+    #[tool(
+        name = "recommend_github_repos",
+        description = "Recommend a short, explained list of GitHub repositories for a dependency \
+                       need, such as `I need a reliable TypeScript ORM` or `React table library`. \
+                       Returns ranked candidates with score-based reasons, caveats, next actions, \
+                       and provenance. Use this before choosing a dependency."
+    )]
+    async fn recommend_github_repos(
+        &self,
+        Parameters(p): Parameters<RecommendReposParams>,
+        Extension(parts): Extension<Parts>,
+    ) -> Result<Json<RecommendReposOutput>, ErrorData> {
+        verify_bearer(&self.state.db, &parts).await?;
+
+        let query = p.need.trim();
+        if query.is_empty() {
+            return Err(ErrorData::invalid_params("need is required", None));
+        }
+
+        let filter = parse_filter(p.filter.as_deref());
+        let filters = RepoSearchFilters {
+            query: Some(query.to_string()),
+            filter,
+            language: p.language,
+            license_spdx: None,
+            stars_min: None,
+            include_archived: false,
+            limit: Some(p.limit.unwrap_or(5).clamp(1, 10)),
+        };
+
+        let results =
+            repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
+                .await
+                .map_err(map_api_error)?;
+        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let scored_at = results
+            .iter()
+            .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
+            .max();
+        let recommendations = build_recommendations(results);
+
+        Ok(Json(RecommendReposOutput {
+            provenance: Provenance {
+                source: "usestakly://registry/github/recommendations".to_string(),
+                formula_version,
+                scored_at,
+            },
+            query_used: query.to_string(),
+            filter_used: filter.as_str().to_string(),
+            count: recommendations.len(),
+            recommendations,
         }))
     }
 
@@ -549,6 +648,102 @@ fn parse_passive_outcome(input: &str) -> Result<SignalKind, ErrorData> {
     }
 }
 
+fn build_recommendations(
+    results: Vec<crate::domain::repo::RepoSearchResult>,
+) -> Vec<RepoRecommendation> {
+    results
+        .into_iter()
+        .enumerate()
+        .map(|(index, repo)| {
+            let q = repo.quality.as_ref();
+            RepoRecommendation {
+                rank: index + 1,
+                owner: repo.owner,
+                name: repo.name,
+                full_name: repo.full_name,
+                html_url: repo.html_url,
+                description: repo.description,
+                language: repo.language,
+                stars_count: repo.stars_count,
+                quality_overall: q.and_then(|q| q.overall),
+                quality_freshness: q.and_then(|q| q.freshness),
+                quality_adoption: q.and_then(|q| q.adoption),
+                quality_reliability: q.and_then(|q| q.reliability),
+                quality_abandonment: q.and_then(|q| q.abandonment),
+                flags: q.map(|q| q.flags.clone()).unwrap_or_default(),
+                reasons: recommendation_reasons(q),
+                caveats: recommendation_caveats(q),
+                next_actions: vec![
+                    "Call get_repo_quality_context before final selection.".to_string(),
+                    "After testing the dependency, call log_usage with the outcome.".to_string(),
+                    "Use watch_repo if this becomes a dependency to monitor.".to_string(),
+                ],
+            }
+        })
+        .collect()
+}
+
+fn recommendation_reasons(
+    quality: Option<&crate::domain::reference::QualityContext>,
+) -> Vec<String> {
+    let Some(q) = quality else {
+        return vec!["No score is available yet; inspect the repo before adopting.".to_string()];
+    };
+    let mut reasons = Vec::new();
+    if let Some(overall) = q.overall {
+        reasons.push(format!("Overall dependency score is {:.3}.", overall));
+    }
+    if q.freshness.unwrap_or(0.0) >= 0.8 {
+        reasons.push("Freshness is strong, indicating recent repository activity.".to_string());
+    }
+    if q.abandonment.unwrap_or(1.0) <= 0.2 {
+        reasons.push("Abandonment risk is currently low.".to_string());
+    }
+    if q.reliability.unwrap_or(0.5) > 0.5 {
+        reasons.push("Reliability is supported by positive usage outcomes.".to_string());
+    } else if q.build_success_count > 0 || q.build_failure_count > 0 {
+        reasons.push(format!(
+            "Reliability has {} build success and {} build failure signals.",
+            q.build_success_count, q.build_failure_count
+        ));
+    }
+    if reasons.is_empty() {
+        reasons.push(
+            "Included because it matched the query and passed the selected filter.".to_string(),
+        );
+    }
+    reasons
+}
+
+fn recommendation_caveats(
+    quality: Option<&crate::domain::reference::QualityContext>,
+) -> Vec<String> {
+    let Some(q) = quality else {
+        return vec!["Score provenance is missing until the repo is computed.".to_string()];
+    };
+    let mut caveats = Vec::new();
+    if q.reliability.unwrap_or(0.5) == 0.5 && q.build_success_count + q.build_failure_count < 5 {
+        caveats.push(
+            "Reliability is still neutral because there are fewer than 5 build samples."
+                .to_string(),
+        );
+    }
+    if q.adoption.unwrap_or(0.0) == 0.0 && q.resolve_count == 0 {
+        caveats.push(
+            "Adoption has no usage outcomes yet; treat popularity separately from proven usage."
+                .to_string(),
+        );
+    }
+    if !q.flags.is_empty() {
+        caveats.push(format!("Active flags to inspect: {}.", q.flags.join(", ")));
+    }
+    if q.abandonment.unwrap_or(0.0) > 0.4 {
+        caveats
+            .push("Abandonment risk is elevated; inspect maintenance before adoption.".to_string());
+    }
+    caveats
+}
+
 fn into_context_output(
     profile: crate::domain::repo::RepoProfile,
     formula_version: String,
@@ -793,6 +988,66 @@ mod tests {
         assert_eq!(output.recent_signals.len(), 1);
         assert_eq!(output.recent_signals[0].signal, "build_success");
         assert!(output.recent_signals[0].is_passive);
+    }
+
+    #[test]
+    fn recommendations_explain_score_caveats_and_next_actions() {
+        let computed_at = Utc.with_ymd_and_hms(2026, 4, 25, 10, 0, 0).unwrap();
+        let artifact_id = Uuid::parse_str("33333333-3333-4333-8333-333333333333").unwrap();
+        let results = vec![RepoSearchResult {
+            artifact_id,
+            owner: "example".to_string(),
+            name: "typed-orm".to_string(),
+            full_name: "example/typed-orm".to_string(),
+            html_url: "https://github.com/example/typed-orm".to_string(),
+            description: Some("A TypeScript ORM.".to_string()),
+            language: Some("TypeScript".to_string()),
+            license_spdx: Some("MIT".to_string()),
+            topics: vec!["orm".to_string(), "typescript".to_string()],
+            stars_count: 12_000,
+            forks_count: 600,
+            open_issues_count: 30,
+            archived: false,
+            last_commit_at: Some(computed_at),
+            quality: Some(QualityContext {
+                formula_version: "v1.1".to_string(),
+                freshness: Some(0.92),
+                adoption: Some(0.0),
+                reliability: Some(0.5),
+                abandonment: Some(0.04),
+                overall: Some(0.71),
+                resolve_count: 0,
+                build_success_count: 1,
+                build_failure_count: 0,
+                regret_count: 0,
+                flags: Vec::new(),
+                computed_at,
+            }),
+        }];
+
+        let recommendations = build_recommendations(results);
+
+        assert_eq!(recommendations.len(), 1);
+        assert_eq!(recommendations[0].rank, 1);
+        assert_eq!(recommendations[0].full_name, "example/typed-orm");
+        assert!(
+            recommendations[0]
+                .reasons
+                .iter()
+                .any(|reason| reason.contains("Overall dependency score"))
+        );
+        assert!(
+            recommendations[0]
+                .caveats
+                .iter()
+                .any(|caveat| caveat.contains("Reliability is still neutral"))
+        );
+        assert!(
+            recommendations[0]
+                .next_actions
+                .iter()
+                .any(|action| action.contains("get_repo_quality_context"))
+        );
     }
 
     fn test_config(app_base_url: &str, frontend_base_url: &str) -> AppConfig {

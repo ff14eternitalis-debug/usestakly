@@ -384,6 +384,15 @@ export const fr: Dict = {
       "L'installeur npm demande ton client et ton token, sauvegarde le fichier de config, écrit UseStakly, puis te laisse tester le transport.",
     cliInstallCommand: "npx usestakly-mcp install",
     cliTestCommand: "npx usestakly-mcp test",
+    tryLabel: "À essayer avec ton agent",
+    tryTitle: "Demande une recommandation expliquée",
+    tryBody:
+      "Après installation, demande à ton agent une shortlist de dépendances, puis laisse-le inspecter la provenance et logger l'outcome après test.",
+    tryPrompts: [
+      "Cherche une lib React table fiable avec UseStakly. Explique le score, les caveats et la provenance, puis log_usage après le test.",
+      "J'ai besoin d'un ORM TypeScript. Recommande des repos GitHub avec UseStakly et compare fiabilité, fraîcheur et risque d'abandon.",
+      "Avant d'ajouter cette dépendance, utilise UseStakly pour inspecter le détail repo et ajoute-le à ma veille s'il paraît sain."
+    ],
     stepsLabel: "Installation",
     steps: [
       {
@@ -415,6 +424,11 @@ export const fr: Dict = {
     toolsBody:
       "Les outils read servent aux recommandations. Les outils write attachent des signaux d'usage ou des entrées de veille au user propriétaire du token.",
     tools: [
+      {
+        name: "recommend_github_repos",
+        body:
+          "Retourne une shortlist expliquée pour un besoin de dépendance, avec raisons liées au score, caveats, prochaines actions et provenance."
+      },
       {
         name: "search_github_repos",
         body:

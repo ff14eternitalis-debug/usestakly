@@ -228,6 +228,28 @@ export function McpGuidePage() {
 
       <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
         <div className="grid content-start gap-3">
+          <span className="kicker">{t.mcpGuide.tryLabel}</span>
+          <h2 className="display-md !text-[1.35rem]">
+            {t.mcpGuide.tryTitle}
+          </h2>
+          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
+            {t.mcpGuide.tryBody}
+          </p>
+        </div>
+        <ul className="grid gap-3">
+          {t.mcpGuide.tryPrompts.map((prompt) => (
+            <li
+              key={prompt}
+              className="rounded-[8px] border border-line bg-surface/35 p-4 text-[0.9rem] leading-relaxed text-fg-dim"
+            >
+              {prompt}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
+        <div className="grid content-start gap-3">
           <span className="kicker">{t.mcpGuide.smokeTestLabel}</span>
           <h2 className="display-md !text-[1.35rem]">
             {t.mcpGuide.smokeTestTitle}

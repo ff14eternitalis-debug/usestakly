@@ -381,6 +381,15 @@ export const en = {
       "The npm installer asks for your client and token, backs up the config file, writes UseStakly, then lets you test the transport.",
     cliInstallCommand: "npx usestakly-mcp install",
     cliTestCommand: "npx usestakly-mcp test",
+    tryLabel: "Try it with your agent",
+    tryTitle: "Ask for an explained recommendation",
+    tryBody:
+      "After installation, ask your agent for a dependency shortlist, then let it inspect provenance and log the outcome after testing.",
+    tryPrompts: [
+      "Find a reliable React table library with UseStakly. Explain the score, caveats, and provenance, then log_usage after the test.",
+      "I need a TypeScript ORM. Recommend GitHub repos with UseStakly and compare reliability, freshness, and abandonment risk.",
+      "Before adding this dependency, use UseStakly to inspect the repo detail and add it to my watchlist if it looks healthy."
+    ],
     stepsLabel: "Install flow",
     steps: [
       {
@@ -412,6 +421,11 @@ export const en = {
     toolsBody:
       "Read tools are safe for recommendations. Write tools attach usage signals or watchlist entries to the user who owns the token.",
     tools: [
+      {
+        name: "recommend_github_repos",
+        body:
+          "Returns a short explained shortlist for a dependency need, with score-based reasons, caveats, next actions, and provenance."
+      },
       {
         name: "search_github_repos",
         body:
