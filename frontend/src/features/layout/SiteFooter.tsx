@@ -32,6 +32,8 @@ export function SiteFooter() {
         </FooterCol>
 
         <FooterCol title={t.footer.about}>
+          <FooterLink to="/privacy">{t.footer.privacy}</FooterLink>
+          <FooterLink to="/status">{t.footer.status}</FooterLink>
           <FooterMuted>{t.footer.selfHosted}</FooterMuted>
           <FooterMuted>{t.footer.publicFormula}</FooterMuted>
           <FooterMuted>{t.footer.localEmbeddings}</FooterMuted>
@@ -69,6 +71,8 @@ function FooterLink({
   to:
     | "/discover"
     | "/how-to-read"
+    | "/privacy"
+    | "/status"
     | "/watchlist"
     | "/notifications"
     | "/mcp-guide";

@@ -38,6 +38,8 @@ export const fr: Dict = {
     signals: "Signaux",
     about: "À propos",
     mcp: "MCP",
+    privacy: "Données",
+    status: "Status",
     freshness: "Fraîcheur",
     adoption: "Adoption",
     reliability: "Fiabilité",
@@ -49,12 +51,13 @@ export const fr: Dict = {
     tagFormula: "formula_v1 · transparent par conception"
   },
   landing: {
-    eyebrow: "Observatoire open-source · v0.1",
-    h1Part1: "Les étoiles GitHub mesurent l'intérêt.",
-    h1Part2: "Nous mesurons ce qui compte.",
+    eyebrow: "Beta publique · formula_v1",
+    h1Part1: "UseStakly",
+    h1Part2: "Choisis tes repos GitHub OSS avec un score qualité transparent.",
     intro:
-      "UseStakly note les dépôts publics sur quatre signaux — fraîcheur, adoption, fiabilité, abandon — et t'alerte quand un projet dont tu dépends commence à dériver. Formule transparente, versionnée, auto-hébergée.",
-    openObservatory: "Ouvrir l'observatoire",
+      "UseStakly aide les devs et les agents de code à comparer des repos GitHub publics avec scoring visible, provenance et alertes de veille.",
+    openObservatory: "Explorer les repos",
+    readGuide: "Lire UseStakly",
     signInForWatchlist: "Se connecter pour la veille",
     myWatchlist: "Ma veille",
     kpi1: "Signaux notés",
@@ -63,6 +66,28 @@ export const fr: Dict = {
     panelLive: "Verdict en direct",
     panelSample: "exemple · facebook/react",
     panelOverall: "Global",
+    dataEyebrow: "Qualité des données",
+    dataH2: "Métadonnées réelles, signaux d'usage progressifs.",
+    dataBody:
+      "Les métadonnées GitHub sont récupérées à l'ingestion. Adoption et fiabilité deviennent plus solides quand les agents MCP et les users remontent des outcomes réels.",
+    dataItems: [
+      {
+        title: "Les métadonnées GitHub sont réelles",
+        body:
+          "Étoiles, forks, issues, topics, langage, état archivé et dernier push viennent de GitHub."
+      },
+      {
+        title: "Les signaux d'usage sont progressifs",
+        body:
+          "resolve, build_success, build_failure et regret sont enregistrés via les signaux UseStakly."
+      },
+      {
+        title: "Beta assumée",
+        body:
+          "Le corpus est curé et grandit. Les scores se lisent avec leur provenance, pas comme une vérité cachée."
+      }
+    ],
+    dataCta: "Comment lire le score",
     pillarsEyebrow: "Ce que ça fait",
     pillarsH2: "Deux outils, une formule, aucune boîte noire.",
     pillar: "Pilier",
@@ -90,6 +115,52 @@ export const fr: Dict = {
     closingBrowse: "Parcourir les dépôts",
     closingWatchlist: "Ouvrir la veille",
     closingStart: "Commencer"
+  },
+  privacy: {
+    eyebrow: "Données",
+    h1: "Ce que UseStakly stocke",
+    intro:
+      "UseStakly garde le minimum nécessaire pour scorer les repos GitHub, gérer la veille, les notifications et l'accès MCP.",
+    sections: [
+      {
+        title: "Identité OAuth",
+        body:
+          "GitHub ou Discord OAuth sert à la connexion. UseStakly stocke ton id user, pseudo, avatar et email quand le provider le renvoie. Il n'y a pas de liste marketing."
+      },
+      {
+        title: "Veille et notifications",
+        body:
+          "Les repos suivis et l'état lu/non lu des notifications sont stockés pour t'alerter quand les scores dérivent."
+      },
+      {
+        title: "Tokens MCP",
+        body:
+          "Les tokens agent utilisent le format usk_. La valeur en clair est affichée une seule fois, puis seul un hash SHA-256 est stocké côté serveur."
+      },
+      {
+        title: "Signaux d'usage",
+        body:
+          "MCP log_usage et les reports user stockent owner/name du repo, outcome, timestamp, propriétaire du token et notes optionnelles pour améliorer les scores avec de vrais usages."
+      }
+    ],
+    closing:
+      "Les métadonnées publiques viennent de GitHub. Le code source privé n'est pas ingéré par UseStakly."
+  },
+  status: {
+    eyebrow: "Status",
+    h1: "État du service UseStakly",
+    intro:
+      "Un contrôle léger pour la beta publique : santé API et lecture du registre.",
+    apiHealth: "Santé API",
+    registryRead: "Lecture registre",
+    checking: "Vérification",
+    online: "En ligne",
+    degraded: "Dégradé",
+    offline: "Hors ligne",
+    lastChecked: "Dernier check",
+    betaTitle: "Périmètre beta publique",
+    betaBody:
+      "Les health checks Coolify couvrent les conteneurs. Cette page ajoute un check visible côté produit, mais ce n'est pas encore un système d'incident complet."
   },
   discover: {
     eyebrow: "Explorer",
@@ -278,6 +349,32 @@ export const fr: Dict = {
     createTokenAction: "Créer un token MCP",
     createTokenHint:
       "Les tokens vivent dans Compte, ne sont affichés qu'une fois et se révoquent sans toucher à ta session web.",
+    installAssistantLabel: "Assistant d'installation",
+    installAssistantBody:
+      "Crée un token ici, choisis ton client MCP, copie la config complète, puis teste l'endpoint.",
+    signInToCreate:
+      "Connecte-toi pour créer un token MCP et générer une config client prête à coller.",
+    tokenLabel: "Label du token",
+    tokenPlaceholder: "ex. codex-local, cursor, claude-desktop",
+    createTokenInline: "Créer le token",
+    creatingToken: "Création...",
+    tokenReady:
+      "Token créé. La valeur en clair est incluse dans la config ci-dessous et ne sera plus affichée après avoir quitté cette page.",
+    chooseClientLabel: "Client",
+    clientCodex: "Codex",
+    clientCursor: "Cursor",
+    clientClaude: "Claude Desktop",
+    clientGeneric: "MCP générique",
+    configReadyTitle: "Copier une config client complète",
+    configReadyBody:
+      "Les schémas varient selon les clients, mais la plupart des clients Streamable HTTP demandent les mêmes champs : type, URL et header Authorization Bearer.",
+    copyConfig: "Copier la config",
+    copied: "copié",
+    testToken: "Tester le token",
+    testingToken: "Test...",
+    testOk: "Token valide. MCP initialize a répondu correctement.",
+    testFail:
+      "Le test du token a échoué. Vérifie que le token vient d'être créé, puis réessaie ou révoque-le depuis Compte.",
     endpointLabel: "Endpoint serveur",
     endpointBody:
       "Utilise cette URL dans les clients qui supportent MCP Streamable HTTP. Envoie le token en Bearer sur chaque requête.",

@@ -15,7 +15,9 @@ import { LandingPage } from "../routes/index";
 import { LoginPage } from "../routes/login";
 import { McpGuidePage } from "../routes/mcp-guide";
 import { NotificationsPage } from "../routes/notifications";
+import { PrivacyPage } from "../routes/privacy";
 import { RepoDetailPage } from "../routes/repo-detail";
+import { StatusPage } from "../routes/status";
 import { WatchlistPage } from "../routes/watchlist";
 import { currentReturnTo } from "../lib/return-to";
 import { useAuthStore } from "../state/auth-store";
@@ -68,6 +70,18 @@ const loginRoute = createRoute({
   component: LoginPage
 });
 
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: PrivacyPage
+});
+
+const statusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/status",
+  component: StatusPage
+});
+
 function requireAuth() {
   const { status } = useAuthStore.getState();
   if (status === "anonymous") {
@@ -106,6 +120,8 @@ const routeTree = rootRoute.addChildren([
   mcpGuideRoute,
   repoDetailRoute,
   loginRoute,
+  privacyRoute,
+  statusRoute,
   watchlistRoute,
   notificationsRoute,
   accountRoute

@@ -36,6 +36,8 @@ export const en = {
     signals: "Signals",
     about: "About",
     mcp: "MCP",
+    privacy: "Privacy",
+    status: "Status",
     freshness: "Freshness",
     adoption: "Adoption",
     reliability: "Reliability",
@@ -47,12 +49,13 @@ export const en = {
     tagFormula: "formula_v1 · transparent by design"
   },
   landing: {
-    eyebrow: "Open-source observatory · v0.1",
-    h1Part1: "GitHub stars measure interest.",
-    h1Part2: "We measure what matters.",
+    eyebrow: "Public beta · formula_v1",
+    h1Part1: "UseStakly",
+    h1Part2: "Choose GitHub OSS with a transparent quality score.",
     intro:
-      "UseStakly scores public repositories on four signals — freshness, adoption, reliability, abandonment — and alerts you when a project you depend on starts to drift. Transparent formula, versioned, self-hosted.",
-    openObservatory: "Open the observatory",
+      "UseStakly helps developers and coding agents compare public GitHub repositories with visible scoring, provenance, and watchlist alerts.",
+    openObservatory: "Explore repositories",
+    readGuide: "Read UseStakly",
     signInForWatchlist: "Sign in for watchlist",
     myWatchlist: "My watchlist",
     kpi1: "Signals scored",
@@ -61,6 +64,28 @@ export const en = {
     panelLive: "Live verdict",
     panelSample: "sample · facebook/react",
     panelOverall: "Overall",
+    dataEyebrow: "Data quality",
+    dataH2: "Real metadata, progressive usage signals.",
+    dataBody:
+      "GitHub metadata is fetched during ingestion. Adoption and reliability become stronger as MCP agents and users report real outcomes.",
+    dataItems: [
+      {
+        title: "GitHub metadata is real",
+        body:
+          "Stars, forks, issues, topics, language, archived state, and last push come from GitHub."
+      },
+      {
+        title: "Usage signals are progressive",
+        body:
+          "resolve, build_success, build_failure, and regret are recorded through UseStakly signals."
+      },
+      {
+        title: "Beta by design",
+        body:
+          "The corpus is curated and growing. Scores should be read with provenance, not treated as hidden truth."
+      }
+    ],
+    dataCta: "How to read the score",
     pillarsEyebrow: "What it does",
     pillarsH2: "Two tools, one formula, zero black-box.",
     pillar: "Pillar",
@@ -88,6 +113,52 @@ export const en = {
     closingBrowse: "Browse repositories",
     closingWatchlist: "Open watchlist",
     closingStart: "Get started"
+  },
+  privacy: {
+    eyebrow: "Privacy",
+    h1: "Data UseStakly stores",
+    intro:
+      "UseStakly keeps the minimum data needed for GitHub repo scoring, watchlists, notifications, and MCP access.",
+    sections: [
+      {
+        title: "OAuth identity",
+        body:
+          "GitHub or Discord OAuth is used for login. UseStakly stores your user id, username, avatar, and email when the provider returns one. It does not run a marketing mailing list."
+      },
+      {
+        title: "Watchlist and notifications",
+        body:
+          "Repos you watch and notification read state are stored so the app can alert you when scores drift."
+      },
+      {
+        title: "MCP tokens",
+        body:
+          "Agent tokens use the usk_ format. Plaintext is shown once, then only a SHA-256 hash is stored server-side."
+      },
+      {
+        title: "Usage signals",
+        body:
+          "MCP log_usage and user reports store repo owner/name, outcome, timestamp, token owner, and optional notes so scores can improve with real usage."
+      }
+    ],
+    closing:
+      "Public repo metadata comes from GitHub. Private source code is not ingested by UseStakly."
+  },
+  status: {
+    eyebrow: "Status",
+    h1: "UseStakly service status",
+    intro:
+      "A lightweight production check for the public beta: API health and registry read path.",
+    apiHealth: "API health",
+    registryRead: "Registry read",
+    checking: "Checking",
+    online: "Online",
+    degraded: "Degraded",
+    offline: "Offline",
+    lastChecked: "Last checked",
+    betaTitle: "Public beta scope",
+    betaBody:
+      "Coolify health checks cover the running containers. This page adds a user-facing read check, but it is not a full incident system yet."
   },
   discover: {
     eyebrow: "Discover",
@@ -275,6 +346,32 @@ export const en = {
     createTokenAction: "Create MCP token",
     createTokenHint:
       "Tokens live in Account, are shown once, and can be revoked without touching your login session.",
+    installAssistantLabel: "Install assistant",
+    installAssistantBody:
+      "Create a token here, choose your MCP client, copy the complete config, then test the endpoint.",
+    signInToCreate:
+      "Sign in to create an MCP token and generate a ready-to-copy client config.",
+    tokenLabel: "Token label",
+    tokenPlaceholder: "e.g. codex-local, cursor, claude-desktop",
+    createTokenInline: "Create token",
+    creatingToken: "Creating...",
+    tokenReady:
+      "Token created. Plaintext is included in the config below and will not be shown again after you leave this page.",
+    chooseClientLabel: "Client",
+    clientCodex: "Codex",
+    clientCursor: "Cursor",
+    clientClaude: "Claude Desktop",
+    clientGeneric: "Generic MCP",
+    configReadyTitle: "Copy a complete client config",
+    configReadyBody:
+      "Client schemas vary, but most Streamable HTTP clients need the same three fields: type, URL, and Authorization Bearer header.",
+    copyConfig: "Copy config",
+    copied: "copied",
+    testToken: "Test token",
+    testingToken: "Testing...",
+    testOk: "Token valid. MCP initialize answered successfully.",
+    testFail:
+      "Token test failed. Verify the token was just created, then retry or revoke it from Account.",
     endpointLabel: "Server endpoint",
     endpointBody:
       "Use this URL in clients that support MCP Streamable HTTP. Send the token as a Bearer credential on every request.",
