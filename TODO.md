@@ -1,12 +1,12 @@
-# UseStakly — TODO MVP
+# UseStakly — TODO MVP / Public Beta
 
-> Version : 5.4 — 2026-04-24 (+ pondération signal par signal, formula v1.1)
+> Version : 5.5 — 2026-04-26 (+ public beta, MCP installer, status public, corpus élargi)
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-04-23** : R1 + R2 + R2b + R3 (hors email / règles custom) + gros morceau de R4/R5 + R6 sont désormais en place sur `main`. Restent surtout : finition trust/modération avancée, UX d'explication scoring, E2E, et second audit parcours utilisateur connecté.
+> **État au 2026-04-26** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : durcissement ops Coolify/MCP, backups DB, rate-limit globale MCP, alerting externe, page légale formelle, E2E complet et croissance du corpus/signaux réels.
 
 ---
 
@@ -18,6 +18,52 @@ Deux fonctions noyau :
 2. **Suivi des repos** — un dev met des repos dans sa watchlist et est notifié quand un score bouge significativement (abandonment up, nouveau flag `security-issue`, maintainer silencieux 90 j, etc.). GitHub ne fournit pas ce suivi qualité.
 
 Les agents IA consomment la même data via MCP.
+
+---
+
+## État public beta — 2026-04-26
+
+- [x] Landing publique orientée promesse produit
+- [x] Page `Lire UseStakly`
+- [x] Page `Privacy / Données`
+- [x] Page `Status / Beta`
+- [x] Endpoint public `GET /api/status/public`
+- [x] Corpus public initial élargi par catégories via `scripts/seed-public-corpus.ps1`
+- [x] Guide MCP public avec installation `npx usestakly-mcp install`
+- [x] Package npm `usestakly-mcp` publié
+- [x] MCP validé dans Codex : search, detail, log_usage, watch_repo
+- [x] Tool MCP haut niveau `recommend_github_repos`
+- [x] Doc exemples MCP : `docs/mcp-examples.md`
+- [ ] Page légale formelle (`/legal` ou `/terms`)
+- [ ] Domaine public stable et email de contact officiel
+
+---
+
+## Priorité ops / sécurité MCP avant ouverture plus large
+
+Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
+
+- [ ] **Configurer un backup DB Coolify planifié**
+  - Risque principal actuel : perte de données Postgres.
+  - Baseline recommandée : backup quotidien, rétention 7 jours minimum, test de restore.
+  - Vérification attendue : `coolify database backup list z3xzjc0sy03kr6mpv8xvka7l --format json` retourne au moins une config.
+
+- [ ] **Ajouter une rate-limit applicative sur `/mcp`**
+  - Couvrir `initialize`, `tools/list`, read tools et write tools.
+  - Aujourd'hui : les write tools ont déjà quotas/cooldowns ; les reads/protocol calls doivent encore être limités.
+  - Cibles : limite par IP pour non-auth/invalides, limite par token pour reads, limite stricte pour writes.
+
+- [ ] **Forcer Authorization sur toute route `/mcp`**
+  - Même `initialize` et `tools/list` ne doivent pas exposer gratuitement le catalogue.
+  - Garder la validation DB token dans chaque tool.
+  - Ajouter un middleware pré-transport MCP pour refuser missing/invalid Bearer.
+
+- [ ] **Ajouter une alerte externe**
+  - Checks recommandés :
+    - `GET /health`
+    - `GET /api/status/public`
+    - test MCP contrôlé avec token dédié monitoring
+  - Services possibles : UptimeRobot, Better Stack, Grafana Cloud ou équivalent.
 
 ---
 
