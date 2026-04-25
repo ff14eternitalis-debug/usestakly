@@ -2,30 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useT } from "../i18n";
 import { apiGet } from "../lib/api-client";
-import type { RepoSearchResponse } from "../lib/types";
-
-type HealthResponse = {
-  status: string;
-};
+import type { PublicStatus } from "../lib/types";
 
 export function StatusPage() {
   const t = useT();
-  const health = useQuery({
-    queryKey: ["status", "health"],
-    queryFn: ({ signal }) => apiGet<HealthResponse>("/health", signal),
-    refetchInterval: 60_000
-  });
-  const registry = useQuery({
-    queryKey: ["status", "registry"],
-    queryFn: ({ signal }) =>
-      apiGet<RepoSearchResponse>("/api/repos/search?filter=explore&limit=1", signal),
+  const status = useQuery({
+    queryKey: ["status", "public"],
+    queryFn: ({ signal }) => apiGet<PublicStatus>("/api/status/public", signal),
     refetchInterval: 60_000
   });
 
-  const checkedAt = new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  const checkedAt = status.data?.checkedAt
+    ? new Date(status.data.checkedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
 
   return (
     <article className="shell-narrow grid gap-10 py-10 md:py-14">
@@ -40,24 +35,29 @@ export function StatusPage() {
       <section className="grid gap-4 sm:grid-cols-2">
         <StatusCheck
           label={t.status.apiHealth}
-          state={
-            health.isLoading
-              ? "checking"
-              : health.isSuccess && health.data.status === "ok"
-                ? "online"
-                : "offline"
-          }
+          state={status.isLoading ? "checking" : checkState(status.data?.api.status)}
+        />
+        <StatusCheck
+          label={t.status.database}
+          state={status.isLoading ? "checking" : checkState(status.data?.database.status)}
         />
         <StatusCheck
           label={t.status.registryRead}
-          state={
-            registry.isLoading
-              ? "checking"
-              : registry.isSuccess
-                ? "online"
-                : "degraded"
+          state={status.isLoading ? "checking" : checkState(status.data?.registry.status)}
+          detail={
+            status.data ? `${status.data.registry.repoCount} ${t.status.repos}` : undefined
           }
         />
+        <StatusCheck
+          label={t.status.mcp}
+          state={status.isLoading ? "checking" : checkState(status.data?.mcp.status)}
+          detail={status.data ? `${status.data.mcp.tools.length} ${t.status.tools}` : undefined}
+        />
+      </section>
+
+      <section className="grid gap-4 border-t border-line pt-8 sm:grid-cols-2">
+        <StatusFact label={t.status.formula} value={status.data?.formula.version ?? "v1"} />
+        <StatusFact label={t.status.publicStatus} value={status.data?.status ?? "checking"} />
       </section>
 
       <section className="grid gap-3 border-t border-line pt-8">
@@ -73,12 +73,20 @@ export function StatusPage() {
   );
 }
 
+function checkState(status?: "ok" | "down" | "degraded") {
+  if (status === "ok") return "online";
+  if (status === "degraded") return "degraded";
+  return "offline";
+}
+
 function StatusCheck({
   label,
-  state
+  state,
+  detail
 }: {
   label: string;
   state: "checking" | "online" | "degraded" | "offline";
+  detail?: string;
 }) {
   const t = useT();
   const statusLabel =
@@ -107,6 +115,18 @@ function StatusCheck({
       <p className="mt-5 data-value text-[1.5rem] leading-none" style={{ color }}>
         {statusLabel}
       </p>
+      {detail ? (
+        <p className="mt-2 mono text-[0.78rem] text-fg-muted">{detail}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function StatusFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-l border-line pl-4">
+      <p className="kicker">{label}</p>
+      <p className="mt-2 text-[1rem] font-semibold text-fg">{value}</p>
     </div>
   );
 }

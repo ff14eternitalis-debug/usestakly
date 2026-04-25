@@ -150,7 +150,13 @@ export const en = {
     intro:
       "A lightweight production check for the public beta: API health and registry read path.",
     apiHealth: "API health",
+    database: "Database",
     registryRead: "Registry read",
+    mcp: "MCP tools",
+    formula: "Formula",
+    publicStatus: "Public status",
+    repos: "repos",
+    tools: "tools",
     checking: "Checking",
     online: "Online",
     degraded: "Degraded",
@@ -158,7 +164,7 @@ export const en = {
     lastChecked: "Last checked",
     betaTitle: "Public beta scope",
     betaBody:
-      "Coolify health checks cover the running containers. This page adds a user-facing read check, but it is not a full incident system yet."
+      "Coolify health checks cover the running containers. This page adds user-facing API, database, registry, MCP, and formula checks, but it is not a full incident system yet."
   },
   discover: {
     eyebrow: "Discover",

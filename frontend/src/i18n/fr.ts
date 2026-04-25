@@ -152,7 +152,13 @@ export const fr: Dict = {
     intro:
       "Un contrôle léger pour la beta publique : santé API et lecture du registre.",
     apiHealth: "Santé API",
+    database: "Base de données",
     registryRead: "Lecture registre",
+    mcp: "Outils MCP",
+    formula: "Formule",
+    publicStatus: "Status public",
+    repos: "repos",
+    tools: "outils",
     checking: "Vérification",
     online: "En ligne",
     degraded: "Dégradé",
@@ -160,7 +166,7 @@ export const fr: Dict = {
     lastChecked: "Dernier check",
     betaTitle: "Périmètre beta publique",
     betaBody:
-      "Les health checks Coolify couvrent les conteneurs. Cette page ajoute un check visible côté produit, mais ce n'est pas encore un système d'incident complet."
+      "Les health checks Coolify couvrent les conteneurs. Cette page ajoute des checks visibles API, DB, registre, MCP et formule, mais ce n'est pas encore un système d'incident complet."
   },
   discover: {
     eyebrow: "Explorer",

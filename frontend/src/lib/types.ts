@@ -250,3 +250,13 @@ export type McpMetricsReport = {
   topUsers: McpUserVolume[];
   dailyVolume: McpDailyBucket[];
 };
+
+export type PublicStatus = {
+  status: "ok" | "degraded";
+  api: { status: "ok" | "down" | "degraded" };
+  database: { status: "ok" | "down" | "degraded" };
+  registry: { status: "ok" | "down" | "degraded"; repoCount: number };
+  mcp: { status: "ok" | "down" | "degraded"; tools: string[] };
+  formula: { status: "ok" | "down" | "degraded"; version: string };
+  checkedAt: string;
+};

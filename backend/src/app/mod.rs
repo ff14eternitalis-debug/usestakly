@@ -33,6 +33,7 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
     Router::new()
         .route_service("/mcp", mcp_service)
         .route("/health", get(health::health))
+        .route("/api/status/public", get(health::public_status))
         .route("/api/auth/github/start", get(auth::github_start))
         .route("/api/auth/github/callback", get(auth::github_callback))
         .route("/api/auth/discord/start", get(auth::discord_start))
