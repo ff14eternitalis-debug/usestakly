@@ -122,6 +122,10 @@ pub struct RepoContextOutput {
     pub quality_adoption: Option<f64>,
     pub quality_reliability: Option<f64>,
     pub quality_abandonment: Option<f64>,
+    pub quality_resolve_count: i32,
+    pub quality_build_success_count: i32,
+    pub quality_build_failure_count: i32,
+    pub quality_regret_count: i32,
     pub flags: Vec<String>,
     pub recent_signals: Vec<SignalSummary>,
 }
@@ -151,6 +155,14 @@ pub struct LogUsageOutput {
     pub name: String,
     pub signal: String,
     pub recorded_at: DateTime<Utc>,
+    pub quality_overall: Option<f64>,
+    pub quality_adoption: Option<f64>,
+    pub quality_reliability: Option<f64>,
+    pub quality_abandonment: Option<f64>,
+    pub quality_resolve_count: i32,
+    pub quality_build_success_count: i32,
+    pub quality_build_failure_count: i32,
+    pub quality_regret_count: i32,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -370,21 +382,33 @@ impl McpServer {
         )
         .await
         .map_err(map_api_error)?;
-        recompute_all_scores_with_config(&self.state.db, Some(&self.state.config))
+        let report = recompute_all_scores_with_config(&self.state.db, Some(&self.state.config))
             .await
             .map_err(map_anyhow)?;
 
         let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let profile = repos_service::get_repo_profile(&self.state.db, artifact_id)
+            .await
+            .map_err(map_api_error)?;
+        let q = profile.repo.quality.as_ref();
         Ok(Json(LogUsageOutput {
             provenance: Provenance {
                 source: format!("usestakly://registry/github/{owner}/{name}"),
                 formula_version,
-                scored_at: None,
+                scored_at: Some(report.computed_at),
             },
             owner: owner.to_string(),
             name: name.to_string(),
             signal: record.signal,
             recorded_at: record.created_at,
+            quality_overall: q.and_then(|q| q.overall),
+            quality_adoption: q.and_then(|q| q.adoption),
+            quality_reliability: q.and_then(|q| q.reliability),
+            quality_abandonment: q.and_then(|q| q.abandonment),
+            quality_resolve_count: q.map(|q| q.resolve_count).unwrap_or_default(),
+            quality_build_success_count: q.map(|q| q.build_success_count).unwrap_or_default(),
+            quality_build_failure_count: q.map(|q| q.build_failure_count).unwrap_or_default(),
+            quality_regret_count: q.map(|q| q.regret_count).unwrap_or_default(),
         }))
     }
 
@@ -560,6 +584,16 @@ fn into_context_output(
         quality_adoption: q.as_ref().and_then(|q| q.adoption),
         quality_reliability: q.as_ref().and_then(|q| q.reliability),
         quality_abandonment: q.as_ref().and_then(|q| q.abandonment),
+        quality_resolve_count: q.as_ref().map(|q| q.resolve_count).unwrap_or_default(),
+        quality_build_success_count: q
+            .as_ref()
+            .map(|q| q.build_success_count)
+            .unwrap_or_default(),
+        quality_build_failure_count: q
+            .as_ref()
+            .map(|q| q.build_failure_count)
+            .unwrap_or_default(),
+        quality_regret_count: q.as_ref().map(|q| q.regret_count).unwrap_or_default(),
         flags: q.map(|q| q.flags).unwrap_or_default(),
         recent_signals: profile
             .recent_signals
@@ -702,6 +736,10 @@ mod tests {
         assert_eq!(output.full_name, "facebook/react");
         assert_eq!(output.quality_overall, Some(0.9));
         assert_eq!(output.quality_abandonment, Some(0.08));
+        assert_eq!(output.quality_resolve_count, 12);
+        assert_eq!(output.quality_build_success_count, 8);
+        assert_eq!(output.quality_build_failure_count, 1);
+        assert_eq!(output.quality_regret_count, 0);
         assert_eq!(output.flags, vec!["deprecated"]);
         assert_eq!(output.recent_signals.len(), 1);
         assert_eq!(output.recent_signals[0].signal, "build_success");

@@ -95,6 +95,7 @@ Entrée :
 Retour :
 
 - dimensions de score
+- counts d'usage (`quality_resolve_count`, `quality_build_success_count`, `quality_build_failure_count`, `quality_regret_count`)
 - flags
 - signaux récents
 - provenance `usestakly://registry/github/<owner>/<name>`
@@ -129,8 +130,30 @@ Ce tool :
 - attache le signal au user du token MCP
 - stocke un `agent_context`
 - déclenche un recompute global du scoring juste après l'enregistrement
+- retourne le score et les counts recalculés pour confirmer l'effet du signal
 
 Si le repo n'est pas encore ingéré, le serveur tente une ingestion à la volée si `GITHUB_TOKEN` est configuré.
+
+Retour utile après écriture :
+
+```json
+{
+  "signal": "build_success",
+  "quality_overall": 0.72,
+  "quality_adoption": 0.18,
+  "quality_reliability": 0.8,
+  "quality_abandonment": 0.11,
+  "quality_resolve_count": 2,
+  "quality_build_success_count": 4,
+  "quality_build_failure_count": 1,
+  "quality_regret_count": 0,
+  "provenance": {
+    "source": "usestakly://registry/github/vitejs/vite",
+    "formula_version": "v1",
+    "scored_at": "2026-04-25T14:30:00Z"
+  }
+}
+```
 
 ### `watch_repo`
 
