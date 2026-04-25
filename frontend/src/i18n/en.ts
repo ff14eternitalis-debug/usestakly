@@ -1,6 +1,7 @@
 export const en = {
   nav: {
     discover: "Discover",
+    howToRead: "How to read",
     mcpGuide: "MCP guide",
     watchlist: "Watchlist",
     notifications: "Notifications",
@@ -95,6 +96,13 @@ export const en = {
     h1Part2: "today?",
     intro:
       "Search the corpus by name, owner, description or topic. Narrow by language, minimum stars, or confidence. Same formula, different thresholds.",
+    scoreGuideTitle: "Read the score before the stars",
+    scoreGuideBody:
+      "Overall combines freshness, adoption, reliability and abandonment risk into a 0-1 verdict. It is a dependency signal, not a popularity chart.",
+    scoreGuideAction: "How to read UseStakly",
+    corpusTitle: "Initial corpus",
+    corpusBody:
+      "The MVP starts with a curated set of credible public OSS repos: active references, deprecated counterexamples, and tooling agents often recommend. Add any GitHub repo to score it on demand.",
     queryLabel: "Query",
     queryPlaceholder: "e.g. date picker, orm, htmx, zustand",
     modeLabel: "Mode",
@@ -162,6 +170,15 @@ export const en = {
     adoptionHint: "Log-normalised resolve count (saturates at 1k).",
     reliabilityHint: "Success / total builds. Neutral 0.5 before 5 samples.",
     abandonmentHint: "Inverse freshness plus regret bump above threshold.",
+    scoreGuideTitle: "How to read this score",
+    scoreGuideBody:
+      "Use the overall verdict as a first pass, then inspect the dimensions. A strong repo can still need monitoring if freshness decays or abandonment risk rises.",
+    scoreGuideAction: "Read the full guide",
+    scoreGuideItems: [
+      "Freshness and reliability are the quickest risk checks before adopting a dependency.",
+      "Adoption is capped so large projects do not win only because they are famous.",
+      "Abandonment is a risk score: lower is better, and high values pull the overall verdict down."
+    ],
     recentSignals: "Recent signals",
     entrySingle: "entry",
     entriesPlural: "entries",
@@ -301,6 +318,74 @@ export const en = {
       "Revoke old tokens from Account when a machine, client, or teammate no longer needs access.",
       "Write tools are rate-limited per token and guarded against duplicate or repeated negative signals."
     ]
+  },
+  howToRead: {
+    eyebrow: "Reading guide",
+    h1: "How to read UseStakly",
+    intro:
+      "UseStakly is built for dependency decisions. The score helps you compare public GitHub repos by maintenance, usage confidence and risk, without treating stars as the final answer.",
+    scoreLabel: "Score",
+    scoreTitle: "Overall is a 0-1 dependency verdict",
+    scoreBody:
+      "A score near 1 means the repo currently looks healthy for adoption. A score near 0 means the repo needs investigation or should usually be avoided. The value is always tied to a formula version and a computed date.",
+    dimensionsLabel: "Dimensions",
+    dimensions: [
+      {
+        name: "Freshness",
+        body:
+          "Looks at recent repository activity. Old last commits decay over time, so a famous but quiet repo can lose confidence."
+      },
+      {
+        name: "Adoption",
+        body:
+          "Measures usage and resolution signals, then caps the effect so popularity does not drown out quality."
+      },
+      {
+        name: "Reliability",
+        body:
+          "Tracks positive versus failed usage outcomes. It stays neutral until there are enough samples."
+      },
+      {
+        name: "Abandonment",
+        body:
+          "Estimates risk. Lower is better. High abandonment can pull down an otherwise popular repo."
+      }
+    ],
+    modesLabel: "Modes",
+    modesTitle: "Same formula, different thresholds",
+    modes: [
+      {
+        name: "Explore",
+        body: "Shows everything with receipts. Useful for audits and weak-signal research."
+      },
+      {
+        name: "Auto",
+        body: "Default shortlist. Hides broken or severe-risk entries while keeping discovery broad."
+      },
+      {
+        name: "Strict",
+        body: "Requires a cleaner profile: no accepted severe flags, better freshness and a higher overall bar."
+      }
+    ],
+    corpusLabel: "Corpus",
+    corpusTitle: "The MVP corpus is curated, then grows on demand",
+    corpusBody:
+      "The initial seed mixes active references across JS/TS, Rust, Python and Go with deprecated examples such as request and maintenance-mode examples such as moment. This makes demos honest: good repos score well, stale repos have to explain themselves.",
+    corpusItems: [
+      "Seed repos are public GitHub projects ingested through the same scoring pipeline.",
+      "Any repo can be added from Discover with owner/repo or a GitHub URL.",
+      "Watchlist refresh and MCP usage signals make the corpus more useful over time."
+    ],
+    workflowLabel: "Workflow",
+    workflowTitle: "A practical reading order",
+    workflowItems: [
+      "Start in Auto mode and search the category you need.",
+      "Compare Overall, then open the repo detail for dimensions and flags.",
+      "Treat high Abandonment or low Freshness as a reason to inspect before adopting.",
+      "Add real dependencies to the watchlist so drift becomes visible later."
+    ],
+    ctaDiscover: "Open discover",
+    ctaMcp: "Install MCP"
   },
   account: {
     eyebrow: "Account",

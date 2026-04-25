@@ -181,6 +181,37 @@ export function RepoDetailPage() {
         defaultBranchLabel={t.repoDetail.defaultBranch}
       />
 
+      <section className="grid gap-4 rounded-[8px] border border-line bg-surface/45 p-5 md:grid-cols-[0.55fr_1.45fr]">
+        <div className="grid content-start gap-2">
+          <p className="kicker">{t.repoDetail.overallVerdict}</p>
+          <h2 className="text-[1.05rem] font-semibold text-fg">
+            {t.repoDetail.scoreGuideTitle}
+          </h2>
+          <Link
+            to="/how-to-read"
+            className="inline-flex w-fit items-center text-[0.86rem] font-medium text-accent hover:underline"
+          >
+            {t.repoDetail.scoreGuideAction} <span className="arrow">→</span>
+          </Link>
+        </div>
+        <div className="grid gap-3">
+          <p className="text-[0.92rem] leading-relaxed text-fg-dim">
+            {t.repoDetail.scoreGuideBody}
+          </p>
+          <ul className="grid gap-2">
+            {t.repoDetail.scoreGuideItems.map((item) => (
+              <li
+                key={item}
+                className="flex gap-3 text-[0.88rem] leading-relaxed text-fg-dim"
+              >
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <hr className="hairline" />
 
       <RepoSignalsList

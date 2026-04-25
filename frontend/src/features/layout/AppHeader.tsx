@@ -36,6 +36,9 @@ export function AppHeader() {
           <Link to="/discover" className="nav-link">
             {t.nav.discover}
           </Link>
+          <Link to="/how-to-read" className="nav-link">
+            {t.nav.howToRead}
+          </Link>
           <Link to="/mcp-guide" className="nav-link">
             {t.nav.mcpGuide}
           </Link>
@@ -97,6 +100,9 @@ export function AppHeader() {
         <div className="shell flex items-center gap-5 overflow-x-auto py-2.5">
           <Link to="/discover" className="nav-link">
             {t.nav.discover}
+          </Link>
+          <Link to="/how-to-read" className="nav-link">
+            {t.nav.howToRead}
           </Link>
           <Link to="/mcp-guide" className="nav-link">
             {t.nav.mcpGuide}

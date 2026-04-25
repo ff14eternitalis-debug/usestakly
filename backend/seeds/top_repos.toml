@@ -1,10 +1,12 @@
 # Seed set for GitHub ingestion pipeline validation.
 #
-# Two buckets on purpose:
+# Three buckets on purpose:
 #   - Abandoned / deprecated — expected to score LOW on freshness + reliability.
 #     Showcases that stars alone don't save a dying repo.
-#   - Actively maintained    — expected to score HIGH.
+#   - Actively maintained    — expected to score HIGH across ecosystems.
 #     Baseline of what a healthy OSS project looks like.
+#   - Tooling / platform     — credible dependencies agents often recommend.
+#     Gives the MVP corpus enough breadth to support public demos.
 #
 # Extend freely — the ingest handler is idempotent (ON CONFLICT DO UPDATE).
 
@@ -57,3 +59,73 @@ note  = "active — schema validation"
 owner = "trpc"
 name  = "trpc"
 note  = "active — end-to-end typesafe APIs"
+
+[[repos]]
+owner = "vitejs"
+name  = "vite"
+note  = "active — frontend build tool"
+
+[[repos]]
+owner = "tailwindlabs"
+name  = "tailwindcss"
+note  = "active — utility CSS framework"
+
+[[repos]]
+owner = "prettier"
+name  = "prettier"
+note  = "active — code formatter"
+
+[[repos]]
+owner = "eslint"
+name  = "eslint"
+note  = "active — JavaScript linting"
+
+[[repos]]
+owner = "prisma"
+name  = "prisma"
+note  = "active — ORM and database toolkit"
+
+[[repos]]
+owner = "supabase"
+name  = "supabase"
+note  = "active — open-source backend platform"
+
+[[repos]]
+owner = "rust-lang"
+name  = "rust"
+note  = "active — language and compiler"
+
+[[repos]]
+owner = "tokio-rs"
+name  = "tokio"
+note  = "active — async Rust runtime"
+
+[[repos]]
+owner = "serde-rs"
+name  = "serde"
+note  = "active — Rust serialization framework"
+
+[[repos]]
+owner = "fastapi"
+name  = "fastapi"
+note  = "active — Python API framework"
+
+[[repos]]
+owner = "django"
+name  = "django"
+note  = "active — Python web framework"
+
+[[repos]]
+owner = "pallets"
+name  = "flask"
+note  = "active — Python web microframework"
+
+[[repos]]
+owner = "gin-gonic"
+name  = "gin"
+note  = "active — Go web framework"
+
+[[repos]]
+owner = "go-gorm"
+name  = "gorm"
+note  = "active — Go ORM"

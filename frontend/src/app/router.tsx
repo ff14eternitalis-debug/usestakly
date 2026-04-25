@@ -10,6 +10,7 @@ import { AppHeader } from "../features/layout/AppHeader";
 import { SiteFooter } from "../features/layout/SiteFooter";
 import { AccountPage } from "../routes/account";
 import { DiscoverPage } from "../routes/discover";
+import { HowToReadPage } from "../routes/how-to-read";
 import { LandingPage } from "../routes/index";
 import { LoginPage } from "../routes/login";
 import { McpGuidePage } from "../routes/mcp-guide";
@@ -47,6 +48,12 @@ const mcpGuideRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/mcp-guide",
   component: McpGuidePage
+});
+
+const howToReadRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/how-to-read",
+  component: HowToReadPage
 });
 
 const repoDetailRoute = createRoute({
@@ -95,6 +102,7 @@ const accountRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   discoverRoute,
+  howToReadRoute,
   mcpGuideRoute,
   repoDetailRoute,
   loginRoute,

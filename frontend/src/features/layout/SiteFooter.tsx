@@ -18,6 +18,7 @@ export function SiteFooter() {
 
         <FooterCol title={t.footer.product}>
           <FooterLink to="/discover">{t.nav.discover}</FooterLink>
+          <FooterLink to="/how-to-read">{t.nav.howToRead}</FooterLink>
           <FooterLink to="/watchlist">{t.nav.watchlist}</FooterLink>
           <FooterLink to="/notifications">{t.nav.notifications}</FooterLink>
           <FooterLink to="/mcp-guide">{t.footer.mcp}</FooterLink>
@@ -65,7 +66,12 @@ function FooterLink({
   to,
   children
 }: {
-  to: "/discover" | "/watchlist" | "/notifications" | "/mcp-guide";
+  to:
+    | "/discover"
+    | "/how-to-read"
+    | "/watchlist"
+    | "/notifications"
+    | "/mcp-guide";
   children: React.ReactNode;
 }) {
   return (

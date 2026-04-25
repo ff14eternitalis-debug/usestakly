@@ -3,6 +3,7 @@ import type { Dict } from "./en";
 export const fr: Dict = {
   nav: {
     discover: "Explorer",
+    howToRead: "Lire UseStakly",
     mcpGuide: "Guide MCP",
     watchlist: "Veille",
     notifications: "Notifications",
@@ -97,6 +98,13 @@ export const fr: Dict = {
     h1Part2: "aujourd'hui ?",
     intro:
       "Cherche le corpus par nom, propriétaire, description ou topic. Affine par langage, nombre minimum d'étoiles ou confiance. Même formule, seuils différents.",
+    scoreGuideTitle: "Lis le score avant les étoiles",
+    scoreGuideBody:
+      "Le global combine fraîcheur, adoption, fiabilité et risque d'abandon dans un verdict de 0 à 1. C'est un signal de dépendance, pas un classement de popularité.",
+    scoreGuideAction: "Comment lire UseStakly",
+    corpusTitle: "Corpus initial",
+    corpusBody:
+      "Le MVP démarre avec une sélection crédible de repos OSS publics : références actives, contre-exemples dépréciés et tooling que les agents recommandent souvent. Ajoute n'importe quel repo GitHub pour le scorer à la demande.",
     queryLabel: "Requête",
     queryPlaceholder: "ex. date picker, orm, htmx, zustand",
     modeLabel: "Mode",
@@ -164,6 +172,15 @@ export const fr: Dict = {
     adoptionHint: "Nombre de résolutions log-normalisé (sature à 1k).",
     reliabilityHint: "Succès / total builds. Neutre 0.5 avant 5 échantillons.",
     abandonmentHint: "Inverse fraîcheur plus bump de regret au-dessus du seuil.",
+    scoreGuideTitle: "Comment lire ce score",
+    scoreGuideBody:
+      "Utilise le verdict global comme premier tri, puis regarde les dimensions. Un bon repo peut quand même demander de la veille si la fraîcheur baisse ou si l'abandon grimpe.",
+    scoreGuideAction: "Lire le guide complet",
+    scoreGuideItems: [
+      "Fraîcheur et fiabilité sont les premiers contrôles de risque avant d'adopter une dépendance.",
+      "L'adoption est plafonnée pour qu'un gros projet ne gagne pas seulement parce qu'il est connu.",
+      "L'abandon est un score de risque : plus bas est meilleur, et une valeur haute tire le verdict global vers le bas."
+    ],
     recentSignals: "Signaux récents",
     entrySingle: "entrée",
     entriesPlural: "entrées",
@@ -304,6 +321,74 @@ export const fr: Dict = {
       "Révoque les anciens tokens depuis Compte quand une machine, un client ou un coéquipier n'a plus besoin d'accès.",
       "Les outils write sont limités par token et protégés contre les doublons ou signaux négatifs répétés."
     ]
+  },
+  howToRead: {
+    eyebrow: "Guide de lecture",
+    h1: "Comment lire UseStakly",
+    intro:
+      "UseStakly sert aux décisions de dépendances. Le score aide à comparer des repos GitHub publics par maintenance, confiance d'usage et risque, sans laisser les étoiles décider seules.",
+    scoreLabel: "Score",
+    scoreTitle: "Le global est un verdict de dépendance entre 0 et 1",
+    scoreBody:
+      "Un score proche de 1 indique qu'un repo semble sain à adopter aujourd'hui. Un score proche de 0 indique qu'il faut enquêter ou l'éviter. La valeur garde toujours une version de formule et une date de calcul.",
+    dimensionsLabel: "Dimensions",
+    dimensions: [
+      {
+        name: "Fraîcheur",
+        body:
+          "Regarde l'activité récente du dépôt. Les derniers commits anciens décayent avec le temps, donc un repo célèbre mais silencieux perd en confiance."
+      },
+      {
+        name: "Adoption",
+        body:
+          "Mesure les signaux d'usage et de résolution, puis plafonne l'effet pour que la popularité n'écrase pas la qualité."
+      },
+      {
+        name: "Fiabilité",
+        body:
+          "Suit les usages positifs face aux échecs. Le score reste neutre tant qu'il n'y a pas assez d'échantillons."
+      },
+      {
+        name: "Abandon",
+        body:
+          "Estime le risque. Plus bas est meilleur. Un abandon élevé peut tirer vers le bas un repo pourtant populaire."
+      }
+    ],
+    modesLabel: "Modes",
+    modesTitle: "Même formule, seuils différents",
+    modes: [
+      {
+        name: "Explorer",
+        body: "Affiche tout avec les preuves. Utile pour auditer ou chercher des signaux faibles."
+      },
+      {
+        name: "Auto",
+        body: "Liste courte par défaut. Masque les entrées cassées ou à risque sévère sans trop fermer la découverte."
+      },
+      {
+        name: "Strict",
+        body: "Demande un profil plus propre : aucun flag sévère accepté, meilleure fraîcheur et barre globale plus haute."
+      }
+    ],
+    corpusLabel: "Corpus",
+    corpusTitle: "Le corpus MVP est curé, puis grandit à la demande",
+    corpusBody:
+      "Le seed initial mélange des références actives en JS/TS, Rust, Python et Go avec des exemples dépréciés comme request et des projets en maintenance comme moment. Les démos restent honnêtes : les bons repos scorent bien, les repos dormants doivent s'expliquer.",
+    corpusItems: [
+      "Les repos seed sont des projets GitHub publics ingérés par le même pipeline de scoring.",
+      "Tout repo peut être ajouté depuis Explorer avec owner/repo ou une URL GitHub.",
+      "La veille et les signaux MCP rendent le corpus plus utile au fil du temps."
+    ],
+    workflowLabel: "Workflow",
+    workflowTitle: "Un ordre de lecture pratique",
+    workflowItems: [
+      "Démarre en mode Auto et cherche la catégorie dont tu as besoin.",
+      "Compare le Global, puis ouvre le détail repo pour les dimensions et flags.",
+      "Traite un Abandon haut ou une Fraîcheur basse comme un signal à inspecter avant adoption.",
+      "Ajoute tes vraies dépendances à la veille pour rendre les dérives visibles ensuite."
+    ],
+    ctaDiscover: "Ouvrir Explorer",
+    ctaMcp: "Installer MCP"
   },
   account: {
     eyebrow: "Compte",
