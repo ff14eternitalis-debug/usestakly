@@ -36,6 +36,14 @@ npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN --dry-r
 
 Prints the config without writing a file.
 
+### Test
+
+```bash
+npx usestakly-mcp test
+```
+
+Runs MCP `initialize`, then calls a protected UseStakly tool so the Bearer token is really checked.
+
 ## Supported clients
 
 - `codex`: writes `~/.codex/config.toml`

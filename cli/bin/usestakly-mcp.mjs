@@ -289,29 +289,83 @@ function escapeToml(value) {
 }
 
 async function initializeMcp(endpoint, token) {
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream"
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
-        protocolVersion: "2025-06-18",
-        capabilities: {},
-        clientInfo: { name: "usestakly-mcp-cli", version: "0.1.0" }
-      }
-    })
+  const initResponse = await sendMcpRequest(endpoint, token, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "usestakly-mcp-cli", version: "0.1.1" }
+    }
   });
+  const sessionId = initResponse.headers.get("mcp-session-id");
+  const initBody = await initResponse.text();
+  assertMcpResponseOk(initResponse, initBody, "MCP initialize failed");
 
+  const toolResponse = await sendMcpRequest(
+    endpoint,
+    token,
+    {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: {
+        name: "search_github_repos",
+        arguments: {
+          query: "react",
+          filter: "explore",
+          limit: 1
+        }
+      }
+    },
+    sessionId
+  );
+  const toolBody = await toolResponse.text();
+  assertMcpResponseOk(toolResponse, toolBody, "MCP protected tool call failed");
+}
+
+async function sendMcpRequest(endpoint, token, body, sessionId) {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    Accept: "application/json, text/event-stream"
+  };
+  if (sessionId) headers["mcp-session-id"] = sessionId;
+
+  return fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body)
+  });
+}
+
+function assertMcpResponseOk(response, body, label) {
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`MCP initialize failed: HTTP ${response.status} ${body.slice(0, 200)}`);
+    throw new Error(`${label}: HTTP ${response.status} ${body.slice(0, 200)}`);
   }
+
+  const payload = parseMcpPayload(body);
+  if (payload?.error) {
+    const message =
+      typeof payload.error.message === "string"
+        ? payload.error.message
+        : JSON.stringify(payload.error);
+    throw new Error(`${label}: ${message}`);
+  }
+}
+
+function parseMcpPayload(body) {
+  const trimmed = body.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("data:")) {
+    const dataLine = trimmed
+      .split(/\r?\n/)
+      .find((line) => line.startsWith("data:") && line.slice(5).trim().startsWith("{"));
+    if (!dataLine) return null;
+    return JSON.parse(dataLine.slice(5).trim());
+  }
+  return JSON.parse(trimmed);
 }
 
 function printHelp(command) {
@@ -375,5 +429,5 @@ Run a command with --help for details.
 
 main().catch((error) => {
   console.error(`Error: ${error.message}`);
-  process.exit(1);
+  process.exitCode = 1;
 });

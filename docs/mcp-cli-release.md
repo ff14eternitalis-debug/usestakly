@@ -12,7 +12,7 @@ npx usestakly-mcp install
 - Non-interactive install via `--token-env USESTAKLY_MCP_TOKEN`.
 - `--dry-run` to preview config without writing files.
 - Automatic backups before modifying an existing config file.
-- `test` command that sends MCP `initialize` to `/mcp`.
+- `test` command that sends MCP `initialize`, then calls a protected tool to validate the Bearer token.
 - `doctor` command that checks whether known client config files contain UseStakly.
 - Node built-in tests, no runtime dependencies.
 
