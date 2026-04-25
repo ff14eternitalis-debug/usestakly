@@ -11,6 +11,7 @@ import {
 } from "../lib/api/repos";
 import { formatRelative, scoreTone } from "../lib/format";
 import { addRepoToWatchlist, getWatchlist, removeRepoFromWatchlist } from "../lib/api/watchlist";
+import type { RepoProfile } from "../lib/types";
 import { useT } from "../i18n";
 import { useAuthStore } from "../state/auth-store";
 import { OwnerDisputePanel } from "../features/repos/components/OwnerDisputePanel";
@@ -212,6 +213,8 @@ export function RepoDetailPage() {
         </div>
       </section>
 
+      <ScoreProvenancePanel repo={repo} />
+
       <hr className="hairline" />
 
       <RepoSignalsList
@@ -273,5 +276,123 @@ export function RepoDetailPage() {
         </>
       ) : null}
     </article>
+  );
+}
+
+function ScoreProvenancePanel({ repo }: { repo: RepoProfile }) {
+  const t = useT();
+  const q = repo.quality;
+  const resolveCount = q?.resolveCount ?? 0;
+  const buildSuccessCount = q?.buildSuccessCount ?? 0;
+  const buildFailureCount = q?.buildFailureCount ?? 0;
+  const regretCount = q?.regretCount ?? 0;
+  const usageCount =
+    resolveCount + buildSuccessCount + buildFailureCount + regretCount;
+  const buildCount = buildSuccessCount + buildFailureCount;
+  const volumeLabel =
+    usageCount === 0
+      ? t.repoDetail.signalVolumeEmpty
+      : usageCount < 5 || buildCount < 5
+        ? t.repoDetail.signalVolumePartial
+        : t.repoDetail.signalVolumeReady;
+
+  return (
+    <section className="grid gap-5 rounded-[8px] border border-line bg-surface/45 p-5">
+      <div className="grid gap-2 md:grid-cols-[0.55fr_1.45fr]">
+        <div>
+          <p className="kicker">{t.repoDetail.provenanceTitle}</p>
+          <p className="mt-2 text-[0.88rem] leading-relaxed text-fg-dim">
+            {t.repoDetail.provenanceBody}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ProvenanceCard title={t.repoDetail.githubMetadata}>
+            <ProvenanceRow
+              label={t.repoDetail.freshnessSource}
+              value={t.repoDetail.lastCommitSource}
+            />
+            <ProvenanceRow
+              label={t.repoDetail.lastCommit}
+              value={formatRelative(repo.lastCommitAt)}
+            />
+            <ProvenanceRow
+              label={t.repoDetail.computed}
+              value={formatRelative(q?.computedAt ?? null)}
+            />
+          </ProvenanceCard>
+
+          <ProvenanceCard title={t.repoDetail.usageSignals}>
+            <ProvenanceRow
+              label={t.repoDetail.adoptionSource}
+              value={`${resolveCount} ${t.repoDetail.resolveCount}`}
+            />
+            <ProvenanceRow
+              label={t.repoDetail.reliabilitySource}
+              value={
+                buildCount > 0
+                  ? `${buildSuccessCount}/${buildCount}`
+                  : t.repoDetail.neutralReliability
+              }
+            />
+            <ProvenanceRow
+              label={t.repoDetail.regretCount}
+              value={String(regretCount)}
+            />
+          </ProvenanceCard>
+        </div>
+      </div>
+
+      <div className="grid gap-3 border-t border-line pt-4 sm:grid-cols-4">
+        <SignalCount label={t.repoDetail.resolveCount} value={resolveCount} />
+        <SignalCount
+          label={t.repoDetail.buildSuccessCount}
+          value={buildSuccessCount}
+        />
+        <SignalCount
+          label={t.repoDetail.buildFailureCount}
+          value={buildFailureCount}
+        />
+        <SignalCount label={t.repoDetail.regretCount} value={regretCount} />
+      </div>
+
+      <p className="text-[0.88rem] leading-relaxed text-fg-dim">
+        {volumeLabel}
+      </p>
+    </section>
+  );
+}
+
+function ProvenanceCard({
+  title,
+  children
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[8px] border border-line bg-bg-subtle p-4">
+      <p className="mono text-[0.76rem] uppercase text-accent">{title}</p>
+      <div className="mt-3 grid gap-2">{children}</div>
+    </div>
+  );
+}
+
+function ProvenanceRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="kicker">{label}</span>
+      <span className="text-right text-[0.84rem] text-fg">{value}</span>
+    </div>
+  );
+}
+
+function SignalCount({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[8px] border border-line bg-bg-subtle px-4 py-3">
+      <p className="data-value text-[1.35rem] leading-none text-fg">{value}</p>
+      <p className="mt-2 mono text-[0.68rem] uppercase tracking-[0.08em] text-fg-muted">
+        {label}
+      </p>
+    </div>
   );
 }

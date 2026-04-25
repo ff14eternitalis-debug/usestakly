@@ -181,6 +181,26 @@ export const fr: Dict = {
       "L'adoption est plafonnée pour qu'un gros projet ne gagne pas seulement parce qu'il est connu.",
       "L'abandon est un score de risque : plus bas est meilleur, et une valeur haute tire le verdict global vers le bas."
     ],
+    provenanceTitle: "Provenance du score",
+    provenanceBody:
+      "Les métadonnées GitHub sont réelles au moment de l'ingestion. Les counts d'usage viennent des signaux UseStakly, surtout des événements MCP log_usage, et restent faibles tant que des agents ou users ne remontent pas d'outcomes réels.",
+    githubMetadata: "Métadonnées GitHub",
+    usageSignals: "Signaux d'usage",
+    freshnessSource: "Source fraîcheur",
+    lastCommitSource: "Dernier push GitHub",
+    adoptionSource: "Source adoption",
+    reliabilitySource: "Source fiabilité",
+    neutralReliability: "neutre avant 5 échantillons build",
+    resolveCount: "resolve",
+    buildSuccessCount: "build success",
+    buildFailureCount: "build failure",
+    regretCount: "regret",
+    signalVolumeEmpty:
+      "Aucun signal d'usage pour l'instant. L'adoption reste vide et la fiabilité garde sa valeur neutre.",
+    signalVolumePartial:
+      "Le volume de signaux est encore fin. Lis le score comme une direction tant que plus d'outcomes MCP n'arrivent pas.",
+    signalVolumeReady:
+      "Le volume de signaux est présent. Fiabilité et adoption reposent maintenant sur des outcomes enregistrés.",
     recentSignals: "Signaux récents",
     entrySingle: "entrée",
     entriesPlural: "entrées",

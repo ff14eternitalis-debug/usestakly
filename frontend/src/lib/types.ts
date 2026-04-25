@@ -14,6 +14,10 @@ export type QualityContext = {
   reliability: number | null;
   abandonment: number | null;
   overall: number | null;
+  resolveCount: number;
+  buildSuccessCount: number;
+  buildFailureCount: number;
+  regretCount: number;
   flags: string[];
   formulaVersion: string | null;
   computedAt: string | null;

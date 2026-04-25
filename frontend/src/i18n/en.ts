@@ -179,6 +179,26 @@ export const en = {
       "Adoption is capped so large projects do not win only because they are famous.",
       "Abandonment is a risk score: lower is better, and high values pull the overall verdict down."
     ],
+    provenanceTitle: "Score provenance",
+    provenanceBody:
+      "GitHub metadata is live at ingestion time. Usage counts come from UseStakly signals, mostly MCP log_usage events, and stay low until agents or users report real outcomes.",
+    githubMetadata: "GitHub metadata",
+    usageSignals: "Usage signals",
+    freshnessSource: "Freshness source",
+    lastCommitSource: "Last GitHub push",
+    adoptionSource: "Adoption source",
+    reliabilitySource: "Reliability source",
+    neutralReliability: "neutral until 5 build samples",
+    resolveCount: "resolve",
+    buildSuccessCount: "build success",
+    buildFailureCount: "build failure",
+    regretCount: "regret",
+    signalVolumeEmpty:
+      "No usage signals yet. Adoption is still empty and reliability stays at its neutral default.",
+    signalVolumePartial:
+      "Usage signal volume is still thin. Treat the score as directional until more MCP outcomes arrive.",
+    signalVolumeReady:
+      "Usage signal volume is present. Reliability and adoption are now backed by recorded outcomes.",
     recentSignals: "Recent signals",
     entrySingle: "entry",
     entriesPlural: "entries",

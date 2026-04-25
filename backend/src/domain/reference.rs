@@ -52,6 +52,10 @@ pub struct QualityContext {
     pub reliability: Option<f64>,
     pub abandonment: Option<f64>,
     pub overall: Option<f64>,
+    pub resolve_count: i32,
+    pub build_success_count: i32,
+    pub build_failure_count: i32,
+    pub regret_count: i32,
     pub flags: Vec<String>,
     pub computed_at: DateTime<Utc>,
 }

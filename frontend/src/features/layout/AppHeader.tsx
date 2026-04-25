@@ -33,14 +33,11 @@ export function AppHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-7">
-          <Link to="/discover" className="nav-link">
-            {t.nav.discover}
-          </Link>
           <Link to="/how-to-read" className="nav-link">
             {t.nav.howToRead}
           </Link>
-          <Link to="/mcp-guide" className="nav-link">
-            {t.nav.mcpGuide}
+          <Link to="/discover" className="nav-link">
+            {t.nav.discover}
           </Link>
           {isAuthed ? (
             <>
@@ -60,6 +57,9 @@ export function AppHeader() {
               </Link>
             </>
           ) : null}
+          <Link to="/mcp-guide" className="nav-link">
+            {t.nav.mcpGuide}
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4 sm:gap-5">
@@ -98,14 +98,11 @@ export function AppHeader() {
       {/* Mobile nav */}
       <nav className="md:hidden border-t border-line">
         <div className="shell flex items-center gap-5 overflow-x-auto py-2.5">
-          <Link to="/discover" className="nav-link">
-            {t.nav.discover}
-          </Link>
           <Link to="/how-to-read" className="nav-link">
             {t.nav.howToRead}
           </Link>
-          <Link to="/mcp-guide" className="nav-link">
-            {t.nav.mcpGuide}
+          <Link to="/discover" className="nav-link">
+            {t.nav.discover}
           </Link>
           {isAuthed ? (
             <>
@@ -125,6 +122,9 @@ export function AppHeader() {
               </Link>
             </>
           ) : null}
+          <Link to="/mcp-guide" className="nav-link">
+            {t.nav.mcpGuide}
+          </Link>
         </div>
       </nav>
     </header>
