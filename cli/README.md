@@ -46,7 +46,7 @@ Runs MCP `initialize`, then calls a protected UseStakly tool so the Bearer token
 
 ## Supported clients
 
-- `codex`: writes `~/.codex/config.toml`
+- `codex`: writes `~/.codex/config.toml` with `http_headers`
 - `cursor`: writes `~/.cursor/mcp.json`
 - `claude`: writes Claude Desktop's `claude_desktop_config.json`
 - `generic`: prints a JSON config without writing a file

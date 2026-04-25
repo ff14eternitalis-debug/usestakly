@@ -9,6 +9,7 @@ npx usestakly-mcp install
 ## What is ready
 
 - Interactive install for Codex, Cursor, Claude Desktop, and generic JSON output.
+- Codex TOML uses `http_headers` for Streamable HTTP authentication.
 - Non-interactive install via `--token-env USESTAKLY_MCP_TOKEN`.
 - `--dry-run` to preview config without writing files.
 - Automatic backups before modifying an existing config file.

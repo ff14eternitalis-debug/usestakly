@@ -65,6 +65,7 @@ test("codex install writes config and removes previous usestakly section", () =>
   assert.match(written, /model = "gpt-5"/);
   assert.match(written, /\[other\]/);
   assert.match(written, /\[mcp_servers\.usestakly\]/);
+  assert.match(written, /\[mcp_servers\.usestakly\.http_headers\]/);
   assert.match(written, /url = "https:\/\/example\.com\/mcp"/);
   assert.doesNotMatch(written, /type = "old"/);
   assert.equal(fs.readdirSync(home).some((file) => file.includes(".bak-")), true);

@@ -260,7 +260,7 @@ function writeCodexConfig(filePath, endpoint, token) {
     'type = "streamable-http"',
     `url = "${escapeToml(endpoint)}"`,
     "",
-    "[mcp_servers.usestakly.headers]",
+    "[mcp_servers.usestakly.http_headers]",
     `Authorization = "Bearer ${escapeToml(token)}"`
   ].join("\n");
   const next = withoutUseStakly ? `${withoutUseStakly}\n\n${block}\n` : `${block}\n`;
