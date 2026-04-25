@@ -16,9 +16,12 @@ export function HowToReadPage() {
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
             to="/discover"
-            className="inline-flex items-center rounded-[6px] border border-accent bg-[color:var(--color-accent-glow)] px-4 py-2 text-[0.88rem] font-medium text-accent transition-colors hover:bg-accent hover:text-[color:var(--color-accent-ink)]"
+            className="group inline-flex items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-5 py-3 text-[0.96rem] font-medium tracking-tight text-fg shadow-[0_0_0_1px_var(--color-line-strong)] transition-all duration-150 hover:border-accent hover:bg-surface hover:text-accent"
           >
             {t.howToRead.ctaDiscover}
+            <span className="arrow transition-transform duration-150 group-hover:translate-x-0.5">
+              →
+            </span>
           </Link>
           <Link
             to="/mcp-guide"

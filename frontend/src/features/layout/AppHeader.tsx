@@ -58,36 +58,36 @@ export function AppHeader() {
                   </span>
                 ) : null}
               </Link>
-              <Link to="/account" className="nav-link">
-                {t.nav.account}
-              </Link>
             </>
           ) : null}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <LocaleSwitch />
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="border-r border-line pr-4 sm:pr-5">
+            <LocaleSwitch />
+          </div>
           {isAuthed ? (
-            <>
-              <span
-                className="hidden sm:inline mono text-[0.78rem] text-fg-muted"
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link
+                to="/account"
+                className="hidden rounded-[6px] border border-transparent px-2.5 py-1.5 text-[0.82rem] font-medium text-fg-dim transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)] hover:text-accent sm:inline-flex"
                 title={user?.email ?? undefined}
               >
                 @{user?.username ?? "anon"}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="mono rounded-[5px] border border-transparent px-2.5 py-1 text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)]"
+                className="mono rounded-[5px] border border-transparent px-2.5 py-1.5 text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)]"
               >
                 {t.nav.signOut}
               </button>
-            </>
+            </div>
           ) : (
             <Link
               to="/login"
               search={loginSearch()}
-              className="inline-flex items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3.5 py-1.5 text-[0.84rem] font-medium text-fg hover:border-accent hover:text-accent transition-colors"
+              className="inline-flex items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-4 py-2 text-[0.86rem] font-medium text-fg transition-colors hover:border-accent hover:text-accent"
             >
               {t.header.signIn}
             </Link>
@@ -122,9 +122,6 @@ export function AppHeader() {
                     {unread > 99 ? "99+" : unread}
                   </span>
                 ) : null}
-              </Link>
-              <Link to="/account" className="nav-link">
-                {t.nav.account}
               </Link>
             </>
           ) : null}
