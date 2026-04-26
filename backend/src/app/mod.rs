@@ -2,7 +2,11 @@ pub mod error;
 
 use axum::{
     Router,
-    http::{HeaderValue, Method},
+    body::Body,
+    extract::State,
+    http::{HeaderValue, Method, Request, StatusCode, header},
+    middleware::{self, Next},
+    response::{IntoResponse, Response},
     routing::{get, post},
 };
 use sqlx::PgPool;
@@ -14,6 +18,7 @@ use crate::{
         account, admin, agent_tokens, auth, health, me, notifications, repos, search, watchlist,
     },
     mcp::server as mcp_server,
+    services::agent_tokens as agent_token_service,
 };
 
 #[derive(Clone)]
@@ -29,9 +34,15 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .unwrap_or_else(|_| HeaderValue::from_static("http://localhost:5173"));
     let state = AppState { config, db };
     let mcp_service = mcp_server::build_service(state.clone());
+    let mcp_routes = Router::new()
+        .route_service("/mcp", mcp_service)
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            require_mcp_authorization,
+        ));
 
     Router::new()
-        .route_service("/mcp", mcp_service)
+        .merge(mcp_routes)
         .route("/health", get(health::health))
         .route("/api/status/public", get(health::public_status))
         .route("/api/auth/github/start", get(auth::github_start))
@@ -126,4 +137,28 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
+}
+
+async fn require_mcp_authorization(
+    State(state): State<AppState>,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    let Some(raw) = request.headers().get(header::AUTHORIZATION) else {
+        return (StatusCode::UNAUTHORIZED, "missing Authorization header").into_response();
+    };
+    let Ok(raw) = raw.to_str() else {
+        return (StatusCode::UNAUTHORIZED, "malformed Authorization header").into_response();
+    };
+    let Some(token) = raw
+        .strip_prefix("Bearer ")
+        .or_else(|| raw.strip_prefix("bearer "))
+    else {
+        return (StatusCode::UNAUTHORIZED, "expected 'Bearer <token>'").into_response();
+    };
+
+    match agent_token_service::verify(&state.db, token.trim()).await {
+        Ok(_) => next.run(request).await,
+        Err(_) => (StatusCode::UNAUTHORIZED, "invalid or revoked token").into_response(),
+    }
 }
