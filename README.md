@@ -163,13 +163,15 @@ Already implemented:
 - repo owners can dispute signals
 - MCP host validation is configured for the public backend host
 - database is private on Coolify, not publicly exposed
+- Authorization Bearer is required for all `/mcp` requests, including `initialize` and `tools/list` (HTTP entrypoint middleware, see [docs/mcp-endpoint-security.md](./docs/mcp-endpoint-security.md))
 
 Known operations gaps before a wider launch:
 
 - configure scheduled Coolify database backups
-- add application-level rate limiting for all `/mcp` calls, including reads and `initialize`
-- require Authorization for all `/mcp` requests, including `initialize` and `tools/list`
+- add application-level rate limiting for all `/mcp` calls, including reads, `initialize`, and `tools/list` (writes already have per-token quota and cooldown)
 - add external uptime alerting for `/health`, `/api/status/public`, and a controlled MCP check
+- ship a formal legal page (`/legal` or `/terms`)
+- pick a stable public domain and an official contact email
 
 See [docs/ops-mcp-coolify-hardening.md](./docs/ops-mcp-coolify-hardening.md).
 

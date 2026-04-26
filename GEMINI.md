@@ -1,81 +1,123 @@
-# Projet K — Komorebi: GEMINI.md Contextual Instructions
+# GEMINI.md
 
-> **Bibliothèque universelle de snippets de code, pilotée par une IA contrainte de réutiliser tes propres briques.**
+This file provides guidance to Gemini CLI when working with code in this repository. Reflète l'état au 2026-04-26.
 
-Ce fichier définit les règles, conventions et le contexte du projet pour les interactions avec Gemini CLI.
+> Ce fichier est miroir de `CLAUDE.md` et `AGENTS.md`. Tout ce qui est durable côté projet doit y rester aligné.
 
----
+## Produit
 
-## 🎯 Vue d'ensemble du projet
+- Nom produit : **UseStakly**. Nom de travail historique : **Project-K** (Komorebi). Pas de renommage spontané — voir `docs/plans/rename-to-usestakly.md`.
+- Objectif : **veille GitHub OSS**. UseStakly score des repos GitHub publics pour aider devs et agents IA à choisir leurs dépendances autrement que par les stars.
+- État : **public beta exposable** (TODO v5.5). Pas d'ouverture publique large tant que les ops MCP (backup DB, rate-limit globale, alerte externe) et le légal ne sont pas finis.
+- Trois piliers : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents** (5 tools, CLI npm `usestakly-mcp`).
+- L'ancien produit **bibliothèque de snippets est abandonné** (pivot 2026-04-21). Schéma SQL legacy reste en base, ne pas réintroduire de surfaces produit snippets.
 
-Le **Projet K (Komorebi)** est un "GitHub personnel intelligent". Il permet de stocker des snippets de code multi-langages et multi-domaines. Un serveur MCP expose ces snippets à l'IA, et un système de **RULES** force l'IA à assembler ces briques existantes au lieu d'en inventer de nouvelles.
+## Layout monorepo
 
-### Architecture & Domaines
-Le projet utilise une classification à deux axes (voir `docs/architecture.md`) :
-1.  **Axe 1 — Domaine :** `frontend`, `backend`, `devops`, `data`, `shared`.
-2.  **Axe 2 — Type (Kind) :** Adaptatif selon le domaine (ex: `atom` pour frontend, `handler` pour backend).
+- `backend/` — API Rust (Axum 0.8 + SQLx 0.8 + rmcp 1.5). Migrations dans `backend/migrations/` exécutées au boot. Binaire `seed_github`.
+- `frontend/` — React 19 + Vite 7 + Tailwind v4 + TypeScript. **TanStack Router** + TanStack Query + Zustand. E2E Playwright.
+- `cli/` — package npm `usestakly-mcp` publié (Node ≥18). Point d'installation MCP pour agents externes.
+- `docs/` — commencer par `docs/README.md`, `TODO.md`, `docs/strategy-pivot-2026-04-21.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`. Archives sous `docs/archive/`.
+- `deploy/coolify/` — déploiement (`docs/deployment-coolify.md`, `docs/ops-mcp-coolify-hardening.md`).
+- `scripts/seed-public-corpus.ps1` — seed corpus public.
+- `docker-compose.yml` — uniquement Postgres local (`pgvector/pgvector:pg17`, DB `project_k`, `:5432`).
 
-### Stack Technique
--   **Backend :** Rust (Axum, sqlx, PostgreSQL + pgvector).
--   **Frontend :** React 19 (Tailwind v4, TypeScript, Vite, TanStack Router).
--   **Détection :** tree-sitter + fastembed (100% local).
--   **Infrastructure :** Docker + Coolify sur VPS auto-hébergé (frontend + backend + Postgres sur la même plateforme, aucun SaaS externe).
+## Commandes
 
----
+Avant tout : copier `.env.example` → `.env` et lancer la base.
 
-## 📁 Structure du Projet (Monorepo prévu)
+```bash
+docker compose up -d              # Postgres + pgvector
+```
 
-Le projet est actuellement en phase de démarrage (Phase 1). L'arborescence cible est la suivante :
--   `backend-core/` : Serveur API Rust & MCP.
--   `frontend-studio/` : Interface React.
--   `shared/` : Types et schémas partagés.
--   `docs/` : Documentation complète (Source de vérité pour l'architecture).
--   `deploy/` : Scripts et configurations de déploiement.
+### Backend (`cd backend`)
 
----
+- `cargo run` — démarre l'API sur `127.0.0.1:4000`.
+- `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo check`.
+- Feature `semantic-search` (default OFF) pour `fastembed` + pgvector.
 
-## 🛠️ Commandes & Développement
+### Frontend (`cd frontend`)
 
-*Note : Ces commandes sont prévues pour la Phase 1.*
+- `npm install` puis `npm run dev` — Vite sur `:5173`.
+- `npm run build` (CI), `npm run test:e2e` (Playwright avec mocks API).
 
--   **Backend :** `cd backend && cargo run`
--   **Frontend :** `cd frontend && npm run dev`
--   **Base de données :** `docker compose up -d` (PostgreSQL + pgvector)
+### CLI MCP (`cd cli`)
 
----
+- `npm test` — `node --test`.
 
-## 📜 Conventions & Règles de Codage
+## Architecture
 
-### Nomenclature des Snippets
-Tout snippet doit suivre le format : `{domain}-{kind}-{category}-{name}-{variant?}`.
-*Exemple : `backend-handler-auth-login-jwt`*
+### Backend
 
-### Principes d'Architecture
--   **Interdiction d'inventer :** L'IA doit toujours chercher des snippets existants via `search_library` avant de proposer du code.
--   **Provenance :** Chaque composant généré doit inclure un commentaire de provenance (ex: `// Assemblé depuis: domain-kind-name@version`).
--   **Séparation des responsabilités (Backend) :** `handler` (I/O) → `service` (logique) → `query` (DB).
--   **Atomic Design (Frontend) :** Strictement appliqué (`atom` → `molecule` → `organism`).
+`main.rs` → `config::AppConfig::from_env()` → `db::connect()` → `app::build_app()` → `axum::serve`.
 
-### Qualité & Sécurité
--   **Zéro Coût Variable :** Privilégier les solutions locales (tree-sitter, fastembed) pour la détection.
--   **Validation Humaine :** Les suggestions de l'IA sont des propositions que l'utilisateur doit valider.
+Couches :
 
----
+- `app/` — Router + AppState, CORS strict, **middleware MCP qui rejette tout `/mcp` sans Bearer dès `initialize`/`tools/list`**.
+- `auth/` — OAuth GitHub + Discord, session JWT cookie `usestakly_session`, `state` OAuth signé avec `return_to` sanitizé.
+- `handlers/` — I/O HTTP : `health`, `auth`, `me`, `account`, `admin`, `agent_tokens`, `search`, `repos` (split en `repos_query`/`repos_ingestion`/`repo_signals`/`repo_viewer`), `watchlist`, `notifications`.
+- `services/` — `ingestion/github`, `repos`, `watchlist`, `notifications`, `scheduler`, `semantic_search` (feature-gated), `agent_tokens`, sous-domaines `quality/` (`formula`, `compute`, `flags`, `weighting`, `pipeline`, `capture`) et `trust/` (`reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events`, `mcp_metrics`).
+- `domain/` — types métier actifs.
+- `mcp/` — Streamable HTTP server, 5 tools MCP, auth Bearer `usk_<64 hex>` SHA-256.
 
-## 🚦 État Actuel & Priorités (TODO)
+Séparation stricte : `handler` (I/O) → `service` (logique) → `query` (DB).
 
-Se référer au fichier `TODO.md` pour le suivi des tâches.
-**Priorité actuelle : Phase 1 — Fondations**
--   Initialisation du monorepo.
--   Mise en place du serveur Rust minimal.
--   Mise en place du frontend React + Tailwind v4.
--   Configuration de la base de données vectorielle.
+### Frontend
 
----
+- `frontend/src/main.tsx` → `AppProviders` → `AppShell`.
+- Routes actives : `/`, `/discover`, `/repos/$id`, `/watchlist`, `/notifications`, `/account`, `/login`, `/status`, `/privacy`, `/how-to-read`, `/mcp-guide`.
+- Garde auth sur routes privées avec `returnTo` signé.
+- Features dans `src/features/{auth,layout,repos,account}/`. `repo-detail` et `account` éclatés en sous-composants.
+- API métier dans `src/lib/api/{account,admin,repos,watchlist}.ts`.
 
-## 📖 Documentation de Référence
+### MCP tools
 
--   `docs/architecture.md` : Modèle de données et nomenclature (CRITIQUE).
--   `docs/vision.md` : Objectifs et proposition de valeur.
--   `docs/tech-stack.md` : Détails des technologies utilisées.
--   `docs/plans/` : Plans d'exécution détaillés par phase.
+| Tool | Type |
+|---|---|
+| `search_github_repos` | read |
+| `recommend_github_repos` | read |
+| `get_repo_quality_context` | read |
+| `log_usage` | write (retourne le score recalculé) |
+| `watch_repo` | write |
+
+Garde-fous write configurés via env (`APP_MCP_*`, `APP_ACTIVE_SIGNAL_*`).
+
+## Conventions
+
+### Scope produit
+
+- Produit vivant : **discovery repos GitHub publics scorés**, **profil repo**, **watchlist**, **notifications in-app**, **MCP read + write + recommend**.
+- Tables legacy snippets/libraries en base mais sans surface produit.
+- `TODO.md` v5.5 = source de vérité d'exécution.
+
+### Principes
+
+- **Score qualité** + **flags toxiques** = cœur produit, pas les stars.
+- Flags publics par **consensus × réputation**, `security_issue` modéré.
+- MCP préserve la **provenance** (`source`, `formula_version`, `scored_at`).
+- Write tools MCP **sous garde** (quota, cooldown, fenêtre, réputation, refus loggés).
+
+## CI
+
+`.github/workflows/ci.yml` :
+
+- backend : `cargo fmt --check` + `cargo clippy --all-targets -- -D warnings` + `cargo test`.
+- frontend : `npm install` + `npm run build` (Node 22) + Playwright + upload artifact.
+
+Aucun Postgres provisionné en CI — tests DB-bound mockés ou feature-gated.
+
+## Gotchas
+
+- `sqlx::migrate!` au compile-time → toute nouvelle migration recompile le backend.
+- `APP_SESSION_SECRET` requis pour les cookies session ; sans lui, fallback dev user.
+- CORS strict sur `FRONTEND_BASE_URL` avec `allow_credentials(true)`.
+- `docker-compose.yml` ne démarre que Postgres.
+- **Scheduler** opt-in via `APP_SCHEDULER_ENABLED=true`, cadence `APP_RECOMPUTE_INTERVAL_SECS` (default 86400).
+- **MCP `/mcp`** : Authorization Bearer obligatoire dès `initialize`/`tools/list` (middleware pré-transport, `docs/mcp-endpoint-security.md`). Tokens `usk_<64 hex>` SHA-256.
+- **Rate-limit MCP** par token sur writes via `agent_token_events` (migration 0014). Pas encore de rate-limit globale multi-token/IP.
+- **Modération** : migrations 0015/0016. Réputation v2 runtime livrée. Formula_v2 + Sybil OAuth à venir.
+- **Scoring v1.1** : pondération `outcome × reporter × dedup` dans `services/quality/weighting.rs`. Endpoint admin `GET /api/admin/scoring/explain/{repo_id}`.
+- **Semantic search** feature OFF par défaut, OFF en prod (`APP_SEMANTIC_SEARCH_ENABLED=false`).
+- **Archived GitHub ≠ abandon** dans `formula_v2`.
+- **`/api/status/public`** exposé sans auth.
+- **Docker prod** : `fastembed` feature-gated, Rust 1.91, pgvector via `ensure_optional_extensions`.

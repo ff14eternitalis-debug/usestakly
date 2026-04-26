@@ -1,146 +1,119 @@
-# UseStakly — Stack Technique
+# UseStakly — Stack technique
 
-> Version : 1.0 — 2026-04-15
+> Version : 2.0 — 2026-04-26
+> Vue à jour de la stack réellement déployée en public beta. Pour les détails de structure, voir `architecture-backend-current.md`.
 
-## 🎯 Résumé
+## Vue d'ensemble
 
-| Couche | Choix | Raison principale |
+| Couche | Choix | Pourquoi |
 |---|---|---|
-| Backend core | **Rust** + Axum + Tokio | Performance MCP + sécurité mémoire |
-| Base de données | **PostgreSQL** + pgvector | SQL standard + recherche sémantique |
-| Recherche vectorielle | **pgvector** + `fastembed` (local) | Zéro clé API, zéro coût variable |
-| Frontend | **React 19** + **Tailwind CSS v4** + TypeScript | Écosystème UI + typage strict |
-| Build frontend | **Vite** | Rapidité, standard moderne |
-| State | **Zustand** | Minimaliste, pas de boilerplate Redux |
-| Code editor | **Monaco** ou **Sandpack** | Sandpack pour preview live |
-| Monorepo | **pnpm workspaces** + **Cargo workspaces** | Gestion multi-langages |
-| Containerisation | **Docker** + **docker-compose** | Dev local reproductible |
-| CI/CD | **GitHub Actions** | Gratuit, standard |
-| Auth | **OAuth direct GitHub + Discord** (MVP) | Auth maison minimale, aucune dépendance à un provider externe (app hébergée sur VPS) |
+| Backend core | **Rust 2024**, Axum 0.8, Tokio | Performance MCP + sécurité mémoire + binaire statique |
+| ORM / DB | **SQLx 0.8** + PostgreSQL 16 | SQL standard, migrations compile-time, pgvector dispo |
+| Vecteurs (optionnel) | **pgvector** + `fastembed` 5 (local) | Zéro clé API, zéro coût variable, OFF par défaut |
+| MCP | **rmcp 1.5** Streamable HTTP | Standard MCP, transport HTTP simple à proxy via Coolify |
+| Frontend | **React 19** + Vite 7 + TypeScript 5.9 + Tailwind v4 | Stack moderne, SPA suffit |
+| Routing | **TanStack Router** + TanStack Query | Type-safe, intégration React Query naturelle |
+| State | **Zustand 5** | Minimal, pas de boilerplate Redux |
+| CLI MCP | Node ≥18, `node:test` | Léger, distribué via npm registry |
+| E2E | **Playwright** | Mocks API → filet anti-régression UI, pas validation backend |
+| CI | **GitHub Actions** | Standard, gratuit |
+| Auth | **OAuth GitHub + Discord direct** | Pas de provider externe, app auto-hébergée |
+| Hébergement | **Coolify sur VPS** | Auto-hébergement, frontend + backend + Postgres sur la même plateforme |
 
-## 🦀 Backend — Rust
+## Backend — Rust
 
-### Pourquoi Rust ?
-- Le serveur MCP analyse potentiellement des milliers de snippets → **latence minimale**
-- Manipulation de code source sensible → **sécurité mémoire** native
-- `tree-sitter`, `fastembed`, `sqlx` : écosystème complet pour notre usage
-- Compilation statique → déploiement simple (un binaire)
+### Dépendances clés (`backend/Cargo.toml`)
 
-### Dépendances clés
 ```toml
-[dependencies]
-tokio = { version = "1", features = ["full"] }
-axum = "0.7"
+axum = "0.8"
 sqlx = { version = "0.8", features = ["postgres", "uuid", "chrono", "runtime-tokio-rustls"] }
+rmcp = { version = "1.5", features = ["server", "transport-streamable-http-server", "macros"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+octocrab = "0.49.7"          # GitHub API (utilisé en complément de reqwest)
+fastembed = { version = "5", optional = true }   # feature `semantic-search`
+sha2 = "0.10"                # hash MCP tokens
+jsonwebtoken = "9"           # session JWT cookie
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-uuid = { version = "1", features = ["v4", "serde"] }
-tree-sitter = "0.22"
-fastembed = "4"
-argon2 = "0.5"
-jsonwebtoken = "9"
-tracing = "0.1"
-anyhow = "1"
-thiserror = "1"
+toml = "0.8"                 # scoring/formula_v1.toml
 ```
 
-## 🎨 Frontend — React + Tailwind
+### Features
 
-### Pourquoi React + Tailwind ?
-- **Tailwind v4** : utility-first, zéro CSS custom à maintenir, parfait pour enforcer les RULES
-- **React 19** : Server Components, Actions, écosystème le plus large
-- **TypeScript strict** : les types partagés (`shared-type-*`) sont la source de vérité
+- `default = []`
+- `semantic-search = ["dep:fastembed"]` — active embeddings + ranking hybride. **OFF par défaut**, OFF en prod (`APP_SEMANTIC_SEARCH_ENABLED=false`).
 
-### Dépendances clés
+### Builder Docker
+
+- Rust 1.91 (image officielle)
+- Dockerfile copie `scoring/` (TOML formula chargé au runtime)
+
+## Frontend — React + Tailwind
+
+### Dépendances clés (`frontend/package.json`)
+
 ```json
 {
-  "dependencies": {
-    "react": "^19",
-    "react-dom": "^19",
-    "zustand": "^5",
-    "@tanstack/react-query": "^5",
-    "@tanstack/react-router": "^1",
-    "@codesandbox/sandpack-react": "^2",
-    "@monaco-editor/react": "^4",
-    "lucide-react": "^0"
-  },
-  "devDependencies": {
-    "vite": "^6",
-    "typescript": "^5.6",
-    "tailwindcss": "^4",
-    "@vitejs/plugin-react": "^4",
-    "vitest": "^2"
-  }
+  "react": "^19.2.0",
+  "@tanstack/react-router": "^1.133",
+  "@tanstack/react-query": "^5.90",
+  "zustand": "^5.0",
+  "tailwindcss": "^4.1",
+  "vite": "^7.1",
+  "typescript": "^5.9",
+  "@playwright/test": "^1.59"
 }
 ```
 
-## 🗄️ Base de données — PostgreSQL + pgvector
+### Build
 
-- Standard, portable, hébergeable partout (local, self-host sur VPS via Coolify)
-- `pgvector` : recherche sémantique dans la même DB que le reste — pas de vector DB séparée à maintenir
-- `JSONB` pour les règles et métadonnées évolutives
-- Migrations via `sqlx migrate`
+- `tsc -b && vite build` — type-check inclus, vérifié par la CI.
+- E2E : `npm run test:e2e` (Playwright + mocks API). CI installe Chromium, upload `playwright-report/`.
 
-## 🏗️ Structure monorepo
+## CLI MCP (`cli/`)
 
-```
-PROJET_K/
-├── backend-core/            # Rust
-│   ├── src/
-│   │   ├── mcp_server/
-│   │   ├── parser/
-│   │   ├── storage/
-│   │   └── main.rs
-│   ├── migrations/          # sqlx
-│   ├── Cargo.toml
-│   └── Dockerfile
-├── frontend-studio/         # React + Tailwind
-│   ├── src/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   └── App.tsx
-│   ├── package.json
-│   └── vite.config.ts
-├── shared/
-│   ├── types/               # TS + Rust via Serde
-│   ├── rules/               # JSON
-│   └── prompts/             # Prompts MCP versionnés
-├── deploy/
-│   ├── docker-compose.yml
-│   └── github-actions/
-├── docs/
-├── TODO.md
-└── README.md
-```
+- Package npm public `usestakly-mcp` (v0.1.3 au 2026-04-26)
+- Node ≥18, `type: "module"`, ESM
+- Tests : `node --test`
+- Install agent : `npx usestakly-mcp install` configure Codex / Cursor avec Bearer + endpoint configurable
 
-## 🔑 Authentification & secrets
+## Base de données
 
-- **OAuth direct GitHub + Discord** côté backend Rust (pas de provider externe type Supabase / Auth0)
-- Session stockée dans un cookie JWT signé (`APP_SESSION_SECRET`) — validation maison
-- Pourquoi pas Supabase Auth : l'app est auto-hébergée sur VPS via Coolify ; ajouter un SaaS d'auth externe n'a pas de valeur et complique le déploiement
-- Secrets en variables d'environnement via `.env` (jamais commité) + `dotenvy` en dev
-- Production : secrets injectés par le runtime Coolify
+- PostgreSQL 16 + pgvector
+- Image dev : `pgvector/pgvector:pg17`
+- Migrations via `sqlx::migrate!` (compile-time, exécutées au boot)
+- 17 migrations (1–9 legacy snippets dormantes, 10–17 actives produit GitHub)
+- Extension `vector` créée via `ensure_optional_extensions` si présente dans `pg_available_extensions`
 
-## 🚀 Hébergement cible (MVP)
+## Auth & secrets
 
-| Composant | Hébergeur suggéré | Coût estimé |
-|---|---|---|
-| Backend Rust | Coolify | dépend du serveur |
-| PostgreSQL | Coolify PostgreSQL managé | dépend du serveur |
-| Frontend | Coolify | dépend du serveur |
-| DNS + CDN | Cloudflare | 0 $ |
+- OAuth GitHub + Discord côté backend, session JWT signée via `APP_SESSION_SECRET` dans le cookie `usestakly_session`
+- `state` OAuth signé, porte un `return_to` sanitizé contre les open redirects
+- Pas de Supabase Auth ni d'autre provider externe
+- Secrets injectés en env (jamais commités, `.env` gitignore + `.env.example` checked-in)
 
-Total MVP : dépend surtout du serveur Coolify retenu, avec une architecture plus simple à opérer.
+## Hébergement
 
-## ❌ Choix explicitement écartés
+| Composant | Cible |
+|---|---|
+| Backend Rust | Coolify (Dockerfile dans `backend/`) |
+| Frontend | Coolify (Dockerfile dans `frontend/`) |
+| PostgreSQL | Coolify managed DB resource |
+| DNS / CDN | Cloudflare |
+| Statut public | `GET /api/status/public` exposé sans auth |
+
+Coût total dépend du serveur Coolify retenu. Architecture simple à opérer (un VPS, un panel).
+
+## Choix explicitement écartés
 
 | Écarté | Raison |
 |---|---|
-| Node.js pour le backend | Moins performant, typage moins strict que Rust |
-| MongoDB | Les relations snippets/versions/tags sont relationnelles par nature |
-| Vector DB dédiée (Pinecone, Weaviate) | pgvector suffit et évite un service en plus |
-| Next.js App Router | Pas besoin de SSR complexe, Vite SPA suffit pour le studio |
-| Redux / MobX | Zustand couvre nos besoins avec moins de boilerplate |
-| GraphQL | REST/JSON suffit au MVP, moins de complexité |
-| OpenAI embeddings (cloud) | `fastembed` local = 0 coût + 0 dépendance externe |
+| Node.js backend | Performance MCP + binaire statique = Rust |
+| MongoDB | Données relationnelles (artifacts, scores, signals, watchlists) |
+| Vector DB dédiée (Pinecone, Weaviate) | pgvector suffit |
+| Next.js App Router | Pas besoin de SSR, SPA Vite suffit |
+| Redux / MobX | Zustand couvre nos besoins |
+| GraphQL | REST/JSON suffit |
+| Embeddings cloud (OpenAI) | `fastembed` local = 0 coût variable |
+| Supabase Auth / Auth0 | App auto-hébergée, OAuth direct simple à maintenir |
+| Sandpack / Monaco / tree-sitter | Plus dans le scope produit (pivot 2026-04-21) |
+| Cron externe (Hangfire, Quartz) | `tokio::spawn` + interval suffit pour le scheduler |

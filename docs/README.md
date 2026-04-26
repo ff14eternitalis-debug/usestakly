@@ -1,53 +1,70 @@
 # UseStakly — Documentation
 
 > **Veille GitHub OSS avec scoring qualité**, consommable par des devs et des agents IA via MCP.
+> Public beta exposable au 2026-04-26 (TODO v5.5). Ouverture publique large conditionnée à la finition ops MCP.
 
-> **Pivot du 2026-04-21** : le scope a été resserré aux **repos GitHub publics OSS**. Le précédent produit de bibliothèque de snippets est abandonné. Plusieurs docs plus anciennes restent présentes comme archives de conception et ne doivent plus être lues comme source de vérité opérationnelle.
+`UseStakly` est le nom produit retenu. `Project-K` reste le nom de travail historique encore présent dans certains chemins techniques (DB `project_k`, repo).
 
-> `UseStakly` est le nom produit retenu. `Project-K` reste le nom de travail historique encore présent dans certains documents et chemins techniques.
+## Comment lire cette doc
 
-## 📚 Index
+| Tu es… | Lis dans cet ordre |
+|---|---|
+| Découverte du produit | `strategy-pivot-2026-04-21.md` → `strategy-quality-scored-registry.md` → `../README.md` |
+| Tu codes | `../TODO.md` → `architecture-backend-current.md` → `mcp-protocol.md` |
+| Tu opères / déploies | `deployment-coolify.md` → `ops-mcp-coolify-hardening.md` → `security-secrets-playbook.md` |
+| Tu intègres un agent | `mcp-protocol.md` → `mcp-cli-release.md` → `mcp-examples.md` → `mcp-endpoint-security.md` |
 
-### Fondations
-- [**strategy-pivot-2026-04-21.md**](./strategy-pivot-2026-04-21.md) — **Scope produit actuel** : repos GitHub publics OSS uniquement
-- [**strategy-quality-scored-registry.md**](./strategy-quality-scored-registry.md) — Moat et principes de scoring qualité
-- [**architecture-backend-current.md**](./architecture-backend-current.md) — Vue backend actuelle post-refacto
-- [**trust-model-v1.md**](./trust-model-v1.md) — Règles de réputation, consensus, review et dispute
-- [**business/competitive-analysis.md**](./business/competitive-analysis.md) — Analyse concurrentielle
-- [**business/market-analysis-2026.md**](./business/market-analysis-2026.md) — Analyse du marché (Contexte 2026)
-- [**business/financial-study.md**](./business/financial-study.md) — Étude de rentabilité financière
-- [**user-journey.md**](./user-journey.md) — Parcours utilisateur *(à relire avec le pivot en tête)*
-- [**tech-stack.md**](./tech-stack.md) — Choix techniques
+## Index
 
-### Systèmes
-- [**mcp-protocol.md**](./mcp-protocol.md) — Protocole MCP GitHub post-pivot
-- [**deployment-coolify.md**](./deployment-coolify.md) — Stratégie d'hébergement cible sur Coolify
-- [**dev-workflow.md**](./dev-workflow.md) — Démarrage local, commandes courantes, principes d'automatisation
-- [**security-secrets-playbook.md**](./security-secrets-playbook.md) — Rotation des secrets et reprise de contrôle des variables sensibles
+### Source de vérité d'exécution
+- [`../TODO.md`](../TODO.md) — checklist globale, version 5.5
+- [`../CLAUDE.md`](../CLAUDE.md) — instructions agent Claude Code (synthèse projet)
+- [`../AGENTS.md`](../AGENTS.md) — équivalent Codex
+- [`../GEMINI.md`](../GEMINI.md) — équivalent Gemini
 
-### Plans d'action (exécution)
+### Stratégie produit
+- [`strategy-pivot-2026-04-21.md`](./strategy-pivot-2026-04-21.md) — scope produit actuel : repos GitHub publics OSS uniquement
+- [`strategy-quality-scored-registry.md`](./strategy-quality-scored-registry.md) — moat et principes de scoring qualité (Team tier obsolète depuis le pivot)
+- [`tech-stack.md`](./tech-stack.md) — choix techniques actuels
+- [`user-journey.md`](./user-journey.md) — parcours user et agent vivants
 
-> **Les plans `mvp-*.md` et plusieurs docs architecture/data pré-datent le pivot snippets → GitHub OSS.** Ils servent surtout d'archives techniques pour les fondations déjà livrées. La référence d'exécution actuelle est `../TODO.md`.
+### Architecture
+- [`architecture-backend-current.md`](./architecture-backend-current.md) — découpage backend, sous-domaines
+- [`trust-model-v1.md`](./trust-model-v1.md) — réputation, consensus, review, dispute
+- [`coherence-audit-2026-04-23.md`](./coherence-audit-2026-04-23.md) — audit cohérence post-refacto sprints 1–4
 
-- [**plans/rename-to-usestakly.md**](./plans/rename-to-usestakly.md) — Plan de transition de `Project-K` vers `UseStakly`
+### MCP
+- [`mcp-protocol.md`](./mcp-protocol.md) — protocole MCP UseStakly v2 (post-pivot)
+- [`mcp-endpoint-security.md`](./mcp-endpoint-security.md) — durcissement entrypoint HTTP `/mcp`
+- [`mcp-cli-release.md`](./mcp-cli-release.md) — release CLI npm `usestakly-mcp`
+- [`mcp-examples.md`](./mcp-examples.md) — exemples d'appels MCP
 
-### Archives snippets
+### Ops / déploiement
+- [`deployment-coolify.md`](./deployment-coolify.md) — stratégie Coolify
+- [`ops-mcp-coolify-hardening.md`](./ops-mcp-coolify-hardening.md) — durcissement ops avant ouverture large
+- [`dev-workflow.md`](./dev-workflow.md) — démarrage local, commandes courantes
+- [`security-secrets-playbook.md`](./security-secrets-playbook.md) — rotation secrets
 
-Les documents centrés sur l'ancien produit snippets ont été déplacés dans [**archive/snippets/**](./archive/snippets/README.md) pour éviter toute confusion avec le produit GitHub actuel.
+### Audits et validations (snapshots datés)
+- [`security-audit-2026-04-21.md`](./security-audit-2026-04-21.md) — audit sécu post-pivot
+- [`audits/user-journey-audit-2026-04-23.md`](./audits/user-journey-audit-2026-04-23.md) — phase 1 (anonyme)
+- [`audits/user-journey-audit-phase2-2026-04-24.md`](./audits/user-journey-audit-phase2-2026-04-24.md) — phase 2 (connecté), corrections livrées
+- [`validation/formula-v1.1-smoke-test-2026-04-24.md`](./validation/formula-v1.1-smoke-test-2026-04-24.md) — smoke test scoring v1.1
 
-### Suivi
-- [**../TODO.md**](../TODO.md) — Checklist globale d'exécution **(source de vérité exécution post-pivot)**
-- [**coherence-audit-2026-04-23.md**](./coherence-audit-2026-04-23.md) — Audit final de cohérence après sprints 1 à 4 de refacto
+### Plans
+- [`plans/refactor-plan-2026-04-23.md`](./plans/refactor-plan-2026-04-23.md) — refacto sprints 1 à 4 (terminés)
+- [`plans/rename-to-usestakly.md`](./plans/rename-to-usestakly.md) — transition `Project-K` → `UseStakly`
+- [`domain-proposals.md`](./domain-proposals.md) — propositions de noms de domaine
 
-## 🧭 Comment lire cette doc
+### Archives
+- [`archive/snippets/`](./archive/snippets/) — docs de l'ancien produit snippets (abandonné au pivot)
+- [`archive/business-prepivot/`](./archive/business-prepivot/) — analyses business pré-pivot (concurrence, marché, finance) — non valides depuis le 2026-04-21
 
-1. Si tu découvres le projet : **strategy-pivot-2026-04-21.md** → **strategy-quality-scored-registry.md** → **../TODO.md**
-2. Si tu veux coder : **../TODO.md** d'abord, puis **mcp-protocol.md** ou les docs techniques pertinentes
-3. Si tu tombes sur une doc snippets/bibliothèques : la traiter comme **archive**, sauf mention contraire explicite dans `TODO.md`
+> Les archives ne sont **plus une source de vérité**. Elles vivent pour la traçabilité de la réflexion produit, pas pour décrire l'état présent.
 
-## 📐 Conventions de la doc
+## Conventions
 
-- Chaque fichier a un **en-tête avec sa version** et la date de mise à jour
-- Les plans d'action contiennent une section **"Definition of Done"**
-- Les décisions architecturales sont **justifiées** (pas juste énoncées)
-- Ce qui est **hors périmètre** est explicitement marqué
+- Chaque doc active porte une **version** et une **date** dans son en-tête
+- Les docs de stratégie ont une section "Décisions encore ouvertes" datée
+- Les snapshots (audits, validations) sont **immuables** une fois écrits — créer un nouveau fichier daté plutôt que modifier l'ancien
+- Les docs pré-pivot sont déplacées dans `archive/`, pas modifiées (préserve l'historique de réflexion)

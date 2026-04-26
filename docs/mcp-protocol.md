@@ -1,7 +1,8 @@
 # UseStakly — Protocole MCP
 
-> Version : 2.1 — 2026-04-23 (post-pivot veille GitHub)
-> Implémentation : `backend/src/mcp/` (R5a + R5b partiel livrés), transport Streamable HTTP via `rmcp` 1.5.
+> Version : 2.2 — 2026-04-26 (public beta)
+> Implémentation : `backend/src/mcp/` (R5a + R5b livrés, `recommend_github_repos` ajouté, MCP auth durcie au niveau HTTP entrypoint).
+> Transport : Streamable HTTP via `rmcp` 1.5.
 > L'ancienne v1 orientée snippets est retirée du produit vivant.
 
 ---
@@ -12,10 +13,11 @@ UseStakly expose un serveur MCP pour interroger une registry scorée de repos Gi
 
 Les agents peuvent :
 
-1. chercher des repos scorés
-2. récupérer un contexte qualité détaillé
-3. enregistrer un signal passif d'usage réel
-4. ajouter un repo à la watchlist du user propriétaire du token
+1. chercher des repos scorés (`search_github_repos`)
+2. recevoir une recommandation haut niveau filtrée + provenance (`recommend_github_repos`)
+3. récupérer un contexte qualité détaillé pour un repo précis (`get_repo_quality_context`)
+4. enregistrer un signal passif d'usage réel (`log_usage`, retourne le score recalculé)
+5. ajouter un repo à la watchlist du user propriétaire du token (`watch_repo`)
 
 Le but est de remplacer une sélection basée sur les stars par une sélection basée sur :
 
@@ -31,8 +33,9 @@ Le but est de remplacer une sélection basée sur les stars par une sélection b
 
 - Transport : **Streamable HTTP**
 - Endpoint : `/mcp`
-- Auth : `Authorization: Bearer usk_<token>`
+- Auth : `Authorization: Bearer usk_<token>` — **obligatoire dès `initialize` et `tools/list`** depuis 2026-04-26 (middleware pré-transport, voir `docs/mcp-endpoint-security.md`). Une requête sans Bearer reçoit `401` avant que `rmcp` ne traite la session.
 - Sessions : `LocalSessionManager`
+- Installation côté agent : `npx usestakly-mcp install` (voir `docs/mcp-cli-release.md`)
 
 ---
 
@@ -78,6 +81,29 @@ Retour :
 
 - candidats classés par `overall`, puis stars, puis récence
 - provenance `usestakly://registry/github`
+
+### `recommend_github_repos`
+
+Tool haut niveau pour les agents : combine search + filter + provenance dans une seule réponse pensée pour la consommation directe par un agent.
+
+Entrée :
+
+```json
+{
+  "query": "react state manager",
+  "intent": "production",
+  "language": "TypeScript",
+  "limit": 5
+}
+```
+
+Retour :
+
+- liste courte de recommandations (taille bornée par `limit`)
+- pour chaque candidat : score multidimensionnel, raison de la recommandation, provenance
+- pensé pour qu'un agent puisse en citer 1–3 directement sans appel supplémentaire
+
+Si aucun candidat ne passe les filtres, le tool retourne une liste vide avec une explication structurée.
 
 ### `get_repo_quality_context`
 
@@ -201,12 +227,18 @@ Convention recommandée côté agent :
 ## Flux type
 
 ```text
-search_github_repos
-  -> get_repo_quality_context
+recommend_github_repos              # recommandation directe (cas usage agent)
+  -> log_usage                       # feedback après usage réel
+  -> watch_repo (si suivi souhaité)
+
+search_github_repos                 # exploration plus large
+  -> get_repo_quality_context        # zoom sur un candidat
   -> génération avec provenance
   -> log_usage
   -> watch_repo (si suivi souhaité)
 ```
+
+`log_usage` retourne le score recalculé immédiatement pour permettre à l'agent d'observer l'effet de son signal sans appel supplémentaire.
 
 ---
 

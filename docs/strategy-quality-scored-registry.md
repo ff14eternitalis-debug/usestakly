@@ -1,8 +1,20 @@
 # Stratégie — Registry qualité-scored pour agents IA
 
-> Version : 1.1 — 2026-04-20
-> Statut : **angle produit retenu** (décidé 2026-04-20)
-> Lien : remplace le pitch initial « bibliothèque adressable de snippets » — voir `TODO.md` phases 6–11 pour l'exécution
+> Version : 1.2 — 2026-04-26
+> Statut : **moat valide, scope resserré au pivot 2026-04-21**
+> Lien : ce doc pose les principes de fond. Le scope produit actuel est dans `strategy-pivot-2026-04-21.md`. L'exécution vit dans `TODO.md` v5.5.
+
+> ### Bandeau de réconciliation post-pivot
+>
+> Ce document a été écrit avant le pivot du 2026-04-21. **Le fond (moat data-lock-in, signaux d'usage > stars, télémétrie passive, evidence obligatoire, anti-gaming) reste valide.** Sont **caducs** :
+>
+> - le tableau **business model multi-tier** (§💰) — pas de Pro / Team / Enterprise. Scope = repos GitHub publics OSS.
+> - le **GTM en 3 temps** (§🗺) — phase B « démarchage des équipes » sortie du roadmap.
+> - les exemples qui parlent de **snippets internes** (§📡, §📊, §🔁) — UseStakly annote des repos GitHub publics, pas des snippets privés.
+> - le **MVP 6–8 semaines** (§🛠) — déjà livré sous une autre forme (R1 ingestion + R2 search + R3 watchlist + R4/R5 trust + MCP).
+> - les **questions ouvertes** finales (§❓) — toutes tranchées au 2026-04-26.
+>
+> Source actuelle pour le scope, l'avancement et les décisions : `strategy-pivot-2026-04-21.md` + `TODO.md`.
 
 ## 🎯 Pitch en une phrase
 
@@ -226,4 +238,4 @@ Si on y va :
 
 ---
 
-> Document à relire après décision sur `docs/plans/mvp-one-shot-blueprint.md` et à fusionner avec `docs/product-vision-and-safety.md` si l'angle est retenu.
+> Pour l'état d'avancement actuel, voir `TODO.md` v5.5. Pour le scope tenu depuis le pivot, voir `strategy-pivot-2026-04-21.md`. Les anciens plans `mvp-one-shot-blueprint.md` et `product-vision-and-safety.md` ont été archivés sous `docs/archive/snippets/`.
