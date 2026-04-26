@@ -17,6 +17,38 @@ const MAX_LIMIT: i64 = 200;
 const LEXICAL_MIN_SCORE: f64 = 0.35;
 const SEMANTIC_MIN_SCORE: f64 = 0.2;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum RepoSort {
+    #[default]
+    Score,
+    Stars,
+    Recency,
+    Abandonment,
+}
+
+impl RepoSort {
+    pub fn parse(input: Option<&str>) -> Self {
+        match input
+            .map(|value| value.trim().to_ascii_lowercase())
+            .as_deref()
+        {
+            Some("stars") => Self::Stars,
+            Some("recency") | Some("recent") | Some("freshness") => Self::Recency,
+            Some("abandonment") | Some("risk") => Self::Abandonment,
+            _ => Self::Score,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Score => "score",
+            Self::Stars => "stars",
+            Self::Recency => "recency",
+            Self::Abandonment => "abandonment",
+        }
+    }
+}
+
 pub async fn find_github_artifact_id(
     db: &PgPool,
     owner: &str,
@@ -47,8 +79,13 @@ pub struct RepoSearchFilters {
     pub language: Option<String>,
     pub license_spdx: Option<String>,
     pub stars_min: Option<i32>,
+    pub topics: Vec<String>,
+    pub score_min: Option<f64>,
+    pub abandonment_max: Option<f64>,
     pub include_archived: bool,
+    pub sort: RepoSort,
     pub limit: Option<i64>,
+    pub offset: Option<i64>,
 }
 
 pub async fn search_github_repos(
@@ -58,6 +95,14 @@ pub async fn search_github_repos(
 ) -> Result<Vec<RepoSearchResult>, ApiError> {
     let formula_version = load_v1()?.meta.version;
     let limit = filters.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
+    let offset = filters.offset.unwrap_or_default().max(0);
+    let topics = normalize_topics(&filters.topics);
+    let score_min = filters
+        .score_min
+        .filter(|value| (0.0..=1.0).contains(value));
+    let abandonment_max = filters
+        .abandonment_max
+        .filter(|value| (0.0..=1.0).contains(value));
     let query_tokens = tokenize_query(filters.query.as_deref());
     let semantic_query =
         semantic_search::embed_query(filters.query.as_deref().unwrap_or(""), config)
@@ -172,7 +217,29 @@ pub async fn search_github_repos(
               )
             )
           )
+          AND (
+            COALESCE(cardinality($14::text[]), 0) = 0
+            OR NOT EXISTS (
+              SELECT 1
+              FROM unnest($14::text[]) required_topic
+              WHERE NOT (
+                EXISTS (
+                  SELECT 1
+                  FROM unnest(topics) topic
+                  WHERE topic ILIKE required_topic
+                )
+                OR COALESCE(description, '') ILIKE '%' || required_topic || '%'
+                OR name ILIKE '%' || required_topic || '%'
+              )
+            )
+          )
+          AND ($15::float8 IS NULL OR COALESCE(quality_overall, 0.0) >= $15)
+          AND ($16::float8 IS NULL OR COALESCE(quality_abandonment, 1.0) <= $16)
         ORDER BY
+                 CASE WHEN $17 = 'stars' THEN stars_count END DESC NULLS LAST,
+                 CASE WHEN $17 = 'recency' THEN last_commit_at END DESC NULLS LAST,
+                 CASE WHEN $17 = 'abandonment' THEN quality_abandonment END ASC NULLS LAST,
+                 CASE WHEN $17 = 'score' THEN quality_overall END DESC NULLS LAST,
                  CASE
                    WHEN $2::text IS NULL THEN quality_overall
                    ELSE (
@@ -187,6 +254,7 @@ pub async fn search_github_repos(
                  stars_count DESC,
                  last_commit_at DESC NULLS LAST
         LIMIT $8
+        OFFSET $13
         "#,
     )
     .bind(&formula_version)
@@ -201,6 +269,11 @@ pub async fn search_github_repos(
     .bind(&query_tokens)
     .bind(LEXICAL_MIN_SCORE)
     .bind(SEMANTIC_MIN_SCORE)
+    .bind(offset)
+    .bind(&topics)
+    .bind(score_min)
+    .bind(abandonment_max)
+    .bind(filters.sort.as_str())
     .fetch_all(db)
     .await?;
 
@@ -515,9 +588,24 @@ fn tokenize_query(query: Option<&str>) -> Vec<String> {
     tokens
 }
 
+fn normalize_topics(topics: &[String]) -> Vec<String> {
+    let mut normalized = Vec::new();
+    for topic in topics {
+        let topic = topic
+            .trim()
+            .trim_start_matches('#')
+            .to_ascii_lowercase()
+            .replace('_', "-");
+        if !topic.is_empty() && !normalized.contains(&topic) {
+            normalized.push(topic);
+        }
+    }
+    normalized
+}
+
 #[cfg(test)]
 mod tests {
-    use super::tokenize_query;
+    use super::{normalize_topics, tokenize_query};
 
     #[test]
     fn tokenize_query_normalizes_and_deduplicates() {
@@ -529,5 +617,15 @@ mod tests {
     fn tokenize_query_drops_short_empty_tokens() {
         let tokens = tokenize_query(Some("a / c++ / rpc"));
         assert_eq!(tokens, vec!["rpc"]);
+    }
+
+    #[test]
+    fn normalize_topics_deduplicates_and_normalizes() {
+        let topics = normalize_topics(&[
+            "#React".to_string(),
+            "data_grid".to_string(),
+            "react".to_string(),
+        ]);
+        assert_eq!(topics, vec!["react", "data-grid"]);
     }
 }

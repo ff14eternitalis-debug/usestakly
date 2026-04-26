@@ -30,7 +30,7 @@ use crate::{
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::{RecordSignalInput, load_v1, recompute_all_scores_with_config, record_signal},
-        repos::{self as repos_service, RepoSearchFilters},
+        repos::{self as repos_service, RepoSearchFilters, RepoSort},
         trust::agent_token_events,
         watchlist,
     },
@@ -100,6 +100,17 @@ pub struct RecommendReposParams {
     /// Optional ecosystem hint, for example TypeScript, Python, Rust, Go, React.
     #[serde(default)]
     pub language: Option<String>,
+    /// Optional ecosystem hint. Prefer this over `language` for product asks such as
+    /// React, Node, Python, Rust, Go, Django, or frontend.
+    #[serde(default)]
+    pub ecosystem: Option<String>,
+    /// Risk tolerance: `low` favors strict, boring dependencies; `medium` is balanced;
+    /// `high` allows newer or less proven repos when relevance is strong.
+    #[serde(default)]
+    pub risk_tolerance: Option<String>,
+    /// Topics that must appear on the candidate repo when present in the corpus.
+    #[serde(default)]
+    pub must_have_topics: Vec<String>,
     /// Quality filter preset: auto (default), strict, or explore.
     #[serde(default)]
     pub filter: Option<String>,
@@ -117,6 +128,7 @@ pub struct RepoRecommendation {
     pub html_url: String,
     pub description: Option<String>,
     pub language: Option<String>,
+    pub topics: Vec<String>,
     pub stars_count: i32,
     pub quality_overall: Option<f64>,
     pub quality_freshness: Option<f64>,
@@ -133,9 +145,20 @@ pub struct RepoRecommendation {
 pub struct RecommendReposOutput {
     pub provenance: Provenance,
     pub query_used: String,
+    pub ecosystem_used: Option<String>,
+    pub risk_tolerance_used: String,
+    pub must_have_topics: Vec<String>,
     pub filter_used: String,
     pub count: usize,
     pub recommendations: Vec<RepoRecommendation>,
+    pub fallback: Option<RecommendationFallback>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct RecommendationFallback {
+    pub message: String,
+    pub add_repo_candidates: Vec<String>,
+    pub next_actions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -262,8 +285,13 @@ impl McpServer {
             language: p.language,
             license_spdx: None,
             stars_min: p.stars_min,
+            topics: Vec::new(),
+            score_min: None,
+            abandonment_max: None,
             include_archived: false,
+            sort: RepoSort::Score,
             limit: Some(p.limit.unwrap_or(20).clamp(1, 50)),
+            offset: None,
         };
 
         let results =
@@ -330,26 +358,55 @@ impl McpServer {
         }
 
         let filter = parse_filter(p.filter.as_deref());
+        let ecosystem = p.ecosystem.as_deref().or(p.language.as_deref());
+        let normalized_topics = normalize_topics(&p.must_have_topics);
+        let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
+        let effective_filter = if p.filter.is_some() {
+            filter
+        } else {
+            filter_for_risk_tolerance(risk_tolerance)
+        };
+        let query = build_recommendation_query(query, ecosystem, &normalized_topics);
         let filters = RepoSearchFilters {
-            query: Some(query.to_string()),
-            filter,
-            language: p.language,
+            query: Some(query.clone()),
+            filter: effective_filter,
+            language: ecosystem.and_then(language_filter_for_ecosystem),
             license_spdx: None,
             stars_min: None,
+            topics: normalized_topics.clone(),
+            score_min: None,
+            abandonment_max: None,
             include_archived: false,
-            limit: Some(p.limit.unwrap_or(5).clamp(1, 10)),
+            sort: RepoSort::Score,
+            limit: Some((p.limit.unwrap_or(5).clamp(1, 10) * 4).clamp(10, 40)),
+            offset: None,
         };
 
-        let results =
+        let mut results =
             repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
                 .await
                 .map_err(map_api_error)?;
+        if !normalized_topics.is_empty() {
+            results.retain(|repo| repo_matches_topics(repo, &normalized_topics));
+        }
+        let max_results = p.limit.unwrap_or(5).clamp(1, 10) as usize;
+        results.truncate(max_results);
         let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
         let scored_at = results
             .iter()
             .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
             .max();
-        let recommendations = build_recommendations(results);
+        let recommendations = build_recommendations(results, risk_tolerance);
+        let fallback = if recommendations.is_empty() {
+            Some(build_recommendation_fallback(
+                &query,
+                ecosystem,
+                &normalized_topics,
+                risk_tolerance,
+            ))
+        } else {
+            None
+        };
 
         Ok(Json(RecommendReposOutput {
             provenance: Provenance {
@@ -357,10 +414,14 @@ impl McpServer {
                 formula_version,
                 scored_at,
             },
-            query_used: query.to_string(),
-            filter_used: filter.as_str().to_string(),
+            query_used: query,
+            ecosystem_used: ecosystem.map(str::to_string),
+            risk_tolerance_used: risk_tolerance.as_str().to_string(),
+            must_have_topics: normalized_topics,
+            filter_used: effective_filter.as_str().to_string(),
             count: recommendations.len(),
             recommendations,
+            fallback,
         }))
     }
 
@@ -648,8 +709,96 @@ fn parse_passive_outcome(input: &str) -> Result<SignalKind, ErrorData> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RiskTolerance {
+    Low,
+    Medium,
+    High,
+}
+
+impl RiskTolerance {
+    fn as_str(self) -> &'static str {
+        match self {
+            RiskTolerance::Low => "low",
+            RiskTolerance::Medium => "medium",
+            RiskTolerance::High => "high",
+        }
+    }
+}
+
+fn parse_risk_tolerance(input: Option<&str>) -> RiskTolerance {
+    match input.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+        Some("low") | Some("safe") | Some("conservative") => RiskTolerance::Low,
+        Some("high") | Some("experimental") | Some("explore") => RiskTolerance::High,
+        _ => RiskTolerance::Medium,
+    }
+}
+
+fn filter_for_risk_tolerance(risk: RiskTolerance) -> SearchFilter {
+    match risk {
+        RiskTolerance::Low => SearchFilter::Strict,
+        RiskTolerance::Medium => SearchFilter::Auto,
+        RiskTolerance::High => SearchFilter::Explore,
+    }
+}
+
+fn normalize_topics(topics: &[String]) -> Vec<String> {
+    let mut normalized = Vec::new();
+    for topic in topics {
+        let topic = topic
+            .trim()
+            .trim_start_matches('#')
+            .to_ascii_lowercase()
+            .replace('_', "-");
+        if !topic.is_empty() && !normalized.contains(&topic) {
+            normalized.push(topic);
+        }
+    }
+    normalized
+}
+
+fn build_recommendation_query(need: &str, ecosystem: Option<&str>, topics: &[String]) -> String {
+    let mut parts = vec![need.trim().to_string()];
+    if let Some(ecosystem) = ecosystem.map(str::trim).filter(|s| !s.is_empty()) {
+        parts.push(ecosystem.to_string());
+    }
+    for topic in topics {
+        parts.push(topic.replace('-', " "));
+    }
+    parts.join(" ")
+}
+
+fn language_filter_for_ecosystem(ecosystem: &str) -> Option<String> {
+    match ecosystem.trim().to_ascii_lowercase().as_str() {
+        "typescript" | "ts" => Some("TypeScript".to_string()),
+        "javascript" | "js" | "node" | "node.js" | "react" | "next" | "next.js" | "frontend" => {
+            Some("TypeScript".to_string())
+        }
+        "python" | "django" | "fastapi" | "flask" => Some("Python".to_string()),
+        "rust" => Some("Rust".to_string()),
+        "go" | "golang" => Some("Go".to_string()),
+        _ => None,
+    }
+}
+
+fn repo_matches_topics(repo: &crate::domain::repo::RepoSearchResult, required: &[String]) -> bool {
+    required.iter().all(|required_topic| {
+        repo.topics
+            .iter()
+            .any(|topic| topic.eq_ignore_ascii_case(required_topic))
+            || repo
+                .description
+                .as_deref()
+                .unwrap_or_default()
+                .to_ascii_lowercase()
+                .contains(required_topic)
+            || repo.name.to_ascii_lowercase().contains(required_topic)
+    })
+}
+
 fn build_recommendations(
     results: Vec<crate::domain::repo::RepoSearchResult>,
+    risk: RiskTolerance,
 ) -> Vec<RepoRecommendation> {
     results
         .into_iter()
@@ -664,6 +813,7 @@ fn build_recommendations(
                 html_url: repo.html_url,
                 description: repo.description,
                 language: repo.language,
+                topics: repo.topics,
                 stars_count: repo.stars_count,
                 quality_overall: q.and_then(|q| q.overall),
                 quality_freshness: q.and_then(|q| q.freshness),
@@ -671,13 +821,9 @@ fn build_recommendations(
                 quality_reliability: q.and_then(|q| q.reliability),
                 quality_abandonment: q.and_then(|q| q.abandonment),
                 flags: q.map(|q| q.flags.clone()).unwrap_or_default(),
-                reasons: recommendation_reasons(q),
-                caveats: recommendation_caveats(q),
-                next_actions: vec![
-                    "Call get_repo_quality_context before final selection.".to_string(),
-                    "After testing the dependency, call log_usage with the outcome.".to_string(),
-                    "Use watch_repo if this becomes a dependency to monitor.".to_string(),
-                ],
+                reasons: recommendation_reasons(q, risk),
+                caveats: recommendation_caveats(q, risk),
+                next_actions: recommendation_next_actions(q),
             }
         })
         .collect()
@@ -685,6 +831,7 @@ fn build_recommendations(
 
 fn recommendation_reasons(
     quality: Option<&crate::domain::reference::QualityContext>,
+    risk: RiskTolerance,
 ) -> Vec<String> {
     let Some(q) = quality else {
         return vec!["No score is available yet; inspect the repo before adopting.".to_string()];
@@ -712,11 +859,23 @@ fn recommendation_reasons(
             "Included because it matched the query and passed the selected filter.".to_string(),
         );
     }
+    match risk {
+        RiskTolerance::Low => reasons.push(
+            "Low risk tolerance favored stricter quality gates and maintenance signals."
+                .to_string(),
+        ),
+        RiskTolerance::High => reasons.push(
+            "High risk tolerance allowed relevance to weigh more than mature usage history."
+                .to_string(),
+        ),
+        RiskTolerance::Medium => {}
+    }
     reasons
 }
 
 fn recommendation_caveats(
     quality: Option<&crate::domain::reference::QualityContext>,
+    risk: RiskTolerance,
 ) -> Vec<String> {
     let Some(q) = quality else {
         return vec!["Score provenance is missing until the repo is computed.".to_string()];
@@ -741,7 +900,57 @@ fn recommendation_caveats(
         caveats
             .push("Abandonment risk is elevated; inspect maintenance before adoption.".to_string());
     }
+    if risk == RiskTolerance::High {
+        caveats.push(
+            "Because risk_tolerance is high, validate API stability and maintenance manually."
+                .to_string(),
+        );
+    }
     caveats
+}
+
+fn recommendation_next_actions(
+    quality: Option<&crate::domain::reference::QualityContext>,
+) -> Vec<String> {
+    let mut actions = vec!["Call get_repo_quality_context before final selection.".to_string()];
+    if quality
+        .map(|q| q.resolve_count + q.build_success_count + q.build_failure_count < 5)
+        .unwrap_or(true)
+    {
+        actions.push("Run a small install/build smoke test before recommending it.".to_string());
+    }
+    actions.push("After testing the dependency, call log_usage with the outcome.".to_string());
+    actions.push("Use watch_repo if this becomes a dependency to monitor.".to_string());
+    actions
+}
+
+fn build_recommendation_fallback(
+    query: &str,
+    ecosystem: Option<&str>,
+    topics: &[String],
+    risk: RiskTolerance,
+) -> RecommendationFallback {
+    let mut candidate_terms = vec![query.to_string()];
+    if let Some(ecosystem) = ecosystem {
+        candidate_terms.push(ecosystem.to_string());
+    }
+    candidate_terms.extend(topics.iter().cloned());
+    RecommendationFallback {
+        message: "No indexed repo matched the current constraints. Add candidate repos, then retry the recommendation.".to_string(),
+        add_repo_candidates: vec![
+            format!("Search GitHub for: {}", candidate_terms.join(" ")),
+            "Add promising repos with POST /api/repos/add or the UseStakly UI.".to_string(),
+            "Retry recommend_github_repos after ingestion and scoring completes.".to_string(),
+        ],
+        next_actions: vec![
+            "Relax must_have_topics if they are too narrow.".to_string(),
+            format!(
+                "Current risk_tolerance is {}; use high/explore only when relevance matters more than maturity.",
+                risk.as_str()
+            ),
+            "For each candidate, prefer maintained repos with recent commits and clear release activity.".to_string(),
+        ],
+    }
 }
 
 fn into_context_output(
@@ -1025,11 +1234,12 @@ mod tests {
             }),
         }];
 
-        let recommendations = build_recommendations(results);
+        let recommendations = build_recommendations(results, RiskTolerance::Medium);
 
         assert_eq!(recommendations.len(), 1);
         assert_eq!(recommendations[0].rank, 1);
         assert_eq!(recommendations[0].full_name, "example/typed-orm");
+        assert_eq!(recommendations[0].topics, vec!["orm", "typescript"]);
         assert!(
             recommendations[0]
                 .reasons
@@ -1047,6 +1257,33 @@ mod tests {
                 .next_actions
                 .iter()
                 .any(|action| action.contains("get_repo_quality_context"))
+        );
+    }
+
+    #[test]
+    fn recommendation_filters_topics_and_builds_fallback() {
+        let topics = normalize_topics(&[
+            "React".to_string(),
+            "#Data-Grid".to_string(),
+            "react".to_string(),
+        ]);
+        assert_eq!(topics, vec!["react", "data-grid"]);
+
+        let fallback =
+            build_recommendation_fallback("table grid", Some("React"), &topics, RiskTolerance::Low);
+
+        assert!(fallback.message.contains("No indexed repo matched"));
+        assert!(
+            fallback
+                .add_repo_candidates
+                .iter()
+                .any(|item| item.contains("table grid React react data-grid"))
+        );
+        assert!(
+            fallback
+                .next_actions
+                .iter()
+                .any(|item| item.contains("low"))
         );
     }
 

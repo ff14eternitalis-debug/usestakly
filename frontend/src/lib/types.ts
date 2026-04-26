@@ -7,6 +7,7 @@ export type CurrentUser = {
 };
 
 export type SearchFilter = "auto" | "strict" | "explore";
+export type RepoSort = "score" | "stars" | "recency" | "abandonment";
 
 export type QualityContext = {
   freshness: number | null;
@@ -75,6 +76,11 @@ export type RepoViewerState = {
 
 export type RepoSearchResponse = {
   filter: SearchFilter;
+  sort: RepoSort;
+  limit: number;
+  offset: number;
+  count: number;
+  hasMore: boolean;
   items: RepoSearchResult[];
 };
 

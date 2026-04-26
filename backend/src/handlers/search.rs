@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     app::{AppState, error::ApiError},
     domain::{reference::SearchFilter, repo::RepoSearchResult},
-    services::repos::{RepoSearchFilters, search_github_repos},
+    services::repos::{RepoSearchFilters, RepoSort, search_github_repos},
 };
 
 #[derive(Debug, Deserialize)]
@@ -40,8 +40,13 @@ pub async fn search(
         language: normalize(query.language),
         license_spdx: normalize(query.license),
         stars_min: query.stars_min.filter(|v| *v >= 0),
+        topics: Vec::new(),
+        score_min: None,
+        abandonment_max: None,
         include_archived: query.include_archived,
+        sort: RepoSort::Score,
         limit: query.limit,
+        offset: None,
     };
     let items = search_github_repos(&state.db, &state.config, &filters).await?;
 
