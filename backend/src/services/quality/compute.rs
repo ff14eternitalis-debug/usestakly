@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use super::formula::Formula;
+use super::formula::{Formula, VitalityWeights};
 
 #[derive(Debug, Clone)]
 pub struct ArtifactMetrics {
@@ -17,11 +17,20 @@ pub struct ArtifactMetrics {
     pub weighted_regret: f64,
     pub last_update: DateTime<Utc>,
     pub flags: Vec<String>,
+    /// Structural vitality inputs (lot 1/3, migration 0018). All optional :
+    /// `structural_signals_at = None` means we never captured for this repo
+    /// and the formula returns the neutral default ; per-field None means a
+    /// partial fetch failure and is treated as neutral 0.5 inside the blend.
+    pub structural_signals_at: Option<DateTime<Utc>>,
+    pub distinct_contributors_90d: Option<i32>,
+    pub commits_30d: Option<i32>,
+    pub has_ci: Option<bool>,
+    pub last_release_at: Option<DateTime<Utc>>,
 }
 
 impl ArtifactMetrics {
     /// Builder for callers (tests, legacy) that don't yet distinguish
-    /// raw and weighted — weighted takes the raw value.
+    /// raw and weighted — weighted takes the raw value, no vitality input.
     #[cfg(test)]
     pub fn unweighted(
         resolve_count: i32,
@@ -42,6 +51,11 @@ impl ArtifactMetrics {
             weighted_regret: f64::from(regret_count),
             last_update,
             flags,
+            structural_signals_at: None,
+            distinct_contributors_90d: None,
+            commits_30d: None,
+            has_ci: None,
+            last_release_at: None,
         }
     }
 }
@@ -52,6 +66,7 @@ pub struct ComputedScore {
     pub adoption: f64,
     pub reliability: f64,
     pub abandonment: f64,
+    pub vitality: f64,
     pub overall: f64,
 }
 
@@ -80,16 +95,31 @@ pub fn compute_score(
     } else {
         0.0
     };
-    let abandonment = abandonment_score(
+    let abandonment_time = abandonment_score(
         freshness,
         regret_rate,
         formula.dimensions.abandonment.regret_rate_threshold,
     );
 
+    let (vitality, vitality_contribution, abandonment) = match formula.dimensions.vitality.as_ref()
+    {
+        Some(v) => {
+            let score = vitality_score(metrics, v, now);
+            // v2 : a fresh-pushed but solo / no-CI / no-release repo is
+            // de-facto abandoned. Couple abandonment with structural vitality
+            // so freshness alone cannot mask a degraded maintainer structure.
+            let coupled = abandonment_time.max(1.0 - score);
+            (score, score * v.weight, coupled)
+        }
+        // v1 formula : dimension absent, no coupling, no contribution to overall.
+        None => (0.0, 0.0, abandonment_time),
+    };
+
     let overall = (freshness * formula.dimensions.freshness.weight
         + adoption * formula.dimensions.adoption.weight
         + reliability * formula.dimensions.reliability.weight
-        + (1.0 - abandonment) * formula.dimensions.abandonment.weight)
+        + (1.0 - abandonment) * formula.dimensions.abandonment.weight
+        + vitality_contribution)
         .clamp(0.0, 1.0);
 
     ComputedScore {
@@ -97,6 +127,7 @@ pub fn compute_score(
         adoption,
         reliability,
         abandonment,
+        vitality,
         overall,
     }
 }
@@ -133,14 +164,57 @@ fn abandonment_score(freshness: f64, regret_rate: f64, regret_threshold: f64) ->
     (base + bump).clamp(0.0, 1.0)
 }
 
+pub fn vitality_score(
+    metrics: &ArtifactMetrics,
+    weights: &VitalityWeights,
+    now: DateTime<Utc>,
+) -> f64 {
+    if metrics.structural_signals_at.is_none() {
+        return weights.neutral_default;
+    }
+
+    let neutral = weights.neutral_default;
+    let collective = match metrics.distinct_contributors_90d {
+        Some(c) => saturate(f64::from(c) / weights.contributors_saturation),
+        None => neutral,
+    };
+    let cadence = match metrics.commits_30d {
+        Some(c) => saturate(f64::from(c) / weights.commits_saturation),
+        None => neutral,
+    };
+    let ci = match metrics.has_ci {
+        Some(true) => 1.0,
+        Some(false) => 0.0,
+        None => neutral,
+    };
+    let release = match metrics.last_release_at {
+        Some(t) => freshness_score(t, now, weights.release_half_life_days),
+        None => neutral,
+    };
+
+    (weights.collective_weight * collective
+        + weights.release_weight * release
+        + weights.cadence_weight * cadence
+        + weights.ci_weight * ci)
+        .clamp(0.0, 1.0)
+}
+
+fn saturate(x: f64) -> f64 {
+    x.clamp(0.0, 1.0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::quality::formula::load_v1;
+    use crate::services::quality::formula::{load_v1, load_v2};
     use chrono::Duration;
 
-    fn test_formula() -> Formula {
+    fn v1_formula() -> Formula {
         load_v1().expect("formula v1 loads")
+    }
+
+    fn v2_formula() -> Formula {
+        load_v2().expect("formula v2 loads")
     }
 
     #[test]
@@ -174,7 +248,7 @@ mod tests {
 
     #[test]
     fn overall_score_is_clamped_and_uses_weights() {
-        let formula = test_formula();
+        let formula = v1_formula();
         let now = Utc::now();
 
         let perfect = ArtifactMetrics::unweighted(1000, 100, 0, 0, now, vec![]);
@@ -184,5 +258,126 @@ mod tests {
         let dead = ArtifactMetrics::unweighted(0, 0, 0, 0, now - Duration::days(1800), vec![]);
         let ds = compute_score(&dead, &formula, now);
         assert!(ds.overall < 0.25);
+    }
+
+    #[test]
+    fn vitality_returns_neutral_when_never_captured() {
+        let formula = v2_formula();
+        let weights = formula
+            .dimensions
+            .vitality
+            .as_ref()
+            .expect("v2 has vitality");
+        let now = Utc::now();
+        let metrics = ArtifactMetrics::unweighted(0, 0, 0, 0, now, vec![]);
+        let v = vitality_score(&metrics, weights, now);
+        assert!((v - weights.neutral_default).abs() < 1e-9);
+    }
+
+    #[test]
+    fn vitality_per_field_null_treated_as_neutral() {
+        let formula = v2_formula();
+        let weights = formula
+            .dimensions
+            .vitality
+            .as_ref()
+            .expect("v2 has vitality");
+        let now = Utc::now();
+        // Captured but every sub-signal missing → still neutral (0.5).
+        let mut metrics = ArtifactMetrics::unweighted(0, 0, 0, 0, now, vec![]);
+        metrics.structural_signals_at = Some(now);
+        let v = vitality_score(&metrics, weights, now);
+        assert!(
+            (v - weights.neutral_default).abs() < 1e-9,
+            "all-NULL captured = neutral, got {}",
+            v
+        );
+    }
+
+    #[test]
+    fn vitality_max_for_collective_repo() {
+        let formula = v2_formula();
+        let weights = formula
+            .dimensions
+            .vitality
+            .as_ref()
+            .expect("v2 has vitality");
+        let now = Utc::now();
+        let mut metrics = ArtifactMetrics::unweighted(0, 0, 0, 0, now, vec![]);
+        metrics.structural_signals_at = Some(now);
+        metrics.distinct_contributors_90d = Some(20);
+        metrics.commits_30d = Some(50);
+        metrics.has_ci = Some(true);
+        metrics.last_release_at = Some(now);
+        let v = vitality_score(&metrics, weights, now);
+        assert!(
+            (v - 1.0).abs() < 1e-9,
+            "saturated collective repo = 1.0, got {}",
+            v
+        );
+    }
+
+    #[test]
+    fn vitality_min_for_solo_no_ci_no_release_repo() {
+        let formula = v2_formula();
+        let weights = formula
+            .dimensions
+            .vitality
+            .as_ref()
+            .expect("v2 has vitality");
+        let now = Utc::now();
+        let mut metrics = ArtifactMetrics::unweighted(0, 0, 0, 0, now, vec![]);
+        metrics.structural_signals_at = Some(now);
+        metrics.distinct_contributors_90d = Some(1);
+        metrics.commits_30d = Some(2);
+        metrics.has_ci = Some(false);
+        metrics.last_release_at = None; // never released → neutral 0.5
+        let v = vitality_score(&metrics, weights, now);
+        // collective ≈ 0.20, cadence ≈ 0.20, ci = 0, release = 0.5 (neutral)
+        // Weighted: 0.30*0.20 + 0.20*0.20 + 0.20*0 + 0.30*0.5 = 0.06 + 0.04 + 0 + 0.15 = 0.25
+        assert!(
+            v < 0.30,
+            "solo vibe-coded repo should score low on vitality, got {}",
+            v
+        );
+    }
+
+    #[test]
+    fn v2_overall_blocks_solo_fresh_slop_from_auto_threshold() {
+        // Critère de succès du plan : un repo solo sans CI, sans release,
+        // freshly-pushed, ne peut PAS atteindre `auto` (overall ≥ 0.45)
+        // sur la seule fraîcheur.
+        let formula = v2_formula();
+        let now = Utc::now();
+        let mut slop = ArtifactMetrics::unweighted(0, 0, 0, 0, now, vec![]);
+        slop.structural_signals_at = Some(now);
+        slop.distinct_contributors_90d = Some(1);
+        slop.commits_30d = Some(3);
+        slop.has_ci = Some(false);
+        slop.last_release_at = None;
+        let s = compute_score(&slop, &formula, now);
+        assert!(
+            s.overall < 0.45,
+            "fresh solo no-CI no-release repo must stay below auto threshold, got overall={}",
+            s.overall
+        );
+    }
+
+    #[test]
+    fn v2_overall_lets_collective_established_repo_pass_strict() {
+        let formula = v2_formula();
+        let now = Utc::now();
+        let mut healthy = ArtifactMetrics::unweighted(500, 50, 0, 0, now, vec![]);
+        healthy.structural_signals_at = Some(now);
+        healthy.distinct_contributors_90d = Some(15);
+        healthy.commits_30d = Some(40);
+        healthy.has_ci = Some(true);
+        healthy.last_release_at = Some(now - Duration::days(30));
+        let s = compute_score(&healthy, &formula, now);
+        assert!(
+            s.overall > 0.70,
+            "established collective repo should clear strict, got overall={}",
+            s.overall
+        );
     }
 }

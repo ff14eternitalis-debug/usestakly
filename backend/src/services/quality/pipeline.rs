@@ -13,7 +13,7 @@ use crate::{
         quality::{
             compute::{ArtifactMetrics, ComputedScore, compute_score},
             flags::{load_active_flag_consensus, normalize_flags},
-            formula::{Formula, load_v1},
+            formula::{Formula, load_v2},
             weighting::{
                 SignalObservation, SignalWeightBreakdown, WeightedCounts,
                 aggregate_weighted_counts, explain_signals,
@@ -42,6 +42,7 @@ pub struct ScoringExplain {
     pub flags: Vec<String>,
     pub weighted_counts: WeightedCountsReport,
     pub score: ScoreReport,
+    pub vitality_inputs: VitalityInputsReport,
     pub signals: Vec<SignalExplainEntry>,
 }
 
@@ -65,7 +66,18 @@ pub struct ScoreReport {
     pub adoption: f64,
     pub reliability: f64,
     pub abandonment: f64,
+    pub vitality: f64,
     pub overall: f64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VitalityInputsReport {
+    pub structural_signals_at: Option<DateTime<Utc>>,
+    pub distinct_contributors_90d: Option<i32>,
+    pub commits_30d: Option<i32>,
+    pub has_ci: Option<bool>,
+    pub last_release_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -112,7 +124,7 @@ pub async fn recompute_all_scores_with_config(
     db: &PgPool,
     config: Option<&AppConfig>,
 ) -> Result<ScoringReport> {
-    let formula = load_v1()?;
+    let formula = load_v2()?;
     let now = Utc::now();
 
     let externals_processed = recompute_externals_with_config(db, &formula, now, config).await?;
@@ -128,6 +140,11 @@ pub async fn recompute_all_scores_with_config(
 struct ExternalRow {
     id: Uuid,
     last_commit_at: Option<DateTime<Utc>>,
+    structural_signals_at: Option<DateTime<Utc>>,
+    distinct_contributors_90d: Option<i32>,
+    commits_30d: Option<i32>,
+    has_ci: Option<bool>,
+    last_release_at: Option<DateTime<Utc>>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -135,6 +152,11 @@ struct ExplainRepoRow {
     github_owner: Option<String>,
     github_repo: Option<String>,
     last_commit_at: Option<DateTime<Utc>>,
+    structural_signals_at: Option<DateTime<Utc>>,
+    distinct_contributors_90d: Option<i32>,
+    commits_30d: Option<i32>,
+    has_ci: Option<bool>,
+    last_release_at: Option<DateTime<Utc>>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -154,7 +176,14 @@ async fn recompute_externals_with_config(
 ) -> Result<usize> {
     let externals: Vec<ExternalRow> = sqlx::query_as(
         r#"
-        SELECT id, last_commit_at
+        SELECT
+          id,
+          last_commit_at,
+          structural_signals_at,
+          distinct_contributors_90d,
+          commits_30d,
+          has_ci,
+          last_release_at
         FROM external_artifacts
         "#,
     )
@@ -211,6 +240,13 @@ async fn recompute_externals_with_config(
                 .get(&external.id)
                 .cloned()
                 .unwrap_or_else(|| normalize_flags(vec![])),
+            VitalityInputs {
+                structural_signals_at: external.structural_signals_at,
+                distinct_contributors_90d: external.distinct_contributors_90d,
+                commits_30d: external.commits_30d,
+                has_ci: external.has_ci,
+                last_release_at: external.last_release_at,
+            },
         );
         let score = compute_score(&metrics, formula, now);
 
@@ -244,15 +280,15 @@ async fn upsert_external_score(
         r#"
         INSERT INTO artifact_scores (
           artifact_kind, external_artifact_id, formula_version,
-          freshness, adoption, reliability, abandonment, overall,
+          freshness, adoption, reliability, abandonment, vitality, overall,
           resolve_count, build_success_count, build_failure_count, regret_count,
           flags, computed_at
         )
         VALUES (
           'external', $1, $2,
-          $3, $4, $5, $6, $7,
-          $8, $9, $10, $11,
-          $12, NOW()
+          $3, $4, $5, $6, $7, $8,
+          $9, $10, $11, $12,
+          $13, NOW()
         )
         ON CONFLICT (external_artifact_id, formula_version)
           WHERE external_artifact_id IS NOT NULL
@@ -261,6 +297,7 @@ async fn upsert_external_score(
           adoption = EXCLUDED.adoption,
           reliability = EXCLUDED.reliability,
           abandonment = EXCLUDED.abandonment,
+          vitality = EXCLUDED.vitality,
           overall = EXCLUDED.overall,
           resolve_count = EXCLUDED.resolve_count,
           build_success_count = EXCLUDED.build_success_count,
@@ -276,6 +313,7 @@ async fn upsert_external_score(
     .bind(score.adoption)
     .bind(score.reliability)
     .bind(score.abandonment)
+    .bind(score.vitality)
     .bind(score.overall)
     .bind(metrics.resolve_count)
     .bind(metrics.build_success_count)
@@ -293,12 +331,20 @@ pub async fn explain_external_scoring(
     config: Option<&AppConfig>,
     external_artifact_id: Uuid,
 ) -> Result<ScoringExplain> {
-    let formula = load_v1()?;
+    let formula = load_v2()?;
     let now = Utc::now();
 
     let repo: Option<ExplainRepoRow> = sqlx::query_as(
         r#"
-        SELECT github_owner, github_repo, last_commit_at
+        SELECT
+          github_owner,
+          github_repo,
+          last_commit_at,
+          structural_signals_at,
+          distinct_contributors_90d,
+          commits_30d,
+          has_ci,
+          last_release_at
         FROM external_artifacts
         WHERE id = $1
         "#,
@@ -314,6 +360,13 @@ pub async fn explain_external_scoring(
     let owner = repo.github_owner;
     let name = repo.github_repo;
     let last_commit_at = repo.last_commit_at;
+    let vitality_inputs = VitalityInputs {
+        structural_signals_at: repo.structural_signals_at,
+        distinct_contributors_90d: repo.distinct_contributors_90d,
+        commits_30d: repo.commits_30d,
+        has_ci: repo.has_ci,
+        last_release_at: repo.last_release_at,
+    };
 
     let signal_rows: Vec<PassiveSignalRow> = sqlx::query_as(
         r#"
@@ -357,7 +410,12 @@ pub async fn explain_external_scoring(
         .get(&external_artifact_id)
         .cloned()
         .unwrap_or_default();
-    let metrics = build_metrics(counts.clone(), last_commit_at.unwrap_or(now), flags.clone());
+    let metrics = build_metrics(
+        counts.clone(),
+        last_commit_at.unwrap_or(now),
+        flags.clone(),
+        vitality_inputs.clone(),
+    );
     let score = compute_score(&metrics, &formula, now);
 
     Ok(ScoringExplain {
@@ -382,16 +440,34 @@ pub async fn explain_external_scoring(
             adoption: score.adoption,
             reliability: score.reliability,
             abandonment: score.abandonment,
+            vitality: score.vitality,
             overall: score.overall,
+        },
+        vitality_inputs: VitalityInputsReport {
+            structural_signals_at: vitality_inputs.structural_signals_at,
+            distinct_contributors_90d: vitality_inputs.distinct_contributors_90d,
+            commits_30d: vitality_inputs.commits_30d,
+            has_ci: vitality_inputs.has_ci,
+            last_release_at: vitality_inputs.last_release_at,
         },
         signals: breakdown.into_iter().map(Into::into).collect(),
     })
+}
+
+#[derive(Debug, Clone)]
+struct VitalityInputs {
+    structural_signals_at: Option<DateTime<Utc>>,
+    distinct_contributors_90d: Option<i32>,
+    commits_30d: Option<i32>,
+    has_ci: Option<bool>,
+    last_release_at: Option<DateTime<Utc>>,
 }
 
 fn build_metrics(
     counts: WeightedCounts,
     last_update: DateTime<Utc>,
     flags: Vec<String>,
+    vitality: VitalityInputs,
 ) -> ArtifactMetrics {
     ArtifactMetrics {
         resolve_count: counts.raw_resolve,
@@ -404,5 +480,10 @@ fn build_metrics(
         weighted_regret: counts.regret,
         last_update,
         flags,
+        structural_signals_at: vitality.structural_signals_at,
+        distinct_contributors_90d: vitality.distinct_contributors_90d,
+        commits_30d: vitality.commits_30d,
+        has_ci: vitality.has_ci,
+        last_release_at: vitality.last_release_at,
     }
 }

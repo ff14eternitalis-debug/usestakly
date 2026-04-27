@@ -9,7 +9,7 @@ use crate::{
         reference::{QualityContext, SearchFilter},
         repo::{RepoProfile, RepoSearchResult, RepoSignal},
     },
-    services::{quality::load_v1, semantic_search, trust::signal_events},
+    services::{quality::load_v2, semantic_search, trust::signal_events},
 };
 
 const DEFAULT_LIMIT: i64 = 50;
@@ -93,7 +93,7 @@ pub async fn search_github_repos(
     config: &AppConfig,
     filters: &RepoSearchFilters,
 ) -> Result<Vec<RepoSearchResult>, ApiError> {
-    let formula_version = load_v1()?.meta.version;
+    let formula_version = load_v2()?.meta.version;
     let limit = filters.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
     let offset = filters.offset.unwrap_or_default().max(0);
     let topics = normalize_topics(&filters.topics);
@@ -281,7 +281,7 @@ pub async fn search_github_repos(
 }
 
 pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProfile, ApiError> {
-    let formula_version = load_v1()?.meta.version;
+    let formula_version = load_v2()?.meta.version;
 
     let row: ProfileRow = sqlx::query_as(
         r#"

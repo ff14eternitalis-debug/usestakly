@@ -2,7 +2,7 @@ use axum::{Json, extract::State};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::{app::AppState, services::quality::load_v1};
+use crate::{app::AppState, services::quality::load_v2};
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -67,7 +67,7 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
     } else {
         0
     };
-    let formula_version = load_v1()
+    let formula_version = load_v2()
         .map(|formula| formula.meta.version)
         .unwrap_or_else(|_| "unavailable".to_string());
     let registry_ok = db_ok && repo_count > 0;

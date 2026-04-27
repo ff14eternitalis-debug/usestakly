@@ -29,7 +29,7 @@ use crate::{
     mcp::auth::{verify_agent, verify_bearer},
     services::{
         ingestion::github::{build_client, ingest_repo},
-        quality::{RecordSignalInput, load_v1, recompute_all_scores_with_config, record_signal},
+        quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
         repos::{self as repos_service, RepoSearchFilters, RepoSort},
         trust::agent_token_events,
         watchlist,
@@ -299,7 +299,7 @@ impl McpServer {
                 .await
                 .map_err(map_api_error)?;
 
-        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         let scored_at = results
             .iter()
             .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
@@ -391,7 +391,7 @@ impl McpServer {
         }
         let max_results = p.limit.unwrap_or(5).clamp(1, 10) as usize;
         results.truncate(max_results);
-        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         let scored_at = results
             .iter()
             .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
@@ -458,7 +458,7 @@ impl McpServer {
             .await
             .map_err(map_api_error)?;
 
-        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         Ok(Json(into_context_output(profile, formula_version)))
     }
 
@@ -546,7 +546,7 @@ impl McpServer {
             .await
             .map_err(map_anyhow)?;
 
-        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         let profile = repos_service::get_repo_profile(&self.state.db, artifact_id)
             .await
             .map_err(map_api_error)?;
@@ -617,7 +617,7 @@ impl McpServer {
         .await
         .map_err(map_api_error)?;
 
-        let formula_version = load_v1().map_err(map_anyhow)?.meta.version;
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         Ok(Json(WatchRepoOutput {
             provenance: Provenance {
                 source: format!("usestakly://registry/github/{owner}/{name}"),

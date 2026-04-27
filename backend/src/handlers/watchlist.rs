@@ -10,7 +10,7 @@ use crate::{
     app::{AppState, error::ApiError},
     auth::resolve_current_user,
     domain::watchlist::{AddWatchRequest, WatchedRepo},
-    services::{quality::load_v1, watchlist},
+    services::{quality::load_v2, watchlist},
 };
 
 pub async fn list_watchlist(
@@ -18,7 +18,7 @@ pub async fn list_watchlist(
     headers: HeaderMap,
 ) -> Result<Json<Vec<WatchedRepo>>, ApiError> {
     let user = resolve_current_user(&state.db, &state.config, &headers).await?;
-    let formula_version = load_v1()?.meta.version;
+    let formula_version = load_v2()?.meta.version;
     let items = watchlist::list_for_user(&state.db, user.id, &formula_version).await?;
     Ok(Json(items))
 }
