@@ -1,9 +1,16 @@
-use chrono::{DateTime, Utc};
+use std::collections::HashSet;
+
+use chrono::{DateTime, Duration, Utc};
 use octocrab::Octocrab;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{app::error::ApiError, config::AppConfig, services::semantic_search};
+
+const COMMITS_LOOKBACK_DAYS: i64 = 90;
+const COMMITS_30D_WINDOW: i64 = 30;
+const COMMITS_PER_PAGE: u8 = 100;
+const COMMITS_MAX_PAGES: u32 = 5;
 
 pub struct GitHubRepoMetadata {
     pub github_id: i64,
@@ -21,6 +28,21 @@ pub struct GitHubRepoMetadata {
     pub open_issues_count: i32,
     pub subscribers_count: i32,
     pub last_commit_at: Option<DateTime<Utc>>,
+    pub structural: StructuralSignals,
+}
+
+/// Passive structural signals captured at ingestion time.
+/// Each field is `Option` : a fetch failure (rate-limit, transient network) leaves
+/// the slot at NULL rather than breaking the whole ingestion. The scoring formula
+/// treats NULL as "unknown / neutral", not as "zero".
+#[derive(Debug, Clone, Default)]
+pub struct StructuralSignals {
+    pub distinct_contributors_90d: Option<i32>,
+    pub commits_30d: Option<i32>,
+    pub has_ci: Option<bool>,
+    pub releases_count: Option<i32>,
+    pub last_release_at: Option<DateTime<Utc>>,
+    pub captured_at: Option<DateTime<Utc>>,
 }
 
 pub fn build_client(token: &str) -> Result<Octocrab, ApiError> {
@@ -72,6 +94,8 @@ pub async fn fetch_repo(
         .map(|u| u.to_string())
         .unwrap_or_else(|| format!("https://github.com/{resolved_owner}/{}", repo.name));
 
+    let structural = fetch_structural_signals(client, &resolved_owner, &repo.name).await;
+
     Ok(GitHubRepoMetadata {
         github_id: *repo.id as i64,
         owner: resolved_owner,
@@ -88,7 +112,188 @@ pub async fn fetch_repo(
         open_issues_count: repo.open_issues_count.unwrap_or(0) as i32,
         subscribers_count: repo.subscribers_count.unwrap_or(0) as i32,
         last_commit_at: repo.pushed_at,
+        structural,
     })
+}
+
+#[derive(Debug, Clone)]
+struct CommitSummary {
+    author_key: String,
+    committed_at: DateTime<Utc>,
+}
+
+struct CommitTally {
+    commits_30d: i32,
+    distinct_contributors_90d: i32,
+}
+
+fn tally_commits(commits: &[CommitSummary], cutoff_30d: DateTime<Utc>) -> CommitTally {
+    let mut authors: HashSet<&str> = HashSet::new();
+    let mut commits_30d: i32 = 0;
+    for commit in commits {
+        authors.insert(commit.author_key.as_str());
+        if commit.committed_at >= cutoff_30d {
+            commits_30d = commits_30d.saturating_add(1);
+        }
+    }
+    CommitTally {
+        commits_30d,
+        distinct_contributors_90d: authors.len() as i32,
+    }
+}
+
+fn commit_summary_from(commit: &octocrab::models::repos::RepoCommit) -> CommitSummary {
+    let inner_author = commit.commit.author.as_ref();
+    let author_key = commit
+        .author
+        .as_ref()
+        .map(|a| a.login.clone())
+        .filter(|s: &String| !s.is_empty())
+        .or_else(|| {
+            inner_author
+                .and_then(|a| a.email.clone())
+                .filter(|s: &String| !s.is_empty())
+        })
+        .or_else(|| {
+            inner_author
+                .map(|a| a.name.clone())
+                .filter(|s: &String| !s.is_empty())
+        })
+        .unwrap_or_else(|| format!("sha:{}", commit.sha));
+    let committed_at = commit
+        .commit
+        .author
+        .as_ref()
+        .and_then(|a| a.date)
+        .or_else(|| commit.commit.committer.as_ref().and_then(|a| a.date))
+        .unwrap_or_else(Utc::now);
+    CommitSummary {
+        author_key,
+        committed_at,
+    }
+}
+
+async fn fetch_structural_signals(client: &Octocrab, owner: &str, name: &str) -> StructuralSignals {
+    let now = Utc::now();
+    let cutoff_90d = now - Duration::days(COMMITS_LOOKBACK_DAYS);
+    let cutoff_30d = now - Duration::days(COMMITS_30D_WINDOW);
+
+    let (distinct_contributors_90d, commits_30d) =
+        match fetch_commits_since(client, owner, name, cutoff_90d).await {
+            Ok(commits) => {
+                let tally = tally_commits(&commits, cutoff_30d);
+                (
+                    Some(tally.distinct_contributors_90d),
+                    Some(tally.commits_30d),
+                )
+            }
+            Err(err) => {
+                tracing::warn!(
+                    target: "ingestion::github::structural",
+                    "commits fetch failed for {owner}/{name}: {err}"
+                );
+                (None, None)
+            }
+        };
+
+    let has_ci = match fetch_has_ci(client, owner, name).await {
+        Ok(value) => Some(value),
+        Err(err) => {
+            tracing::warn!(
+                target: "ingestion::github::structural",
+                "has_ci fetch failed for {owner}/{name}: {err}"
+            );
+            None
+        }
+    };
+
+    let (releases_count, last_release_at) = match fetch_releases_summary(client, owner, name).await
+    {
+        Ok((count, last)) => (Some(count), last),
+        Err(err) => {
+            tracing::warn!(
+                target: "ingestion::github::structural",
+                "releases fetch failed for {owner}/{name}: {err}"
+            );
+            (None, None)
+        }
+    };
+
+    StructuralSignals {
+        distinct_contributors_90d,
+        commits_30d,
+        has_ci,
+        releases_count,
+        last_release_at,
+        captured_at: Some(now),
+    }
+}
+
+async fn fetch_commits_since(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    since: DateTime<Utc>,
+) -> Result<Vec<CommitSummary>, octocrab::Error> {
+    let mut summaries: Vec<CommitSummary> = Vec::new();
+    let mut page = client
+        .repos(owner, name)
+        .list_commits()
+        .since(since)
+        .per_page(COMMITS_PER_PAGE)
+        .send()
+        .await?;
+    let mut pages_remaining = COMMITS_MAX_PAGES;
+    loop {
+        for commit in &page.items {
+            summaries.push(commit_summary_from(commit));
+        }
+        pages_remaining = pages_remaining.saturating_sub(1);
+        if pages_remaining == 0 {
+            break;
+        }
+        match client
+            .get_page::<octocrab::models::repos::RepoCommit>(&page.next)
+            .await?
+        {
+            Some(next) => page = next,
+            None => break,
+        }
+    }
+    Ok(summaries)
+}
+
+async fn fetch_has_ci(client: &Octocrab, owner: &str, name: &str) -> Result<bool, octocrab::Error> {
+    match client
+        .repos(owner, name)
+        .get_content()
+        .path(".github/workflows")
+        .send()
+        .await
+    {
+        Ok(content) => Ok(!content.items.is_empty()),
+        Err(octocrab::Error::GitHub { source, .. }) if source.status_code.as_u16() == 404 => {
+            Ok(false)
+        }
+        Err(err) => Err(err),
+    }
+}
+
+async fn fetch_releases_summary(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+) -> Result<(i32, Option<DateTime<Utc>>), octocrab::Error> {
+    let page = client
+        .repos(owner, name)
+        .releases()
+        .list()
+        .per_page(100)
+        .send()
+        .await?;
+    let count = page.items.len() as i32;
+    let last = page.items.iter().filter_map(|r| r.published_at).max();
+    Ok((count, last))
 }
 
 pub async fn upsert_github_artifact(
@@ -106,7 +311,9 @@ pub async fn upsert_github_artifact(
           default_branch, html_url, description, language,
           license_spdx, topics, archived,
           stars_count, forks_count, open_issues_count, subscribers_count,
-          last_commit_at, priors_fetched_at
+          last_commit_at, priors_fetched_at,
+          distinct_contributors_90d, commits_30d, has_ci,
+          releases_count, last_release_at, structural_signals_at
         )
         VALUES (
           CAST($1 AS external_source), $2, $3,
@@ -114,7 +321,9 @@ pub async fn upsert_github_artifact(
           $7, $8, $9, $10,
           $11, $12, $13,
           $14, $15, $16, $17,
-          $18, NOW()
+          $18, NOW(),
+          $19, $20, $21,
+          $22, $23, $24
         )
         ON CONFLICT (source, canonical_slug) DO UPDATE SET
           package_name = EXCLUDED.package_name,
@@ -133,7 +342,13 @@ pub async fn upsert_github_artifact(
           open_issues_count = EXCLUDED.open_issues_count,
           subscribers_count = EXCLUDED.subscribers_count,
           last_commit_at = EXCLUDED.last_commit_at,
-          priors_fetched_at = NOW()
+          priors_fetched_at = NOW(),
+          distinct_contributors_90d = COALESCE(EXCLUDED.distinct_contributors_90d, external_artifacts.distinct_contributors_90d),
+          commits_30d              = COALESCE(EXCLUDED.commits_30d,              external_artifacts.commits_30d),
+          has_ci                   = COALESCE(EXCLUDED.has_ci,                   external_artifacts.has_ci),
+          releases_count           = COALESCE(EXCLUDED.releases_count,           external_artifacts.releases_count),
+          last_release_at          = COALESCE(EXCLUDED.last_release_at,          external_artifacts.last_release_at),
+          structural_signals_at    = COALESCE(EXCLUDED.structural_signals_at,    external_artifacts.structural_signals_at)
         RETURNING id
         "#,
     )
@@ -155,6 +370,12 @@ pub async fn upsert_github_artifact(
     .bind(meta.open_issues_count)
     .bind(meta.subscribers_count)
     .bind(meta.last_commit_at)
+    .bind(meta.structural.distinct_contributors_90d)
+    .bind(meta.structural.commits_30d)
+    .bind(meta.structural.has_ci)
+    .bind(meta.structural.releases_count)
+    .bind(meta.structural.last_release_at)
+    .bind(meta.structural.captured_at)
     .fetch_one(db)
     .await?;
 
@@ -227,7 +448,8 @@ pub fn parse_github_repo_input(input: &str) -> Result<(String, String), ApiError
 
 #[cfg(test)]
 mod tests {
-    use super::parse_github_repo_input;
+    use super::{CommitSummary, parse_github_repo_input, tally_commits};
+    use chrono::{Duration, Utc};
 
     #[test]
     fn parses_owner_repo() {
@@ -247,5 +469,68 @@ mod tests {
     #[test]
     fn rejects_extra_segments() {
         assert!(parse_github_repo_input("openai/gpt/issues").is_err());
+    }
+
+    #[test]
+    fn tally_counts_distinct_authors_and_30d_window() {
+        let now = Utc::now();
+        let cutoff_30d = now - Duration::days(30);
+        let commits = vec![
+            CommitSummary {
+                author_key: "alice".into(),
+                committed_at: now - Duration::days(1),
+            },
+            CommitSummary {
+                author_key: "alice".into(),
+                committed_at: now - Duration::days(40),
+            },
+            CommitSummary {
+                author_key: "bob".into(),
+                committed_at: now - Duration::days(15),
+            },
+            CommitSummary {
+                author_key: "carol".into(),
+                committed_at: now - Duration::days(80),
+            },
+        ];
+        let tally = tally_commits(&commits, cutoff_30d);
+        assert_eq!(tally.distinct_contributors_90d, 3);
+        assert_eq!(tally.commits_30d, 2);
+    }
+
+    #[test]
+    fn tally_handles_empty_input() {
+        let now = Utc::now();
+        let cutoff_30d = now - Duration::days(30);
+        let tally = tally_commits(&[], cutoff_30d);
+        assert_eq!(tally.distinct_contributors_90d, 0);
+        assert_eq!(tally.commits_30d, 0);
+    }
+
+    #[test]
+    fn tally_solo_dev_high_cadence_is_one_contributor() {
+        let now = Utc::now();
+        let cutoff_30d = now - Duration::days(30);
+        let commits: Vec<CommitSummary> = (0..50)
+            .map(|i| CommitSummary {
+                author_key: "solo-vibe-coder".into(),
+                committed_at: now - Duration::hours(i),
+            })
+            .collect();
+        let tally = tally_commits(&commits, cutoff_30d);
+        assert_eq!(tally.distinct_contributors_90d, 1);
+        assert_eq!(tally.commits_30d, 50);
+    }
+
+    #[test]
+    fn tally_30d_boundary_is_inclusive() {
+        let now = Utc::now();
+        let cutoff_30d = now - Duration::days(30);
+        let commits = vec![CommitSummary {
+            author_key: "edge".into(),
+            committed_at: cutoff_30d,
+        }];
+        let tally = tally_commits(&commits, cutoff_30d);
+        assert_eq!(tally.commits_30d, 1);
     }
 }
