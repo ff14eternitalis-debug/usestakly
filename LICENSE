@@ -1,0 +1,44 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor: UseStakly (and its creators)
+Licensed Work: The UseStakly Platform, including but not limited to:
+               - The Scoring Engine and Formulas (formula_v1.toml, formula_v2.toml)
+               - The Backend API (Rust/Axum)
+               - The Frontend Application (React)
+               - The MCP CLI (usestakly-mcp)
+Additional Use Grant: 
+    1. You may make non-commercial use of the Licensed Work. 
+    2. You may use the Licensed Work for personal development, testing, and evaluation.
+    3. Any production use for the purpose of providing a scoring, registry, or 
+       discovery service for software repositories is strictly prohibited.
+    4. Redistribution of the Licensed Work, even if modified, under a different 
+       name, brand, or identity ("White-labeling") is strictly prohibited.
+    5. Any use intended to redirect users from the original UseStakly service 
+       to a derivative or competing service is strictly prohibited.
+Change Date: 2030-05-01
+Change License: Apache License, Version 2.0
+
+Terms
+
+1. A World-wide, royalty-free, non-exclusive, non-transferable license to 
+   copy, modify, create derivative works, and redistribute the Licensed 
+   Work is hereby granted for the Additional Use Grant, subject to the 
+   terms and conditions of this License.
+
+2. Any use of the Licensed Work not explicitly permitted by the Additional 
+   Use Grant is prohibited unless authorized by the Licensor in writing.
+
+3. On the Change Date, this License shall automatically convert to the Change License. 
+   The Change License shall govern all use of the Licensed Work from that point forward.
+
+4. All copies of the Licensed Work must include this License text, and 
+   the Parameters must remain unchanged.
+
+5. TRADEMARK: This license does not grant permission to use the trade names, 
+   trademarks, service marks, or product names of the Licensor (specifically "UseStakly"), 
+   except as required for reasonable and customary use in describing the 
+   origin of the Licensed Work.
+
+6. DISCLAIMER: THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

@@ -12,6 +12,7 @@
 ![TanStack Router](https://img.shields.io/badge/TanStack_Router-active-FF4154)
 ![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP-10B981)
 ![Coolify](https://img.shields.io/badge/Coolify-deployed-0B0D0E)
+![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-blue.svg)
 
 > Public beta observatory for GitHub OSS repositories: quality-scored discovery, watchlists, notifications, and MCP tools for coding agents.
 
@@ -190,3 +191,14 @@ Start here:
 - [docs/security-audit-2026-04-21.md](./docs/security-audit-2026-04-21.md)
 
 Archived snippets-era docs live under `docs/archive/snippets/` and are not the source of truth for the current product.
+
+## License
+
+UseStakly is licensed under the **Business Source License 1.1** (BSL 1.1).
+
+- **Source Available**: The source code is public and transparent.
+- **Protection**: Production use for competing services, white-labeling, or user redirection is strictly prohibited until the Change Date.
+- **Future Open Source**: On **May 1st, 2030**, this version of the software will automatically convert to the **Apache License, Version 2.0**.
+
+For full terms and conditions, please see the [LICENSE](./LICENSE) file.
+
