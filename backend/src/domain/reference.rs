@@ -51,6 +51,7 @@ pub struct QualityContext {
     pub adoption: Option<f64>,
     pub reliability: Option<f64>,
     pub abandonment: Option<f64>,
+    pub vitality: Option<f64>,
     pub overall: Option<f64>,
     pub resolve_count: i32,
     pub build_success_count: i32,

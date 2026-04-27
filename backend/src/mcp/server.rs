@@ -135,6 +135,7 @@ pub struct RepoRecommendation {
     pub quality_adoption: Option<f64>,
     pub quality_reliability: Option<f64>,
     pub quality_abandonment: Option<f64>,
+    pub quality_vitality: Option<f64>,
     pub flags: Vec<String>,
     pub reasons: Vec<String>,
     pub caveats: Vec<String>,
@@ -190,12 +191,24 @@ pub struct RepoContextOutput {
     pub quality_adoption: Option<f64>,
     pub quality_reliability: Option<f64>,
     pub quality_abandonment: Option<f64>,
+    pub quality_vitality: Option<f64>,
+    pub vitality_inputs: VitalityInputsOutput,
     pub quality_resolve_count: i32,
     pub quality_build_success_count: i32,
     pub quality_build_failure_count: i32,
     pub quality_regret_count: i32,
     pub flags: Vec<String>,
     pub recent_signals: Vec<SignalSummary>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct VitalityInputsOutput {
+    pub structural_signals_at: Option<DateTime<Utc>>,
+    pub distinct_contributors_90d: Option<i32>,
+    pub commits_30d: Option<i32>,
+    pub has_ci: Option<bool>,
+    pub releases_count: Option<i32>,
+    pub last_release_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -820,6 +833,7 @@ fn build_recommendations(
                 quality_adoption: q.and_then(|q| q.adoption),
                 quality_reliability: q.and_then(|q| q.reliability),
                 quality_abandonment: q.and_then(|q| q.abandonment),
+                quality_vitality: q.and_then(|q| q.vitality),
                 flags: q.map(|q| q.flags.clone()).unwrap_or_default(),
                 reasons: recommendation_reasons(q, risk),
                 caveats: recommendation_caveats(q, risk),
@@ -988,6 +1002,15 @@ fn into_context_output(
         quality_adoption: q.as_ref().and_then(|q| q.adoption),
         quality_reliability: q.as_ref().and_then(|q| q.reliability),
         quality_abandonment: q.as_ref().and_then(|q| q.abandonment),
+        quality_vitality: q.as_ref().and_then(|q| q.vitality),
+        vitality_inputs: VitalityInputsOutput {
+            structural_signals_at: profile.vitality_inputs.structural_signals_at,
+            distinct_contributors_90d: profile.vitality_inputs.distinct_contributors_90d,
+            commits_30d: profile.vitality_inputs.commits_30d,
+            has_ci: profile.vitality_inputs.has_ci,
+            releases_count: profile.vitality_inputs.releases_count,
+            last_release_at: profile.vitality_inputs.last_release_at,
+        },
         quality_resolve_count: q.as_ref().map(|q| q.resolve_count).unwrap_or_default(),
         quality_build_success_count: q
             .as_ref()
@@ -1065,7 +1088,7 @@ mod tests {
     use crate::config::AppConfig;
     use crate::domain::{
         reference::{QualityContext, SearchFilter},
-        repo::{RepoProfile, RepoSearchResult, RepoSignal},
+        repo::{RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
     };
 
     #[test]
@@ -1146,11 +1169,12 @@ mod tests {
                 archived: false,
                 last_commit_at: Some(computed_at),
                 quality: Some(QualityContext {
-                    formula_version: "v1.1".to_string(),
+                    formula_version: "v2.0".to_string(),
                     freshness: Some(0.91),
                     adoption: Some(0.98),
                     reliability: Some(0.84),
                     abandonment: Some(0.08),
+                    vitality: Some(0.95),
                     overall: Some(0.9),
                     resolve_count: 12,
                     build_success_count: 8,
@@ -1163,6 +1187,14 @@ mod tests {
             subscribers_count: 6_400,
             default_branch: Some("main".to_string()),
             priors_fetched_at: Some(computed_at),
+            vitality_inputs: VitalityInputs {
+                structural_signals_at: Some(computed_at),
+                distinct_contributors_90d: Some(120),
+                commits_30d: Some(450),
+                has_ci: Some(true),
+                releases_count: Some(40),
+                last_release_at: Some(computed_at),
+            },
             recent_signals: vec![RepoSignal {
                 id: signal_id,
                 signal: "build_success".to_string(),
@@ -1178,13 +1210,16 @@ mod tests {
             }],
         };
 
-        let output = into_context_output(profile, "v1.1".to_string());
+        let output = into_context_output(profile, "v2.0".to_string());
 
         assert_eq!(
             output.provenance.source,
             "usestakly://registry/github/facebook/react"
         );
-        assert_eq!(output.provenance.formula_version, "v1.1");
+        assert_eq!(output.provenance.formula_version, "v2.0");
+        assert_eq!(output.quality_vitality, Some(0.95));
+        assert_eq!(output.vitality_inputs.has_ci, Some(true));
+        assert_eq!(output.vitality_inputs.distinct_contributors_90d, Some(120));
         assert_eq!(output.provenance.scored_at, Some(computed_at));
         assert_eq!(output.full_name, "facebook/react");
         assert_eq!(output.quality_overall, Some(0.9));
@@ -1219,11 +1254,12 @@ mod tests {
             archived: false,
             last_commit_at: Some(computed_at),
             quality: Some(QualityContext {
-                formula_version: "v1.1".to_string(),
+                formula_version: "v2.0".to_string(),
                 freshness: Some(0.92),
                 adoption: Some(0.0),
                 reliability: Some(0.5),
                 abandonment: Some(0.04),
+                vitality: Some(0.78),
                 overall: Some(0.71),
                 resolve_count: 0,
                 build_success_count: 1,

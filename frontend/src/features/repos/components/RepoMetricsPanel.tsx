@@ -6,7 +6,7 @@ import {
   formatStars,
   scoreTone
 } from "../../../lib/format";
-import type { RepoProfile } from "../../../lib/types";
+import type { RepoProfile, VitalityInputs } from "../../../lib/types";
 
 function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   if (tone === "danger") return "var(--color-danger)";
@@ -37,10 +37,20 @@ type RepoMetricsPanelProps = {
   adoptionLabel: string;
   reliabilityLabel: string;
   abandonmentLabel: string;
+  vitalityLabel: string;
   freshnessHint: string;
   adoptionHint: string;
   reliabilityHint: string;
   abandonmentHint: string;
+  vitalityHint: string;
+  vitalityCollectiveLabel: string;
+  vitalityCadenceLabel: string;
+  vitalityCiLabel: string;
+  vitalityReleaseLabel: string;
+  vitalityNotCapturedLabel: string;
+  vitalityNeverReleasedLabel: string;
+  ciYesLabel: string;
+  ciNoLabel: string;
   starsLabel: string;
   forksLabel: string;
   openIssuesLabel: string;
@@ -49,6 +59,69 @@ type RepoMetricsPanelProps = {
   priorsFetchedLabel: string;
   defaultBranchLabel: string;
 };
+
+function formatNullableNumber(value: number | null): string {
+  return value === null || value === undefined ? "—" : String(value);
+}
+
+function formatBoolean(
+  value: boolean | null,
+  yes: string,
+  no: string
+): string {
+  if (value === null || value === undefined) return "—";
+  return value ? yes : no;
+}
+
+function VitalityBreakdown({
+  inputs,
+  notCapturedLabel,
+  neverReleasedLabel,
+  collectiveLabel,
+  cadenceLabel,
+  ciLabel,
+  releaseLabel,
+  ciYesLabel,
+  ciNoLabel
+}: {
+  inputs: VitalityInputs;
+  notCapturedLabel: string;
+  neverReleasedLabel: string;
+  collectiveLabel: string;
+  cadenceLabel: string;
+  ciLabel: string;
+  releaseLabel: string;
+  ciYesLabel: string;
+  ciNoLabel: string;
+}) {
+  if (!inputs.structuralSignalsAt) {
+    return (
+      <p className="text-[0.84rem] text-fg-muted">{notCapturedLabel}</p>
+    );
+  }
+
+  return (
+    <div className="grid gap-2 text-[0.88rem] sm:grid-cols-2">
+      <Row
+        k={collectiveLabel}
+        v={formatNullableNumber(inputs.distinctContributors90d)}
+      />
+      <Row k={cadenceLabel} v={formatNullableNumber(inputs.commits30d)} />
+      <Row
+        k={ciLabel}
+        v={formatBoolean(inputs.hasCi, ciYesLabel, ciNoLabel)}
+      />
+      <Row
+        k={releaseLabel}
+        v={
+          inputs.lastReleaseAt
+            ? formatRelative(inputs.lastReleaseAt)
+            : neverReleasedLabel
+        }
+      />
+    </div>
+  );
+}
 
 export function RepoMetricsPanel({
   repo,
@@ -59,10 +132,20 @@ export function RepoMetricsPanel({
   adoptionLabel,
   reliabilityLabel,
   abandonmentLabel,
+  vitalityLabel,
   freshnessHint,
   adoptionHint,
   reliabilityHint,
   abandonmentHint,
+  vitalityHint,
+  vitalityCollectiveLabel,
+  vitalityCadenceLabel,
+  vitalityCiLabel,
+  vitalityReleaseLabel,
+  vitalityNotCapturedLabel,
+  vitalityNeverReleasedLabel,
+  ciYesLabel,
+  ciNoLabel,
   starsLabel,
   forksLabel,
   openIssuesLabel,
@@ -131,6 +214,26 @@ export function RepoMetricsPanel({
             tone={abandonmentTone(q?.abandonment ?? null)}
             invert
             hint={abandonmentHint}
+          />
+        </div>
+
+        <div className="surface p-5 grid gap-4">
+          <ScoreBar
+            label={vitalityLabel}
+            value={q?.vitality ?? null}
+            tone={scoreTone(q?.vitality ?? null)}
+            hint={vitalityHint}
+          />
+          <VitalityBreakdown
+            inputs={repo.vitalityInputs}
+            notCapturedLabel={vitalityNotCapturedLabel}
+            neverReleasedLabel={vitalityNeverReleasedLabel}
+            collectiveLabel={vitalityCollectiveLabel}
+            cadenceLabel={vitalityCadenceLabel}
+            ciLabel={vitalityCiLabel}
+            releaseLabel={vitalityReleaseLabel}
+            ciYesLabel={ciYesLabel}
+            ciNoLabel={ciNoLabel}
           />
         </div>
       </div>

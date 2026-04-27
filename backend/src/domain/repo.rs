@@ -56,5 +56,17 @@ pub struct RepoProfile {
     pub subscribers_count: i32,
     pub default_branch: Option<String>,
     pub priors_fetched_at: Option<DateTime<Utc>>,
+    pub vitality_inputs: VitalityInputs,
     pub recent_signals: Vec<RepoSignal>,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct VitalityInputs {
+    pub structural_signals_at: Option<DateTime<Utc>>,
+    pub distinct_contributors_90d: Option<i32>,
+    pub commits_30d: Option<i32>,
+    pub has_ci: Option<bool>,
+    pub releases_count: Option<i32>,
+    pub last_release_at: Option<DateTime<Utc>>,
 }

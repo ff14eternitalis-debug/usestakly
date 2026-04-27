@@ -70,6 +70,30 @@ export function HowToReadPage() {
 
       <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
         <div className="grid content-start gap-3">
+          <span className="kicker">{t.howToRead.formulaVersionLabel}</span>
+          <h2 className="display-md !text-[1.45rem]">
+            {t.howToRead.formulaVersionTitle}
+          </h2>
+        </div>
+        <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
+          {t.howToRead.formulaVersionBody}
+        </p>
+      </section>
+
+      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
+        <div className="grid content-start gap-3">
+          <span className="kicker">{t.howToRead.vitalityLimitsLabel}</span>
+          <h2 className="display-md !text-[1.45rem]">
+            {t.howToRead.vitalityLimitsTitle}
+          </h2>
+        </div>
+        <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
+          {t.howToRead.vitalityLimitsBody}
+        </p>
+      </section>
+
+      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
+        <div className="grid content-start gap-3">
           <span className="kicker">{t.howToRead.modesLabel}</span>
           <h2 className="display-md !text-[1.45rem]">
             {t.howToRead.modesTitle}

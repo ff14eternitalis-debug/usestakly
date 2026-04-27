@@ -14,6 +14,7 @@ export type QualityContext = {
   adoption: number | null;
   reliability: number | null;
   abandonment: number | null;
+  vitality: number | null;
   overall: number | null;
   resolveCount: number;
   buildSuccessCount: number;
@@ -22,6 +23,15 @@ export type QualityContext = {
   flags: string[];
   formulaVersion: string | null;
   computedAt: string | null;
+};
+
+export type VitalityInputs = {
+  structuralSignalsAt: string | null;
+  distinctContributors90d: number | null;
+  commits30d: number | null;
+  hasCi: boolean | null;
+  releasesCount: number | null;
+  lastReleaseAt: string | null;
 };
 
 export type RepoSearchResult = {
@@ -66,6 +76,7 @@ export type RepoProfile = RepoSearchResult & {
   subscribersCount: number;
   defaultBranch: string | null;
   priorsFetchedAt: string | null;
+  vitalityInputs: VitalityInputs;
   recentSignals: RepoSignal[];
 };
 

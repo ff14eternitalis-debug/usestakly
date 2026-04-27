@@ -257,10 +257,21 @@ export const en = {
     adoption: "Adoption",
     reliability: "Reliability",
     abandonment: "Abandonment",
+    vitality: "Vitality",
     freshnessHint: "Exponential decay on last_commit_at (half-life 180d).",
     adoptionHint: "Log-normalised resolve count (saturates at 1k).",
     reliabilityHint: "Success / total builds. Neutral 0.5 before 5 samples.",
-    abandonmentHint: "Inverse freshness plus regret bump above threshold.",
+    abandonmentHint: "Inverse freshness plus regret bump above threshold; coupled with vitality.",
+    vitalityHint:
+      "Structural maintainer signals captured at ingestion: contributors, cadence, CI, releases.",
+    vitalityCollective: "Distinct contributors (90d)",
+    vitalityCadence: "Commits (30d)",
+    vitalityCi: "Continuous integration",
+    vitalityRelease: "Last release",
+    vitalityNotCaptured: "Structural signals not yet captured.",
+    ciYes: "Yes",
+    ciNo: "No",
+    vitalityNeverReleased: "no release",
     scoreGuideTitle: "How to read this score",
     scoreGuideBody:
       "Use the overall verdict as a first pass, then inspect the dimensions. A strong repo can still need monitoring if freshness decays or abandonment risk rises.",
@@ -505,9 +516,22 @@ export const en = {
       {
         name: "Abandonment",
         body:
-          "Estimates risk. Lower is better. High abandonment can pull down an otherwise popular repo."
+          "Estimates risk. Lower is better. In v2 it is coupled with vitality, so a fresh push alone can no longer mask a degraded maintainer structure."
+      },
+      {
+        name: "Vitality",
+        body:
+          "Structural maintainer signals captured directly from GitHub at ingestion: distinct contributors over 90 days, commit cadence over 30 days, presence of CI workflows, and recency of releases. This is the anti-slop floor: a freshly-pushed solo repo with no CI and no release cannot dominate the ranking on freshness alone."
       }
     ],
+    formulaVersionLabel: "Formula version",
+    formulaVersionTitle: "v2.0 adds vitality and couples it with abandonment",
+    formulaVersionBody:
+      "Formula v2.0 (April 2026) introduced the vitality dimension on top of the existing four. Weights: freshness 0.15, adoption 0.10, reliability 0.30, abandonment 0.20, vitality 0.25. Old v1.1 scores remain readable in the audit history under their original formula tag.",
+    vitalityLimitsLabel: "What vitality does not measure",
+    vitalityLimitsTitle: "Honest limits",
+    vitalityLimitsBody:
+      "Vitality is structural and passive. It cannot tell whether code is well written, whether the maintainers are responsive, or whether a niche solo project of high quality deserves more credit than its sub-signals suggest. Legitimate solo tools and personal scripts will be penalised — that is an explicit tradeoff against the slop risk. Read the dimension as a floor, not a verdict on craft.",
     modesLabel: "Modes",
     modesTitle: "Same formula, different thresholds",
     modes: [
@@ -538,7 +562,7 @@ export const en = {
     workflowItems: [
       "Start in Auto mode and search the category you need.",
       "Compare Overall, then open the repo detail for dimensions and flags.",
-      "Treat high Abandonment or low Freshness as a reason to inspect before adopting.",
+      "Treat high Abandonment, low Freshness, or low Vitality as a reason to inspect before adopting.",
       "Add real dependencies to the watchlist so drift becomes visible later."
     ],
     ctaDiscover: "Open discover",

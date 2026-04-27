@@ -259,10 +259,21 @@ export const fr: Dict = {
     adoption: "Adoption",
     reliability: "Fiabilité",
     abandonment: "Abandon",
+    vitality: "Vitalité",
     freshnessHint: "Décroissance exponentielle sur last_commit_at (demi-vie 180j).",
     adoptionHint: "Nombre de résolutions log-normalisé (sature à 1k).",
     reliabilityHint: "Succès / total builds. Neutre 0.5 avant 5 échantillons.",
-    abandonmentHint: "Inverse fraîcheur plus bump de regret au-dessus du seuil.",
+    abandonmentHint: "Inverse fraîcheur plus bump de regret au-dessus du seuil ; couplé à la vitalité.",
+    vitalityHint:
+      "Signaux structurels de maintenance capturés à l'ingestion : contributeurs, cadence, CI, releases.",
+    vitalityCollective: "Contributeurs distincts (90j)",
+    vitalityCadence: "Commits (30j)",
+    vitalityCi: "Intégration continue",
+    vitalityRelease: "Dernière release",
+    vitalityNotCaptured: "Signaux structurels pas encore capturés.",
+    ciYes: "Oui",
+    ciNo: "Non",
+    vitalityNeverReleased: "aucune release",
     scoreGuideTitle: "Comment lire ce score",
     scoreGuideBody:
       "Utilise le verdict global comme premier tri, puis regarde les dimensions. Un bon repo peut quand même demander de la veille si la fraîcheur baisse ou si l'abandon grimpe.",
@@ -508,9 +519,22 @@ export const fr: Dict = {
       {
         name: "Abandon",
         body:
-          "Estime le risque. Plus bas est meilleur. Un abandon élevé peut tirer vers le bas un repo pourtant populaire."
+          "Estime le risque. Plus bas est meilleur. En v2, l'abandon est couplé avec la vitalité, donc un push frais ne suffit plus à masquer une structure de mainteneurs dégradée."
+      },
+      {
+        name: "Vitalité",
+        body:
+          "Signaux structurels de maintenance capturés directement depuis GitHub à l'ingestion : contributeurs distincts sur 90 jours, cadence de commits sur 30 jours, présence de workflows CI, fraîcheur de la dernière release. C'est le plancher anti-slop : un repo solo fraîchement pushé sans CI ni release ne peut plus dominer le ranking sur la seule fraîcheur."
       }
     ],
+    formulaVersionLabel: "Version de formule",
+    formulaVersionTitle: "v2.0 ajoute la vitalité et la couple à l'abandon",
+    formulaVersionBody:
+      "La formule v2.0 (avril 2026) a introduit la dimension vitalité par-dessus les quatre existantes. Poids : fraîcheur 0.15, adoption 0.10, fiabilité 0.30, abandon 0.20, vitalité 0.25. Les anciens scores v1.1 restent lisibles dans l'historique d'audit sous leur tag de formule d'origine.",
+    vitalityLimitsLabel: "Ce que la vitalité ne mesure pas",
+    vitalityLimitsTitle: "Limites assumées",
+    vitalityLimitsBody:
+      "La vitalité est structurelle et passive. Elle ne dit pas si le code est bien écrit, si les mainteneurs sont réactifs, ni si un projet solo de niche très qualitatif mérite plus de crédit que ses sous-signaux ne le suggèrent. Les outils solo légitimes et scripts personnels seront pénalisés — c'est un tradeoff explicite face au risque de slop. À lire comme un plancher, pas un verdict sur l'artisanat.",
     modesLabel: "Modes",
     modesTitle: "Même formule, seuils différents",
     modes: [
@@ -541,7 +565,7 @@ export const fr: Dict = {
     workflowItems: [
       "Démarre en mode Auto et cherche la catégorie dont tu as besoin.",
       "Compare le Global, puis ouvre le détail repo pour les dimensions et flags.",
-      "Traite un Abandon haut ou une Fraîcheur basse comme un signal à inspecter avant adoption.",
+      "Traite un Abandon haut, une Fraîcheur basse ou une Vitalité faible comme un signal à inspecter avant adoption.",
       "Ajoute tes vraies dépendances à la veille pour rendre les dérives visibles ensuite."
     ],
     ctaDiscover: "Ouvrir Explorer",
