@@ -284,8 +284,13 @@ fn classify_with_rule(
     let readme_medium = matches_text(rule.medium, readme_haystack);
     let readme_weak = matches_text(rule.weak, readme_haystack);
 
-    if rule.category == "ui-kit" && strong.is_empty() && readme_strong.is_empty() {
-        return None;
+    if rule.category == "ui-kit" {
+        if strong.is_empty() && readme_strong.is_empty() {
+            return None;
+        }
+        if strong.is_empty() && !has_ui_kit_readme_anchor(&readme_strong) {
+            return None;
+        }
     }
 
     let score = (strong.len() as f64 * 0.34)
@@ -370,6 +375,23 @@ fn matches_text<'a>(terms: &'a [&'a str], haystack: &str) -> Vec<&'a str> {
         .collect()
 }
 
+fn has_ui_kit_readme_anchor(terms: &[&str]) -> bool {
+    terms.iter().any(|term| {
+        matches!(
+            *term,
+            "design-system"
+                | "design system"
+                | "shadcn"
+                | "material-ui"
+                | "chakra"
+                | "radix"
+                | "mantine"
+                | "headlessui"
+                | "ant-design"
+        )
+    })
+}
+
 fn text_tokens(input: &str) -> Vec<String> {
     input
         .split(|ch: char| !ch.is_ascii_alphanumeric())
@@ -431,6 +453,13 @@ mod tests {
 
     fn categories(meta: GitHubRepoMetadata) -> Vec<String> {
         classify_repo(&meta)
+            .into_iter()
+            .map(|category| category.category)
+            .collect()
+    }
+
+    fn categories_with_readme(meta: GitHubRepoMetadata, readme: &str) -> Vec<String> {
+        classify_repo_with_readme(&meta, Some(readme))
             .into_iter()
             .map(|category| category.category)
             .collect()
@@ -514,6 +543,21 @@ mod tests {
         let serialized = serde_json::to_string(&found).unwrap();
         assert!(!serialized.contains("Secretly long README"));
         assert!(!serialized.contains("Headless UI components for a design system"));
+    }
+
+    #[test]
+    fn readme_generic_ui_words_do_not_create_ui_kit_false_positive() {
+        let found = categories_with_readme(
+            meta(
+                "fastapi",
+                "fastapi",
+                "FastAPI framework with swagger-ui",
+                &["framework", "swagger-ui"],
+            ),
+            "# FastAPI\n\nBuild APIs with docs, UI, interfaces and reusable components.",
+        );
+
+        assert!(!found.contains(&"ui-kit".to_string()));
     }
 
     #[test]
