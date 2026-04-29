@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { buttonClass } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { useT } from "../i18n";
+import { listUseCaseWatches } from "../lib/api/use-cases";
 import { apiDelete, apiGet, apiPatch } from "../lib/api-client";
 import {
   abandonmentTone,
@@ -14,7 +15,7 @@ import {
   formatStars,
   scoreTone
 } from "../lib/format";
-import type { WatchedRepo } from "../lib/types";
+import type { UseCaseWatch, WatchedRepo } from "../lib/types";
 
 function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   if (tone === "danger") return "var(--color-danger)";
@@ -32,6 +33,10 @@ export function WatchlistPage() {
     queryKey: ["watchlist"],
     queryFn: ({ signal }) => apiGet<WatchedRepo[]>("/api/watchlist", signal)
   });
+  const useCaseQuery = useQuery({
+    queryKey: ["use-case-watches"],
+    queryFn: ({ signal }) => listUseCaseWatches(signal)
+  });
 
   const toggleMute = useMutation({
     mutationFn: ({ id, muted }: { id: string; muted: boolean }) =>
@@ -48,6 +53,10 @@ export function WatchlistPage() {
   });
 
   const items = query.data ?? [];
+  const useCaseWatches = useCaseQuery.data ?? [];
+  const isLoading = query.isLoading || useCaseQuery.isLoading;
+  const isError = query.isError || useCaseQuery.isError;
+  const hasAnyWatch = items.length > 0 || useCaseWatches.length > 0;
 
   return (
     <section className="shell grid gap-8 py-10 md:py-14">
@@ -69,11 +78,11 @@ export function WatchlistPage() {
         </div>
       </header>
 
-      {query.isLoading ? (
+      {isLoading ? (
         <div className="py-10 text-center">
           <span className="kicker">{t.watchlist.loading}</span>
         </div>
-      ) : query.isError ? (
+      ) : isError ? (
         <div className="surface grid gap-4 p-10 text-center">
           <p className="display-md !text-[1.3rem]">{t.watchlist.loadErrorTitle}</p>
           <p className="max-w-[52ch] mx-auto text-[0.96rem] leading-relaxed text-fg-dim">
@@ -81,13 +90,16 @@ export function WatchlistPage() {
           </p>
           <button
             type="button"
-            onClick={() => void query.refetch()}
+            onClick={() => {
+              void query.refetch();
+              void useCaseQuery.refetch();
+            }}
             className={`${buttonClass("outline")} justify-self-center mt-2`}
           >
             {t.watchlist.retry}
           </button>
         </div>
-      ) : items.length === 0 ? (
+      ) : !hasAnyWatch ? (
         <div className="surface grid gap-4 p-10 text-center">
           <p className="display-md !text-[1.3rem]">{t.watchlist.emptyTitle}</p>
           <p className="max-w-[52ch] mx-auto text-[0.96rem] leading-relaxed text-fg-dim">
@@ -102,8 +114,43 @@ export function WatchlistPage() {
           </Link>
         </div>
       ) : (
-        <ul className="grid gap-3">
-          {items.map((w, i) => {
+        <div className="grid gap-8">
+          {useCaseWatches.length > 0 ? (
+            <section className="grid gap-3">
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <div>
+                  <p className="kicker">{t.watchlist.needsLabel}</p>
+                  <h2 className="text-[1.05rem] font-semibold text-fg">
+                    {t.watchlist.needsTitle}
+                  </h2>
+                </div>
+                <span className="mono text-[0.78rem] text-fg-muted">
+                  {useCaseWatches.length} {t.watchlist.needsCount}
+                </span>
+              </div>
+              <ul className="grid gap-3">
+                {useCaseWatches.map((watch) => (
+                  <UseCaseWatchItem key={watch.id} watch={watch} />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {items.length > 0 ? (
+            <section className="grid gap-3">
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <div>
+                  <p className="kicker">{t.watchlist.reposLabel}</p>
+                  <h2 className="text-[1.05rem] font-semibold text-fg">
+                    {t.watchlist.reposTitle}
+                  </h2>
+                </div>
+                <span className="mono text-[0.78rem] text-fg-muted">
+                  {items.length} {t.watchlist.reposCount}
+                </span>
+              </div>
+              <ul className="grid gap-3">
+                {items.map((w, i) => {
             const overallTone = scoreTone(w.overall);
             const abTone = abandonmentTone(w.abandonment);
             const isMuting =
@@ -222,9 +269,60 @@ export function WatchlistPage() {
                 </div>
               </li>
             );
-          })}
-        </ul>
+                })}
+              </ul>
+            </section>
+          ) : null}
+        </div>
       )}
     </section>
+  );
+}
+
+function UseCaseWatchItem({ watch }: { watch: UseCaseWatch }) {
+  const t = useT();
+  return (
+    <li className="grid gap-4 rounded-[10px] border border-line bg-surface/40 p-5 transition-colors hover:border-line-strong md:grid-cols-[1fr_auto] md:items-start">
+      <div className="grid gap-3 min-w-0">
+        <div className="grid gap-1">
+          <h3 className="display-md !text-[1.08rem]">{watch.label}</h3>
+          <p className="max-w-[70ch] text-[0.9rem] leading-relaxed text-fg-dim">
+            {watch.queryText}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip tone="info">{watch.normalizedIntent}</Chip>
+          <Chip tone="neutral">risk {watch.riskTolerance}</Chip>
+          {watch.topics.slice(0, 6).map((topic) => (
+            <Chip key={topic} tone="neutral">
+              #{topic}
+            </Chip>
+          ))}
+        </div>
+        {watch.topMatches.length > 0 ? (
+          <div className="flex flex-wrap gap-2 text-[0.82rem] text-fg-dim">
+            {watch.topMatches.slice(0, 4).map((match) => (
+              <Link
+                key={match.artifactId}
+                to="/repos/$id"
+                params={{ id: match.artifactId }}
+                className="rounded-[999px] border border-line bg-bg-subtle px-3 py-1.5 transition-colors hover:border-accent hover:text-accent"
+              >
+                {match.fullName} · {formatScore(match.qualityScore)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className="grid gap-1 md:text-right">
+        <span className="kicker">{t.watchlist.matches}</span>
+        <span className="data-value text-[2.2rem] leading-none text-fg">
+          {watch.matchCount}
+        </span>
+        <span className="mono text-[0.76rem] text-fg-muted">
+          {formatRelative(watch.createdAt)}
+        </span>
+      </div>
+    </li>
   );
 }

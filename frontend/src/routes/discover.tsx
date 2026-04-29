@@ -4,6 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "../components/Button";
 import { RepoCard } from "../components/RepoCard";
+import { UseCaseSearchPanel } from "../features/repos/components/UseCaseSearchPanel";
 import { useT } from "../i18n";
 import { ApiError, apiGet, apiPost } from "../lib/api-client";
 import type { AddRepoResponse, RepoSearchResponse, RepoSort, SearchFilter } from "../lib/types";
@@ -208,6 +209,8 @@ export function DiscoverPage() {
           </p>
         </div>
       </section>
+
+      <UseCaseSearchPanel />
 
       <div className="surface grid gap-4 p-4 md:p-5">
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">

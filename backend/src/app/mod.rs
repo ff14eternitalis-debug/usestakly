@@ -10,12 +10,16 @@ use axum::{
     routing::{get, post},
 };
 use sqlx::PgPool;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 
 use crate::{
     config::AppConfig,
     handlers::{
-        account, admin, agent_tokens, auth, health, me, notifications, repos, search, watchlist,
+        account, admin, agent_tokens, auth, health, me, notifications, repos, search, use_cases,
+        watchlist,
     },
     mcp::server as mcp_server,
     services::agent_tokens as agent_token_service,
@@ -28,10 +32,7 @@ pub struct AppState {
 }
 
 pub fn build_app(config: AppConfig, db: PgPool) -> Router {
-    let frontend_origin = config
-        .frontend_base_url
-        .parse::<HeaderValue>()
-        .unwrap_or_else(|_| HeaderValue::from_static("http://localhost:5173"));
+    let allowed_origins = allowed_frontend_origins(&config.frontend_base_url);
     let state = AppState { config, db };
     let mcp_service = mcp_server::build_service(state.clone());
     let mcp_routes = Router::new()
@@ -75,6 +76,14 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
             post(admin::review_repo_signal),
         )
         .route("/api/search", get(search::search))
+        .route(
+            "/api/use-cases/recommend",
+            post(use_cases::recommend_use_case),
+        )
+        .route(
+            "/api/use-cases/watch",
+            get(use_cases::list_use_case_watches).post(use_cases::create_use_case_watch),
+        )
         .route("/api/repos/add", post(repos::add_repo))
         .route("/api/repos/search", get(repos::search_repos))
         .route("/api/repos/{repo_id}", get(repos::get_repo))
@@ -121,7 +130,9 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         )
         .layer(
             CorsLayer::new()
-                .allow_origin(frontend_origin)
+                .allow_origin(AllowOrigin::predicate(move |origin, _| {
+                    allowed_origins.iter().any(|allowed| allowed == origin)
+                }))
                 .allow_credentials(true)
                 .allow_methods([
                     Method::GET,
@@ -137,6 +148,35 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
+}
+
+fn allowed_frontend_origins(frontend_base_url: &str) -> Vec<HeaderValue> {
+    let mut origins = Vec::new();
+    push_origin(&mut origins, frontend_base_url);
+    if frontend_base_url.starts_with("http://localhost:") {
+        push_origin(
+            &mut origins,
+            &frontend_base_url.replacen("http://localhost:", "http://127.0.0.1:", 1),
+        );
+    } else if frontend_base_url.starts_with("http://127.0.0.1:") {
+        push_origin(
+            &mut origins,
+            &frontend_base_url.replacen("http://127.0.0.1:", "http://localhost:", 1),
+        );
+    }
+    if origins.is_empty() {
+        origins.push(HeaderValue::from_static("http://localhost:5173"));
+        origins.push(HeaderValue::from_static("http://127.0.0.1:5173"));
+    }
+    origins
+}
+
+fn push_origin(origins: &mut Vec<HeaderValue>, value: &str) {
+    if let Ok(origin) = value.parse::<HeaderValue>()
+        && !origins.iter().any(|existing| existing == origin)
+    {
+        origins.push(origin);
+    }
 }
 
 async fn require_mcp_authorization(

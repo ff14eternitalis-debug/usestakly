@@ -7,4 +7,5 @@ pub mod me;
 pub mod notifications;
 pub mod repos;
 pub mod search;
+pub mod use_cases;
 pub mod watchlist;

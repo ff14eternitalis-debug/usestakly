@@ -95,6 +95,60 @@ export type RepoSearchResponse = {
   items: RepoSearchResult[];
 };
 
+export type IntentConfidence = "high" | "medium" | "low";
+
+export type UseCaseIntent = {
+  label: string;
+  confidence: IntentConfidence;
+  categories: string[];
+  topics: string[];
+  languages: string[];
+};
+
+export type UseCaseRecommendation = RepoSearchResult & {
+  matchScore: number;
+  recommendationScore: number;
+  risk: "low" | "medium" | "high" | string;
+  reason: string;
+  matchedTopics: string[];
+};
+
+export type UseCaseRecommendationReport = {
+  query: string;
+  riskTolerance: string;
+  intent: UseCaseIntent;
+  recommendations: UseCaseRecommendation[];
+  fallbackCandidates: string[];
+};
+
+export type UseCaseWatchMatch = {
+  artifactId: string;
+  fullName: string;
+  language: string | null;
+  matchScore: number;
+  qualityScore: number | null;
+};
+
+export type UseCaseWatch = {
+  id: string;
+  queryText: string;
+  label: string;
+  normalizedIntent: string;
+  categories: string[];
+  topics: string[];
+  languages: string[];
+  riskTolerance: string;
+  enabled: boolean;
+  matchCount: number;
+  topMatches: UseCaseWatchMatch[];
+  createdAt: string;
+};
+
+export type CreateUseCaseWatchResponse = {
+  watchId: string;
+  watch: UseCaseWatch;
+};
+
 export type AddRepoResponse = {
   artifactId: string;
   alreadyIndexed: boolean;

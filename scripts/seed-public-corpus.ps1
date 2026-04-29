@@ -8,6 +8,14 @@ $repos = @(
   "ag-grid/ag-grid",
   "handsontable/handsontable",
 
+  # Video / training content
+  "remotion-dev/remotion",
+  "obsproject/obs-studio",
+  "FFmpeg/FFmpeg",
+  "ManimCommunity/manim",
+  "mifi/lossless-cut",
+  "mltframework/shotcut",
+
   # TypeScript ORM / database
   "prisma/prisma",
   "drizzle-team/drizzle-orm",

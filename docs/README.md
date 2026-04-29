@@ -54,6 +54,7 @@
 ### Plans
 - [`plans/refactor-plan-2026-04-23.md`](./plans/refactor-plan-2026-04-23.md) — refacto sprints 1 à 4 (terminés)
 - [`plans/rename-to-usestakly.md`](./plans/rename-to-usestakly.md) — transition `Project-K` → `UseStakly`
+- [`plans/use-case-recommendation-watch-plan.md`](./plans/use-case-recommendation-watch-plan.md) — plan d'action recherche par besoin + veille d'intention
 - [`domain-proposals.md`](./domain-proposals.md) — propositions de noms de domaine
 
 ### Archives
