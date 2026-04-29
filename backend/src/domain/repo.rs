@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use uuid::Uuid;
 
 use crate::domain::reference::QualityContext;
@@ -22,6 +23,16 @@ pub struct RepoSearchResult {
     pub archived: bool,
     pub last_commit_at: Option<DateTime<Utc>>,
     pub quality: Option<QualityContext>,
+    pub categories: Vec<RepoCategory>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RepoCategory {
+    pub category: String,
+    pub confidence: f64,
+    pub source: String,
+    pub evidence: Value,
 }
 
 #[derive(Debug, Clone, Serialize)]

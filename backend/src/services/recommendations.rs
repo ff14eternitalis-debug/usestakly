@@ -148,6 +148,36 @@ pub fn parse_intent(query: &str) -> UseCaseIntent {
             &["table", "datatable", "grid", "react", "typescript"],
         );
     }
+    if contains_token_any(
+        &normalized,
+        &[
+            "ui",
+            "kit",
+            "component",
+            "components",
+            "design",
+            "shadcn",
+            "chakra",
+            "radix",
+            "mantine",
+        ],
+    ) {
+        labels.push("Kit UI / composants");
+        push_unique(&mut categories, "ui-kit");
+        push_unique(&mut categories, "ui");
+        push_unique(&mut categories, "components");
+        push_unique_many(
+            &mut topics,
+            &[
+                "components",
+                "ui",
+                "react",
+                "design-system",
+                "css",
+                "tailwind",
+            ],
+        );
+    }
     if contains_any(&normalized, &["auth", "login", "oauth", "session"]) {
         labels.push("Authentification web");
         push_unique(&mut categories, "auth");
@@ -225,6 +255,7 @@ fn build_recommendation(
     };
     let lexical_match = lexical_match(&repo, intent);
     let ecosystem_match = ecosystem_match(&repo, intent);
+    let category_match = category_match(&repo, intent);
     let risk = classify_risk(quality_overall, abandonment);
     if !risk_allowed_for_tolerance(risk, normalize_risk_tolerance(risk_tolerance)) {
         return None;
@@ -232,6 +263,9 @@ fn build_recommendation(
 
     let mut recommendation_score =
         score_candidate(quality_overall, topic_match, lexical_match, ecosystem_match);
+    if category_match > 0.0 {
+        recommendation_score = clamp01(recommendation_score + category_match * 0.12);
+    }
 
     if abandonment > 0.35 {
         recommendation_score *= 0.72;
@@ -274,7 +308,8 @@ fn risk_allowed_for_tolerance(risk: &str, tolerance: &str) -> bool {
 fn build_candidate_query(query: &str, intent: &UseCaseIntent) -> String {
     intent
         .topics
-        .first()
+        .iter()
+        .find(|topic| topic.len() >= 3)
         .cloned()
         .unwrap_or_else(|| query.trim().to_string())
 }
@@ -317,6 +352,22 @@ fn ecosystem_match(repo: &RepoSearchResult, intent: &UseCaseIntent) -> f64 {
         return 1.0;
     }
     0.0
+}
+
+fn category_match(repo: &RepoSearchResult, intent: &UseCaseIntent) -> f64 {
+    if intent.categories.is_empty() || repo.categories.is_empty() {
+        return 0.0;
+    }
+    let hits = intent
+        .categories
+        .iter()
+        .filter(|expected| {
+            repo.categories
+                .iter()
+                .any(|category| category.category.eq_ignore_ascii_case(expected))
+        })
+        .count();
+    hits as f64 / intent.categories.len() as f64
 }
 
 fn repo_haystack(repo: &RepoSearchResult) -> String {
@@ -391,6 +442,21 @@ fn fallback_candidates_for(intent: &UseCaseIntent) -> Vec<String> {
             "typeorm/typeorm".to_string(),
             "sequelize/sequelize".to_string(),
             "knex/knex".to_string(),
+        ];
+    }
+    if intent
+        .categories
+        .iter()
+        .any(|category| category == "ui-kit" || category == "ui" || category == "components")
+    {
+        return vec![
+            "shadcn-ui/ui".to_string(),
+            "mui/material-ui".to_string(),
+            "chakra-ui/chakra-ui".to_string(),
+            "radix-ui/primitives".to_string(),
+            "tailwindlabs/headlessui".to_string(),
+            "ant-design/ant-design".to_string(),
+            "mantinedev/mantine".to_string(),
         ];
     }
     Vec::new()
@@ -484,6 +550,7 @@ mod tests {
                 flags: Vec::new(),
                 computed_at: chrono::Utc::now(),
             }),
+            categories: Vec::new(),
         }
     }
 
@@ -508,6 +575,17 @@ mod tests {
         assert!(intent.categories.contains(&"education".to_string()));
         assert!(intent.topics.contains(&"video".to_string()));
         assert!(intent.topics.contains(&"recording".to_string()));
+    }
+
+    #[test]
+    fn detects_ui_kit_intent_from_short_tool_name() {
+        let intent = parse_intent("Kit UI");
+
+        assert_eq!(intent.label, "Kit UI / composants");
+        assert_eq!(intent.confidence, IntentConfidence::High);
+        assert!(intent.categories.contains(&"ui".to_string()));
+        assert!(intent.categories.contains(&"components".to_string()));
+        assert!(intent.topics.contains(&"components".to_string()));
     }
 
     #[test]
@@ -537,6 +615,7 @@ mod tests {
             archived: false,
             last_commit_at: None,
             quality: None,
+            categories: Vec::new(),
         };
 
         assert!(!matches_term(&repo, "orm"));
@@ -551,6 +630,13 @@ mod tests {
             build_candidate_query("outil video formation", &intent),
             "video"
         );
+    }
+
+    #[test]
+    fn candidate_query_skips_short_topics_for_ui_intents() {
+        let intent = parse_intent("Kit UI");
+
+        assert_eq!(build_candidate_query("Kit UI", &intent), "components");
     }
 
     #[test]

@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use tokio::net::TcpListener;
-use tracing::info;
+use tracing::{info, warn};
 use usestakly_backend::{app, config, db, services, telemetry};
 
 #[tokio::main]
@@ -12,6 +12,12 @@ async fn main() -> anyhow::Result<()> {
     let db = db::connect(&config.database_url)
         .await
         .context("failed to connect to database")?;
+
+    match services::repo_categories::backfill_missing_repo_categories(&db).await {
+        Ok(count) if count > 0 => info!(count, "repo category backfill completed"),
+        Ok(_) => {}
+        Err(err) => warn!(?err, "repo category backfill failed"),
+    }
 
     if config.scheduler_enabled {
         let interval = Duration::from_secs(config.recompute_interval_secs);

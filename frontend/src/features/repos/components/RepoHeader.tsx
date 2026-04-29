@@ -67,6 +67,11 @@ export function RepoHeader({
         {repo.language ? <Chip tone="info">{repo.language}</Chip> : null}
         {repo.licenseSpdx ? <Chip tone="neutral">{repo.licenseSpdx}</Chip> : null}
         {repo.archived ? <Chip tone="warn">archived</Chip> : null}
+        {repo.categories.map((category) => (
+          <Chip key={category.category} tone="accent">
+            {category.category}
+          </Chip>
+        ))}
         {q?.flags.map((flag) => (
           <Chip key={flag} tone={toneFromFlag(flag)}>
             {flagLabel(flag)}

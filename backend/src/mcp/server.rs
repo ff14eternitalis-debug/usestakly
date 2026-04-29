@@ -1183,6 +1183,7 @@ mod tests {
                     flags: vec!["deprecated".to_string()],
                     computed_at,
                 }),
+                categories: Vec::new(),
             },
             subscribers_count: 6_400,
             default_branch: Some("main".to_string()),
@@ -1268,6 +1269,7 @@ mod tests {
                 flags: Vec::new(),
                 computed_at,
             }),
+            categories: Vec::new(),
         }];
 
         let recommendations = build_recommendations(results, RiskTolerance::Medium);

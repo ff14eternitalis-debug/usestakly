@@ -71,6 +71,11 @@ export function RepoCard({ repo, index }: Props) {
             <Chip tone="neutral">{repo.licenseSpdx}</Chip>
           ) : null}
           {repo.archived ? <Chip tone="warn">archived</Chip> : null}
+          {repo.categories.slice(0, 3).map((category) => (
+            <Chip key={category.category} tone="accent">
+              {category.category}
+            </Chip>
+          ))}
           {q?.flags.map((flag) => (
             <Chip key={flag} tone={toneFromFlag(flag)}>
               {flagLabel(flag)}

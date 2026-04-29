@@ -5,9 +5,11 @@ use uuid::Uuid;
 
 use crate::{
     app::{AppState, error::ApiError},
+    domain::repo::RepoCategory,
     services::{
         ingestion::github::{build_client, ingest_repo, parse_github_repo_input},
         quality::recompute_all_scores_with_config,
+        repo_categories::classify_repo,
         repos::find_github_artifact_id,
     },
 };
@@ -39,6 +41,7 @@ pub struct AddRepoResponse {
     pub default_branch: Option<String>,
     pub last_commit_at: Option<DateTime<Utc>>,
     pub formula_version: String,
+    pub categories: Vec<RepoCategory>,
 }
 
 pub async fn add_repo(
@@ -57,6 +60,7 @@ pub async fn add_repo(
         .is_some();
     let client = build_client(token)?;
     let (artifact_id, meta) = ingest_repo(&client, &state.db, &state.config, &owner, &name).await?;
+    let categories = classify_repo(&meta);
     let report = recompute_all_scores_with_config(&state.db, Some(&state.config)).await?;
 
     Ok(Json(AddRepoResponse {
@@ -78,5 +82,6 @@ pub async fn add_repo(
         default_branch: meta.default_branch,
         last_commit_at: meta.last_commit_at,
         formula_version: report.formula_version,
+        categories,
     }))
 }

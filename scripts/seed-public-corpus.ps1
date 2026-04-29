@@ -8,6 +8,15 @@ $repos = @(
   "ag-grid/ag-grid",
   "handsontable/handsontable",
 
+  # UI kits and component systems
+  "shadcn-ui/ui",
+  "mui/material-ui",
+  "chakra-ui/chakra-ui",
+  "radix-ui/primitives",
+  "tailwindlabs/headlessui",
+  "ant-design/ant-design",
+  "mantinedev/mantine",
+
   # Video / training content
   "remotion-dev/remotion",
   "obsproject/obs-studio",

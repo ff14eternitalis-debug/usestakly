@@ -56,6 +56,9 @@ const SearchIcon = (
 
 export function DiscoverPage() {
   const t = useT();
+  const [discoverMode, setDiscoverMode] = useState<"recommended" | "advanced">(
+    "recommended"
+  );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SearchFilter>("explore");
   const [language, setLanguage] = useState("");
@@ -110,7 +113,8 @@ export function DiscoverPage() {
     queryKey: ["search", search],
     queryFn: ({ signal }) =>
       apiGet<RepoSearchResponse>(`/api/repos/search?${search}`, signal),
-    placeholderData: (prev) => prev
+    placeholderData: (prev) => prev,
+    enabled: discoverMode === "advanced"
   });
 
   const addRepo = useMutation({
@@ -210,8 +214,43 @@ export function DiscoverPage() {
         </div>
       </section>
 
-      <UseCaseSearchPanel />
+      <div className="flex flex-wrap gap-2 border-b border-line">
+        {[
+          {
+            value: "recommended" as const,
+            label: t.discover.recommendedTab,
+            hint: t.discover.recommendedTabHint
+          },
+          {
+            value: "advanced" as const,
+            label: t.discover.advancedTab,
+            hint: t.discover.advancedTabHint
+          }
+        ].map((tab) => {
+          const active = discoverMode === tab.value;
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setDiscoverMode(tab.value)}
+              className={`grid gap-1 border-b-2 px-1 pb-3 text-left transition-colors sm:min-w-44 ${
+                active
+                  ? "border-accent text-fg"
+                  : "border-transparent text-fg-muted hover:text-fg"
+              }`}
+            >
+              <span className="text-[0.95rem] font-semibold">{tab.label}</span>
+              <span className="text-[0.78rem] leading-snug text-fg-muted">
+                {tab.hint}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
+      {discoverMode === "recommended" ? <UseCaseSearchPanel /> : null}
+
+      {discoverMode === "advanced" ? (
       <div className="surface grid gap-4 p-4 md:p-5">
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
           <label className="grid gap-1.5">
@@ -464,7 +503,9 @@ export function DiscoverPage() {
           </div>
         ) : null}
       </div>
+      ) : null}
 
+      {discoverMode === "advanced" ? (
       <div className="flex items-center justify-between border-b border-line pb-3">
         <div className="flex items-center gap-2">
           <span className="dot text-accent" />
@@ -478,7 +519,9 @@ export function DiscoverPage() {
         </div>
         <p className="kicker hidden sm:inline">{t.discover.sortedBy}</p>
       </div>
+      ) : null}
 
+      {discoverMode === "advanced" ? (
       <div className="grid gap-4">
         {results.isLoading ? (
           <div className="py-16 text-center">
@@ -522,8 +565,9 @@ export function DiscoverPage() {
           ))
         )}
       </div>
+      ) : null}
 
-      {results.data && (hasPrevious || hasNext) ? (
+      {discoverMode === "advanced" && results.data && (hasPrevious || hasNext) ? (
         <nav
           className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between"
           aria-label={t.discover.paginationLabel}

@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use sqlx::types::Json;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
@@ -7,7 +8,7 @@ use crate::{
     config::AppConfig,
     domain::{
         reference::{QualityContext, SearchFilter},
-        repo::{RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
+        repo::{RepoCategory, RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
     },
     services::{quality::load_v2, semantic_search, trust::signal_events},
 };
@@ -126,6 +127,19 @@ pub async fn search_github_repos(
             e.open_issues_count    AS open_issues_count,
             e.archived             AS archived,
             e.last_commit_at       AS last_commit_at,
+            COALESCE((
+              SELECT jsonb_agg(
+                jsonb_build_object(
+                  'category', rc.category,
+                  'confidence', rc.confidence,
+                  'source', rc.source,
+                  'evidence', rc.evidence
+                )
+                ORDER BY rc.confidence DESC, rc.category
+              )
+              FROM repo_categories rc
+              WHERE rc.external_artifact_id = e.id
+            ), '[]'::jsonb) AS categories,
             ascore.formula_version      AS quality_formula_version,
             ascore.freshness::float8    AS quality_freshness,
             ascore.adoption::float8     AS quality_adoption,
@@ -193,6 +207,12 @@ pub async fn search_github_repos(
             OR name ILIKE '%' || $2 || '%'
             OR COALESCE(description, '') ILIKE '%' || $2 || '%'
             OR EXISTS (SELECT 1 FROM unnest(topics) t WHERE t ILIKE '%' || $2 || '%')
+            OR EXISTS (
+              SELECT 1
+              FROM repo_categories rc
+              WHERE rc.external_artifact_id = artifact_id
+                AND rc.category ILIKE '%' || $2 || '%'
+            )
             OR COALESCE(lexical_score, 0.0) >= $11
             OR COALESCE(semantic_score, 0.0) >= $12
           )
@@ -231,6 +251,12 @@ pub async fn search_github_repos(
                 )
                 OR COALESCE(description, '') ILIKE '%' || required_topic || '%'
                 OR name ILIKE '%' || required_topic || '%'
+                OR EXISTS (
+                  SELECT 1
+                  FROM repo_categories rc
+                  WHERE rc.external_artifact_id = artifact_id
+                    AND rc.category ILIKE required_topic
+                )
               )
             )
           )
@@ -300,6 +326,19 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
           e.open_issues_count    AS open_issues_count,
           e.archived             AS archived,
           e.last_commit_at       AS last_commit_at,
+          COALESCE((
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'category', rc.category,
+                'confidence', rc.confidence,
+                'source', rc.source,
+                'evidence', rc.evidence
+              )
+              ORDER BY rc.confidence DESC, rc.category
+            )
+            FROM repo_categories rc
+            WHERE rc.external_artifact_id = e.id
+          ), '[]'::jsonb) AS categories,
           e.subscribers_count         AS subscribers_count,
           e.default_branch            AS default_branch,
           e.priors_fetched_at         AS priors_fetched_at,
@@ -392,6 +431,7 @@ struct RepoRow {
     open_issues_count: i32,
     archived: bool,
     last_commit_at: Option<DateTime<Utc>>,
+    categories: Json<Vec<RepoCategory>>,
     quality_formula_version: Option<String>,
     quality_freshness: Option<f64>,
     quality_adoption: Option<f64>,
@@ -457,6 +497,7 @@ impl RepoRow {
             archived: self.archived,
             last_commit_at: self.last_commit_at,
             quality,
+            categories: self.categories.0,
         }
     }
 }
@@ -476,6 +517,7 @@ struct ProfileRow {
     open_issues_count: i32,
     archived: bool,
     last_commit_at: Option<DateTime<Utc>>,
+    categories: Json<Vec<RepoCategory>>,
     subscribers_count: i32,
     default_branch: Option<String>,
     priors_fetched_at: Option<DateTime<Utc>>,
@@ -517,6 +559,7 @@ impl ProfileRow {
             open_issues_count: self.open_issues_count,
             archived: self.archived,
             last_commit_at: self.last_commit_at,
+            categories: self.categories,
             quality_formula_version: self.quality_formula_version,
             quality_freshness: self.quality_freshness,
             quality_adoption: self.quality_adoption,

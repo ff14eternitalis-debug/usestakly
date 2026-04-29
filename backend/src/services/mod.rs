@@ -3,6 +3,7 @@ pub mod ingestion;
 pub mod notifications;
 pub mod quality;
 pub mod recommendations;
+pub mod repo_categories;
 pub mod repos;
 pub mod scheduler;
 pub mod semantic_search;

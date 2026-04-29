@@ -25,6 +25,13 @@ export type QualityContext = {
   computedAt: string | null;
 };
 
+export type RepoCategory = {
+  category: string;
+  confidence: number;
+  source: string;
+  evidence: unknown;
+};
+
 export type VitalityInputs = {
   structuralSignalsAt: string | null;
   distinctContributors90d: number | null;
@@ -50,6 +57,7 @@ export type RepoSearchResult = {
   archived: boolean;
   lastCommitAt: string | null;
   quality: QualityContext | null;
+  categories: RepoCategory[];
 };
 
 export type RepoSignalEvent = {
@@ -168,6 +176,7 @@ export type AddRepoResponse = {
   defaultBranch: string | null;
   lastCommitAt: string | null;
   formulaVersion: string;
+  categories: RepoCategory[];
 };
 
 export type AgentTokenSummary = {

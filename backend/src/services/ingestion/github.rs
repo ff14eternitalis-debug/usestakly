@@ -5,7 +5,11 @@ use octocrab::Octocrab;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{app::error::ApiError, config::AppConfig, services::semantic_search};
+use crate::{
+    app::error::ApiError,
+    config::AppConfig,
+    services::{repo_categories, semantic_search},
+};
 
 const COMMITS_LOOKBACK_DAYS: i64 = 90;
 const COMMITS_30D_WINDOW: i64 = 30;
@@ -391,6 +395,7 @@ pub async fn ingest_repo(
 ) -> Result<(Uuid, GitHubRepoMetadata), ApiError> {
     let meta = fetch_repo(client, owner, name).await?;
     let id = upsert_github_artifact(db, &meta).await?;
+    repo_categories::upsert_repo_categories(db, id, &meta).await?;
     if let Some(embedding) = semantic_search::embed_passage(
         semantic_search::build_search_document(
             &meta.owner,

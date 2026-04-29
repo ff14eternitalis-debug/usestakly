@@ -173,7 +173,7 @@ fn allowed_frontend_origins(frontend_base_url: &str) -> Vec<HeaderValue> {
 
 fn push_origin(origins: &mut Vec<HeaderValue>, value: &str) {
     if let Ok(origin) = value.parse::<HeaderValue>()
-        && !origins.iter().any(|existing| existing == origin)
+        && !origins.contains(&origin)
     {
         origins.push(origin);
     }

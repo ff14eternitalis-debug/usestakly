@@ -9,8 +9,6 @@ import { createUseCaseWatch, recommendUseCase } from "../../../lib/api/use-cases
 import { formatScore, formatStars } from "../../../lib/format";
 import { useAuthStore } from "../../../state/auth-store";
 
-const DEFAULT_QUERY = "ORM TypeScript fiable";
-
 export function UseCaseSearchPanel() {
   const t = useT();
   const authStatus = useAuthStore((state) => state.status);
@@ -94,21 +92,6 @@ export function UseCaseSearchPanel() {
             : t.discover.intentAction}
         </Button>
       </form>
-
-      <div className="flex flex-wrap gap-2">
-        {["ORM TypeScript fiable", "outil video formation", "lib React table"].map(
-          (preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => setQuery(preset)}
-              className="rounded-[999px] border border-line bg-bg-subtle px-3 py-1.5 text-[0.78rem] font-medium text-fg-dim transition-colors hover:border-accent hover:text-accent"
-            >
-              {preset || DEFAULT_QUERY}
-            </button>
-          )
-        )}
-      </div>
 
       {recommendation.isError ? (
         <p className="text-[0.86rem]" style={{ color: "var(--color-danger)" }}>
@@ -209,6 +192,11 @@ export function UseCaseSearchPanel() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {repo.language ? <Chip tone="info">{repo.language}</Chip> : null}
+                    {repo.categories.slice(0, 3).map((category) => (
+                      <Chip key={category.category} tone="accent">
+                        {category.category}
+                      </Chip>
+                    ))}
                     <Chip tone={repo.risk === "low" ? "info" : repo.risk === "high" ? "warn" : "neutral"}>
                       risk {repo.risk}
                     </Chip>
