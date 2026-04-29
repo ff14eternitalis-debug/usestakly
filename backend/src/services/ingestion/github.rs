@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use chrono::{DateTime, Duration, Utc};
 use octocrab::Octocrab;
+use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -15,6 +17,7 @@ const COMMITS_LOOKBACK_DAYS: i64 = 90;
 const COMMITS_30D_WINDOW: i64 = 30;
 const COMMITS_PER_PAGE: u8 = 100;
 const COMMITS_MAX_PAGES: u32 = 5;
+const README_CLASSIFICATION_MAX_BYTES: usize = 80_000;
 
 pub struct GitHubRepoMetadata {
     pub github_id: i64,
@@ -129,6 +132,12 @@ struct CommitSummary {
 struct CommitTally {
     commits_30d: i32,
     distinct_contributors_90d: i32,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubReadmeResponse {
+    content: Option<String>,
+    encoding: Option<String>,
 }
 
 fn tally_commits(commits: &[CommitSummary], cutoff_30d: DateTime<Utc>) -> CommitTally {
@@ -300,6 +309,79 @@ async fn fetch_releases_summary(
     Ok((count, last))
 }
 
+async fn fetch_readme_for_classification(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+) -> Option<String> {
+    match fetch_readme_text(client, owner, name).await {
+        Ok(readme) => readme,
+        Err(err) => {
+            tracing::warn!(
+                target: "ingestion::github::readme",
+                "README fetch failed for {owner}/{name}: {err:?}"
+            );
+            None
+        }
+    }
+}
+
+async fn fetch_readme_text(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+) -> Result<Option<String>, ApiError> {
+    let path = format!("/repos/{owner}/{name}/readme");
+    let response: GitHubReadmeResponse = match client.get(path, None::<&()>).await {
+        Ok(response) => response,
+        Err(octocrab::Error::GitHub { source, .. }) if source.status_code.as_u16() == 404 => {
+            return Ok(None);
+        }
+        Err(octocrab::Error::GitHub { source, .. })
+            if source.status_code.as_u16() == 403 || source.status_code.as_u16() == 429 =>
+        {
+            return Err(ApiError::forbidden(
+                "GitHub README fetch rate limited or denied",
+            ));
+        }
+        Err(other) => {
+            return Err(ApiError::internal(format!(
+                "GitHub README fetch failed: {other}"
+            )));
+        }
+    };
+
+    let Some(content) = response.content else {
+        return Ok(None);
+    };
+    let encoding = response.encoding.as_deref().unwrap_or("base64");
+    decode_readme_content(&content, encoding).map(Some)
+}
+
+fn decode_readme_content(content: &str, encoding: &str) -> Result<String, ApiError> {
+    let bytes = match encoding {
+        "base64" => {
+            let compact = content.split_whitespace().collect::<String>();
+            BASE64_STANDARD
+                .decode(compact.as_bytes())
+                .map_err(|err| ApiError::internal(format!("README base64 decode failed: {err}")))?
+        }
+        "plain" => content.as_bytes().to_vec(),
+        other => {
+            return Err(ApiError::internal(format!(
+                "unsupported README encoding: {other}"
+            )));
+        }
+    };
+
+    let limited = if bytes.len() > README_CLASSIFICATION_MAX_BYTES {
+        &bytes[..README_CLASSIFICATION_MAX_BYTES]
+    } else {
+        &bytes
+    };
+    Ok(String::from_utf8_lossy(limited).to_string())
+}
+
 pub async fn upsert_github_artifact(
     db: &PgPool,
     meta: &GitHubRepoMetadata,
@@ -392,10 +474,20 @@ pub async fn ingest_repo(
     config: &AppConfig,
     owner: &str,
     name: &str,
-) -> Result<(Uuid, GitHubRepoMetadata), ApiError> {
+) -> Result<
+    (
+        Uuid,
+        GitHubRepoMetadata,
+        Vec<crate::domain::repo::RepoCategory>,
+    ),
+    ApiError,
+> {
     let meta = fetch_repo(client, owner, name).await?;
     let id = upsert_github_artifact(db, &meta).await?;
-    repo_categories::upsert_repo_categories(db, id, &meta).await?;
+    let readme = fetch_readme_for_classification(client, &meta.owner, &meta.name).await;
+    let categories =
+        repo_categories::upsert_repo_categories_with_readme(db, id, &meta, readme.as_deref())
+            .await?;
     if let Some(embedding) = semantic_search::embed_passage(
         semantic_search::build_search_document(
             &meta.owner,
@@ -410,7 +502,7 @@ pub async fn ingest_repo(
     {
         semantic_search::update_repo_embedding(db, id, &embedding).await?;
     }
-    Ok((id, meta))
+    Ok((id, meta, categories))
 }
 
 pub fn parse_github_repo_input(input: &str) -> Result<(String, String), ApiError> {
@@ -469,6 +561,21 @@ mod tests {
             parse_github_repo_input("https://github.com/openai/gpt.git?tab=readme").unwrap();
         assert_eq!(owner, "openai");
         assert_eq!(repo, "gpt");
+    }
+
+    #[test]
+    fn decodes_base64_readme_content_for_classification() {
+        let decoded = super::decode_readme_content("IyBLaXQgVUkK", "base64").unwrap();
+
+        assert_eq!(decoded, "# Kit UI\n");
+    }
+
+    #[test]
+    fn limits_readme_text_used_for_classification() {
+        let oversized = "a".repeat(super::README_CLASSIFICATION_MAX_BYTES + 20);
+        let decoded = super::decode_readme_content(&oversized, "plain").unwrap();
+
+        assert_eq!(decoded.len(), super::README_CLASSIFICATION_MAX_BYTES);
     }
 
     #[test]

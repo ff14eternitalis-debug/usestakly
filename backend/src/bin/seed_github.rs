@@ -56,13 +56,14 @@ async fn main() -> Result<()> {
     for (idx, repo) in seed.repos.iter().enumerate() {
         let slug = format!("{}/{}", repo.owner, repo.name);
         match ingest_repo(&client, &pool, &config, &repo.owner, &repo.name).await {
-            Ok((id, meta)) => {
+            Ok((id, meta, categories)) => {
                 info!(
                     slug = %slug,
                     id = %id,
                     stars = meta.stars_count,
                     archived = meta.archived,
                     language = meta.language.as_deref().unwrap_or("-"),
+                    categories = categories.len(),
                     note = repo.note.as_deref().unwrap_or(""),
                     "ingested"
                 );

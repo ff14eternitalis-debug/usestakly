@@ -146,7 +146,7 @@ pub async fn ingest_github_repo(
         .ok_or_else(|| ApiError::forbidden("GitHub ingestion disabled (set GITHUB_TOKEN)"))?;
 
     let client = build_client(token)?;
-    let (id, meta) = ingest_repo(&client, &state.db, &state.config, owner, name).await?;
+    let (id, meta, _) = ingest_repo(&client, &state.db, &state.config, owner, name).await?;
 
     Ok(Json(IngestGithubResponse {
         id,

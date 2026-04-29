@@ -702,7 +702,7 @@ async fn ensure_github_artifact(
     })?;
 
     let client = build_client(token).map_err(map_api_error)?;
-    let (id, _) = ingest_repo(&client, &state.db, &state.config, owner, name)
+    let (id, _, _) = ingest_repo(&client, &state.db, &state.config, owner, name)
         .await
         .map_err(map_api_error)?;
     Ok(id)

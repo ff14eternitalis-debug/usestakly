@@ -8,6 +8,7 @@ use crate::{
 };
 
 const SOURCE: &str = "github_metadata";
+const README_SOURCE: &str = "github_metadata+readme";
 
 #[derive(Debug, Clone, Copy)]
 struct CategoryRule {
@@ -87,7 +88,15 @@ const RULES: &[CategoryRule] = &[
 ];
 
 pub fn classify_repo(meta: &GitHubRepoMetadata) -> Vec<RepoCategory> {
+    classify_repo_with_readme(meta, None)
+}
+
+pub fn classify_repo_with_readme(
+    meta: &GitHubRepoMetadata,
+    readme: Option<&str>,
+) -> Vec<RepoCategory> {
     let haystack = normalized_haystack(meta);
+    let readme_haystack = readme.map(normalize_text).unwrap_or_default();
     let topic_text = meta
         .topics
         .iter()
@@ -96,7 +105,7 @@ pub fn classify_repo(meta: &GitHubRepoMetadata) -> Vec<RepoCategory> {
 
     let mut categories = RULES
         .iter()
-        .filter_map(|rule| classify_with_rule(rule, &haystack, &topic_text))
+        .filter_map(|rule| classify_with_rule(rule, &haystack, &readme_haystack, &topic_text))
         .collect::<Vec<_>>();
 
     categories.sort_by(|a, b| {
@@ -113,7 +122,16 @@ pub async fn upsert_repo_categories(
     artifact_id: Uuid,
     meta: &GitHubRepoMetadata,
 ) -> Result<Vec<RepoCategory>, ApiError> {
-    let categories = classify_repo(meta);
+    upsert_repo_categories_with_readme(db, artifact_id, meta, None).await
+}
+
+pub async fn upsert_repo_categories_with_readme(
+    db: &PgPool,
+    artifact_id: Uuid,
+    meta: &GitHubRepoMetadata,
+    readme: Option<&str>,
+) -> Result<Vec<RepoCategory>, ApiError> {
+    let categories = classify_repo_with_readme(meta, readme);
     let mut tx = db.begin().await?;
 
     sqlx::query("DELETE FROM repo_categories WHERE external_artifact_id = $1")
@@ -256,18 +274,26 @@ impl BackfillRepoRow {
 fn classify_with_rule(
     rule: &CategoryRule,
     haystack: &str,
+    readme_haystack: &str,
     topics: &[String],
 ) -> Option<RepoCategory> {
     let strong = matches(rule.strong, haystack, topics);
     let medium = matches(rule.medium, haystack, topics);
     let weak = matches(rule.weak, haystack, topics);
+    let readme_strong = matches_text(rule.strong, readme_haystack);
+    let readme_medium = matches_text(rule.medium, readme_haystack);
+    let readme_weak = matches_text(rule.weak, readme_haystack);
 
-    if rule.category == "ui-kit" && strong.is_empty() {
+    if rule.category == "ui-kit" && strong.is_empty() && readme_strong.is_empty() {
         return None;
     }
 
-    let score =
-        (strong.len() as f64 * 0.34) + (medium.len() as f64 * 0.16) + (weak.len() as f64 * 0.08);
+    let score = (strong.len() as f64 * 0.34)
+        + (medium.len() as f64 * 0.16)
+        + (weak.len() as f64 * 0.08)
+        + (readme_strong.len() as f64 * 0.24)
+        + (readme_medium.len() as f64 * 0.12)
+        + (readme_weak.len() as f64 * 0.04);
     if score < 0.24 {
         return None;
     }
@@ -276,16 +302,34 @@ fn classify_with_rule(
     evidence_terms.extend(strong.iter().cloned());
     evidence_terms.extend(medium.iter().cloned());
     evidence_terms.extend(weak.iter().cloned());
+    evidence_terms.extend(readme_strong.iter().cloned());
+    evidence_terms.extend(readme_medium.iter().cloned());
+    evidence_terms.extend(readme_weak.iter().cloned());
+    evidence_terms.sort_unstable();
+    evidence_terms.dedup();
+
+    let mut readme_terms = Vec::new();
+    readme_terms.extend(readme_strong.iter().cloned());
+    readme_terms.extend(readme_medium.iter().cloned());
+    readme_terms.extend(readme_weak.iter().cloned());
+    readme_terms.sort_unstable();
+    readme_terms.dedup();
 
     Some(RepoCategory {
         category: rule.category.to_string(),
         confidence: score.clamp(0.0, 0.98),
-        source: SOURCE.to_string(),
+        source: if readme_terms.is_empty() {
+            SOURCE
+        } else {
+            README_SOURCE
+        }
+        .to_string(),
         evidence: json!({
             "matched": evidence_terms,
             "strong": strong,
             "medium": medium,
-            "weak": weak
+            "weak": weak,
+            "readmeMatched": readme_terms
         }),
     })
 }
@@ -303,6 +347,25 @@ fn matches<'a>(terms: &'a [&'a str], haystack: &str, topics: &[String]) -> Vec<&
                 } else {
                     tokens.iter().any(|token| token == &normalized)
                 }
+        })
+        .collect()
+}
+
+fn matches_text<'a>(terms: &'a [&'a str], haystack: &str) -> Vec<&'a str> {
+    if haystack.is_empty() {
+        return Vec::new();
+    }
+    let tokens = text_tokens(haystack);
+    terms
+        .iter()
+        .copied()
+        .filter(|term| {
+            let normalized = normalize_text(term);
+            if normalized.contains('-') || normalized.contains(' ') {
+                haystack.contains(&normalized)
+            } else {
+                tokens.iter().any(|token| token == &normalized)
+            }
         })
         .collect()
 }
@@ -426,6 +489,31 @@ mod tests {
         let found = classify_repo(&meta("example", "misc", "Small helper", &["utility"]));
 
         assert!(found.is_empty());
+    }
+
+    #[test]
+    fn readme_signals_can_classify_unclear_metadata() {
+        let found = classify_repo_with_readme(
+            &meta("example", "kit", "Small helper", &["react"]),
+            Some("# Design system\n\nAccessible components for Tailwind applications."),
+        );
+
+        let category = found
+            .iter()
+            .find(|category| category.category == "ui-kit")
+            .expect("README signals should classify UI kits");
+        assert_eq!(category.source, "github_metadata+readme");
+        assert_eq!(category.evidence["readmeMatched"][0], "components");
+    }
+
+    #[test]
+    fn readme_evidence_does_not_store_raw_readme_text() {
+        let raw_readme = "# Secretly long README\n\nHeadless UI components for a design system.";
+        let found = classify_repo_with_readme(&meta("example", "kit", "", &[]), Some(raw_readme));
+
+        let serialized = serde_json::to_string(&found).unwrap();
+        assert!(!serialized.contains("Secretly long README"));
+        assert!(!serialized.contains("Headless UI components for a design system"));
     }
 
     #[test]
