@@ -859,8 +859,11 @@ fn repo_matches_intent(
     repo: &crate::domain::repo::RepoSearchResult,
     intent: &UseCaseIntent,
 ) -> bool {
+    if intent.categories.is_empty() {
+        return repo_matches_any_topic(repo, &intent.topics);
+    }
     repo_matches_any_category(repo, &intent.categories)
-        || repo_matches_any_topic(repo, &intent.topics)
+        || repo_matches_any_topic(repo, &recommendation_query_topics(intent))
 }
 
 fn repo_matches_any_category(
@@ -1427,6 +1430,7 @@ mod tests {
             license_spdx: Some("MIT".to_string()),
             topics: vec![
                 "javascript".to_string(),
+                "typescript".to_string(),
                 "react".to_string(),
                 "video".to_string(),
             ],
