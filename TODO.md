@@ -19,6 +19,8 @@ Deux fonctions noyau :
 
 Les agents IA consomment la même data via MCP.
 
+Cap produit à venir : **UseStakly = source de vérité qualité + radar OSS anti-bruit**. Le score reste la base, mais le produit doit aussi distinguer les choix établis des projets émergents utiles pour un besoin dev. Plan d'action : `docs/plans/source-of-truth-oss-radar-plan.md`.
+
 ---
 
 ## État public beta — 2026-04-26

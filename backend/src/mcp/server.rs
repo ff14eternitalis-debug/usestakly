@@ -30,6 +30,7 @@ use crate::{
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
+        recommendations::{UseCaseIntent, parse_intent},
         repos::{self as repos_service, RepoSearchFilters, RepoSort},
         trust::agent_token_events,
         watchlist,
@@ -373,13 +374,14 @@ impl McpServer {
         let filter = parse_filter(p.filter.as_deref());
         let ecosystem = p.ecosystem.as_deref().or(p.language.as_deref());
         let normalized_topics = normalize_topics(&p.must_have_topics);
+        let intent = parse_intent(query);
         let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
         let effective_filter = if p.filter.is_some() {
             filter
         } else {
             filter_for_risk_tolerance(risk_tolerance)
         };
-        let query = build_recommendation_query(query, ecosystem, &normalized_topics);
+        let query = build_recommendation_query(query, ecosystem, &normalized_topics, &intent);
         let filters = RepoSearchFilters {
             query: Some(query.clone()),
             filter: effective_filter,
@@ -401,6 +403,8 @@ impl McpServer {
                 .map_err(map_api_error)?;
         if !normalized_topics.is_empty() {
             results.retain(|repo| repo_matches_topics(repo, &normalized_topics));
+        } else if !intent.categories.is_empty() {
+            results.retain(|repo| repo_matches_intent(repo, &intent));
         }
         let max_results = p.limit.unwrap_or(5).clamp(1, 10) as usize;
         results.truncate(max_results);
@@ -770,15 +774,57 @@ fn normalize_topics(topics: &[String]) -> Vec<String> {
     normalized
 }
 
-fn build_recommendation_query(need: &str, ecosystem: Option<&str>, topics: &[String]) -> String {
+fn build_recommendation_query(
+    need: &str,
+    ecosystem: Option<&str>,
+    topics: &[String],
+    intent: &UseCaseIntent,
+) -> String {
     let mut parts = vec![need.trim().to_string()];
     if let Some(ecosystem) = ecosystem.map(str::trim).filter(|s| !s.is_empty()) {
         parts.push(ecosystem.to_string());
     }
-    for topic in topics {
+    let inferred_topics;
+    let query_topics = if topics.is_empty() {
+        inferred_topics = recommendation_query_topics(intent);
+        &inferred_topics
+    } else {
+        topics
+    };
+    for topic in query_topics {
         parts.push(topic.replace('-', " "));
     }
     parts.join(" ")
+}
+
+fn recommendation_query_topics(intent: &UseCaseIntent) -> Vec<String> {
+    if intent
+        .categories
+        .iter()
+        .any(|category| category == "testing")
+    {
+        return vec!["test".to_string(), "testing".to_string()];
+    }
+    if intent
+        .categories
+        .iter()
+        .any(|category| category == "ui-kit")
+    {
+        return vec!["components".to_string(), "ui".to_string()];
+    }
+    if intent.categories.iter().any(|category| category == "auth") {
+        return vec!["auth".to_string(), "oauth".to_string()];
+    }
+    if intent.categories.iter().any(|category| category == "orm") {
+        return vec!["orm".to_string(), "database".to_string()];
+    }
+    intent
+        .topics
+        .iter()
+        .filter(|topic| topic.len() >= 3)
+        .take(2)
+        .cloned()
+        .collect()
 }
 
 fn language_filter_for_ecosystem(ecosystem: &str) -> Option<String> {
@@ -806,6 +852,41 @@ fn repo_matches_topics(repo: &crate::domain::repo::RepoSearchResult, required: &
                 .to_ascii_lowercase()
                 .contains(required_topic)
             || repo.name.to_ascii_lowercase().contains(required_topic)
+    })
+}
+
+fn repo_matches_intent(
+    repo: &crate::domain::repo::RepoSearchResult,
+    intent: &UseCaseIntent,
+) -> bool {
+    repo_matches_any_category(repo, &intent.categories)
+        || repo_matches_any_topic(repo, &intent.topics)
+}
+
+fn repo_matches_any_category(
+    repo: &crate::domain::repo::RepoSearchResult,
+    categories: &[String],
+) -> bool {
+    !categories.is_empty()
+        && repo.categories.iter().any(|category| {
+            categories
+                .iter()
+                .any(|expected| category.category.eq_ignore_ascii_case(expected))
+        })
+}
+
+fn repo_matches_any_topic(repo: &crate::domain::repo::RepoSearchResult, topics: &[String]) -> bool {
+    topics.iter().any(|topic| {
+        repo.topics
+            .iter()
+            .any(|repo_topic| repo_topic.eq_ignore_ascii_case(topic))
+            || repo
+                .description
+                .as_deref()
+                .unwrap_or_default()
+                .to_ascii_lowercase()
+                .contains(topic)
+            || repo.name.to_ascii_lowercase().contains(topic)
     })
 }
 
@@ -1088,7 +1169,7 @@ mod tests {
     use crate::config::AppConfig;
     use crate::domain::{
         reference::{QualityContext, SearchFilter},
-        repo::{RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
+        repo::{RepoCategory, RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
     };
 
     #[test]
@@ -1296,6 +1377,75 @@ mod tests {
                 .iter()
                 .any(|action| action.contains("get_repo_quality_context"))
         );
+    }
+
+    #[test]
+    fn recommendation_query_infers_testing_terms_from_natural_need() {
+        let intent = parse_intent("outil de test JavaScript");
+        let query =
+            build_recommendation_query("outil de test JavaScript", None, &Vec::new(), &intent);
+
+        assert!(query.contains("test"));
+        assert!(query.contains("testing"));
+    }
+
+    #[test]
+    fn recommendation_intent_filter_keeps_testing_and_rejects_unrelated_javascript() {
+        let intent = parse_intent("outil de test JavaScript");
+        let computed_at = Utc.with_ymd_and_hms(2026, 4, 24, 8, 0, 0).unwrap();
+        let testing_repo = RepoSearchResult {
+            artifact_id: Uuid::parse_str("44444444-4444-4444-8444-444444444444").unwrap(),
+            owner: "vitest-dev".to_string(),
+            name: "vitest".to_string(),
+            full_name: "vitest-dev/vitest".to_string(),
+            html_url: "https://github.com/vitest-dev/vitest".to_string(),
+            description: Some("Next generation testing framework powered by Vite.".to_string()),
+            language: Some("TypeScript".to_string()),
+            license_spdx: Some("MIT".to_string()),
+            topics: vec!["test".to_string(), "testing-tools".to_string()],
+            stars_count: 16_000,
+            forks_count: 900,
+            open_issues_count: 100,
+            archived: false,
+            last_commit_at: Some(computed_at),
+            quality: None,
+            categories: vec![RepoCategory {
+                category: "testing".to_string(),
+                confidence: 0.98,
+                source: "github_metadata+readme".to_string(),
+                evidence: json!({}),
+            }],
+        };
+        let unrelated_repo = RepoSearchResult {
+            artifact_id: Uuid::parse_str("55555555-5555-4555-8555-555555555555").unwrap(),
+            owner: "remotion-dev".to_string(),
+            name: "remotion".to_string(),
+            full_name: "remotion-dev/remotion".to_string(),
+            html_url: "https://github.com/remotion-dev/remotion".to_string(),
+            description: Some("Make videos programmatically with React.".to_string()),
+            language: Some("TypeScript".to_string()),
+            license_spdx: Some("MIT".to_string()),
+            topics: vec![
+                "javascript".to_string(),
+                "react".to_string(),
+                "video".to_string(),
+            ],
+            stars_count: 45_000,
+            forks_count: 1_500,
+            open_issues_count: 80,
+            archived: false,
+            last_commit_at: Some(computed_at),
+            quality: None,
+            categories: vec![RepoCategory {
+                category: "video-tool".to_string(),
+                confidence: 0.98,
+                source: "github_metadata+readme".to_string(),
+                evidence: json!({}),
+            }],
+        };
+
+        assert!(repo_matches_intent(&testing_repo, &intent));
+        assert!(!repo_matches_intent(&unrelated_repo, &intent));
     }
 
     #[test]

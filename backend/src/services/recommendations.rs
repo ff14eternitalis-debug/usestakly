@@ -112,6 +112,27 @@ pub fn parse_intent(query: &str) -> UseCaseIntent {
         push_unique(&mut topics, "typescript");
         push_unique(&mut languages, "TypeScript");
     }
+    if contains_token_any(
+        &normalized,
+        &[
+            "test",
+            "tests",
+            "testing",
+            "e2e",
+            "unit",
+            "integration",
+            "playwright",
+            "vitest",
+            "jest",
+        ],
+    ) {
+        labels.push("Testing");
+        push_unique(&mut categories, "testing");
+        push_unique_many(
+            &mut topics,
+            &["test", "testing", "testing-tools", "e2e-testing"],
+        );
+    }
     if contains_any(
         &normalized,
         &[
@@ -248,6 +269,9 @@ fn build_recommendation(
     if intent.categories.iter().any(|category| category == "orm") && !matches_term(&repo, "orm") {
         return None;
     }
+    if requires_category_match(intent) && category_match(&repo, intent) == 0.0 {
+        return None;
+    }
     let topic_match = if intent.topics.is_empty() {
         0.0
     } else {
@@ -370,6 +394,15 @@ fn category_match(repo: &RepoSearchResult, intent: &UseCaseIntent) -> f64 {
     hits as f64 / intent.categories.len() as f64
 }
 
+fn requires_category_match(intent: &UseCaseIntent) -> bool {
+    intent.categories.iter().any(|category| {
+        matches!(
+            category.as_str(),
+            "testing" | "ui-kit" | "auth" | "data-grid" | "video-tool"
+        )
+    })
+}
+
 fn repo_haystack(repo: &RepoSearchResult) -> String {
     normalize_text(&format!(
         "{} {} {} {} {}",
@@ -447,6 +480,19 @@ fn fallback_candidates_for(intent: &UseCaseIntent) -> Vec<String> {
     if intent
         .categories
         .iter()
+        .any(|category| category == "testing")
+    {
+        return vec![
+            "vitest-dev/vitest".to_string(),
+            "microsoft/playwright".to_string(),
+            "jestjs/jest".to_string(),
+            "testing-library/react-testing-library".to_string(),
+            "cypress-io/cypress".to_string(),
+        ];
+    }
+    if intent
+        .categories
+        .iter()
         .any(|category| category == "ui-kit" || category == "ui" || category == "components")
     {
         return vec![
@@ -513,7 +559,7 @@ fn clamp01(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::reference::QualityContext;
+    use crate::domain::{reference::QualityContext, repo::RepoCategory};
 
     fn repo_fixture(overall: f64, abandonment: f64) -> RepoSearchResult {
         RepoSearchResult {
@@ -589,6 +635,17 @@ mod tests {
     }
 
     #[test]
+    fn detects_testing_intent_from_general_tool_need() {
+        let intent = parse_intent("outil de test JavaScript");
+
+        assert_eq!(intent.label, "Testing");
+        assert_eq!(intent.confidence, IntentConfidence::High);
+        assert!(intent.categories.contains(&"testing".to_string()));
+        assert!(intent.topics.contains(&"test".to_string()));
+        assert!(intent.topics.contains(&"testing".to_string()));
+    }
+
+    #[test]
     fn recommendation_score_rewards_quality_and_topic_match() {
         let focused = score_candidate(0.74, 1.0, 0.8, 1.0);
         let vague = score_candidate(0.9, 0.0, 0.1, 0.0);
@@ -620,6 +677,29 @@ mod tests {
 
         assert!(!matches_term(&repo, "orm"));
         assert!(matches_term(&repo, "database"));
+    }
+
+    #[test]
+    fn clear_testing_intent_rejects_unrelated_javascript_repos() {
+        let intent = parse_intent("outil de test JavaScript");
+        let mut repo = repo_fixture(0.82, 0.05);
+        repo.owner = "remotion-dev".to_string();
+        repo.name = "remotion".to_string();
+        repo.full_name = "remotion-dev/remotion".to_string();
+        repo.description = Some("Make videos programmatically with React".to_string());
+        repo.topics = vec![
+            "javascript".to_string(),
+            "react".to_string(),
+            "video".to_string(),
+        ];
+        repo.categories = vec![RepoCategory {
+            category: "video-tool".to_string(),
+            confidence: 0.9,
+            source: "github_metadata+readme".to_string(),
+            evidence: serde_json::json!({}),
+        }];
+
+        assert!(build_recommendation(repo, &intent, "high").is_none());
     }
 
     #[test]
