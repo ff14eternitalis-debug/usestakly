@@ -7,7 +7,7 @@ export type CurrentUser = {
 };
 
 export type SearchFilter = "auto" | "strict" | "explore";
-export type RepoSort = "score" | "stars" | "recency" | "abandonment";
+export type RepoSort = "score" | "stars" | "recency" | "abandonment" | "trend";
 
 export type QualityContext = {
   freshness: number | null;

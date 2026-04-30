@@ -29,6 +29,7 @@ pub enum RepoSort {
     Stars,
     Recency,
     Abandonment,
+    Trend,
 }
 
 impl RepoSort {
@@ -40,6 +41,7 @@ impl RepoSort {
             Some("stars") => Self::Stars,
             Some("recency") | Some("recent") | Some("freshness") => Self::Recency,
             Some("abandonment") | Some("risk") => Self::Abandonment,
+            Some("trend") | Some("radar") | Some("emerging") => Self::Trend,
             _ => Self::Score,
         }
     }
@@ -50,6 +52,7 @@ impl RepoSort {
             Self::Stars => "stars",
             Self::Recency => "recency",
             Self::Abandonment => "abandonment",
+            Self::Trend => "trend",
         }
     }
 }
@@ -85,6 +88,7 @@ pub struct RepoSearchFilters {
     pub license_spdx: Option<String>,
     pub stars_min: Option<i32>,
     pub topics: Vec<String>,
+    pub maturity_bands: Vec<String>,
     pub score_min: Option<f64>,
     pub abandonment_max: Option<f64>,
     pub include_archived: bool,
@@ -102,6 +106,7 @@ pub async fn search_github_repos(
     let limit = filters.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
     let offset = filters.offset.unwrap_or_default().max(0);
     let topics = normalize_topics(&filters.topics);
+    let maturity_bands = normalize_maturity_bands(&filters.maturity_bands);
     let score_min = filters
         .score_min
         .filter(|value| (0.0..=1.0).contains(value));
@@ -272,7 +277,13 @@ pub async fn search_github_repos(
           )
           AND ($15::float8 IS NULL OR COALESCE(quality_overall, 0.0) >= $15)
           AND ($16::float8 IS NULL OR COALESCE(quality_abandonment, 1.0) <= $16)
+          AND (
+            COALESCE(cardinality($18::text[]), 0) = 0
+            OR radar_maturity_band = ANY($18::text[])
+          )
         ORDER BY
+                 CASE WHEN $17 = 'trend' THEN radar_trend_signal END DESC NULLS LAST,
+                 CASE WHEN $17 = 'trend' THEN radar_relevance END DESC NULLS LAST,
                  CASE WHEN $17 = 'stars' THEN stars_count END DESC NULLS LAST,
                  CASE WHEN $17 = 'recency' THEN last_commit_at END DESC NULLS LAST,
                  CASE WHEN $17 = 'abandonment' THEN quality_abandonment END ASC NULLS LAST,
@@ -311,6 +322,7 @@ pub async fn search_github_repos(
     .bind(score_min)
     .bind(abandonment_max)
     .bind(filters.sort.as_str())
+    .bind(&maturity_bands)
     .fetch_all(db)
     .await?;
 
@@ -711,9 +723,24 @@ fn normalize_topics(topics: &[String]) -> Vec<String> {
     normalized
 }
 
+fn normalize_maturity_bands(bands: &[String]) -> Vec<String> {
+    let mut normalized = Vec::new();
+    for band in bands {
+        let band = band.trim().to_ascii_lowercase().replace('_', "-");
+        let known = matches!(
+            band.as_str(),
+            "established" | "emerging" | "experimental" | "stale" | "noisy"
+        );
+        if known && !normalized.contains(&band) {
+            normalized.push(band);
+        }
+    }
+    normalized
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{normalize_topics, tokenize_query};
+    use super::{RepoSort, normalize_maturity_bands, normalize_topics, tokenize_query};
 
     #[test]
     fn tokenize_query_normalizes_and_deduplicates() {
@@ -735,5 +762,23 @@ mod tests {
             "react".to_string(),
         ]);
         assert_eq!(topics, vec!["react", "data-grid"]);
+    }
+
+    #[test]
+    fn repo_sort_parses_trend_aliases() {
+        assert_eq!(RepoSort::parse(Some("trend")), RepoSort::Trend);
+        assert_eq!(RepoSort::parse(Some("radar")), RepoSort::Trend);
+        assert_eq!(RepoSort::parse(Some("emerging")), RepoSort::Trend);
+    }
+
+    #[test]
+    fn normalize_maturity_bands_keeps_known_values_only() {
+        let bands = normalize_maturity_bands(&[
+            "Emerging".to_string(),
+            "experimental".to_string(),
+            "unknown".to_string(),
+            "emerging".to_string(),
+        ]);
+        assert_eq!(bands, vec!["emerging", "experimental"]);
     }
 }

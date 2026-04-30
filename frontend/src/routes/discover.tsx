@@ -56,7 +56,7 @@ const SearchIcon = (
 
 export function DiscoverPage() {
   const t = useT();
-  const [discoverMode, setDiscoverMode] = useState<"recommended" | "advanced">(
+  const [discoverMode, setDiscoverMode] = useState<"recommended" | "radar" | "advanced">(
     "recommended"
   );
   const [query, setQuery] = useState("");
@@ -69,6 +69,7 @@ export function DiscoverPage() {
   const [sort, setSort] = useState<RepoSort>("score");
   const [starsMin, setStarsMin] = useState<number | "">("");
   const [page, setPage] = useState(0);
+  const [radarPage, setRadarPage] = useState(0);
   const [repoInput, setRepoInput] = useState("");
   const [addedRepo, setAddedRepo] = useState<AddRepoResponse | null>(null);
   const queryClient = useQueryClient();
@@ -109,12 +110,30 @@ export function DiscoverPage() {
     page
   ]);
 
+  const radarSearch = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("filter", "explore");
+    params.set("maturity_bands", "emerging,experimental");
+    params.set("sort", "trend");
+    params.set("limit", String(PAGE_SIZE));
+    params.set("offset", String(radarPage * PAGE_SIZE));
+    return params.toString();
+  }, [radarPage]);
+
   const results = useQuery({
     queryKey: ["search", search],
     queryFn: ({ signal }) =>
       apiGet<RepoSearchResponse>(`/api/repos/search?${search}`, signal),
     placeholderData: (prev) => prev,
     enabled: discoverMode === "advanced"
+  });
+
+  const radarResults = useQuery({
+    queryKey: ["search", "radar", radarSearch],
+    queryFn: ({ signal }) =>
+      apiGet<RepoSearchResponse>(`/api/repos/search?${radarSearch}`, signal),
+    placeholderData: (prev) => prev,
+    enabled: discoverMode === "radar"
   });
 
   const addRepo = useMutation({
@@ -134,6 +153,12 @@ export function DiscoverPage() {
   const rangeEnd = offset + count;
   const hasPrevious = page > 0;
   const hasNext = results.data?.hasMore ?? false;
+  const radarCount = radarResults.data?.items.length ?? 0;
+  const radarOffset = radarResults.data?.offset ?? radarPage * PAGE_SIZE;
+  const radarRangeStart = radarCount > 0 ? radarOffset + 1 : 0;
+  const radarRangeEnd = radarOffset + radarCount;
+  const hasPreviousRadar = radarPage > 0;
+  const hasNextRadar = radarResults.data?.hasMore ?? false;
   const activeFilter = FILTERS.find((f) => f.value === filter);
   const addRepoError =
     addRepo.error instanceof ApiError ? addRepo.error.message : null;
@@ -222,6 +247,11 @@ export function DiscoverPage() {
             hint: t.discover.recommendedTabHint
           },
           {
+            value: "radar" as const,
+            label: t.discover.radarTab,
+            hint: t.discover.radarTabHint
+          },
+          {
             value: "advanced" as const,
             label: t.discover.advancedTab,
             hint: t.discover.advancedTabHint
@@ -232,7 +262,11 @@ export function DiscoverPage() {
             <button
               key={tab.value}
               type="button"
-              onClick={() => setDiscoverMode(tab.value)}
+              onClick={() => {
+                setDiscoverMode(tab.value);
+                setPage(0);
+                setRadarPage(0);
+              }}
               className={`grid gap-1 border-b-2 px-1 pb-3 text-left transition-colors sm:min-w-44 ${
                 active
                   ? "border-accent text-fg"
@@ -249,6 +283,101 @@ export function DiscoverPage() {
       </div>
 
       {discoverMode === "recommended" ? <UseCaseSearchPanel /> : null}
+
+      {discoverMode === "radar" ? (
+        <>
+          <section className="grid gap-3 border-b border-line pb-5">
+            <span className="kicker">Radar</span>
+            <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
+              <div className="grid gap-2">
+                <h2 className="text-[1.1rem] font-semibold text-fg">
+                  {t.discover.radarTitle}
+                </h2>
+                <p className="max-w-[72ch] text-[0.92rem] leading-relaxed text-fg-dim">
+                  {t.discover.radarBody}
+                </p>
+              </div>
+              <p className="mono text-[0.78rem] text-fg-dim">
+                {radarResults.isFetching
+                  ? t.discover.measuring
+                  : radarResults.data
+                    ? `${radarRangeStart}-${radarRangeEnd} · ${radarCount} ${
+                        radarCount === 1
+                          ? t.discover.entriesSingle
+                          : t.discover.entriesPlural
+                      } · sort=trend`
+                    : "—"}
+              </p>
+            </div>
+          </section>
+
+          <div className="grid gap-4">
+            {radarResults.isLoading ? (
+              <div className="py-16 text-center">
+                <span className="kicker">{t.common.tuning}</span>
+              </div>
+            ) : radarResults.isError ? (
+              <div className="surface grid gap-2 p-8">
+                <p className="kicker" style={{ color: "var(--color-danger)" }}>
+                  {t.common.offline}
+                </p>
+                <p className="text-[0.94rem] text-fg-dim">
+                  {t.common.offlineHint}{" "}
+                  <code className="inline">{t.common.cargoRun}</code>{" "}
+                  {t.common.offlineFrom}{" "}
+                  <code className="inline">{t.common.backendDir}</code>.
+                </p>
+              </div>
+            ) : radarCount === 0 ? (
+              <div className="surface grid gap-3 p-10 text-center">
+                <p className="display-md !text-[1.2rem]">{t.discover.radarEmpty}</p>
+                <p className="text-[0.94rem] text-fg-dim">
+                  {t.discover.addRepoHelp}
+                </p>
+              </div>
+            ) : (
+              (radarResults.data?.items ?? []).map((repo, index) => (
+                <RepoCard
+                  key={repo.artifactId}
+                  repo={repo}
+                  index={radarOffset + index}
+                />
+              ))
+            )}
+          </div>
+
+          {radarResults.data && (hasPreviousRadar || hasNextRadar) ? (
+            <nav
+              className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between"
+              aria-label={t.discover.paginationLabel}
+            >
+              <p className="mono text-[0.78rem] text-fg-dim">
+                {t.discover.pageLabel} {radarPage + 1} · {radarRangeStart}-{radarRangeEnd}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRadarPage((value) => Math.max(0, value - 1))}
+                  disabled={!hasPreviousRadar || radarResults.isFetching}
+                  className="inline-flex min-w-28 items-center justify-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3 py-2 text-[0.86rem] font-medium text-fg transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span aria-hidden>←</span>
+                  {t.discover.previousPage}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRadarPage((value) => value + 1)}
+                  disabled={!hasNextRadar || radarResults.isFetching}
+                  className="inline-flex min-w-28 items-center justify-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3 py-2 text-[0.86rem] font-medium text-fg transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {t.discover.nextPage}
+                  <span aria-hidden>→</span>
+                </button>
+              </div>
+            </nav>
+          ) : null}
+        </>
+      ) : null}
 
       {discoverMode === "advanced" ? (
       <div className="surface grid gap-4 p-4 md:p-5">
@@ -389,6 +518,7 @@ export function DiscoverPage() {
               <option value="stars">{t.discover.sortStars}</option>
               <option value="recency">{t.discover.sortRecency}</option>
               <option value="abandonment">{t.discover.sortAbandonment}</option>
+              <option value="trend">{t.discover.sortTrend}</option>
             </select>
           </label>
         </div>

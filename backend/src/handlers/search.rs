@@ -41,6 +41,7 @@ pub async fn search(
         license_spdx: normalize(query.license),
         stars_min: query.stars_min.filter(|v| *v >= 0),
         topics: Vec::new(),
+        maturity_bands: Vec::new(),
         score_min: None,
         abandonment_max: None,
         include_archived: query.include_archived,

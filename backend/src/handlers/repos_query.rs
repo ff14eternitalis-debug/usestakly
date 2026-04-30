@@ -23,6 +23,8 @@ pub struct RepoSearchQuery {
     pub license: Option<String>,
     pub stars_min: Option<i32>,
     pub topics: Option<String>,
+    pub maturity_bands: Option<String>,
+    pub maturity_band: Option<String>,
     pub score_min: Option<f64>,
     pub abandonment_max: Option<f64>,
     #[serde(default)]
@@ -57,6 +59,7 @@ pub async fn search_repos(
         license_spdx: normalize(query.license),
         stars_min: query.stars_min.filter(|v| *v >= 0),
         topics: parse_topics(query.topics),
+        maturity_bands: parse_csv_pair(query.maturity_bands, query.maturity_band),
         score_min: query.score_min.filter(|v| (0.0..=1.0).contains(v)),
         abandonment_max: query.abandonment_max.filter(|v| (0.0..=1.0).contains(v)),
         include_archived: query.include_archived,
@@ -93,6 +96,20 @@ fn normalize(value: Option<String>) -> Option<String> {
 }
 
 fn parse_topics(value: Option<String>) -> Vec<String> {
+    parse_csv(value)
+}
+
+fn parse_csv_pair(primary: Option<String>, fallback: Option<String>) -> Vec<String> {
+    let mut values = parse_csv(primary);
+    for value in parse_csv(fallback) {
+        if !values.contains(&value) {
+            values.push(value);
+        }
+    }
+    values
+}
+
+fn parse_csv(value: Option<String>) -> Vec<String> {
     value
         .unwrap_or_default()
         .split(',')
