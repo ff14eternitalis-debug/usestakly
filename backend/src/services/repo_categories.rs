@@ -292,10 +292,7 @@ fn classify_with_rule(
             return None;
         }
     }
-    if rule.category == "testing"
-        && strong.is_empty()
-        && !has_testing_readme_anchor(&readme_strong, &readme_medium)
-    {
+    if rule.category == "testing" && strong.is_empty() {
         return None;
     }
     if rule.category == "data-grid"
@@ -402,13 +399,6 @@ fn has_ui_kit_readme_anchor(terms: &[&str]) -> bool {
                 | "ant-design"
         )
     })
-}
-
-fn has_testing_readme_anchor(strong: &[&str], medium: &[&str]) -> bool {
-    strong
-        .iter()
-        .chain(medium.iter())
-        .any(|term| matches!(*term, "testing" | "playwright" | "vitest" | "jest" | "e2e"))
 }
 
 fn has_data_grid_readme_anchor(strong: &[&str], medium: &[&str]) -> bool {
@@ -598,6 +588,21 @@ mod tests {
                 &["http-client"],
             ),
             "# Axios\n\nRun tests before submitting a request change.",
+        );
+
+        assert!(!found.contains(&"testing".to_string()));
+    }
+
+    #[test]
+    fn readme_testing_word_without_metadata_does_not_create_testing_false_positive() {
+        let found = categories_with_readme(
+            meta(
+                "axios",
+                "axios",
+                "Promise based HTTP client",
+                &["http-client"],
+            ),
+            "# Axios\n\nSee the testing guide before submitting a pull request.",
         );
 
         assert!(!found.contains(&"testing".to_string()));
