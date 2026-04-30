@@ -62,6 +62,13 @@ pub struct SearchReposParams {
     pub language: Option<String>,
     #[serde(default)]
     pub stars_min: Option<i32>,
+    /// Optional comma-like list of radar maturity bands to keep:
+    /// established, emerging, experimental, stale, noisy.
+    #[serde(default)]
+    pub maturity_bands: Vec<String>,
+    /// Sort mode: score (default), stars, recency, abandonment, or trend/radar.
+    #[serde(default)]
+    pub sort: Option<String>,
     /// Max number of results (default 20, max 50).
     #[serde(default)]
     pub limit: Option<i64>,
@@ -84,12 +91,22 @@ pub struct RepoCandidate {
     pub quality_reliability: Option<f64>,
     pub quality_abandonment: Option<f64>,
     pub flags: Vec<String>,
+    pub radar: Option<RadarBrief>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct RadarBrief {
+    pub maturity_band: String,
+    pub radar_relevance: f64,
+    pub trend_signal: f64,
+    pub summary: String,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
 pub struct SearchReposOutput {
     pub provenance: Provenance,
     pub filter_used: String,
+    pub sort_used: String,
     pub count: usize,
     pub results: Vec<RepoCandidate>,
 }
@@ -138,6 +155,7 @@ pub struct RepoRecommendation {
     pub quality_abandonment: Option<f64>,
     pub quality_vitality: Option<f64>,
     pub flags: Vec<String>,
+    pub radar: Option<RadarBrief>,
     pub reasons: Vec<String>,
     pub caveats: Vec<String>,
     pub next_actions: Vec<String>,
@@ -199,6 +217,7 @@ pub struct RepoContextOutput {
     pub quality_build_failure_count: i32,
     pub quality_regret_count: i32,
     pub flags: Vec<String>,
+    pub radar: Option<RadarBrief>,
     pub recent_signals: Vec<SignalSummary>,
 }
 
@@ -293,6 +312,7 @@ impl McpServer {
         verify_bearer(&self.state.db, &parts).await?;
 
         let filter = parse_filter(p.filter.as_deref());
+        let sort = RepoSort::parse(p.sort.as_deref());
         let filters = RepoSearchFilters {
             query: p.query,
             filter,
@@ -300,11 +320,11 @@ impl McpServer {
             license_spdx: None,
             stars_min: p.stars_min,
             topics: Vec::new(),
-            maturity_bands: Vec::new(),
+            maturity_bands: p.maturity_bands,
             score_min: None,
             abandonment_max: None,
             include_archived: false,
-            sort: RepoSort::Score,
+            sort,
             limit: Some(p.limit.unwrap_or(20).clamp(1, 50)),
             offset: None,
         };
@@ -320,26 +340,7 @@ impl McpServer {
             .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
             .max();
 
-        let candidates: Vec<RepoCandidate> = results
-            .into_iter()
-            .map(|r| RepoCandidate {
-                owner: r.owner,
-                name: r.name,
-                full_name: r.full_name,
-                html_url: r.html_url,
-                description: r.description,
-                language: r.language,
-                license_spdx: r.license_spdx,
-                topics: r.topics,
-                stars_count: r.stars_count,
-                archived: r.archived,
-                last_commit_at: r.last_commit_at,
-                quality_overall: r.quality.as_ref().and_then(|q| q.overall),
-                quality_reliability: r.quality.as_ref().and_then(|q| q.reliability),
-                quality_abandonment: r.quality.as_ref().and_then(|q| q.abandonment),
-                flags: r.quality.map(|q| q.flags).unwrap_or_default(),
-            })
-            .collect();
+        let candidates: Vec<RepoCandidate> = results.into_iter().map(into_repo_candidate).collect();
 
         Ok(Json(SearchReposOutput {
             provenance: Provenance {
@@ -348,6 +349,7 @@ impl McpServer {
                 scored_at,
             },
             filter_used: filter.as_str().to_string(),
+            sort_used: sort.as_str().to_string(),
             count: candidates.len(),
             results: candidates,
         }))
@@ -895,6 +897,59 @@ fn repo_matches_any_topic(repo: &crate::domain::repo::RepoSearchResult, topics: 
     })
 }
 
+fn into_repo_candidate(repo: crate::domain::repo::RepoSearchResult) -> RepoCandidate {
+    let radar = repo.radar.as_ref().map(radar_brief);
+    RepoCandidate {
+        owner: repo.owner,
+        name: repo.name,
+        full_name: repo.full_name,
+        html_url: repo.html_url,
+        description: repo.description,
+        language: repo.language,
+        license_spdx: repo.license_spdx,
+        topics: repo.topics,
+        stars_count: repo.stars_count,
+        archived: repo.archived,
+        last_commit_at: repo.last_commit_at,
+        quality_overall: repo.quality.as_ref().and_then(|q| q.overall),
+        quality_reliability: repo.quality.as_ref().and_then(|q| q.reliability),
+        quality_abandonment: repo.quality.as_ref().and_then(|q| q.abandonment),
+        flags: repo.quality.map(|q| q.flags).unwrap_or_default(),
+        radar,
+    }
+}
+
+fn radar_brief(radar: &crate::domain::repo::RepoRadarSnapshot) -> RadarBrief {
+    RadarBrief {
+        maturity_band: radar.maturity_band.clone(),
+        radar_relevance: radar.radar_relevance,
+        trend_signal: radar.trend_signal,
+        summary: radar_summary(radar),
+    }
+}
+
+fn radar_summary(radar: &crate::domain::repo::RepoRadarSnapshot) -> String {
+    let base = match radar.maturity_band.as_str() {
+        "established" => "Radar: established baseline with mature quality and activity signals.",
+        "emerging" => {
+            "Radar: emerging repo with active signals, but usage proof is still building."
+        }
+        "experimental" => {
+            "Radar: experimental candidate; evidence is still thin, inspect before adopting."
+        }
+        "stale" => "Radar: stale or flagged candidate; verify maintenance before use.",
+        "noisy" => "Radar: weak category signal; treat it as a lead, not a recommendation.",
+        _ => "Radar: maturity signal is available; inspect the repo context before use.",
+    };
+    if radar.trend_signal >= 0.85 {
+        format!("{base} Trend signal is strong.")
+    } else if radar.trend_signal >= 0.55 {
+        format!("{base} Trend signal is visible.")
+    } else {
+        base.to_string()
+    }
+}
+
 fn build_recommendations(
     results: Vec<crate::domain::repo::RepoSearchResult>,
     risk: RiskTolerance,
@@ -904,6 +959,7 @@ fn build_recommendations(
         .enumerate()
         .map(|(index, repo)| {
             let q = repo.quality.as_ref();
+            let radar = repo.radar.as_ref().map(radar_brief);
             RepoRecommendation {
                 rank: index + 1,
                 owner: repo.owner,
@@ -921,9 +977,10 @@ fn build_recommendations(
                 quality_abandonment: q.and_then(|q| q.abandonment),
                 quality_vitality: q.and_then(|q| q.vitality),
                 flags: q.map(|q| q.flags.clone()).unwrap_or_default(),
-                reasons: recommendation_reasons(q, risk),
-                caveats: recommendation_caveats(q, risk),
-                next_actions: recommendation_next_actions(q),
+                radar,
+                reasons: recommendation_reasons(q, repo.radar.as_ref(), risk),
+                caveats: recommendation_caveats(q, repo.radar.as_ref(), risk),
+                next_actions: recommendation_next_actions(q, repo.radar.as_ref()),
             }
         })
         .collect()
@@ -931,6 +988,7 @@ fn build_recommendations(
 
 fn recommendation_reasons(
     quality: Option<&crate::domain::reference::QualityContext>,
+    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
     risk: RiskTolerance,
 ) -> Vec<String> {
     let Some(q) = quality else {
@@ -959,6 +1017,9 @@ fn recommendation_reasons(
             "Included because it matched the query and passed the selected filter.".to_string(),
         );
     }
+    if let Some(radar) = radar {
+        reasons.push(radar_summary(radar));
+    }
     match risk {
         RiskTolerance::Low => reasons.push(
             "Low risk tolerance favored stricter quality gates and maintenance signals."
@@ -975,6 +1036,7 @@ fn recommendation_reasons(
 
 fn recommendation_caveats(
     quality: Option<&crate::domain::reference::QualityContext>,
+    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
     risk: RiskTolerance,
 ) -> Vec<String> {
     let Some(q) = quality else {
@@ -1000,6 +1062,17 @@ fn recommendation_caveats(
         caveats
             .push("Abandonment risk is elevated; inspect maintenance before adoption.".to_string());
     }
+    if let Some(radar) = radar
+        && matches!(
+            radar.maturity_band.as_str(),
+            "emerging" | "experimental" | "noisy"
+        )
+    {
+        caveats.push(format!(
+            "Radar marks this repo as {}; validate fit before production adoption.",
+            radar.maturity_band
+        ));
+    }
     if risk == RiskTolerance::High {
         caveats.push(
             "Because risk_tolerance is high, validate API stability and maintenance manually."
@@ -1011,6 +1084,7 @@ fn recommendation_caveats(
 
 fn recommendation_next_actions(
     quality: Option<&crate::domain::reference::QualityContext>,
+    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
 ) -> Vec<String> {
     let mut actions = vec!["Call get_repo_quality_context before final selection.".to_string()];
     if quality
@@ -1021,6 +1095,14 @@ fn recommendation_next_actions(
     }
     actions.push("After testing the dependency, call log_usage with the outcome.".to_string());
     actions.push("Use watch_repo if this becomes a dependency to monitor.".to_string());
+    if radar
+        .map(|radar| matches!(radar.maturity_band.as_str(), "emerging" | "experimental"))
+        .unwrap_or(false)
+    {
+        actions.push(
+            "If choosing an emerging repo, use watch_repo to monitor quality drift.".to_string(),
+        );
+    }
     actions
 }
 
@@ -1058,6 +1140,7 @@ fn into_context_output(
     formula_version: String,
 ) -> RepoContextOutput {
     let q = profile.repo.quality.clone();
+    let radar = profile.repo.radar.as_ref().map(radar_brief);
     let scored_at = q.as_ref().map(|q| q.computed_at);
     RepoContextOutput {
         provenance: Provenance {
@@ -1108,6 +1191,7 @@ fn into_context_output(
             .unwrap_or_default(),
         quality_regret_count: q.as_ref().map(|q| q.regret_count).unwrap_or_default(),
         flags: q.map(|q| q.flags).unwrap_or_default(),
+        radar,
         recent_signals: profile
             .recent_signals
             .into_iter()
@@ -1174,7 +1258,10 @@ mod tests {
     use crate::config::AppConfig;
     use crate::domain::{
         reference::{QualityContext, SearchFilter},
-        repo::{RepoCategory, RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
+        repo::{
+            RepoCategory, RepoProfile, RepoRadarSnapshot, RepoSearchResult, RepoSignal,
+            VitalityInputs,
+        },
     };
 
     #[test]
@@ -1383,6 +1470,72 @@ mod tests {
                 .next_actions
                 .iter()
                 .any(|action| action.contains("get_repo_quality_context"))
+        );
+    }
+
+    #[test]
+    fn recommendations_include_radar_maturity_and_caveats() {
+        let computed_at = Utc.with_ymd_and_hms(2026, 4, 25, 10, 0, 0).unwrap();
+        let artifact_id = Uuid::parse_str("66666666-6666-4666-8666-666666666666").unwrap();
+        let results = vec![RepoSearchResult {
+            artifact_id,
+            owner: "example".to_string(),
+            name: "new-test-runner".to_string(),
+            full_name: "example/new-test-runner".to_string(),
+            html_url: "https://github.com/example/new-test-runner".to_string(),
+            description: Some("A fast testing tool.".to_string()),
+            language: Some("TypeScript".to_string()),
+            license_spdx: Some("MIT".to_string()),
+            topics: vec!["testing".to_string()],
+            stars_count: 420,
+            forks_count: 22,
+            open_issues_count: 12,
+            archived: false,
+            last_commit_at: Some(computed_at),
+            quality: Some(QualityContext {
+                formula_version: "v2.0".to_string(),
+                freshness: Some(0.9),
+                adoption: Some(0.0),
+                reliability: Some(0.5),
+                abandonment: Some(0.08),
+                vitality: Some(0.7),
+                overall: Some(0.62),
+                resolve_count: 0,
+                build_success_count: 0,
+                build_failure_count: 0,
+                regret_count: 0,
+                flags: Vec::new(),
+                computed_at,
+            }),
+            categories: Vec::new(),
+            radar: Some(RepoRadarSnapshot {
+                maturity_band: "emerging".to_string(),
+                radar_relevance: 0.72,
+                trend_signal: 0.88,
+                explanation: json!({ "reasons": ["clear_category", "recent_activity"] }),
+            }),
+        }];
+
+        let recommendations = build_recommendations(results, RiskTolerance::Medium);
+
+        assert_eq!(
+            recommendations[0]
+                .radar
+                .as_ref()
+                .map(|radar| radar.maturity_band.as_str()),
+            Some("emerging")
+        );
+        assert!(
+            recommendations[0]
+                .caveats
+                .iter()
+                .any(|caveat| caveat.contains("Radar marks this repo as emerging"))
+        );
+        assert!(
+            recommendations[0]
+                .next_actions
+                .iter()
+                .any(|action| action.contains("watch_repo"))
         );
     }
 
