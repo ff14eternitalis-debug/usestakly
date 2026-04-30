@@ -341,6 +341,7 @@ export function DiscoverPage() {
                   key={repo.artifactId}
                   repo={repo}
                   index={radarOffset + index}
+                  showRadarSummary
                 />
               ))
             )}

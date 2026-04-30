@@ -17,6 +17,7 @@ import { ScoreBar } from "./ScoreBar";
 type Props = {
   repo: RepoSearchResult;
   index?: number;
+  showRadarSummary?: boolean;
 };
 
 function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
@@ -33,7 +34,7 @@ function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   return "var(--color-fg-muted)";
 }
 
-export function RepoCard({ repo, index }: Props) {
+export function RepoCard({ repo, index, showRadarSummary = false }: Props) {
   const t = useT();
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
@@ -96,7 +97,7 @@ export function RepoCard({ repo, index }: Props) {
           ))}
         </div>
 
-        {repo.radar ? (
+        {showRadarSummary && repo.radar ? (
           <p className="max-w-[70ch] border-l border-line pl-3 text-[0.86rem] leading-relaxed text-fg-dim">
             <span className="font-medium text-fg">Radar.</span>{" "}
             {radarSummary(repo.radar, t.radar)}
