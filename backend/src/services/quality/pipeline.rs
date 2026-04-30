@@ -266,6 +266,9 @@ async fn recompute_externals_with_config(
         }
         processed += 1;
     }
+    if let Err(e) = crate::services::radar::refresh_all_repo_radar_snapshots(db).await {
+        tracing::warn!(error = ?e, "failed to refresh repo radar snapshots");
+    }
     Ok(processed)
 }
 

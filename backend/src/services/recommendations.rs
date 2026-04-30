@@ -597,6 +597,7 @@ mod tests {
                 computed_at: chrono::Utc::now(),
             }),
             categories: Vec::new(),
+            radar: None,
         }
     }
 
@@ -673,6 +674,7 @@ mod tests {
             last_commit_at: None,
             quality: None,
             categories: Vec::new(),
+            radar: None,
         };
 
         assert!(!matches_term(&repo, "orm"));

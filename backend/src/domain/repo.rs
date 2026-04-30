@@ -24,6 +24,7 @@ pub struct RepoSearchResult {
     pub last_commit_at: Option<DateTime<Utc>>,
     pub quality: Option<QualityContext>,
     pub categories: Vec<RepoCategory>,
+    pub radar: Option<RepoRadarSnapshot>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -33,6 +34,15 @@ pub struct RepoCategory {
     pub confidence: f64,
     pub source: String,
     pub evidence: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RepoRadarSnapshot {
+    pub maturity_band: String,
+    pub radar_relevance: f64,
+    pub trend_signal: f64,
+    pub explanation: Value,
 }
 
 #[derive(Debug, Clone, Serialize)]

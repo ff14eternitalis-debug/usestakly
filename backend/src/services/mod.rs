@@ -2,6 +2,7 @@ pub mod agent_tokens;
 pub mod ingestion;
 pub mod notifications;
 pub mod quality;
+pub mod radar;
 pub mod recommendations;
 pub mod repo_categories;
 pub mod repos;

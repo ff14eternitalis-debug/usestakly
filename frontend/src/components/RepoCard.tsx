@@ -24,6 +24,16 @@ function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
   return "neutral";
 }
 
+function toneFromMaturity(
+  band: string
+): "accent" | "info" | "warn" | "danger" | "neutral" {
+  if (band === "established") return "accent";
+  if (band === "emerging") return "info";
+  if (band === "experimental") return "warn";
+  if (band === "stale") return "danger";
+  return "neutral";
+}
+
 function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   if (tone === "danger") return "var(--color-danger)";
   if (tone === "warn") return "var(--color-warn)";
@@ -71,6 +81,11 @@ export function RepoCard({ repo, index }: Props) {
             <Chip tone="neutral">{repo.licenseSpdx}</Chip>
           ) : null}
           {repo.archived ? <Chip tone="warn">archived</Chip> : null}
+          {repo.radar ? (
+            <Chip tone={toneFromMaturity(repo.radar.maturityBand)}>
+              {repo.radar.maturityBand}
+            </Chip>
+          ) : null}
           {repo.categories.slice(0, 3).map((category) => (
             <Chip key={category.category} tone="accent">
               {category.category}

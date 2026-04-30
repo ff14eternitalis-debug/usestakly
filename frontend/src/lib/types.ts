@@ -32,6 +32,13 @@ export type RepoCategory = {
   evidence: unknown;
 };
 
+export type RepoRadarSnapshot = {
+  maturityBand: "established" | "emerging" | "experimental" | "stale" | "noisy";
+  radarRelevance: number;
+  trendSignal: number;
+  explanation: unknown;
+};
+
 export type VitalityInputs = {
   structuralSignalsAt: string | null;
   distinctContributors90d: number | null;
@@ -58,6 +65,7 @@ export type RepoSearchResult = {
   lastCommitAt: string | null;
   quality: QualityContext | null;
   categories: RepoCategory[];
+  radar: RepoRadarSnapshot | null;
 };
 
 export type RepoSignalEvent = {

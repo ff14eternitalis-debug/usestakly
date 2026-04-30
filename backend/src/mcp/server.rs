@@ -1268,6 +1268,7 @@ mod tests {
                     computed_at,
                 }),
                 categories: Vec::new(),
+                radar: None,
             },
             subscribers_count: 6_400,
             default_branch: Some("main".to_string()),
@@ -1354,6 +1355,7 @@ mod tests {
                 computed_at,
             }),
             categories: Vec::new(),
+            radar: None,
         }];
 
         let recommendations = build_recommendations(results, RiskTolerance::Medium);
@@ -1418,6 +1420,7 @@ mod tests {
                 source: "github_metadata+readme".to_string(),
                 evidence: json!({}),
             }],
+            radar: None,
         };
         let unrelated_repo = RepoSearchResult {
             artifact_id: Uuid::parse_str("55555555-5555-4555-8555-555555555555").unwrap(),
@@ -1446,6 +1449,7 @@ mod tests {
                 source: "github_metadata+readme".to_string(),
                 evidence: json!({}),
             }],
+            radar: None,
         };
 
         assert!(repo_matches_intent(&testing_repo, &intent));

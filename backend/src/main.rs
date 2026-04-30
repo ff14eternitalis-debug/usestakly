@@ -18,6 +18,11 @@ async fn main() -> anyhow::Result<()> {
         Ok(_) => {}
         Err(err) => warn!(?err, "repo category backfill failed"),
     }
+    match services::radar::refresh_all_repo_radar_snapshots(&db).await {
+        Ok(count) if count > 0 => info!(count, "repo radar refresh completed"),
+        Ok(_) => {}
+        Err(err) => warn!(?err, "repo radar refresh failed"),
+    }
 
     if config.scheduler_enabled {
         let interval = Duration::from_secs(config.recompute_interval_secs);

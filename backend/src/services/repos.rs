@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use serde_json::Value;
 use sqlx::types::Json;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
@@ -8,7 +9,10 @@ use crate::{
     config::AppConfig,
     domain::{
         reference::{QualityContext, SearchFilter},
-        repo::{RepoCategory, RepoProfile, RepoSearchResult, RepoSignal, VitalityInputs},
+        repo::{
+            RepoCategory, RepoProfile, RepoRadarSnapshot, RepoSearchResult, RepoSignal,
+            VitalityInputs,
+        },
     },
     services::{quality::load_v2, semantic_search, trust::signal_events},
 };
@@ -140,6 +144,10 @@ pub async fn search_github_repos(
               FROM repo_categories rc
               WHERE rc.external_artifact_id = e.id
             ), '[]'::jsonb) AS categories,
+            radar.maturity_band         AS radar_maturity_band,
+            radar.radar_relevance::float8 AS radar_relevance,
+            radar.trend_signal::float8  AS radar_trend_signal,
+            radar.explanation           AS radar_explanation,
             ascore.formula_version      AS quality_formula_version,
             ascore.freshness::float8    AS quality_freshness,
             ascore.adoption::float8     AS quality_adoption,
@@ -191,6 +199,8 @@ pub async fn search_github_repos(
           LEFT JOIN artifact_scores ascore
             ON ascore.external_artifact_id = e.id
             AND ascore.formula_version = $1
+          LEFT JOIN repo_radar_snapshots radar
+            ON radar.external_artifact_id = e.id
           WHERE e.source = 'github'
             AND e.github_owner IS NOT NULL
             AND e.github_repo IS NOT NULL
@@ -339,6 +349,10 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
             FROM repo_categories rc
             WHERE rc.external_artifact_id = e.id
           ), '[]'::jsonb) AS categories,
+          radar.maturity_band         AS radar_maturity_band,
+          radar.radar_relevance::float8 AS radar_relevance,
+          radar.trend_signal::float8  AS radar_trend_signal,
+          radar.explanation           AS radar_explanation,
           e.subscribers_count         AS subscribers_count,
           e.default_branch            AS default_branch,
           e.priors_fetched_at         AS priors_fetched_at,
@@ -365,6 +379,8 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
         LEFT JOIN artifact_scores ascore
           ON ascore.external_artifact_id = e.id
           AND ascore.formula_version = $1
+        LEFT JOIN repo_radar_snapshots radar
+          ON radar.external_artifact_id = e.id
         WHERE e.id = $2
           AND e.source = 'github'
         "#,
@@ -432,6 +448,10 @@ struct RepoRow {
     archived: bool,
     last_commit_at: Option<DateTime<Utc>>,
     categories: Json<Vec<RepoCategory>>,
+    radar_maturity_band: Option<String>,
+    radar_relevance: Option<f64>,
+    radar_trend_signal: Option<f64>,
+    radar_explanation: Option<Value>,
     quality_formula_version: Option<String>,
     quality_freshness: Option<f64>,
     quality_adoption: Option<f64>,
@@ -472,6 +492,15 @@ impl RepoRow {
         })
     }
 
+    fn radar(&self) -> Option<RepoRadarSnapshot> {
+        Some(RepoRadarSnapshot {
+            maturity_band: self.radar_maturity_band.clone()?,
+            radar_relevance: self.radar_relevance?,
+            trend_signal: self.radar_trend_signal?,
+            explanation: self.radar_explanation.clone().unwrap_or(Value::Null),
+        })
+    }
+
     fn into_search_result(self) -> RepoSearchResult {
         let owner = self.owner.clone().unwrap_or_default();
         let name = self.name.clone().unwrap_or_default();
@@ -481,6 +510,7 @@ impl RepoRow {
             .clone()
             .unwrap_or_else(|| format!("https://github.com/{full_name}"));
         let quality = self.quality();
+        let radar = self.radar();
         RepoSearchResult {
             artifact_id: self.artifact_id,
             owner,
@@ -498,6 +528,7 @@ impl RepoRow {
             last_commit_at: self.last_commit_at,
             quality,
             categories: self.categories.0,
+            radar,
         }
     }
 }
@@ -518,6 +549,10 @@ struct ProfileRow {
     archived: bool,
     last_commit_at: Option<DateTime<Utc>>,
     categories: Json<Vec<RepoCategory>>,
+    radar_maturity_band: Option<String>,
+    radar_relevance: Option<f64>,
+    radar_trend_signal: Option<f64>,
+    radar_explanation: Option<Value>,
     subscribers_count: i32,
     default_branch: Option<String>,
     priors_fetched_at: Option<DateTime<Utc>>,
@@ -560,6 +595,10 @@ impl ProfileRow {
             archived: self.archived,
             last_commit_at: self.last_commit_at,
             categories: self.categories,
+            radar_maturity_band: self.radar_maturity_band,
+            radar_relevance: self.radar_relevance,
+            radar_trend_signal: self.radar_trend_signal,
+            radar_explanation: self.radar_explanation,
             quality_formula_version: self.quality_formula_version,
             quality_freshness: self.quality_freshness,
             quality_adoption: self.quality_adoption,
