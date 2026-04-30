@@ -292,6 +292,18 @@ fn classify_with_rule(
             return None;
         }
     }
+    if rule.category == "testing"
+        && strong.is_empty()
+        && !has_testing_readme_anchor(&readme_strong, &readme_medium)
+    {
+        return None;
+    }
+    if rule.category == "data-grid"
+        && strong.is_empty()
+        && !has_data_grid_readme_anchor(&readme_strong, &readme_medium)
+    {
+        return None;
+    }
 
     let score = (strong.len() as f64 * 0.34)
         + (medium.len() as f64 * 0.16)
@@ -388,6 +400,22 @@ fn has_ui_kit_readme_anchor(terms: &[&str]) -> bool {
                 | "mantine"
                 | "headlessui"
                 | "ant-design"
+        )
+    })
+}
+
+fn has_testing_readme_anchor(strong: &[&str], medium: &[&str]) -> bool {
+    strong
+        .iter()
+        .chain(medium.iter())
+        .any(|term| matches!(*term, "testing" | "playwright" | "vitest" | "jest" | "e2e"))
+}
+
+fn has_data_grid_readme_anchor(strong: &[&str], medium: &[&str]) -> bool {
+    strong.iter().chain(medium.iter()).any(|term| {
+        matches!(
+            *term,
+            "datatable" | "data-grid" | "data grid" | "react-table" | "tanstack"
         )
     })
 }
@@ -558,6 +586,36 @@ mod tests {
         );
 
         assert!(!found.contains(&"ui-kit".to_string()));
+    }
+
+    #[test]
+    fn readme_generic_test_word_does_not_create_testing_false_positive() {
+        let found = categories_with_readme(
+            meta(
+                "axios",
+                "axios",
+                "Promise based HTTP client",
+                &["http-client"],
+            ),
+            "# Axios\n\nRun tests before submitting a request change.",
+        );
+
+        assert!(!found.contains(&"testing".to_string()));
+    }
+
+    #[test]
+    fn readme_generic_table_word_does_not_create_data_grid_false_positive() {
+        let found = categories_with_readme(
+            meta(
+                "prisma",
+                "prisma",
+                "Next-generation ORM",
+                &["orm", "database"],
+            ),
+            "# Prisma\n\nSee the compatibility table for database providers.",
+        );
+
+        assert!(!found.contains(&"data-grid".to_string()));
     }
 
     #[test]
