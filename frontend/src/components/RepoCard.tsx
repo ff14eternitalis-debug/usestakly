@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { useT } from "../i18n";
 import type { RepoSearchResult } from "../lib/types";
 import {
   abandonmentTone,
@@ -9,6 +10,7 @@ import {
   formatStars,
   scoreTone
 } from "../lib/format";
+import { radarSummary, radarTone } from "../lib/radar";
 import { Chip } from "./Chip";
 import { ScoreBar } from "./ScoreBar";
 
@@ -24,16 +26,6 @@ function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
   return "neutral";
 }
 
-function toneFromMaturity(
-  band: string
-): "accent" | "info" | "warn" | "danger" | "neutral" {
-  if (band === "established") return "accent";
-  if (band === "emerging") return "info";
-  if (band === "experimental") return "warn";
-  if (band === "stale") return "danger";
-  return "neutral";
-}
-
 function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   if (tone === "danger") return "var(--color-danger)";
   if (tone === "warn") return "var(--color-warn)";
@@ -42,6 +34,7 @@ function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
 }
 
 export function RepoCard({ repo, index }: Props) {
+  const t = useT();
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
   return (
@@ -82,7 +75,7 @@ export function RepoCard({ repo, index }: Props) {
           ) : null}
           {repo.archived ? <Chip tone="warn">archived</Chip> : null}
           {repo.radar ? (
-            <Chip tone={toneFromMaturity(repo.radar.maturityBand)}>
+            <Chip tone={radarTone(repo.radar.maturityBand)}>
               {repo.radar.maturityBand}
             </Chip>
           ) : null}
@@ -102,6 +95,13 @@ export function RepoCard({ repo, index }: Props) {
             </Chip>
           ))}
         </div>
+
+        {repo.radar ? (
+          <p className="max-w-[70ch] border-l border-line pl-3 text-[0.86rem] leading-relaxed text-fg-dim">
+            <span className="font-medium text-fg">Radar.</span>{" "}
+            {radarSummary(repo.radar, t.radar)}
+          </p>
+        ) : null}
 
         <div className="grid gap-4 pt-2 md:grid-cols-[220px_1fr] md:gap-8">
           <div className="grid gap-2 border-t border-line pt-4 md:border-0 md:border-r md:pt-0 md:pr-6">

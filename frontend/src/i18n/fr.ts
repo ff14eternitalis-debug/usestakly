@@ -28,6 +28,20 @@ export const fr: Dict = {
     checkingStatus: "vérification",
     observingStatus: "observation"
   },
+  radar: {
+    established:
+      "Base fiable : catégorie claire, activité récente et signaux qualité matures.",
+    emerging:
+      "Projet actif avec une catégorie claire, mais les preuves d'usage se construisent encore.",
+    experimental:
+      "Signal utile, mais preuves encore fines. À inspecter avant adoption.",
+    stale:
+      "Risque de fraîcheur ou d'abandon élevé. Vérifie la maintenance avant usage.",
+    noisy:
+      "Signal de catégorie faible. À lire comme une piste, pas une recommandation.",
+    trendStrong: "La tendance radar est forte.",
+    trendModerate: "La tendance radar est visible."
+  },
   header: {
     signIn: "Connexion"
   },

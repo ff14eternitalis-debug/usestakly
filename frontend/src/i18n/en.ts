@@ -26,6 +26,20 @@ export const en = {
     checkingStatus: "checking",
     observingStatus: "observing"
   },
+  radar: {
+    established:
+      "Reliable baseline: clear category, recent activity, and mature quality signals.",
+    emerging:
+      "Active project with a clear category, but usage proof is still building.",
+    experimental:
+      "Useful signal, but evidence is still thin. Inspect it before adopting.",
+    stale:
+      "Freshness or abandonment risk is elevated. Verify maintenance before use.",
+    noisy:
+      "Weak category signal. Treat this as a lead, not a recommendation.",
+    trendStrong: "Radar trend is strong.",
+    trendModerate: "Radar trend is visible."
+  },
   header: {
     signIn: "Sign in"
   },

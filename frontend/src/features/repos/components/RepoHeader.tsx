@@ -2,7 +2,9 @@ import { Link } from "@tanstack/react-router";
 
 import { Button, buttonClass } from "../../../components/Button";
 import { Chip } from "../../../components/Chip";
+import { useT } from "../../../i18n";
 import { flagLabel } from "../../../lib/format";
+import { radarSummary, radarTone } from "../../../lib/radar";
 import { loginSearch } from "../../../lib/return-to";
 import type { RepoProfile } from "../../../lib/types";
 
@@ -11,16 +13,6 @@ function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
   if (flag === "deprecated" || flag === "unmaintained" || flag === "abandoned") {
     return "warn";
   }
-  return "neutral";
-}
-
-function toneFromMaturity(
-  band: string
-): "accent" | "info" | "warn" | "danger" | "neutral" {
-  if (band === "established") return "accent";
-  if (band === "emerging") return "info";
-  if (band === "experimental") return "warn";
-  if (band === "stale") return "danger";
   return "neutral";
 }
 
@@ -57,6 +49,7 @@ export function RepoHeader({
   unwatchingLabel,
   viewOnGithubLabel
 }: RepoHeaderProps) {
+  const t = useT();
   const q = repo.quality;
 
   return (
@@ -78,7 +71,7 @@ export function RepoHeader({
         {repo.licenseSpdx ? <Chip tone="neutral">{repo.licenseSpdx}</Chip> : null}
         {repo.archived ? <Chip tone="warn">archived</Chip> : null}
         {repo.radar ? (
-          <Chip tone={toneFromMaturity(repo.radar.maturityBand)}>
+          <Chip tone={radarTone(repo.radar.maturityBand)}>
             {repo.radar.maturityBand}
           </Chip>
         ) : null}
@@ -98,6 +91,13 @@ export function RepoHeader({
           </Chip>
         ))}
       </div>
+
+      {repo.radar ? (
+        <p className="max-w-[68ch] border-l border-line pl-3 text-[0.92rem] leading-relaxed text-fg-dim">
+          <span className="font-medium text-fg">Radar.</span>{" "}
+          {radarSummary(repo.radar, t.radar)}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3 pt-1">
         {isAuthed ? (
