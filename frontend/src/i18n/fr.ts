@@ -478,7 +478,10 @@ export const fr: Dict = {
     tryPrompts: [
       "Cherche une lib React table fiable avec UseStakly. Explique le score, les caveats et la provenance, puis log_usage après le test.",
       "J'ai besoin d'un ORM TypeScript. Recommande des repos GitHub avec UseStakly et compare fiabilité, fraîcheur et risque d'abandon.",
-      "Avant d'ajouter cette dépendance, utilise UseStakly pour inspecter le détail repo et ajoute-le à ma veille s'il paraît sain."
+      "Avant d'ajouter cette dépendance, utilise UseStakly pour inspecter le détail repo et ajoute-le à ma veille s'il paraît sain.",
+      "Trouve une lib de tests fiable pour TypeScript avec UseStakly. Je veux d'abord des choix établis, pas des emerging.",
+      "Trouve des alternatives emerging à Prisma côté ORM TypeScript. J'accepte plus de risque pour des projets récents avec une bonne vitalité.",
+      "Surveille les nouveaux outils OSS pour l'observabilité. Mets les options établies dans ma veille et préviens-moi si un challenger emerging apparaît."
     ],
     stepsLabel: "Installation",
     steps: [
@@ -591,6 +594,32 @@ export const fr: Dict = {
     vitalityLimitsTitle: "Limites assumées",
     vitalityLimitsBody:
       "La vitalité est structurelle et passive. Elle ne dit pas si le code est bien écrit, si les mainteneurs sont réactifs, ni si un projet solo de niche très qualitatif mérite plus de crédit que ses sous-signaux ne le suggèrent. Les outils solo légitimes et scripts personnels seront pénalisés — c'est un tradeoff explicite face au risque de slop. À lire comme un plancher, pas un verdict sur l'artisanat.",
+    radarLabel: "Maturité radar",
+    radarTitle: "Score et maturité répondent à deux questions différentes",
+    radarBody:
+      "Le score (0–1) dit à quel point on peut faire confiance à un repo aujourd'hui. La bande de maturité radar dit quel rôle ce repo joue dans ta décision : dépendance éprouvée, challenger emerging à surveiller, ou candidat bruyant à filtrer. Les deux axes utilisent les mêmes données mais alimentent des surfaces différentes — le mode Fiable dans Explorer privilégie le score, le mode Radar emerging privilégie maturité et tendance.",
+    radarBands: [
+      {
+        name: "established",
+        body: "Mature, actif, assez de signaux publics pour être un choix par défaut sain."
+      },
+      {
+        name: "emerging",
+        body: "Jeune ou moins adopté, mais actif et pertinent. Prometteur — pas encore éprouvé en prod."
+      },
+      {
+        name: "experimental",
+        body: "Intéressant mais trop tôt ou trop fin pour recommander sans réserves."
+      },
+      {
+        name: "stale",
+        body: "Fraîcheur faible ou abandon élevé. À inspecter avant adoption."
+      },
+      {
+        name: "noisy",
+        body: "Beaucoup de signaux de surface (stars, trafic) pour peu d'évidence d'utilité réelle."
+      }
+    ],
     modesLabel: "Modes",
     modesTitle: "Même formule, seuils différents",
     modes: [

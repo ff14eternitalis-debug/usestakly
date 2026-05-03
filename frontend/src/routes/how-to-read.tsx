@@ -94,6 +94,25 @@ export function HowToReadPage() {
 
       <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
         <div className="grid content-start gap-3">
+          <span className="kicker">{t.howToRead.radarLabel}</span>
+          <h2 className="display-md !text-[1.45rem]">
+            {t.howToRead.radarTitle}
+          </h2>
+        </div>
+        <div className="grid gap-4">
+          <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
+            {t.howToRead.radarBody}
+          </p>
+          <div className="grid gap-3">
+            {t.howToRead.radarBands.map((band) => (
+              <GuideRow key={band.name} name={band.name} body={band.body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
+        <div className="grid content-start gap-3">
           <span className="kicker">{t.howToRead.modesLabel}</span>
           <h2 className="display-md !text-[1.45rem]">
             {t.howToRead.modesTitle}

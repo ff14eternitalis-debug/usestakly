@@ -475,7 +475,10 @@ export const en = {
     tryPrompts: [
       "Find a reliable React table library with UseStakly. Explain the score, caveats, and provenance, then log_usage after the test.",
       "I need a TypeScript ORM. Recommend GitHub repos with UseStakly and compare reliability, freshness, and abandonment risk.",
-      "Before adding this dependency, use UseStakly to inspect the repo detail and add it to my watchlist if it looks healthy."
+      "Before adding this dependency, use UseStakly to inspect the repo detail and add it to my watchlist if it looks healthy.",
+      "Find a reliable testing library for TypeScript with UseStakly. I want established choices first, not emerging picks.",
+      "Find emerging alternatives to Prisma in the TypeScript ORM space. I accept higher risk for newer projects with strong vitality.",
+      "Watch new OSS tools for observability. Add the established options to my watchlist and tell me when an emerging contender shows up."
     ],
     stepsLabel: "Install flow",
     steps: [
@@ -588,6 +591,32 @@ export const en = {
     vitalityLimitsTitle: "Honest limits",
     vitalityLimitsBody:
       "Vitality is structural and passive. It cannot tell whether code is well written, whether the maintainers are responsive, or whether a niche solo project of high quality deserves more credit than its sub-signals suggest. Legitimate solo tools and personal scripts will be penalised — that is an explicit tradeoff against the slop risk. Read the dimension as a floor, not a verdict on craft.",
+    radarLabel: "Radar maturity",
+    radarTitle: "Score and maturity answer different questions",
+    radarBody:
+      "The score (0–1) tells you how much to trust a repo today. The radar maturity band tells you what role the repo plays in your decision: a proven dependency, an emerging contender to keep an eye on, or a noisy candidate to filter out. Both axes use the same data but ship to different surfaces — Reliable mode in Discover prioritises score, Emerging radar prioritises maturity and trend.",
+    radarBands: [
+      {
+        name: "established",
+        body: "Mature, active, enough public signals to be a default-safe pick."
+      },
+      {
+        name: "emerging",
+        body: "Young or less adopted, but active and relevant. Promising — not production-proven."
+      },
+      {
+        name: "experimental",
+        body: "Interesting but too early or too thin to recommend without caveats."
+      },
+      {
+        name: "stale",
+        body: "Weak freshness or high abandonment. Needs investigation before adoption."
+      },
+      {
+        name: "noisy",
+        body: "Lots of surface signals (stars, traffic) but low evidence of usefulness."
+      }
+    ],
     modesLabel: "Modes",
     modesTitle: "Same formula, different thresholds",
     modes: [
