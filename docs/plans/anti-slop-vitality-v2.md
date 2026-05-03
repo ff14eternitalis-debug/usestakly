@@ -1,6 +1,9 @@
 # Plan — Anti-slop & dimension `vitality` (formula v2)
 
-**Statut :** brouillon, en attente de validation point par point.
+**Statut (2026-05-03) :** LIVRÉ sur `main` (3 commits bisectables : `5800262` lot 1, `e5fcbe6` lot 2, `974fcb4` lot 3). `pipeline.rs` charge `load_v2()` par défaut (lignes 127, 337). Audit v1.1 préservé via index unique `(external_artifact_id, formula_version)`.
+
+**Followup ouvert :** capture `last_release_at` partielle (4/25 repos validés sur le seed initial). `services/ingestion/github.rs::fetch_releases_summary` renvoie `(0, None)` sur la majorité des repos qui ont pourtant des releases visibles (tokio, vitest, eslint, rust, prisma). Bug de pagination/parsing à investiguer. Pas bloquant car `vitality` retourne neutre 0.5 quand `structural_signals_at` est NULL. Reporté dans `docs/plans/remaining-work-2026-05-03.md`.
+
 **Auteur :** discussion 2026-04-27.
 **Cible code :** `backend/src/services/ingestion/github.rs`, `backend/src/services/quality/`, `backend/scoring/`, `backend/migrations/`, `frontend/src/features/repos/`, `backend/src/mcp/`.
 

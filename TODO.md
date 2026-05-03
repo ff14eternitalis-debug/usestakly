@@ -113,7 +113,7 @@ Pipeline neuf. C'est le cœur du nouveau produit : sans repos ingérés, rien à
 - [ ] **Reste à faire** : computation priors dérivés côté events API (`owner_inactive_days`)
 - [ ] **Reste à faire** : cadence refresh automatique (daily par défaut, horaire pour repos watchés) — actuellement manuel / au seed
 - [ ] **Reste à faire** : critère corpus v1 formel — **à trancher** entre top N par langage / sur demande / via watchlist uniquement
-- [ ] **Reste à faire** : endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé
+- [x] Endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé (`backend/src/handlers/admin.rs::ingest_github_repo`, route câblée dans `app/mod.rs`)
 - [ ] **Reste à faire** : tests unitaires sur parsing réponses GitHub
 
 ### Phase R2 — Discovery qualité-scored ✅ LIVRÉE (commit 8e4e1f7, fix f053f79)
@@ -128,7 +128,7 @@ Remplace la search snippets par la search repos GitHub.
 - [x] Endpoint admin de backfill embeddings corpus existant — `POST /api/admin/embeddings/backfill`
 - [x] Calibration initiale du ranking hybride sur corpus local réel — `auto` ne vide plus artificiellement les résultats, score lexical tokenisé + blend lexical / sémantique / qualité branché
 - [ ] **Reste à faire** : affiner encore le weighting lexical / sémantique / score qualité sur corpus plus large et requêtes réelles variées
-- [ ] **Reste à faire** : filtres avancés (langage, license, stars min/max, freshness min) — partiellement présents, à compléter
+- [x] Filtres avancés (langage, license, stars min/max, freshness, topics, score_min, abandonment_max, include_archived) — `RepoSearchFilters` complet dans `services/repos.rs`, livré 2026-04-26 (`b608db3`)
 - [ ] **Reste à faire** : UX d'explication « pourquoi ce repo est proposé, pourquoi X est exclu en mode auto »
 
 ### Phase R3 — Watchlist & suivi ✅ LIVRÉE partiellement (commit 8750ea8)
@@ -227,9 +227,9 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 
 Reportée pour ne pas casser le flow actuel, mais à faire avant ouverture externe :
 
-- [ ] **Doc reproduction tests** — comment lancer la stack locale (docker compose + backend + frontend), quelles env vars minimales, quel corpus de seed, comment déclencher un cycle scheduler à la main pour valider (`curl POST /api/admin/scoring/recompute` avec token), comment inspecter `notifications` en DB
+- [x] **Doc reproduction tests** — `docs/dev-workflow.md` couvre démarrage stack, env vars, recherche sémantique, commandes courantes
 - [ ] **Doc tests fonctionnels** — check-list : login OAuth OK, add repo OK, watchlist affiche, notifs se créent quand un score bouge, `/api/search` filtre auto/strict/explore, profil repo cohérent
-- [ ] **Doc parcours utilisateur** — à produire en même temps que l'audit (voir section ci-dessous), une fois les incohérences routées
+- [x] **Doc parcours utilisateur** — `docs/user-journey.md` v2.0 (5 flows : découverte, connexion/watch, agent MCP, signal modéré, admin)
 
 ## 🧭 Audit parcours utilisateur — phase 1 faite, phase 2 à faire
 

@@ -52,9 +52,12 @@
 - [`validation/formula-v1.1-smoke-test-2026-04-24.md`](./validation/formula-v1.1-smoke-test-2026-04-24.md) — smoke test scoring v1.1
 
 ### Plans
+- [`plans/remaining-work-2026-05-03.md`](./plans/remaining-work-2026-05-03.md) — **vue priorisée du reste à terminer** (audit faux positifs + items vraiment ouverts)
 - [`plans/refactor-plan-2026-04-23.md`](./plans/refactor-plan-2026-04-23.md) — refacto sprints 1 à 4 (terminés)
+- [`plans/anti-slop-vitality-v2.md`](./plans/anti-slop-vitality-v2.md) — formula v2 vitality (livré, followup release_at)
+- [`plans/source-of-truth-oss-radar-plan.md`](./plans/source-of-truth-oss-radar-plan.md) — radar maturity (phases 1/2/3/5 livrées, 4/6 partielles)
+- [`plans/use-case-recommendation-watch-plan.md`](./plans/use-case-recommendation-watch-plan.md) — recherche par besoin (lots 1/2/3/5 livrés hors notifs, 4 MCP ouvert)
 - [`plans/rename-to-usestakly.md`](./plans/rename-to-usestakly.md) — transition `Project-K` → `UseStakly`
-- [`plans/use-case-recommendation-watch-plan.md`](./plans/use-case-recommendation-watch-plan.md) — plan d'action recherche par besoin + veille d'intention
 - [`domain-proposals.md`](./domain-proposals.md) — propositions de noms de domaine
 
 ### Archives
