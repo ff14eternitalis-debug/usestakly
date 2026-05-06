@@ -65,13 +65,14 @@ Format : chaque check est un test minimal **un seul outil ou une seule action**,
 
 - [ ] **H1 — Auth requise** : `curl -X POST http://localhost:4000/mcp -d '{"jsonrpc":"2.0","id":1,"method":"initialize",...}'` **sans** Bearer renvoie `401` ou équivalent (middleware pré-transport).
 - [ ] **H2 — Initialize avec token** : même requête avec `Authorization: Bearer usk_...` valide renvoie une réponse MCP `result` avec `serverInfo`.
-- [ ] **H3 — `tools/list`** : retourne 5 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`.
+- [ ] **H3 — `tools/list`** : retourne 6 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`, `watch_use_case`.
 - [ ] **H4 — `search_github_repos`** : paramètres `{query: "react table", limit: 5}` renvoie une shortlist avec `quality_overall`, `radar` (si snapshot), et `provenance.formula_version = "v2.0"`.
 - [ ] **H5 — `get_repo_quality_context`** : `{owner: "TanStack", name: "table"}` (ou un repo seedé) renvoie le profil complet avec dimensions, flags, recent_signals.
-- [ ] **H6 — `recommend_github_repos`** : `{need: "TypeScript ORM"}` renvoie au moins un candidat avec `reasons` et `caveats`.
+- [ ] **H6 — `recommend_github_repos`** : `{need: "TypeScript ORM"}` renvoie au moins un candidat avec `reasons`, `caveats`, `stable_picks` / `emerging_picks` et `fallback_candidates`.
 - [ ] **H7 — `log_usage`** : `{owner, name, outcome: "build_success"}` réussit, retourne le score recalculé, et un `quality_signal` est persisté côté DB.
 - [ ] **H8 — `watch_repo`** : `{owner, name}` ajoute le repo à la watchlist du user propriétaire du token, visible ensuite dans `/watchlist`.
-- [ ] **H9 — Quota write** : 30 `log_usage` rapides avec le même token → les derniers sont refusés (`mcp_guard_rejection` dans `agent_token_events`).
+- [ ] **H9 — `watch_use_case`** : `{need: "testing tools for TypeScript"}` crée une veille d'intention visible ensuite dans `/watchlist` section `Besoins`.
+- [ ] **H10 — Quota write** : 30 `log_usage` rapides avec le même token → les derniers sont refusés (`mcp_guard_rejection` dans `agent_token_events`).
 
 ## I. CLI MCP
 

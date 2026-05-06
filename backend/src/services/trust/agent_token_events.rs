@@ -6,6 +6,7 @@ use crate::{app::error::ApiError, domain::quality::SignalKind, services::trust::
 
 const EVENT_LOG_USAGE: &str = "mcp_log_usage";
 const EVENT_WATCH_REPO: &str = "mcp_watch_repo";
+const EVENT_WATCH_USE_CASE: &str = "mcp_watch_use_case";
 const EVENT_GUARD_REJECTION: &str = "mcp_guard_rejection";
 
 pub const REJECTION_REASON_QUOTA: &str = "quota_exceeded";
@@ -17,6 +18,7 @@ pub const REJECTION_REASON_NEGATIVE_NOTES: &str = "negative_notes_too_short";
 
 pub const REJECTION_TOOL_LOG_USAGE: &str = "log_usage";
 pub const REJECTION_TOOL_WATCH_REPO: &str = "watch_repo";
+pub const REJECTION_TOOL_WATCH_USE_CASE: &str = "watch_use_case";
 
 pub async fn enforce_write_quota(
     db: &PgPool,
@@ -33,7 +35,7 @@ pub async fn enforce_write_quota(
         FROM agent_token_events
           WHERE token_id = $1
             AND created_at >= NOW() - INTERVAL '1 hour'
-            AND kind IN ('mcp_log_usage', 'mcp_watch_repo')
+            AND kind IN ('mcp_log_usage', 'mcp_watch_repo', 'mcp_watch_use_case')
         "#,
     )
     .bind(token_id)
@@ -211,6 +213,28 @@ pub async fn record_watch_repo(
         owner,
         name,
         serde_json::json!({}),
+    )
+    .await
+}
+
+pub async fn record_watch_use_case(
+    db: &PgPool,
+    token_id: Uuid,
+    user_id: Uuid,
+    label: &str,
+    query: &str,
+) -> Result<(), ApiError> {
+    record_event(
+        db,
+        token_id,
+        user_id,
+        EVENT_WATCH_USE_CASE,
+        "use-case",
+        query,
+        serde_json::json!({
+            "label": label,
+            "query": query,
+        }),
     )
     .await
 }

@@ -1,12 +1,12 @@
 # UseStakly — TODO MVP / Public Beta
 
-> Version : 5.5 — 2026-04-26 (+ public beta, MCP installer, status public, corpus élargi)
+> Version : 5.6 — 2026-05-06 (+ radar MCP, watch_use_case)
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-04-26** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : durcissement ops Coolify/MCP, backups DB, rate-limit globale MCP, alerting externe, page légale formelle, E2E complet et croissance du corpus/signaux réels.
+> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : durcissement ops Coolify/MCP, backups DB, rate-limit globale MCP, alerting externe, page légale formelle, E2E complet et notifications de veilles d'intention.
 
 ---
 
@@ -35,6 +35,7 @@ Cap produit à venir : **UseStakly = source de vérité qualité + radar OSS ant
 - [x] Package npm `usestakly-mcp` publié
 - [x] MCP validé dans Codex : search, detail, log_usage, watch_repo
 - [x] Tool MCP haut niveau `recommend_github_repos`
+- [x] Tool MCP `watch_use_case`
 - [x] Doc exemples MCP : `docs/mcp-examples.md`
 - [ ] Page légale formelle (`/legal` ou `/terms`)
 - [ ] Domaine public stable et email de contact officiel
@@ -55,7 +56,7 @@ Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
   - Aujourd'hui : les write tools ont déjà quotas/cooldowns ; les reads/protocol calls doivent encore être limités.
   - Cibles : limite par IP pour non-auth/invalides, limite par token pour reads, limite stricte pour writes.
 
-- [ ] **Forcer Authorization sur toute route `/mcp`**
+- [x] **Forcer Authorization sur toute route `/mcp`**
   - Même `initialize` et `tools/list` ne doivent pas exposer gratuitement le catalogue.
   - Garder la validation DB token dans chaque tool.
   - Ajouter un middleware pré-transport MCP pour refuser missing/invalid Bearer.
@@ -111,7 +112,7 @@ Pipeline neuf. C'est le cœur du nouveau produit : sans repos ingérés, rien à
 - [x] Binary `seed_github` pour bootstrap corpus manuel
 - [ ] **Reste à faire** : rate-limit handling (ETags conditional requests, backoff, quota monitoring)
 - [ ] **Reste à faire** : computation priors dérivés côté events API (`owner_inactive_days`)
-- [ ] **Reste à faire** : cadence refresh automatique (daily par défaut, horaire pour repos watchés) — actuellement manuel / au seed
+- [x] Cadence refresh automatique : scheduler opt-in, default 24 h, refresh des repos watchés + corpus GitHub stale (`priors_fetched_at` NULL ou > 24 h) via `services::scheduler`.
 - [ ] **Reste à faire** : critère corpus v1 formel — **à trancher** entre top N par langage / sur demande / via watchlist uniquement
 - [x] Endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé (`backend/src/handlers/admin.rs::ingest_github_repo`, route câblée dans `app/mod.rs`)
 - [ ] **Reste à faire** : tests unitaires sur parsing réponses GitHub
@@ -140,7 +141,7 @@ Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 - [x] Détection de changement significatif : diff score T vs T-1 dans `services::notifications` (`fetch_prev_snapshot` + seuils)
 - [x] Règles d'alerte défaut : abandonment +0.20, nouveau flag `security-issue` / `broken`, score `overall` qui chute de ≥ 0.10
 - [x] Canal notification v1 : **in-app** (endpoints `/api/notifications`, route frontend `notifications.tsx`)
-- [x] Worker scheduler autonome : `services::scheduler::spawn_recompute_loop` — tokio::spawn + interval, opt-in via `APP_SCHEDULER_ENABLED`, cadence via `APP_RECOMPUTE_INTERVAL_SECS` (default 24 h). Refresh des repos watchés via `ingest_repo` puis `recompute_all_scores` (qui émet les notifs). Pas de run au boot.
+- [x] Worker scheduler autonome : `services::scheduler::spawn_recompute_loop` — tokio::spawn + interval, opt-in via `APP_SCHEDULER_ENABLED`, cadence via `APP_RECOMPUTE_INTERVAL_SECS` (default 24 h). Refresh des repos watchés + repos GitHub dont les priors ont plus de 24 h via `ingest_repo`, puis `recompute_all_scores` (qui émet les notifs). Pas de run au boot.
 - [ ] **Reste à faire** : règle « maintainer silencieux 90 j » (dépend de `owner_inactive_days` côté R1)
 - [ ] **Reste à faire** : règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
 - [ ] **Reste à faire** : canal v2 email + webhook pour devs avancés
@@ -164,7 +165,7 @@ Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 - [ ] Pondération réputation owner / reporter plus riche dans les reviews elles-mêmes — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 
-### Phase R5 — MCP adapté aux repos
+### Phase R5 — MCP adapté aux repos et besoins
 
 Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-23) / R5b (write tools + signaux passifs, livré partiellement le 2026-04-23).
 
@@ -183,6 +184,8 @@ Plus des snippets — des repos GitHub. Split en R5a (read-only, livré 2026-04-
 
 - [x] Outil `log_usage(repo, outcome)` → crée un `quality_signal` passif avec `user_id` du token
 - [x] Outil `watch_repo(repo)` — ajoute à la watchlist du user propriétaire du token
+- [x] Outil `watch_use_case(need, risk_tolerance?)` — crée une veille d'intention/radar du user propriétaire du token
+- [x] `recommend_github_repos` aligné sur `services::recommendations` et réponse structurée en `stable_picks` / `emerging_picks` / `fallback_candidates`
 - [x] Ingestion à la volée d'un repo manquant avant `log_usage` / `watch_repo` si `GITHUB_TOKEN` est configuré
 - [x] Rate-limit par token (quota write/heure configurable) via `agent_token_events` (migration `0014`)
 - [x] Garde-fous anti-spam sur `log_usage` : cooldown par token + fenêtre de refroidissement sur outcomes négatifs répétés

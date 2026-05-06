@@ -1,13 +1,13 @@
 # AGENTS.md
 
-This file provides guidance to Codex (and other CLI agents) when working with code in this repository. Reflète l'état au 2026-04-26.
+This file provides guidance to Codex (and other CLI agents) when working with code in this repository. Reflète l'état au 2026-05-06.
 
 ## Produit
 
 - Nom produit : **UseStakly**. Nom de travail historique : **Project-K** (Komorebi). Les deux cohabitent encore dans certains chemins (DB `project_k`, repo). Pas de renommage spontané — voir `docs/plans/rename-to-usestakly.md`.
 - Objectif : **veille GitHub OSS**. UseStakly score des repos GitHub publics pour aider devs et agents IA à choisir leurs dépendances autrement que par les stars.
 - État : **public beta exposable** (TODO v5.5). Pas d'ouverture publique large tant que les ops MCP (backup DB, rate-limit globale, alerte externe) et le légal ne sont pas finis.
-- Trois piliers actifs : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents** (5 tools, CLI npm `usestakly-mcp`).
+- Trois piliers actifs : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents** (6 tools, CLI npm `usestakly-mcp`).
 - L'ancien produit **bibliothèque de snippets est abandonné**. Schéma SQL historique (libraries/snippets/...) reste en base, mais ne pas réintroduire de surfaces produit snippets sans demande explicite.
 
 ## Layout monorepo
@@ -59,7 +59,7 @@ docker compose up -d              # Postgres + pgvector
 - `services/` — `ingestion/github`, `repos`, `watchlist`, `notifications`, `scheduler`, `semantic_search` (feature-gated), `agent_tokens`, sous-domaines `quality/` (`formula`, `compute`, `flags`, `weighting`, `pipeline`, `capture`) et `trust/` (`reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events`, `mcp_metrics`).
 - `domain/` — `account`, `agent_token`, `quality`, `repo`, `reference`, `watchlist`.
 - `db/` — pool, migrations, `ensure_optional_extensions` (pgvector optionnel).
-- `mcp/` — Streamable HTTP server. 5 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`.
+- `mcp/` — Streamable HTTP server. 6 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`, `watch_use_case`.
 
 Séparation : `handler` (I/O) → `service` (logique) → `query` (DB). À respecter pour tout nouveau code.
 
@@ -114,7 +114,7 @@ Aucun service Postgres provisionné — tests DB-bound mockés ou feature-gated.
 - Cookies session exigent `APP_SESSION_SECRET`. Sans lui, `auth_enabled()` = `false`, seul le dev user fonctionne.
 - CORS strict sur `FRONTEND_BASE_URL` avec `allow_credentials(true)` — changer l'URL casse l'auth.
 - `docker-compose.yml` ne démarre **que** Postgres.
-- **Scheduler opt-in** : `APP_SCHEDULER_ENABLED=true`, cadence `APP_RECOMPUTE_INTERVAL_SECS` (default 86400). Pas de run au boot. OFF en dev par défaut.
+- **Scheduler opt-in** : `APP_SCHEDULER_ENABLED=true`, cadence `APP_RECOMPUTE_INTERVAL_SECS` (default 86400). Pas de run au boot. OFF en dev par défaut. À chaque cycle, refresh GitHub des repos watchés + repos du corpus dont `priors_fetched_at` est NULL ou vieux de plus de 24 h.
 - **MCP `/mcp`** monté via `rmcp::StreamableHttpService`. **Authorization Bearer requise dès `initialize`/`tools/list`** (middleware pré-transport, doc `docs/mcp-endpoint-security.md`). Tokens `usk_<64 hex>` SHA-256 dans `agent_tokens` (migration 0013).
 - **Rate-limit MCP par token** sur writes via `agent_token_events` (migration 0014). Pas encore de rate-limit globale multi-token / par IP — item ops #2 dans `docs/ops-mcp-coolify-hardening.md`.
 - **Modération** : migrations 0015/0016 (review + events). Garde-fous v1 en place. Réputation v2 runtime livrée. Formula_v2 + Sybil OAuth à venir.

@@ -98,5 +98,20 @@ Watch new OSS tools for observability. Add the established options to my watchli
 Expected flow:
 
 1. `recommend_github_repos` returns observability candidates split by maturity.
-2. `watch_repo` is called for the established picks the user wants to track.
-3. The agent reminds the user that a use-case watch (web `/watchlist` Besoins section) will surface future emerging contenders even when the agent is offline.
+2. `watch_use_case` creates an ongoing need watch for observability.
+3. `watch_repo` can still be called for specific dependencies the user already adopted.
+4. The agent reminds the user that the web `/watchlist` Besoins section will surface future contenders even when the agent is offline.
+
+## Create a radar watch directly
+
+Ask:
+
+```text
+Use UseStakly to watch emerging auth tools for TypeScript. Keep established picks separate from newer contenders.
+```
+
+Expected flow:
+
+1. `recommend_github_repos` returns `stable_picks`, `emerging_picks`, and fallback candidates.
+2. The agent explains the difference between quality score and radar maturity.
+3. `watch_use_case` creates the ongoing watch for that need.

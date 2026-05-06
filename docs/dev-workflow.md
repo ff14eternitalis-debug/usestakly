@@ -91,6 +91,22 @@ Notes :
 - lancer plusieurs batches si le corpus est large
 - le premier lancement télécharge le modèle local `fastembed`, donc il peut être plus lent
 
+## Refresh quotidien des données GitHub
+
+Le scheduler est opt-in. Quand il est actif, il tourne toutes les 24 h par défaut et rafraîchit :
+
+- les repos présents dans les watchlists ;
+- les repos GitHub du corpus dont `priors_fetched_at` est absent ou vieux de plus de 24 h.
+
+Dans `.env` :
+
+```powershell
+APP_SCHEDULER_ENABLED=true
+APP_RECOMPUTE_INTERVAL_SECS=86400
+```
+
+Il faut aussi un `GITHUB_TOKEN`, sinon le scheduler saute le refresh GitHub et se limite au recompute.
+
 ## Commandes courantes (à taper à la main)
 
 Ces commandes **n'ont pas de script dédié** par choix (voir section *Principes d'automatisation*).

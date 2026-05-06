@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashSet,
+    time::{Duration, Instant},
+};
 
 use sqlx::PgPool;
 
@@ -27,7 +30,7 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
     let start = Instant::now();
     tracing::info!("scheduler: cycle start");
 
-    let refreshed = refresh_watched_repos(db, config).await;
+    let refreshed = refresh_github_repos(db, config).await;
     match recompute_all_scores(db).await {
         Ok(report) => tracing::info!(
             refreshed,
@@ -40,7 +43,7 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
     }
 }
 
-async fn refresh_watched_repos(db: &PgPool, config: &AppConfig) -> usize {
+async fn refresh_github_repos(db: &PgPool, config: &AppConfig) -> usize {
     let Some(token) = config.github_token.as_deref() else {
         tracing::warn!("scheduler: GITHUB_TOKEN missing, skipping GitHub refresh");
         return 0;
@@ -53,32 +56,28 @@ async fn refresh_watched_repos(db: &PgPool, config: &AppConfig) -> usize {
         }
     };
 
-    let rows: Vec<(String, String)> = match sqlx::query_as(
-        r#"
-        SELECT DISTINCT e.github_owner, e.github_repo
-        FROM watched_artifacts w
-        JOIN external_artifacts e ON e.id = w.external_artifact_id
-        WHERE w.muted = FALSE
-          AND e.source = 'github'
-          AND e.github_owner IS NOT NULL
-          AND e.github_repo IS NOT NULL
-        "#,
-    )
-    .fetch_all(db)
-    .await
-    {
-        Ok(rows) => rows,
-        Err(e) => {
-            tracing::error!(error = ?e, "scheduler: failed to list watched repos");
-            return 0;
-        }
-    };
+    let mut rows = list_watched_repo_targets(db).await.unwrap_or_else(|e| {
+        tracing::error!(error = ?e, "scheduler: failed to list watched repos");
+        Vec::new()
+    });
+    let stale = list_stale_corpus_repo_targets(db)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!(error = ?e, "scheduler: failed to list stale corpus repos");
+            Vec::new()
+        });
+    rows.extend(stale);
 
+    let rows = dedupe_refresh_targets(rows);
     let total = rows.len();
     if total == 0 {
         return 0;
     }
-    tracing::info!(total, "scheduler: refreshing watched repos");
+    tracing::info!(
+        total,
+        stale_after_secs = corpus_refresh_stale_after().as_secs(),
+        "scheduler: refreshing github repos"
+    );
 
     let mut refreshed = 0usize;
     for (owner, name) in &rows {
@@ -93,4 +92,84 @@ async fn refresh_watched_repos(db: &PgPool, config: &AppConfig) -> usize {
         }
     }
     refreshed
+}
+
+async fn list_watched_repo_targets(db: &PgPool) -> Result<Vec<(String, String)>, sqlx::Error> {
+    sqlx::query_as(
+        r#"
+        SELECT DISTINCT e.github_owner, e.github_repo
+        FROM watched_artifacts w
+        JOIN external_artifacts e ON e.id = w.external_artifact_id
+        WHERE w.muted = FALSE
+          AND e.source = 'github'
+          AND e.github_owner IS NOT NULL
+          AND e.github_repo IS NOT NULL
+        "#,
+    )
+    .fetch_all(db)
+    .await
+}
+
+async fn list_stale_corpus_repo_targets(db: &PgPool) -> Result<Vec<(String, String)>, sqlx::Error> {
+    let stale_after_secs = i32::try_from(corpus_refresh_stale_after().as_secs()).unwrap_or(86_400);
+    sqlx::query_as(
+        r#"
+        SELECT e.github_owner, e.github_repo
+        FROM external_artifacts e
+        WHERE e.source = 'github'
+          AND e.github_owner IS NOT NULL
+          AND e.github_repo IS NOT NULL
+          AND (
+            e.priors_fetched_at IS NULL
+            OR e.priors_fetched_at <= NOW() - make_interval(secs => $1)
+          )
+        ORDER BY e.priors_fetched_at ASC NULLS FIRST, e.created_at ASC
+        "#,
+    )
+    .bind(stale_after_secs)
+    .fetch_all(db)
+    .await
+}
+
+fn corpus_refresh_stale_after() -> Duration {
+    Duration::from_secs(86_400)
+}
+
+fn dedupe_refresh_targets(rows: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut seen = HashSet::new();
+    let mut deduped = Vec::new();
+    for (owner, name) in rows {
+        let key = (owner.to_ascii_lowercase(), name.to_ascii_lowercase());
+        if seen.insert(key) {
+            deduped.push((owner, name));
+        }
+    }
+    deduped
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn corpus_refresh_stale_after_is_24_hours() {
+        assert_eq!(corpus_refresh_stale_after().as_secs(), 86_400);
+    }
+
+    #[test]
+    fn dedupe_refresh_targets_preserves_first_seen_order() {
+        let targets = dedupe_refresh_targets(vec![
+            ("facebook".to_string(), "react".to_string()),
+            ("vercel".to_string(), "next.js".to_string()),
+            ("Facebook".to_string(), "React".to_string()),
+        ]);
+
+        assert_eq!(
+            targets,
+            vec![
+                ("facebook".to_string(), "react".to_string()),
+                ("vercel".to_string(), "next.js".to_string()),
+            ]
+        );
+    }
 }

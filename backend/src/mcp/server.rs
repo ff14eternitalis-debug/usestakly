@@ -30,10 +30,10 @@ use crate::{
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
-        recommendations::{UseCaseIntent, parse_intent},
+        recommendations::{UseCaseRecommendation, recommend_for_use_case},
         repos::{self as repos_service, RepoSearchFilters, RepoSort},
         trust::agent_token_events,
-        watchlist,
+        use_case_watches, watchlist,
     },
 };
 
@@ -137,7 +137,7 @@ pub struct RecommendReposParams {
     pub limit: Option<i64>,
 }
 
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct RepoRecommendation {
     pub rank: usize,
     pub owner: String,
@@ -171,7 +171,17 @@ pub struct RecommendReposOutput {
     pub filter_used: String,
     pub count: usize,
     pub recommendations: Vec<RepoRecommendation>,
+    pub stable_picks: Vec<RepoRecommendation>,
+    pub emerging_picks: Vec<RepoRecommendation>,
+    pub fallback_candidates: Vec<String>,
     pub fallback: Option<RecommendationFallback>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct RecommendationSections {
+    pub stable_picks: Vec<RepoRecommendation>,
+    pub emerging_picks: Vec<RepoRecommendation>,
+    pub fallback_candidates: Vec<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -179,6 +189,45 @@ pub struct RecommendationFallback {
     pub message: String,
     pub add_repo_candidates: Vec<String>,
     pub next_actions: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct WatchUseCaseParams {
+    /// Natural-language need to monitor, such as `testing tools for TypeScript`.
+    pub need: String,
+    /// Optional label displayed in UseStakly watchlist.
+    #[serde(default)]
+    pub label: Option<String>,
+    /// Risk tolerance: low, medium, or high.
+    #[serde(default)]
+    pub risk_tolerance: Option<String>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct WatchUseCaseOutput {
+    pub provenance: Provenance,
+    pub watch_id: String,
+    pub label: String,
+    pub query: String,
+    pub normalized_intent: String,
+    pub categories: Vec<String>,
+    pub topics: Vec<String>,
+    pub languages: Vec<String>,
+    pub risk_tolerance: String,
+    pub enabled: bool,
+    pub initial_matches: i64,
+    pub top_matches: Vec<WatchUseCaseMatchOutput>,
+    pub created_at: DateTime<Utc>,
+    pub next_actions: Vec<String>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct WatchUseCaseMatchOutput {
+    pub artifact_id: String,
+    pub full_name: String,
+    pub language: Option<String>,
+    pub match_score: f64,
+    pub quality_score: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -374,60 +423,60 @@ impl McpServer {
             return Err(ErrorData::invalid_params("need is required", None));
         }
 
-        let filter = parse_filter(p.filter.as_deref());
         let ecosystem = p.ecosystem.as_deref().or(p.language.as_deref());
         let normalized_topics = normalize_topics(&p.must_have_topics);
-        let intent = parse_intent(query);
         let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
-        let effective_filter = if p.filter.is_some() {
-            filter
-        } else {
-            filter_for_risk_tolerance(risk_tolerance)
-        };
-        let query = build_recommendation_query(query, ecosystem, &normalized_topics, &intent);
-        let filters = RepoSearchFilters {
-            query: Some(query.clone()),
-            filter: effective_filter,
-            language: ecosystem.and_then(language_filter_for_ecosystem),
-            license_spdx: None,
-            stars_min: None,
-            topics: normalized_topics.clone(),
-            maturity_bands: Vec::new(),
-            score_min: None,
-            abandonment_max: None,
-            include_archived: false,
-            sort: RepoSort::Score,
-            limit: Some((p.limit.unwrap_or(5).clamp(1, 10) * 4).clamp(10, 40)),
-            offset: None,
-        };
-
-        let mut results =
-            repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
-                .await
-                .map_err(map_api_error)?;
+        let service_query = build_use_case_service_query(query, ecosystem, &normalized_topics);
+        let mut report = recommend_for_use_case(
+            &self.state.db,
+            &self.state.config,
+            &service_query,
+            risk_tolerance.as_str(),
+            (p.limit.unwrap_or(5).clamp(1, 10) * 4).clamp(10, 40),
+        )
+        .await
+        .map_err(map_api_error)?;
         if !normalized_topics.is_empty() {
-            results.retain(|repo| repo_matches_topics(repo, &normalized_topics));
-        } else if !intent.categories.is_empty() {
-            results.retain(|repo| repo_matches_intent(repo, &intent));
+            report.recommendations.retain(|recommendation| {
+                repo_matches_topics(&recommendation.repo, &normalized_topics)
+            });
         }
         let max_results = p.limit.unwrap_or(5).clamp(1, 10) as usize;
-        results.truncate(max_results);
+        report.recommendations.truncate(max_results);
         let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let scored_at = results
+        let scored_at = report
+            .recommendations
             .iter()
-            .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
+            .filter_map(|recommendation| {
+                recommendation
+                    .repo
+                    .quality
+                    .as_ref()
+                    .map(|quality| quality.computed_at)
+            })
             .max();
-        let recommendations = build_recommendations(results, risk_tolerance);
+        let recommendations =
+            build_recommendations_from_use_case(report.recommendations, risk_tolerance);
         let fallback = if recommendations.is_empty() {
-            Some(build_recommendation_fallback(
-                &query,
-                ecosystem,
-                &normalized_topics,
-                risk_tolerance,
-            ))
+            Some(RecommendationFallback {
+                message: "No indexed repo matched the current need. Add candidate repos, then retry the recommendation.".to_string(),
+                add_repo_candidates: report.fallback_candidates.clone(),
+                next_actions: vec![
+                    "Add promising fallback repos through /discover or POST /api/repos/add.".to_string(),
+                    "Retry recommend_github_repos after ingestion and scoring completes.".to_string(),
+                    "Relax must_have_topics if they are too narrow.".to_string(),
+                ],
+            })
         } else {
             None
         };
+        let sections = recommendation_sections(
+            recommendations.clone(),
+            fallback
+                .as_ref()
+                .map(|fallback| fallback.add_repo_candidates.clone())
+                .unwrap_or_default(),
+        );
 
         Ok(Json(RecommendReposOutput {
             provenance: Provenance {
@@ -435,13 +484,16 @@ impl McpServer {
                 formula_version,
                 scored_at,
             },
-            query_used: query,
+            query_used: report.query,
             ecosystem_used: ecosystem.map(str::to_string),
             risk_tolerance_used: risk_tolerance.as_str().to_string(),
             must_have_topics: normalized_topics,
-            filter_used: effective_filter.as_str().to_string(),
+            filter_used: p.filter.as_deref().unwrap_or("use_case").to_string(),
             count: recommendations.len(),
             recommendations,
+            stable_picks: sections.stable_picks,
+            emerging_picks: sections.emerging_picks,
+            fallback_candidates: sections.fallback_candidates,
             fallback,
         }))
     }
@@ -651,6 +703,66 @@ impl McpServer {
             watching: true,
         }))
     }
+
+    #[tool(
+        name = "watch_use_case",
+        description = "Create a UseStakly watch for a natural-language dependency need, \
+                       such as `testing tools for TypeScript` or `emerging auth libraries`. \
+                       Use this when the user wants ongoing radar monitoring for a need, \
+                       not just one repository."
+    )]
+    async fn watch_use_case(
+        &self,
+        Parameters(p): Parameters<WatchUseCaseParams>,
+        Extension(parts): Extension<Parts>,
+    ) -> Result<Json<WatchUseCaseOutput>, ErrorData> {
+        let agent = verify_agent(&self.state.db, &parts).await?;
+        let need = p.need.trim();
+        if need.is_empty() {
+            return Err(ErrorData::invalid_params("need is required", None));
+        }
+        let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
+
+        agent_token_events::enforce_write_quota(
+            &self.state.db,
+            agent.token_id,
+            agent.user_id,
+            agent_token_events::REJECTION_TOOL_WATCH_USE_CASE,
+            "use-case",
+            need,
+            self.state.config.mcp_write_limit_per_hour,
+        )
+        .await
+        .map_err(map_api_error)?;
+
+        let watch = use_case_watches::create_watch(
+            &self.state.db,
+            &self.state.config,
+            agent.user_id,
+            need,
+            p.label,
+            risk_tolerance.as_str(),
+        )
+        .await
+        .map_err(map_api_error)?;
+
+        agent_token_events::record_watch_use_case(
+            &self.state.db,
+            agent.token_id,
+            agent.user_id,
+            &watch.label,
+            &watch.query_text,
+        )
+        .await
+        .map_err(map_api_error)?;
+
+        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
+        Ok(Json(into_watch_use_case_output(
+            watch,
+            formula_version,
+            None,
+        )))
+    }
 }
 
 #[tool_handler(
@@ -658,8 +770,8 @@ impl McpServer {
     instructions = "UseStakly MCP — query a scored registry of public GitHub repos. \
                     Always call `search_github_repos` before generating code that pulls in \
                     a dependency, then `get_repo_quality_context` to confirm the pick. \
-                    After trying a repo, call `log_usage`. Use `watch_repo` when the user wants \
-                    ongoing monitoring. Write calls are rate-limited per token and duplicate \
+                    After trying a repo, call `log_usage`. Use `watch_repo` for a dependency \
+                    and `watch_use_case` for an ongoing need/radar watch. Write calls are rate-limited per token and duplicate \
                     `log_usage` events are intentionally throttled. Include the returned provenance \
                     string when you write the code."
 )]
@@ -755,14 +867,6 @@ fn parse_risk_tolerance(input: Option<&str>) -> RiskTolerance {
     }
 }
 
-fn filter_for_risk_tolerance(risk: RiskTolerance) -> SearchFilter {
-    match risk {
-        RiskTolerance::Low => SearchFilter::Strict,
-        RiskTolerance::Medium => SearchFilter::Auto,
-        RiskTolerance::High => SearchFilter::Explore,
-    }
-}
-
 fn normalize_topics(topics: &[String]) -> Vec<String> {
     let mut normalized = Vec::new();
     for topic in topics {
@@ -778,11 +882,12 @@ fn normalize_topics(topics: &[String]) -> Vec<String> {
     normalized
 }
 
+#[cfg(test)]
 fn build_recommendation_query(
     need: &str,
     ecosystem: Option<&str>,
     topics: &[String],
-    intent: &UseCaseIntent,
+    intent: &crate::services::recommendations::UseCaseIntent,
 ) -> String {
     let mut parts = vec![need.trim().to_string()];
     if let Some(ecosystem) = ecosystem.map(str::trim).filter(|s| !s.is_empty()) {
@@ -801,7 +906,19 @@ fn build_recommendation_query(
     parts.join(" ")
 }
 
-fn recommendation_query_topics(intent: &UseCaseIntent) -> Vec<String> {
+fn build_use_case_service_query(need: &str, ecosystem: Option<&str>, topics: &[String]) -> String {
+    let mut parts = vec![need.trim().to_string()];
+    if let Some(ecosystem) = ecosystem.map(str::trim).filter(|value| !value.is_empty()) {
+        parts.push(ecosystem.to_string());
+    }
+    parts.extend(topics.iter().cloned());
+    parts.join(" ")
+}
+
+#[cfg(test)]
+fn recommendation_query_topics(
+    intent: &crate::services::recommendations::UseCaseIntent,
+) -> Vec<String> {
     if intent
         .categories
         .iter()
@@ -831,19 +948,6 @@ fn recommendation_query_topics(intent: &UseCaseIntent) -> Vec<String> {
         .collect()
 }
 
-fn language_filter_for_ecosystem(ecosystem: &str) -> Option<String> {
-    match ecosystem.trim().to_ascii_lowercase().as_str() {
-        "typescript" | "ts" => Some("TypeScript".to_string()),
-        "javascript" | "js" | "node" | "node.js" | "react" | "next" | "next.js" | "frontend" => {
-            Some("TypeScript".to_string())
-        }
-        "python" | "django" | "fastapi" | "flask" => Some("Python".to_string()),
-        "rust" => Some("Rust".to_string()),
-        "go" | "golang" => Some("Go".to_string()),
-        _ => None,
-    }
-}
-
 fn repo_matches_topics(repo: &crate::domain::repo::RepoSearchResult, required: &[String]) -> bool {
     required.iter().all(|required_topic| {
         repo.topics
@@ -859,9 +963,10 @@ fn repo_matches_topics(repo: &crate::domain::repo::RepoSearchResult, required: &
     })
 }
 
+#[cfg(test)]
 fn repo_matches_intent(
     repo: &crate::domain::repo::RepoSearchResult,
-    intent: &UseCaseIntent,
+    intent: &crate::services::recommendations::UseCaseIntent,
 ) -> bool {
     if intent.categories.is_empty() {
         return repo_matches_any_topic(repo, &intent.topics);
@@ -870,6 +975,7 @@ fn repo_matches_intent(
         || repo_matches_any_topic(repo, &recommendation_query_topics(intent))
 }
 
+#[cfg(test)]
 fn repo_matches_any_category(
     repo: &crate::domain::repo::RepoSearchResult,
     categories: &[String],
@@ -882,6 +988,7 @@ fn repo_matches_any_category(
         })
 }
 
+#[cfg(test)]
 fn repo_matches_any_topic(repo: &crate::domain::repo::RepoSearchResult, topics: &[String]) -> bool {
     topics.iter().any(|topic| {
         repo.topics
@@ -984,6 +1091,65 @@ fn build_recommendations(
             }
         })
         .collect()
+}
+
+fn build_recommendations_from_use_case(
+    recommendations: Vec<UseCaseRecommendation>,
+    risk: RiskTolerance,
+) -> Vec<RepoRecommendation> {
+    recommendations
+        .into_iter()
+        .enumerate()
+        .map(|(index, recommendation)| {
+            let mut output = build_recommendations(vec![recommendation.repo], risk)
+                .into_iter()
+                .next()
+                .expect("one input repo produces one MCP recommendation");
+            output.rank = index + 1;
+            output.reasons.insert(0, recommendation.reason);
+            output.reasons.push(format!(
+                "Use-case match score is {:.3}.",
+                recommendation.match_score
+            ));
+            output.reasons.push(format!(
+                "Recommendation score is {:.3}.",
+                recommendation.recommendation_score
+            ));
+            if !recommendation.matched_topics.is_empty() {
+                output.reasons.push(format!(
+                    "Matched intent topics: {}.",
+                    recommendation.matched_topics.join(", ")
+                ));
+            }
+            output
+        })
+        .collect()
+}
+
+fn recommendation_sections(
+    recommendations: Vec<RepoRecommendation>,
+    fallback_candidates: Vec<String>,
+) -> RecommendationSections {
+    let mut stable_picks = Vec::new();
+    let mut emerging_picks = Vec::new();
+
+    for recommendation in recommendations {
+        let band = recommendation
+            .radar
+            .as_ref()
+            .map(|radar| radar.maturity_band.as_str());
+        if matches!(band, Some("emerging" | "experimental")) {
+            emerging_picks.push(recommendation);
+        } else {
+            stable_picks.push(recommendation);
+        }
+    }
+
+    RecommendationSections {
+        stable_picks,
+        emerging_picks,
+        fallback_candidates,
+    }
 }
 
 fn recommendation_reasons(
@@ -1106,6 +1272,7 @@ fn recommendation_next_actions(
     actions
 }
 
+#[cfg(test)]
 fn build_recommendation_fallback(
     query: &str,
     ecosystem: Option<&str>,
@@ -1205,6 +1372,47 @@ fn into_context_output(
     }
 }
 
+fn into_watch_use_case_output(
+    watch: use_case_watches::UseCaseWatch,
+    formula_version: String,
+    scored_at: Option<DateTime<Utc>>,
+) -> WatchUseCaseOutput {
+    WatchUseCaseOutput {
+        provenance: Provenance {
+            source: "usestakly://watch/use-case".to_string(),
+            formula_version,
+            scored_at,
+        },
+        watch_id: watch.id.to_string(),
+        label: watch.label,
+        query: watch.query_text,
+        normalized_intent: watch.normalized_intent,
+        categories: watch.categories,
+        topics: watch.topics,
+        languages: watch.languages,
+        risk_tolerance: watch.risk_tolerance,
+        enabled: watch.enabled,
+        initial_matches: watch.match_count,
+        top_matches: watch
+            .top_matches
+            .into_iter()
+            .map(|item| WatchUseCaseMatchOutput {
+                artifact_id: item.artifact_id.to_string(),
+                full_name: item.full_name,
+                language: item.language,
+                match_score: item.match_score,
+                quality_score: item.quality_score,
+            })
+            .collect(),
+        created_at: watch.created_at,
+        next_actions: vec![
+            "Use the UseStakly watchlist to review this need over time.".to_string(),
+            "When a recommended repo becomes a dependency, call watch_repo too.".to_string(),
+            "After testing a repo, call log_usage so future recommendations improve.".to_string(),
+        ],
+    }
+}
+
 // ---------- Axum integration ----------
 
 /// Build the tower service mounted by `app::build_app` at `/mcp`.
@@ -1263,6 +1471,7 @@ mod tests {
             VitalityInputs,
         },
     };
+    use crate::services::recommendations::parse_intent;
 
     #[test]
     fn parse_filter_defaults_to_auto_for_missing_or_unknown_values() {
@@ -1536,6 +1745,171 @@ mod tests {
                 .next_actions
                 .iter()
                 .any(|action| action.contains("watch_repo"))
+        );
+    }
+
+    #[test]
+    fn recommendation_sections_split_stable_and_emerging_picks() {
+        let stable = RepoRecommendation {
+            rank: 1,
+            owner: "established".to_string(),
+            name: "orm".to_string(),
+            full_name: "established/orm".to_string(),
+            html_url: "https://github.com/established/orm".to_string(),
+            description: None,
+            language: Some("TypeScript".to_string()),
+            topics: vec!["orm".to_string()],
+            stars_count: 20_000,
+            quality_overall: Some(0.82),
+            quality_freshness: Some(0.9),
+            quality_adoption: Some(0.2),
+            quality_reliability: Some(0.75),
+            quality_abandonment: Some(0.05),
+            quality_vitality: Some(0.9),
+            flags: Vec::new(),
+            radar: Some(RadarBrief {
+                maturity_band: "established".to_string(),
+                radar_relevance: 0.9,
+                trend_signal: 0.5,
+                summary: "Radar: established baseline.".to_string(),
+            }),
+            reasons: Vec::new(),
+            caveats: Vec::new(),
+            next_actions: Vec::new(),
+        };
+        let emerging = RepoRecommendation {
+            rank: 2,
+            owner: "new".to_string(),
+            name: "orm".to_string(),
+            full_name: "new/orm".to_string(),
+            html_url: "https://github.com/new/orm".to_string(),
+            description: None,
+            language: Some("TypeScript".to_string()),
+            topics: vec!["orm".to_string()],
+            stars_count: 500,
+            quality_overall: Some(0.63),
+            quality_freshness: Some(0.95),
+            quality_adoption: Some(0.0),
+            quality_reliability: Some(0.5),
+            quality_abandonment: Some(0.08),
+            quality_vitality: Some(0.82),
+            flags: Vec::new(),
+            radar: Some(RadarBrief {
+                maturity_band: "emerging".to_string(),
+                radar_relevance: 0.8,
+                trend_signal: 0.88,
+                summary: "Radar: promising emerging repo.".to_string(),
+            }),
+            reasons: Vec::new(),
+            caveats: Vec::new(),
+            next_actions: Vec::new(),
+        };
+
+        let sections = recommendation_sections(vec![stable, emerging], Vec::new());
+
+        assert_eq!(sections.stable_picks.len(), 1);
+        assert_eq!(sections.stable_picks[0].full_name, "established/orm");
+        assert_eq!(sections.emerging_picks.len(), 1);
+        assert_eq!(sections.emerging_picks[0].full_name, "new/orm");
+        assert_eq!(sections.fallback_candidates, Vec::<String>::new());
+    }
+
+    #[test]
+    fn watch_use_case_output_exposes_watch_summary_and_matches() {
+        let created_at = Utc.with_ymd_and_hms(2026, 5, 3, 9, 30, 0).unwrap();
+        let watch = crate::services::use_case_watches::UseCaseWatch {
+            id: Uuid::parse_str("99999999-9999-4999-8999-999999999999").unwrap(),
+            query_text: "testing tools for TypeScript".to_string(),
+            label: "Veille Testing".to_string(),
+            normalized_intent: "Testing".to_string(),
+            categories: vec!["testing".to_string()],
+            topics: vec!["test".to_string(), "testing-tools".to_string()],
+            languages: vec!["TypeScript".to_string()],
+            risk_tolerance: "medium".to_string(),
+            enabled: true,
+            match_count: 1,
+            top_matches: vec![crate::services::use_case_watches::UseCaseWatchMatch {
+                artifact_id: Uuid::parse_str("88888888-8888-4888-8888-888888888888").unwrap(),
+                full_name: "vitest-dev/vitest".to_string(),
+                language: Some("TypeScript".to_string()),
+                match_score: 0.82,
+                quality_score: Some(0.74),
+            }],
+            created_at,
+        };
+
+        let output = into_watch_use_case_output(watch, "v2.0".to_string(), Some(created_at));
+
+        assert_eq!(output.provenance.source, "usestakly://watch/use-case");
+        assert_eq!(output.provenance.formula_version, "v2.0");
+        assert_eq!(
+            output.watch_id.to_string(),
+            "99999999-9999-4999-8999-999999999999"
+        );
+        assert_eq!(output.label, "Veille Testing");
+        assert_eq!(output.initial_matches, 1);
+        assert_eq!(output.top_matches[0].full_name, "vitest-dev/vitest");
+    }
+
+    #[test]
+    fn mcp_recommendations_preserve_use_case_service_reason() {
+        let computed_at = Utc.with_ymd_and_hms(2026, 5, 3, 11, 0, 0).unwrap();
+        let recommendation = crate::services::recommendations::UseCaseRecommendation {
+            repo: RepoSearchResult {
+                artifact_id: Uuid::parse_str("77777777-7777-4777-8777-777777777777").unwrap(),
+                owner: "vitest-dev".to_string(),
+                name: "vitest".to_string(),
+                full_name: "vitest-dev/vitest".to_string(),
+                html_url: "https://github.com/vitest-dev/vitest".to_string(),
+                description: Some("Testing framework powered by Vite.".to_string()),
+                language: Some("TypeScript".to_string()),
+                license_spdx: Some("MIT".to_string()),
+                topics: vec!["testing".to_string()],
+                stars_count: 16_000,
+                forks_count: 800,
+                open_issues_count: 120,
+                archived: false,
+                last_commit_at: Some(computed_at),
+                quality: Some(QualityContext {
+                    formula_version: "v2.0".to_string(),
+                    freshness: Some(0.95),
+                    adoption: Some(0.1),
+                    reliability: Some(0.55),
+                    abandonment: Some(0.05),
+                    vitality: Some(0.83),
+                    overall: Some(0.74),
+                    resolve_count: 2,
+                    build_success_count: 4,
+                    build_failure_count: 0,
+                    regret_count: 0,
+                    flags: Vec::new(),
+                    computed_at,
+                }),
+                categories: vec![RepoCategory {
+                    category: "testing".to_string(),
+                    confidence: 0.95,
+                    source: "github_metadata+readme".to_string(),
+                    evidence: json!({}),
+                }],
+                radar: None,
+            },
+            match_score: 0.9,
+            recommendation_score: 0.81,
+            risk: "medium".to_string(),
+            reason: "Service says this matches the testing intent.".to_string(),
+            matched_topics: vec!["testing".to_string()],
+        };
+
+        let recommendations =
+            build_recommendations_from_use_case(vec![recommendation], RiskTolerance::Medium);
+
+        assert_eq!(recommendations.len(), 1);
+        assert_eq!(recommendations[0].full_name, "vitest-dev/vitest");
+        assert!(
+            recommendations[0]
+                .reasons
+                .iter()
+                .any(|reason| reason == "Service says this matches the testing intent.")
         );
     }
 

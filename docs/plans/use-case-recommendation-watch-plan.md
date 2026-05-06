@@ -1,7 +1,7 @@
 # UseStakly — Plan d'action : recherche par besoin + veille d'intention
 
 > Version : 0.1 — 2026-04-29
-> **Statut (2026-05-03)** : Lots 1, 2, 3 (hors notifs), 5 livrés sur `main`. Lot 3 notifications + Lot 4 MCP cohérent restent ouverts. Reste consolidé dans `docs/plans/remaining-work-2026-05-03.md`.
+> **Statut (2026-05-06)** : Lots 1, 2, 3 (hors notifs), 4, 5 livrés sur `main`. Lot 3 notifications reste ouvert. Reste consolidé dans `docs/plans/remaining-work-2026-05-03.md`.
 >
 > **Livré** :
 > - Lot 1 : `services/recommendations.rs` (754 l, parser intent + ranking + `parse_intent`/`recommend_for_use_case`), endpoint `POST /api/use-cases/recommend` (handler `use_cases.rs`).
@@ -11,7 +11,7 @@
 >
 > **Reste** :
 > - Lot 3 notifications : étendre `services/scheduler.rs` pour réévaluer les watches actives, comparer avec `use_case_watch_matches`, émettre les 4 types de notifications via `services/notifications.rs`.
-> - Lot 4 MCP : faire consommer au tool `recommend_github_repos` le même service que l'API HTTP (intent+categories+topics + provenance), ou ajouter un tool `watch_use_case` séparé.
+> - Lot 4 MCP : livré le 2026-05-06. `recommend_github_repos` consomme le même service que l'API HTTP, expose des sections `stable_picks` / `emerging_picks` / `fallback_candidates`, et `watch_use_case` crée une veille d'intention.
 >
 > Objectif : transformer UseStakly de "je connais un repo, est-il fiable ?" vers "j'ai un besoin, quels outils OSS fiables dois-je regarder et surveiller ?"
 
@@ -493,12 +493,14 @@ Validation :
 - la veille apparait dans `/watchlist` ;
 - une variation de score significative cree une notification.
 
-### Lot 4 — MCP coherent avec le web
+### Lot 4 — MCP coherent avec le web ✅ livré 2026-05-06
 
-- [ ] Faire consommer au tool `recommend_github_repos` le meme service que l'API.
-- [ ] Ajouter explications "intent/categories/topics".
-- [ ] Ajouter fallback "repos candidats a ajouter au corpus".
-- [ ] Documenter dans `/mcp-guide` et `docs/mcp-examples.md`.
+- [x] Faire consommer au tool `recommend_github_repos` le meme service que l'API.
+- [x] Ajouter explications "intent/categories/topics".
+- [x] Ajouter fallback "repos candidats a ajouter au corpus".
+- [x] Ajouter `watch_use_case`.
+- [x] Documenter dans `docs/mcp-examples.md`.
+- [ ] Vérifier / ajuster `/mcp-guide`.
 
 Validation :
 
@@ -568,4 +570,3 @@ Mitigation :
 - La veille apparait dans `/watchlist`.
 - Une notification in-app est creee lorsqu'un repo important de cette veille change fortement.
 - Le MCP donne une reponse coherente pour le meme besoin.
-

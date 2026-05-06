@@ -1,7 +1,7 @@
 # UseStakly — Protocole MCP
 
-> Version : 2.2 — 2026-04-26 (public beta)
-> Implémentation : `backend/src/mcp/` (R5a + R5b livrés, `recommend_github_repos` ajouté, MCP auth durcie au niveau HTTP entrypoint).
+> Version : 2.3 — 2026-05-06 (MCP radar + watch use-case)
+> Implémentation : `backend/src/mcp/` (R5a + R5b livrés, `recommend_github_repos` aligné sur le service web de recommandation, `watch_use_case` ajouté, MCP auth durcie au niveau HTTP entrypoint).
 > Transport : Streamable HTTP via `rmcp` 1.5.
 > L'ancienne v1 orientée snippets est retirée du produit vivant.
 
@@ -18,6 +18,7 @@ Les agents peuvent :
 3. récupérer un contexte qualité détaillé pour un repo précis (`get_repo_quality_context`)
 4. enregistrer un signal passif d'usage réel (`log_usage`, retourne le score recalculé)
 5. ajouter un repo à la watchlist du user propriétaire du token (`watch_repo`)
+6. créer une veille d'intention/radar sur un besoin (`watch_use_case`)
 
 Le but est de remplacer une sélection basée sur les stars par une sélection basée sur :
 
@@ -90,17 +91,20 @@ Entrée :
 
 ```json
 {
-  "query": "react state manager",
-  "intent": "production",
-  "language": "TypeScript",
+  "need": "react state manager",
+  "ecosystem": "TypeScript",
+  "risk_tolerance": "medium",
   "limit": 5
 }
 ```
 
 Retour :
 
-- liste courte de recommandations (taille bornée par `limit`)
-- pour chaque candidat : score multidimensionnel, raison de la recommandation, provenance
+- `recommendations` : liste courte compatible avec les anciennes intégrations
+- `stable_picks` : candidats établis ou non émergents
+- `emerging_picks` : candidats `emerging` / `experimental`, à traiter comme radar
+- `fallback_candidates` : repos candidats à ajouter si le corpus ne contient pas encore assez de résultats
+- pour chaque candidat : score multidimensionnel, radar maturity, raison de la recommandation, caveats, next actions, provenance
 - pensé pour qu'un agent puisse en citer 1–3 directement sans appel supplémentaire
 
 Si aucun candidat ne passe les filtres, le tool retourne une liste vide avec une explication structurée.
@@ -202,6 +206,29 @@ Retour :
 
 Si le repo n'est pas encore ingéré, le serveur tente une ingestion à la volée si `GITHUB_TOKEN` est configuré.
 
+### `watch_use_case`
+
+Crée une veille sur un besoin naturel, pas seulement sur un repo.
+
+Entrée :
+
+```json
+{
+  "need": "testing tools for TypeScript",
+  "label": "Veille Testing TypeScript",
+  "risk_tolerance": "medium"
+}
+```
+
+Retour :
+
+- `watch_id`
+- intention normalisée, catégories, topics, languages
+- `initial_matches` + `top_matches`
+- provenance `usestakly://watch/use-case`
+
+Ce tool est utile quand l'agent doit surveiller un espace de besoin dans le temps : observability, auth, testing, UI kits, ORM, agent frameworks, etc.
+
 ---
 
 ## Provenance
@@ -211,7 +238,7 @@ Chaque tool retourne une provenance structurée :
 ```json
 {
   "source": "usestakly://registry/github[/owner/name]",
-  "formula_version": "v1",
+  "formula_version": "v2.0",
   "scored_at": "2026-04-23T10:00:00Z"
 }
 ```

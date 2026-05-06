@@ -42,14 +42,16 @@ Migration 0020 + endpoints + UI livrés. **Aucune notification n'est jamais émi
   - `use_case_flag_added` — repo recommandé prend un flag toxique
 - [ ] Anti-bruit : max 1 notification par watch par jour au MVP, mettre à jour `last_notified_at`.
 
-### 2.2 MCP cohérence intent (Lot 4 du plan use-case + Phase 4 du plan radar)
+### 2.2 MCP cohérence intent (Lot 4 du plan use-case + Phase 4 du plan radar) ✅ livré 2026-05-06
 
-- [ ] Faire consommer au tool MCP `recommend_github_repos` le **même service** (`services/recommendations.rs`) que `POST /api/use-cases/recommend`, pour aligner les explications intent/categories/topics et la provenance.
-- [ ] Sortir la réponse en sections séparées dans le tool `recommend_github_repos` :
-  - `stable_picks` (maturity_band = `established`, score ≥ seuil)
-  - `emerging_picks` (maturity_band = `emerging`, vitality ≥ seuil)
-  - `fallback_candidates` (déjà présent dans `services/recommendations.rs:47`)
-- [ ] Ajouter un tool MCP `watch_use_case` (équivalent du REST `POST /api/use-cases/watch`).
+- [x] Faire consommer au tool MCP `recommend_github_repos` le **même service** (`services/recommendations.rs`) que `POST /api/use-cases/recommend`, pour aligner les explications intent/categories/topics et la provenance.
+- [x] Sortir la réponse en sections séparées dans le tool `recommend_github_repos` :
+  - `stable_picks`
+  - `emerging_picks`
+  - `fallback_candidates`
+- [x] Ajouter un tool MCP `watch_use_case` (équivalent du REST `POST /api/use-cases/watch`).
+
+Reste côté MCP : valider un smoke réel avec token prod après déploiement, puis garder la doc d'exemples à jour quand de nouveaux patterns d'agents apparaissent.
 
 ### 2.3 Bug capture `last_release_at` (followup formula v2)
 
@@ -59,7 +61,7 @@ Migration 0020 + endpoints + UI livrés. **Aucune notification n'est jamais émi
 
 - [ ] **Rate-limit handling GitHub** : ETags / conditional requests, backoff sur 429, monitoring du quota restant. Aujourd'hui un 429 lève une `forbidden` brute (`services/ingestion/github.rs`).
 - [ ] **Computation `owner_inactive_days`** côté events API GitHub — préalable à la règle d'alerte "maintainer silencieux 90j" (Phase R3).
-- [ ] **Cadence refresh corpus entier** : le scheduler actuel (`services/scheduler.rs`) ne refresh que les repos **watchés**. Décider d'une stratégie pour le reste du corpus (refresh hebdo ? jamais ? sur demande ?).
+- [x] **Cadence refresh corpus entier** : livré 2026-05-06. Le scheduler opt-in refresh les repos watchés + tout repo GitHub dont `priors_fetched_at` est NULL ou vieux de plus de 24 h.
 - [ ] **Critère corpus v1 formel** : top N par langage, sur demande, ou via watchlist uniquement ? Aujourd'hui : seed manuel via `seed-public-corpus.ps1`.
 - [ ] **Tests unitaires parsing GitHub** : aucun test sur `services/ingestion/github.rs` au-delà des helpers `decode_readme_content` et `parse_github_repo_input`.
 
@@ -87,10 +89,11 @@ Migration 0020 + endpoints + UI livrés. **Aucune notification n'est jamais émi
 
 ### 3.4 Phase R6 — Public positioning (Phase 6 du plan radar)
 
-- [ ] Mettre à jour `/mcp-guide` et `docs/mcp-examples.md` avec exemples emerging :
+- [x] Mettre à jour `docs/mcp-examples.md` avec exemples emerging :
   - "Find a reliable testing library."
   - "Find emerging alternatives for auth in TypeScript."
   - "Watch new OSS tools for observability."
+- [ ] Vérifier / ajuster `/mcp-guide` côté frontend après la passe MCP du 2026-05-06.
 - [ ] Vérifier que `/how-to-read` mentionne explicitement la distinction score (qualité) vs maturity_band (radar).
 
 ### 3.5 Phase R2 — Search calibration

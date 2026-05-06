@@ -9,8 +9,8 @@
 > - Phase 5 : classification catégories à l'ingestion via `services/repo_categories.rs` (signaux README + métadonnées GitHub), seed `scripts/seed-public-corpus.ps1` organisé par familles (UI kits, ORM, Auth, Testing, etc.).
 >
 > **Reste** :
-> - Phase 4 MCP : sortir `recommend_github_repos` en sections `stable_picks` / `emerging_picks` / `fallback_candidates` (seul `fallback_candidates` existe aujourd'hui dans `services/recommendations.rs:47`). Pas de tool MCP `watch_use_case` (REST seulement).
-> - Phase 6 copy : exemples "emerging alternatives" dans `/mcp-guide` et `docs/mcp-examples.md`.
+> - Phase 4 MCP : livré le 2026-05-06 (`recommend_github_repos` consomme le service web, expose `stable_picks` / `emerging_picks` / `fallback_candidates`, et `watch_use_case` crée une veille d'intention depuis le MCP).
+> - Phase 6 copy : exemples "emerging alternatives" ajoutés dans `docs/mcp-examples.md`; vérifier `/mcp-guide` côté frontend.
 
 > **For agentic workers:** implement this plan task-by-task. Keep commits small, verify each phase, and do not dilute the existing score/trust model.
 
@@ -179,7 +179,7 @@ UseStakly should notify when:
 
 ### Existing tools to improve
 
-- `recommend_github_repos`
+- `recommend_github_repos` ✅ livré 2026-05-06
   - Must map broad needs to categories strongly:
     - testing -> `testing`
     - auth -> `auth`
@@ -192,9 +192,9 @@ UseStakly should notify when:
     - `emerging_picks`
     - `fallback_candidates`
 
-### New tool to add later
+### New tool added
 
-- `watch_use_case`
+- `watch_use_case` ✅ livré 2026-05-06
   - Input: need, risk tolerance, mode.
   - Creates a need watch for the authenticated token/user.
 
@@ -303,4 +303,3 @@ UseStakly should say:
 - The MCP gives coherent recommendations without requiring perfect user wording.
 - Young repos are visible without being falsely presented as production-proven.
 - README-derived data improves categories but README content is never displayed on repo cards.
-

@@ -1,7 +1,7 @@
 # Architecture backend actuelle
 
-> Version : 1.1
-> Dernière mise à jour : 2026-04-26
+> Version : 1.2
+> Dernière mise à jour : 2026-05-06
 > Portée : backend vivant de **UseStakly** (public beta exposable)
 
 ## Vue d'ensemble
@@ -11,7 +11,7 @@ Le backend UseStakly est une API Rust/Axum centrée sur cinq capacités produit 
 - découverte de repos GitHub publics scorés (lexical + sémantique optionnel + qualité)
 - watchlist + notifications in-app
 - signaux qualité modérés (consensus, réputation, review, dispute)
-- exposition MCP Streamable HTTP pour agents IA (5 tools, auth Bearer)
+- exposition MCP Streamable HTTP pour agents IA (6 tools, auth Bearer)
 - observabilité MCP et statut public pour la beta
 
 Le point d'entrée :
@@ -63,7 +63,7 @@ Responsabilité : logique métier.
 - `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
 - `repos.rs` — agrégation profils repo, réponses discovery, score provenance
 - `watchlist.rs`, `notifications.rs`
-- `scheduler.rs` — boucle opt-in `tokio::spawn` refresh + recompute + emit notifs
+- `scheduler.rs` — boucle opt-in `tokio::spawn` refresh quotidien des priors GitHub stale (> 24 h) + repos watchés, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation
 - `quality/`
@@ -98,7 +98,7 @@ Réputation, modération, ownership, observabilité MCP.
 Serveur MCP Streamable HTTP monté à `/mcp`.
 
 - `auth.rs` — `verify_bearer` : SHA-256 du token contre `agent_tokens.token_hash`, lookup user, retour `AgentTokenContext`
-- `server.rs` — handlers des 5 tools (voir ci-dessous)
+- `server.rs` — handlers des 6 tools (voir ci-dessous)
 - `tools/` — réservé aux helpers de tool partagés à venir
 
 Tools exposés :
@@ -110,6 +110,7 @@ Tools exposés :
 | `get_repo_quality_context` | read | profil complet d'un repo (dimensions, flags, signals, provenance) |
 | `log_usage` | write | crée un `quality_signal` passif. Retourne le score recalculé pour feedback agent immédiat |
 | `watch_repo` | write | ajoute le repo à la watchlist du user propriétaire du token |
+| `watch_use_case` | write | crée une veille d'intention/radar sur un besoin naturel |
 
 Garde-fous write (config via env) :
 
