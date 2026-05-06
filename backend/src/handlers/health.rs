@@ -52,6 +52,17 @@ pub struct FormulaStatus {
     version: String,
 }
 
+fn public_mcp_tools() -> Vec<&'static str> {
+    vec![
+        "recommend_github_repos",
+        "search_github_repos",
+        "get_repo_quality_context",
+        "log_usage",
+        "watch_repo",
+        "watch_use_case",
+    ]
+}
+
 pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusResponse> {
     let db_ok = sqlx::query_scalar::<_, i32>("SELECT 1")
         .fetch_one(&state.db)
@@ -86,13 +97,7 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
         },
         mcp: McpStatus {
             status: "ok",
-            tools: vec![
-                "recommend_github_repos",
-                "search_github_repos",
-                "get_repo_quality_context",
-                "log_usage",
-                "watch_repo",
-            ],
+            tools: public_mcp_tools(),
         },
         formula: FormulaStatus {
             status: if formula_ok { "ok" } else { "degraded" },
@@ -100,4 +105,14 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
         },
         checked_at: Utc::now(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::public_mcp_tools;
+
+    #[test]
+    fn public_status_lists_watch_use_case_tool() {
+        assert!(public_mcp_tools().contains(&"watch_use_case"));
+    }
 }
