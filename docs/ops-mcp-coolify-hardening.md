@@ -19,6 +19,7 @@ Verified in the application:
 - MCP tokens are hashed in the database
 - tokens can be revoked from the account page
 - MCP write tools have quota and cooldown guards
+- `/mcp` has in-process rate limits for invalid auth by IP and valid traffic by token
 - public status endpoint exists at `/api/status/public`
 
 ## Priority 1: Schedule Coolify Database Backups
@@ -52,7 +53,9 @@ Acceptance criteria:
 - at least one manual backup execution succeeds
 - restore procedure is documented
 
-## Priority 2: Add Application Rate Limiting on `/mcp`
+## Priority 2: Application Rate Limiting on `/mcp`
+
+Status: delivered 2026-05-06.
 
 Risk:
 
@@ -64,9 +67,9 @@ Add application-level rate limits to all `/mcp` traffic, not only write tools.
 
 Recommended baseline:
 
-- per-IP limit for unauthenticated MCP requests
-- per-token limit for authenticated read calls
-- stricter per-token limit for write calls
+- per-IP limit for unauthenticated or invalid MCP requests
+- per-token limit for authenticated protocol/read calls
+- stricter per-token limit for write calls via existing `agent_token_events` guards
 - separate counters for:
   - `initialize`
   - `tools/list`
@@ -80,10 +83,12 @@ Current coverage:
 
 Acceptance criteria:
 
-- repeated unauthenticated `/mcp` requests are throttled
-- repeated authenticated read calls are throttled by token
+- repeated unauthenticated `/mcp` requests are throttled with `429` and `Retry-After`
+- repeated authenticated protocol/read calls are throttled by token
 - existing write guards remain in place
-- rate-limit rejections are observable in logs or metrics
+- configurable defaults exist in `.env.example`:
+  - `APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE=30`
+  - `APP_MCP_READ_LIMIT_PER_MINUTE=120`
 
 ## Priority 3: Require Authorization for All `/mcp` Requests
 
@@ -142,8 +147,8 @@ Acceptance criteria:
 ## Recommended Order
 
 1. Configure DB backups.
-2. Add `/mcp` global Authorization enforcement.
-3. Add `/mcp` read/protocol rate limiting.
+2. Add `/mcp` global Authorization enforcement. Done.
+3. Add `/mcp` read/protocol rate limiting. Done.
 4. Add external uptime alerting.
 5. Document restore and incident steps.
 

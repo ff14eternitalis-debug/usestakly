@@ -23,6 +23,8 @@ pub struct AppConfig {
     pub github_token: Option<String>,
     pub scheduler_enabled: bool,
     pub recompute_interval_secs: u64,
+    pub mcp_auth_failure_limit_per_minute: usize,
+    pub mcp_read_limit_per_minute: usize,
     pub mcp_write_limit_per_hour: u32,
     pub mcp_log_usage_cooldown_secs: u64,
     pub mcp_negative_signal_window_hours: u64,
@@ -81,6 +83,22 @@ impl AppConfig {
             return Err(anyhow!(
                 "APP_RECOMPUTE_INTERVAL_SECS must be >= 60 (got {recompute_interval_secs})"
             ));
+        }
+        let mcp_auth_failure_limit_per_minute = env::var("APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE")
+            .unwrap_or_else(|_| "30".to_string())
+            .parse::<usize>()
+            .map_err(|_| anyhow!("APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE must be a valid usize"))?;
+        if mcp_auth_failure_limit_per_minute == 0 {
+            return Err(anyhow!(
+                "APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE must be >= 1"
+            ));
+        }
+        let mcp_read_limit_per_minute = env::var("APP_MCP_READ_LIMIT_PER_MINUTE")
+            .unwrap_or_else(|_| "120".to_string())
+            .parse::<usize>()
+            .map_err(|_| anyhow!("APP_MCP_READ_LIMIT_PER_MINUTE must be a valid usize"))?;
+        if mcp_read_limit_per_minute == 0 {
+            return Err(anyhow!("APP_MCP_READ_LIMIT_PER_MINUTE must be >= 1"));
         }
         let mcp_write_limit_per_hour = env::var("APP_MCP_WRITE_LIMIT_PER_HOUR")
             .unwrap_or_else(|_| "60".to_string())
@@ -154,6 +172,8 @@ impl AppConfig {
             github_token,
             scheduler_enabled,
             recompute_interval_secs,
+            mcp_auth_failure_limit_per_minute,
+            mcp_read_limit_per_minute,
             mcp_write_limit_per_hour,
             mcp_log_usage_cooldown_secs,
             mcp_negative_signal_window_hours,

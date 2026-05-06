@@ -2030,6 +2030,8 @@ mod tests {
             github_token: None,
             scheduler_enabled: false,
             recompute_interval_secs: 86_400,
+            mcp_auth_failure_limit_per_minute: 30,
+            mcp_read_limit_per_minute: 120,
             mcp_write_limit_per_hour: 60,
             mcp_log_usage_cooldown_secs: 900,
             mcp_negative_signal_window_hours: 24,

@@ -1,14 +1,18 @@
 pub mod error;
+mod mcp_rate_limit;
+
+use std::{sync::Arc, time::Instant};
 
 use axum::{
     Router,
     body::Body,
     extract::State,
-    http::{HeaderValue, Method, Request, StatusCode, header},
+    http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
+use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -16,6 +20,7 @@ use tower_http::{
 };
 
 use crate::{
+    app::mcp_rate_limit::{McpRateLimitKey, McpRateLimiter},
     config::AppConfig,
     handlers::{
         account, admin, agent_tokens, auth, health, me, notifications, repos, search, use_cases,
@@ -29,11 +34,26 @@ use crate::{
 pub struct AppState {
     pub config: AppConfig,
     pub db: PgPool,
+    mcp_rate_limits: Arc<McpRateLimits>,
+}
+
+#[derive(Debug)]
+struct McpRateLimits {
+    auth_failures: McpRateLimiter,
+    authenticated: McpRateLimiter,
 }
 
 pub fn build_app(config: AppConfig, db: PgPool) -> Router {
     let allowed_origins = allowed_frontend_origins(&config.frontend_base_url);
-    let state = AppState { config, db };
+    let mcp_rate_limits = Arc::new(McpRateLimits {
+        auth_failures: McpRateLimiter::per_minute(config.mcp_auth_failure_limit_per_minute),
+        authenticated: McpRateLimiter::per_minute(config.mcp_read_limit_per_minute),
+    });
+    let state = AppState {
+        config,
+        db,
+        mcp_rate_limits,
+    };
     let mcp_service = mcp_server::build_service(state.clone());
     let mcp_routes = Router::new()
         .route_service("/mcp", mcp_service)
@@ -184,21 +204,100 @@ async fn require_mcp_authorization(
     request: Request<Body>,
     next: Next,
 ) -> Response {
+    let source_ip = source_ip(request.headers());
     let Some(raw) = request.headers().get(header::AUTHORIZATION) else {
+        if let Err(retry_after) = state
+            .mcp_rate_limits
+            .auth_failures
+            .check(McpRateLimitKey::InvalidAuthIp(source_ip), Instant::now())
+        {
+            return rate_limited_response(retry_after);
+        }
         return (StatusCode::UNAUTHORIZED, "missing Authorization header").into_response();
     };
     let Ok(raw) = raw.to_str() else {
+        if let Err(retry_after) = state
+            .mcp_rate_limits
+            .auth_failures
+            .check(McpRateLimitKey::InvalidAuthIp(source_ip), Instant::now())
+        {
+            return rate_limited_response(retry_after);
+        }
         return (StatusCode::UNAUTHORIZED, "malformed Authorization header").into_response();
     };
     let Some(token) = raw
         .strip_prefix("Bearer ")
         .or_else(|| raw.strip_prefix("bearer "))
     else {
+        if let Err(retry_after) = state
+            .mcp_rate_limits
+            .auth_failures
+            .check(McpRateLimitKey::InvalidAuthIp(source_ip), Instant::now())
+        {
+            return rate_limited_response(retry_after);
+        }
         return (StatusCode::UNAUTHORIZED, "expected 'Bearer <token>'").into_response();
     };
 
-    match agent_token_service::verify(&state.db, token.trim()).await {
-        Ok(_) => next.run(request).await,
-        Err(_) => (StatusCode::UNAUTHORIZED, "invalid or revoked token").into_response(),
+    let token = token.trim();
+    let invalid_auth_key = McpRateLimitKey::InvalidAuthIp(source_ip);
+    if let Some(retry_after) = state
+        .mcp_rate_limits
+        .auth_failures
+        .is_limited(&invalid_auth_key, Instant::now())
+    {
+        return rate_limited_response(retry_after);
     }
+
+    match agent_token_service::verify(&state.db, token).await {
+        Ok(_) => {
+            if let Err(retry_after) = state.mcp_rate_limits.authenticated.check(
+                McpRateLimitKey::Token(token_fingerprint(token)),
+                Instant::now(),
+            ) {
+                return rate_limited_response(retry_after);
+            }
+            next.run(request).await
+        }
+        Err(_) => {
+            if let Err(retry_after) = state
+                .mcp_rate_limits
+                .auth_failures
+                .check(invalid_auth_key, Instant::now())
+            {
+                return rate_limited_response(retry_after);
+            }
+            (StatusCode::UNAUTHORIZED, "invalid or revoked token").into_response()
+        }
+    }
+}
+
+fn source_ip(headers: &HeaderMap) -> String {
+    headers
+        .get("cf-connecting-ip")
+        .and_then(|value| value.to_str().ok())
+        .or_else(|| {
+            headers
+                .get("x-forwarded-for")
+                .and_then(|value| value.to_str().ok())
+                .and_then(|value| value.split(',').next())
+        })
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or("unknown")
+        .to_string()
+}
+
+fn token_fingerprint(token: &str) -> String {
+    let digest = Sha256::digest(token.as_bytes());
+    hex::encode(digest)
+}
+
+fn rate_limited_response(retry_after: std::time::Duration) -> Response {
+    let retry_secs = retry_after.as_secs().max(1).to_string();
+    let mut response = (StatusCode::TOO_MANY_REQUESTS, "MCP rate limit exceeded").into_response();
+    if let Ok(value) = HeaderValue::from_str(&retry_secs) {
+        response.headers_mut().insert(header::RETRY_AFTER, value);
+    }
+    response
 }

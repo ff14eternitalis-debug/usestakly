@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : durcissement ops Coolify/MCP, backups DB, rate-limit globale MCP, alerting externe, page légale formelle, E2E complet et notifications de veilles d'intention.
+> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : backups DB, alerting externe, page légale formelle, E2E complet et notifications de veilles d'intention.
 
 ---
 
@@ -51,10 +51,10 @@ Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
   - Baseline recommandée : backup quotidien, rétention 7 jours minimum, test de restore.
   - Vérification attendue : `coolify database backup list z3xzjc0sy03kr6mpv8xvka7l --format json` retourne au moins une config.
 
-- [ ] **Ajouter une rate-limit applicative sur `/mcp`**
+- [x] **Ajouter une rate-limit applicative sur `/mcp`**
   - Couvrir `initialize`, `tools/list`, read tools et write tools.
-  - Aujourd'hui : les write tools ont déjà quotas/cooldowns ; les reads/protocol calls doivent encore être limités.
-  - Cibles : limite par IP pour non-auth/invalides, limite par token pour reads, limite stricte pour writes.
+  - Livré 2026-05-06 : limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`).
+  - Les write tools gardent leurs quotas/cooldowns existants via `agent_token_events`.
 
 - [x] **Forcer Authorization sur toute route `/mcp`**
   - Même `initialize` et `tools/list` ne doivent pas exposer gratuitement le catalogue.
