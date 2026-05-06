@@ -10,7 +10,7 @@ Verified on Coolify:
 - frontend: `running:healthy`
 - PostgreSQL: `running:healthy`
 - database public exposure: `is_public: false`
-- database backups: no scheduled backup configuration was listed by the Coolify CLI
+- database backups: local scheduled backup enabled for `usestakly-postgres`
 
 Verified in the application:
 
@@ -23,6 +23,8 @@ Verified in the application:
 - public status endpoint exists at `/api/status/public`
 
 ## Priority 1: Schedule Coolify Database Backups
+
+Status: delivered 2026-05-06 for the local backup baseline.
 
 Risk:
 
@@ -39,6 +41,16 @@ Recommended baseline:
 - storage: remote storage if available, otherwise Coolify-managed storage as an interim step
 - manual restore test: at least once before a wider public launch
 
+Current production configuration:
+
+- database resource: `usestakly-postgres` (`z3xzjc0sy03kr6mpv8xvka7l`)
+- backup schedule: `n12jqb2qn56mcmiqrwnjbh1z`
+- frequency: `0 2 * * *`
+- databases: `usestakly`
+- local retention: 7 days / 7 backups
+- S3/offsite backup: not configured yet
+- manual trigger on 2026-05-06: succeeded
+
 CLI discovery:
 
 ```bash
@@ -47,11 +59,18 @@ coolify database backup create --help
 coolify database backup trigger --help
 ```
 
+Note: on Coolify v4.0.0 with CLI 1.6.2, `coolify database backup list` and `coolify database backup executions` can fail on JSON type mismatches. The authoritative verification used the Coolify API:
+
+```bash
+GET /api/v1/databases/z3xzjc0sy03kr6mpv8xvka7l/backups
+```
+
 Acceptance criteria:
 
-- `coolify database backup list z3xzjc0sy03kr6mpv8xvka7l --format json` returns at least one scheduled backup configuration
-- at least one manual backup execution succeeds
-- restore procedure is documented
+- scheduled backup configuration exists and is enabled. Done.
+- at least one manual backup execution succeeds. Done.
+- restore procedure is documented. Pending.
+- at least one restore is tested before wider public launch. Pending.
 
 ## Priority 2: Application Rate Limiting on `/mcp`
 
@@ -147,10 +166,11 @@ Acceptance criteria:
 ## Recommended Order
 
 1. Configure DB backups.
+   - Local baseline done.
 2. Add `/mcp` global Authorization enforcement. Done.
 3. Add `/mcp` read/protocol rate limiting. Done.
 4. Add external uptime alerting.
-5. Document restore and incident steps.
+5. Document and test restore and incident steps.
 
 ## Notes
 

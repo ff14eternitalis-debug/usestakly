@@ -14,7 +14,8 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 
 ### 1.1 Ops MCP / DB
 
-- [ ] **Backup DB Coolify planifié** — quotidien, rétention 7 jours minimum, test de restore. Vérification : `coolify database backup list z3xzjc0sy03kr6mpv8xvka7l --format json` retourne au moins une config.
+- [x] **Backup DB Coolify planifié** — livré 2026-05-06. Backup local quotidien sur `usestakly-postgres`, cron `0 2 * * *`, DB `usestakly`, rétention 7 jours / 7 backups, exécution manuelle `success`.
+- [ ] **Test de restore DB** — faire au moins une restauration contrôlée avant ouverture publique large. Le stockage offsite/S3 reste aussi à décider.
 - [x] **Rate-limit applicative globale `/mcp`** — livré 2026-05-06. Limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent le quota par token existant via `agent_token_events`.
 - [ ] **Alerte externe** (UptimeRobot / Better Stack / Grafana Cloud) sur `GET /health`, `GET /api/status/public`, et un test MCP contrôlé avec token monitoring dédié.
 

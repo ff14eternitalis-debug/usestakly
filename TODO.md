@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture et guide MCP sont en place sur `main`. Restent surtout : backups DB, alerting externe, page légale formelle, E2E complet et notifications de veilles d'intention.
+> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP et backup DB Coolify quotidien sont en place sur `main`. Restent surtout : alerting externe, test de restore DB, page légale formelle, E2E complet et notifications de veilles d'intention.
 
 ---
 
@@ -46,10 +46,11 @@ Cap produit à venir : **UseStakly = source de vérité qualité + radar OSS ant
 
 Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
 
-- [ ] **Configurer un backup DB Coolify planifié**
+- [x] **Configurer un backup DB Coolify planifié**
   - Risque principal actuel : perte de données Postgres.
-  - Baseline recommandée : backup quotidien, rétention 7 jours minimum, test de restore.
-  - Vérification attendue : `coolify database backup list z3xzjc0sy03kr6mpv8xvka7l --format json` retourne au moins une config.
+  - Livré 2026-05-06 : backup local Coolify activé sur `usestakly-postgres` (`z3xzjc0sy03kr6mpv8xvka7l`), cron `0 2 * * *`, DB `usestakly`, rétention locale 7 jours / 7 backups.
+  - Vérifié via API Coolify `GET /api/v1/databases/z3xzjc0sy03kr6mpv8xvka7l/backups` : config `n12jqb2qn56mcmiqrwnjbh1z` active, exécution manuelle `success`.
+  - Reste à faire avant ouverture large : test de restore et stockage distant/offsite.
 
 - [x] **Ajouter une rate-limit applicative sur `/mcp`**
   - Couvrir `initialize`, `tools/list`, read tools et write tools.
