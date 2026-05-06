@@ -21,7 +21,7 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 ### 1.2 Public beta gating
 
 - [ ] **Page légale `/legal` ou `/terms`** — aujourd'hui seul `/privacy` existe (`frontend/src/routes/privacy.tsx`).
-- [ ] **Domaine public stable + email contact officiel** — actuel : sslip.io temporaire (`xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io`), aucun email contact sur landing/footer/privacy.
+- [ ] **Email contact officiel** — domaine public stable livré (`https://www.usestakly.com` + `https://mcp.usestakly.com`). Reste à ajouter une adresse contact officielle sur landing/footer/privacy.
 
 ---
 

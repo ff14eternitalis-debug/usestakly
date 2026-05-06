@@ -1,5 +1,5 @@
 param(
-  [string]$Api = "https://xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io"
+  [string]$Api = "https://mcp.usestakly.com"
 )
 
 $repos = @(

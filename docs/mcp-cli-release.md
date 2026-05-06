@@ -46,12 +46,12 @@ npm publish
 
 ```bash
 npx usestakly-mcp --help
-npx usestakly-mcp install --client generic --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client generic --endpoint https://mcp.usestakly.com/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
 ## Publication status
 
-`usestakly-mcp@0.1.3` removes the hard-coded Coolify endpoint from the package. It can be installed with:
+`usestakly-mcp@0.1.4` documents the stable public MCP endpoint, while keeping the endpoint configurable and out of the CLI code. It can be installed with:
 
 ```bash
 npx usestakly-mcp install

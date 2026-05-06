@@ -1,6 +1,6 @@
 {
   "name": "usestakly-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Install and test the UseStakly MCP server in local coding agents.",
   "type": "module",
   "bin": {

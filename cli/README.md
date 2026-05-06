@@ -25,13 +25,13 @@ npx usestakly-mcp install
 Interactive flow. Asks for the client, endpoint, and token.
 
 ```bash
-npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client codex --endpoint https://mcp.usestakly.com/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
 Non-interactive flow. Safer for terminals and scripts because the token stays out of shell history.
 
 ```bash
-npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN --dry-run
+npx usestakly-mcp install --client codex --endpoint https://mcp.usestakly.com/mcp --token-env USESTAKLY_MCP_TOKEN --dry-run
 ```
 
 Prints the config without writing a file.
@@ -54,8 +54,8 @@ Runs MCP `initialize`, then calls a protected UseStakly tool so the Bearer token
 ## Non-interactive options
 
 ```bash
-npx usestakly-mcp install --client codex --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
-npx usestakly-mcp test --endpoint https://your-usestakly-domain.example/mcp --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp install --client codex --endpoint https://mcp.usestakly.com/mcp --token-env USESTAKLY_MCP_TOKEN
+npx usestakly-mcp test --endpoint https://mcp.usestakly.com/mcp --token-env USESTAKLY_MCP_TOKEN
 ```
 
 Set `USESTAKLY_MCP_ENDPOINT=https://.../mcp` or pass `--endpoint https://.../mcp`.

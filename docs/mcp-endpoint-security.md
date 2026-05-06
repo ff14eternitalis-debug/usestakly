@@ -30,14 +30,14 @@ That URL did not expose a secret, but it exposed infrastructure metadata:
 
 Because npm packages are public and indexed by third-party services, old package contents should be considered permanently public once published. Future versions must avoid embedding temporary infrastructure URLs.
 
-`usestakly-mcp@0.1.3` removes the hard-coded endpoint. Users must pass the endpoint explicitly.
+`usestakly-mcp@0.1.3` removed the hard-coded endpoint. `usestakly-mcp@0.1.4` documents the stable public endpoint, while users can still pass a different endpoint explicitly.
 
 ## Recommended public endpoint model
 
 Use a product-owned domain:
 
 ```text
-https://mcp.usestakly.example/mcp
+https://mcp.usestakly.com/mcp
 ```
 
 or, if the app and API share one domain:
@@ -72,7 +72,7 @@ UseStakly MCP token (usk_...):
 Non-interactive:
 
 ```bash
-export USESTAKLY_MCP_ENDPOINT="https://mcp.usestakly.example/mcp"
+export USESTAKLY_MCP_ENDPOINT="https://mcp.usestakly.com/mcp"
 export USESTAKLY_MCP_TOKEN="usk_xxxxx"
 npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN
 ```
@@ -80,7 +80,7 @@ npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN
 PowerShell:
 
 ```powershell
-$env:USESTAKLY_MCP_ENDPOINT = "https://mcp.usestakly.example/mcp"
+$env:USESTAKLY_MCP_ENDPOINT = "https://mcp.usestakly.com/mcp"
 $env:USESTAKLY_MCP_TOKEN = "usk_xxxxx"
 npx usestakly-mcp install --client codex --token-env USESTAKLY_MCP_TOKEN
 ```
@@ -90,7 +90,7 @@ Direct endpoint option:
 ```bash
 npx usestakly-mcp install \
   --client codex \
-  --endpoint https://mcp.usestakly.example/mcp \
+  --endpoint https://mcp.usestakly.com/mcp \
   --token-env USESTAKLY_MCP_TOKEN
 ```
 
@@ -195,7 +195,7 @@ npx @modelcontextprotocol/inspector
 Then configure a remote Streamable HTTP connection:
 
 ```text
-URL: https://mcp.usestakly.example/mcp
+URL: https://mcp.usestakly.com/mcp
 Header: Authorization: Bearer usk_xxxxx
 ```
 

@@ -1514,17 +1514,14 @@ mod tests {
 
     #[test]
     fn mcp_allowed_hosts_include_public_backend_authority() {
-        let config = test_config(
-            "https://xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io",
-            "https://gii8ev9tkvjffvoqdiyxp6p3.137.74.112.197.sslip.io",
-        );
+        let config = test_config("https://mcp.usestakly.com", "https://www.usestakly.com");
 
         let hosts = mcp_allowed_hosts(&config);
 
         assert!(hosts.contains(&"localhost".to_string()));
         assert!(hosts.contains(&"127.0.0.1".to_string()));
-        assert!(hosts.contains(&"xl4xtxfxbxm0lvqjywsl98il.137.74.112.197.sslip.io".to_string()));
-        assert!(hosts.contains(&"gii8ev9tkvjffvoqdiyxp6p3.137.74.112.197.sslip.io".to_string()));
+        assert!(hosts.contains(&"mcp.usestakly.com".to_string()));
+        assert!(hosts.contains(&"www.usestakly.com".to_string()));
     }
 
     #[test]
