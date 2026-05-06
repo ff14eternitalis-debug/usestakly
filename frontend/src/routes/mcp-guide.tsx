@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { useT } from "../i18n";
-import { authUrl } from "../lib/api-client";
+import { ApiError, authUrl } from "../lib/api-client";
 import { createAgentToken } from "../lib/api/account";
 import type { AgentTokenCreated } from "../lib/types";
 import { loginSearch } from "../lib/return-to";
@@ -88,6 +88,12 @@ export function McpGuidePage() {
       await queryClient.invalidateQueries({ queryKey: ["agent-tokens"] });
     }
   });
+  const createError =
+    createToken.error instanceof ApiError && createToken.error.status === 401
+      ? t.mcpGuide.createTokenUnauthorized
+      : createToken.error
+        ? t.mcpGuide.createTokenFail
+        : null;
 
   const testToken = useMutation({
     mutationFn: async () => {
@@ -142,6 +148,7 @@ export function McpGuidePage() {
           copied={copied}
           testPending={testToken.isPending}
           testResult={testResult}
+          createError={createError}
           onCreate={() => createToken.mutate()}
           onCopyConfig={() => void copyConfig()}
           onTest={() => testToken.mutate()}
@@ -319,6 +326,7 @@ function InstallAssistant({
   copied,
   testPending,
   testResult,
+  createError,
   onCreate,
   onCopyConfig,
   onTest
@@ -331,6 +339,7 @@ function InstallAssistant({
   copied: boolean;
   testPending: boolean;
   testResult: "idle" | "ok" | "fail";
+  createError: string | null;
   onCreate: () => void;
   onCopyConfig: () => void;
   onTest: () => void;
@@ -401,6 +410,14 @@ function InstallAssistant({
       {created ? (
         <p className="text-[0.84rem] leading-relaxed text-fg-dim">
           {t.mcpGuide.tokenReady}
+        </p>
+      ) : null}
+      {createError ? (
+        <p
+          className="text-[0.84rem] leading-relaxed"
+          style={{ color: "var(--color-danger)" }}
+        >
+          {createError}
         </p>
       ) : null}
       {testResult !== "idle" ? (

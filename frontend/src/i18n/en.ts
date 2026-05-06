@@ -442,6 +442,10 @@ export const en = {
     tokenPlaceholder: "e.g. codex-local, cursor, claude-desktop",
     createTokenInline: "Create token",
     creatingToken: "Creating...",
+    createTokenFail:
+      "Could not create the token right now. Try again in a few seconds.",
+    createTokenUnauthorized:
+      "Your session is no longer valid on the new domain. Sign in again, then create the token.",
     tokenReady:
       "Token created. Plaintext is included in the config below and will not be shown again after you leave this page.",
     chooseClientLabel: "Client",

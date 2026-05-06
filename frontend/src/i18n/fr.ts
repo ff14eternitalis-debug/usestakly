@@ -445,6 +445,10 @@ export const fr: Dict = {
     tokenPlaceholder: "ex. codex-local, cursor, claude-desktop",
     createTokenInline: "Créer le token",
     creatingToken: "Création...",
+    createTokenFail:
+      "Impossible de créer le token pour le moment. Réessaie dans quelques secondes.",
+    createTokenUnauthorized:
+      "Ta session n'est plus valide sur le nouveau domaine. Reconnecte-toi, puis recrée le token.",
     tokenReady:
       "Token créé. La valeur en clair est incluse dans la config ci-dessous et ne sera plus affichée après avoir quitté cette page.",
     chooseClientLabel: "Client",
