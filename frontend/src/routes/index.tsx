@@ -569,8 +569,6 @@ export function LandingPage() {
     <>
       <Hero />
       <DataQualitySection />
-      <PillarsSection />
-      <FormulaSection />
       <LivePreview />
       <ClosingCTA />
     </>

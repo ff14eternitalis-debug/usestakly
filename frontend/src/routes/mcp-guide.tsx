@@ -219,7 +219,7 @@ export function McpGuidePage() {
         </div>
       </section>
 
-      <section className="grid gap-3">
+      <section className="grid gap-3 border-t border-line pt-8">
         <span className="kicker">{t.mcpGuide.stepsLabel}</span>
         <ol className="grid">
           {t.mcpGuide.steps.map((step, index) => (
@@ -255,29 +255,19 @@ export function McpGuidePage() {
         </ul>
       </section>
 
-      <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.mcpGuide.smokeTestLabel}</span>
-          <h2 className="display-md !text-[1.35rem]">
-            {t.mcpGuide.smokeTestTitle}
-          </h2>
-          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
-            {t.mcpGuide.smokeTestBody}
-          </p>
-        </div>
+      <McpDetails
+        label={t.mcpGuide.smokeTestLabel}
+        title={t.mcpGuide.smokeTestTitle}
+        body={t.mcpGuide.smokeTestBody}
+      >
         <CodeBlock code={curlExample} />
-      </section>
+      </McpDetails>
 
-      <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.mcpGuide.toolsLabel}</span>
-          <h2 className="display-md !text-[1.35rem]">
-            {t.mcpGuide.toolsTitle}
-          </h2>
-          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
-            {t.mcpGuide.toolsBody}
-          </p>
-        </div>
+      <McpDetails
+        label={t.mcpGuide.toolsLabel}
+        title={t.mcpGuide.toolsTitle}
+        body={t.mcpGuide.toolsBody}
+      >
         <ul className="grid gap-3">
           {t.mcpGuide.tools.map((tool) => (
             <li
@@ -293,15 +283,9 @@ export function McpGuidePage() {
             </li>
           ))}
         </ul>
-      </section>
+      </McpDetails>
 
-      <section className="grid gap-5 border-t border-line pt-8 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.mcpGuide.securityLabel}</span>
-          <h2 className="display-md !text-[1.35rem]">
-            {t.mcpGuide.securityTitle}
-          </h2>
-        </div>
+      <McpDetails label={t.mcpGuide.securityLabel} title={t.mcpGuide.securityTitle}>
         <ul className="grid gap-2">
           {t.mcpGuide.securityItems.map((item) => (
             <li
@@ -312,8 +296,44 @@ export function McpGuidePage() {
             </li>
           ))}
         </ul>
-      </section>
+      </McpDetails>
     </section>
+  );
+}
+
+function McpDetails({
+  label,
+  title,
+  body,
+  children
+}: {
+  label: string;
+  title: string;
+  body?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group border-t border-line pt-6">
+      <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
+        <span className="kicker">{label}</span>
+        <span className="flex items-center justify-between gap-4">
+          <span className="display-md !text-[1.25rem]">{title}</span>
+          <span className="mono text-accent transition-transform group-open:rotate-45">
+            +
+          </span>
+        </span>
+      </summary>
+      <div className="grid gap-5 pt-5 md:grid-cols-[0.82fr_1.18fr] md:gap-8">
+        {body ? (
+          <p className="text-[0.94rem] leading-relaxed text-fg-dim">
+            {body}
+          </p>
+        ) : (
+          <span aria-hidden />
+        )}
+        <div>{children}</div>
+      </div>
+    </details>
   );
 }
 

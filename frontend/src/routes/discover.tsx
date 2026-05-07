@@ -212,33 +212,6 @@ export function DiscoverPage() {
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[8px] border border-line bg-surface/45 p-5">
-          <p className="kicker">{t.repoDetail.overallVerdict}</p>
-          <h2 className="mt-2 text-[1.04rem] font-semibold text-fg">
-            {t.discover.scoreGuideTitle}
-          </h2>
-          <p className="mt-2 text-[0.9rem] leading-relaxed text-fg-dim">
-            {t.discover.scoreGuideBody}
-          </p>
-          <Link
-            to="/how-to-read"
-            className="mt-4 inline-flex w-fit items-center text-[0.88rem] font-medium text-accent hover:underline"
-          >
-            {t.discover.scoreGuideAction} <span className="arrow">→</span>
-          </Link>
-        </div>
-        <div className="rounded-[8px] border border-line bg-surface/45 p-5">
-          <p className="kicker">{t.howToRead.corpusLabel}</p>
-          <h2 className="mt-2 text-[1.04rem] font-semibold text-fg">
-            {t.discover.corpusTitle}
-          </h2>
-          <p className="mt-2 text-[0.9rem] leading-relaxed text-fg-dim">
-            {t.discover.corpusBody}
-          </p>
-        </div>
-      </section>
-
       <div className="flex flex-wrap gap-2 border-b border-line">
         {[
           {
@@ -274,9 +247,6 @@ export function DiscoverPage() {
               }`}
             >
               <span className="text-[0.95rem] font-semibold">{tab.label}</span>
-              <span className="text-[0.78rem] leading-snug text-fg-muted">
-                {tab.hint}
-              </span>
             </button>
           );
         })}

@@ -70,7 +70,7 @@ export const en = {
     h1Part1: "UseStakly",
     h1Part2: "Choose GitHub OSS with a transparent quality score.",
     intro:
-      "UseStakly helps developers and coding agents compare public GitHub repositories with visible scoring, provenance, and watchlist alerts.",
+      "An OSS radar for comparing repositories by quality, provenance, and drift over time.",
     openObservatory: "Explore repositories",
     readGuide: "Read UseStakly",
     signInForWatchlist: "Sign in for watchlist",
@@ -84,22 +84,22 @@ export const en = {
     dataEyebrow: "Data quality",
     dataH2: "Real metadata, progressive usage signals.",
     dataBody:
-      "GitHub metadata is fetched during ingestion. Adoption and reliability become stronger as MCP agents and users report real outcomes.",
+      "GitHub provides public facts. MCP agents add real usage outcomes.",
     dataItems: [
       {
         title: "GitHub metadata is real",
         body:
-          "Stars, forks, issues, topics, language, archived state, and last push come from GitHub."
+          "Stars, forks, issues, topics, language, and last push come from GitHub."
       },
       {
         title: "Usage signals are progressive",
         body:
-          "resolve, build_success, build_failure, and regret are recorded through UseStakly signals."
+          "resolve, build_success, build_failure, and regret arrive through MCP."
       },
       {
         title: "Beta by design",
         body:
-          "The corpus is curated and growing. Scores should be read with provenance, not treated as hidden truth."
+          "The corpus grows over time. Every score keeps its provenance."
       }
     ],
     dataCta: "How to read the score",
@@ -230,7 +230,7 @@ export const en = {
     h1Accent: "measuring",
     h1Part2: "today?",
     intro:
-      "Search the corpus by name, owner, description or topic. Narrow by language, minimum stars, or confidence. Same formula, different thresholds.",
+      "Search a repo, category, or need. The quality score stays visible before stars.",
     scoreGuideTitle: "Read the score before the stars",
     scoreGuideBody:
       "Overall combines freshness, adoption, reliability and abandonment risk into a 0-1 verdict. It is a dependency signal, not a popularity chart.",
@@ -253,7 +253,7 @@ export const en = {
     intentEyebrow: "Need search",
     intentTitle: "Start from what you want to build",
     intentBody:
-      "Enter a tool name, category, or short phrase. UseStakly derives topics, then ranks matching repos with the quality score.",
+      "Enter a tool or category. UseStakly ranks repos with the quality score.",
     intentQueryLabel: "Tool or need",
     intentPlaceholder: "e.g. UI kit, TypeScript ORM, video tool",
     intentRiskLabel: "Risk",
@@ -473,7 +473,7 @@ export const en = {
     eyebrow: "MCP guide",
     h1: "Install UseStakly in your agent",
     intro:
-      "Connect an MCP-capable coding agent to the same quality-scored GitHub registry used by the web app. Create one token per agent, paste the Streamable HTTP config, then ask for scored repo recommendations with provenance.",
+      "Connect your MCP agent to the scored registry. Create a token, copy the config, then ask for a recommendation.",
     createTokenAction: "Create MCP token",
     createTokenHint:
       "Tokens live in Account, are shown once, and can be revoked without touching your login session.",
@@ -513,20 +513,17 @@ export const en = {
     cliLabel: "One-command install",
     cliTitle: "Let the CLI write the client config",
     cliBody:
-      "The npm installer asks for your client and token, backs up the config file, writes UseStakly, then lets you test the transport.",
+      "The npm installer writes the client config and runs a transport test.",
     cliInstallCommand: "npx usestakly-mcp install",
     cliTestCommand: "npx usestakly-mcp test",
     tryLabel: "Try it with your agent",
     tryTitle: "Ask for an explained recommendation",
     tryBody:
-      "After installation, ask your agent for a dependency shortlist, then let it inspect provenance and log the outcome after testing.",
+      "After installation, ask for a shortlist and a score explanation.",
     tryPrompts: [
       "Find a reliable React table library with UseStakly. Explain the score, caveats, and provenance, then log_usage after the test.",
       "I need a TypeScript ORM. Recommend GitHub repos with UseStakly and compare reliability, freshness, and abandonment risk.",
-      "Before adding this dependency, use UseStakly to inspect the repo detail and add it to my watchlist if it looks healthy.",
-      "Find a reliable testing library for TypeScript with UseStakly. I want established choices first, not emerging picks.",
-      "Find emerging alternatives to Prisma in the TypeScript ORM space. I accept higher risk for newer projects with strong vitality.",
-      "Watch new OSS tools for observability. Add the established options to my watchlist and tell me when an emerging contender shows up."
+      "Find emerging alternatives to Prisma in the TypeScript ORM space. I accept higher risk for newer projects with strong vitality."
     ],
     stepsLabel: "Install flow",
     steps: [
@@ -598,11 +595,11 @@ export const en = {
     eyebrow: "Reading guide",
     h1: "How to read UseStakly",
     intro:
-      "UseStakly is built for dependency decisions. The score helps you compare public GitHub repos by maintenance, usage confidence and risk, without treating stars as the final answer.",
+      "Read the score first, then the dimensions. Stars are only context.",
     scoreLabel: "Score",
     scoreTitle: "Overall is a 0-1 dependency verdict",
     scoreBody:
-      "A score near 1 means the repo currently looks healthy for adoption. A score near 0 means the repo needs investigation or should usually be avoided. The value is always tied to a formula version and a computed date.",
+      "Near 1: healthy. Near 0: inspect or avoid. Every value keeps its formula and computed date.",
     dimensionsLabel: "Dimensions",
     dimensions: [
       {
@@ -628,7 +625,7 @@ export const en = {
       {
         name: "Vitality",
         body:
-          "Structural maintainer signals captured directly from GitHub at ingestion: distinct contributors over 90 days, commit cadence over 30 days, presence of CI workflows, and recency of releases. This is the anti-slop floor: a freshly-pushed solo repo with no CI and no release cannot dominate the ranking on freshness alone."
+          "Contributors, cadence, CI, and releases. It prevents a fresh push from hiding a fragile project."
       }
     ],
     formulaVersionLabel: "Formula version",

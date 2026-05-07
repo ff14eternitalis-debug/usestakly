@@ -72,7 +72,7 @@ export const fr: Dict = {
     h1Part1: "UseStakly",
     h1Part2: "Choisis tes repos GitHub OSS avec un score qualité transparent.",
     intro:
-      "UseStakly aide les devs et les agents de code à comparer des repos GitHub publics avec scoring visible, provenance et alertes de veille.",
+      "Un radar OSS pour comparer les repos par qualité, provenance et dérive dans le temps.",
     openObservatory: "Explorer les repos",
     readGuide: "Lire UseStakly",
     signInForWatchlist: "Se connecter pour la veille",
@@ -86,22 +86,22 @@ export const fr: Dict = {
     dataEyebrow: "Qualité des données",
     dataH2: "Métadonnées réelles, signaux d'usage progressifs.",
     dataBody:
-      "Les métadonnées GitHub sont récupérées à l'ingestion. Adoption et fiabilité deviennent plus solides quand les agents MCP et les users remontent des outcomes réels.",
+      "GitHub donne les faits publics. Les agents MCP ajoutent les retours d'usage.",
     dataItems: [
       {
         title: "Les métadonnées GitHub sont réelles",
         body:
-          "Étoiles, forks, issues, topics, langage, état archivé et dernier push viennent de GitHub."
+          "Étoiles, forks, issues, topics, langage et dernier push viennent de GitHub."
       },
       {
         title: "Les signaux d'usage sont progressifs",
         body:
-          "resolve, build_success, build_failure et regret sont enregistrés via les signaux UseStakly."
+          "resolve, build_success, build_failure et regret arrivent via MCP."
       },
       {
         title: "Beta assumée",
         body:
-          "Le corpus est curé et grandit. Les scores se lisent avec leur provenance, pas comme une vérité cachée."
+          "Le corpus grandit. Chaque score garde sa provenance."
       }
     ],
     dataCta: "Comment lire le score",
@@ -233,7 +233,7 @@ export const fr: Dict = {
     h1Accent: "mesurer",
     h1Part2: "aujourd'hui ?",
     intro:
-      "Cherche le corpus par nom, propriétaire, description ou topic. Affine par langage, nombre minimum d'étoiles ou confiance. Même formule, seuils différents.",
+      "Cherche un repo, une catégorie ou un besoin. Le score reste visible avant les étoiles.",
     scoreGuideTitle: "Lis le score avant les étoiles",
     scoreGuideBody:
       "Le global combine fraîcheur, adoption, fiabilité et risque d'abandon dans un verdict de 0 à 1. C'est un signal de dépendance, pas un classement de popularité.",
@@ -256,7 +256,7 @@ export const fr: Dict = {
     intentEyebrow: "Recherche par besoin",
     intentTitle: "Pars de ce que tu veux construire",
     intentBody:
-      "Saisis un nom d'outil, une catégorie ou une courte phrase. UseStakly en déduit des topics, puis classe les repos avec le score qualité.",
+      "Saisis un outil ou une catégorie. UseStakly classe les repos avec le score qualité.",
     intentQueryLabel: "Outil ou besoin",
     intentPlaceholder: "ex. Kit UI, ORM TypeScript, outil vidéo",
     intentRiskLabel: "Risque",
@@ -477,7 +477,7 @@ export const fr: Dict = {
     eyebrow: "Guide MCP",
     h1: "Installer UseStakly dans ton agent",
     intro:
-      "Branche un agent de code compatible MCP sur le même registre GitHub scoré que l'app web. Crée un token par agent, colle la config Streamable HTTP, puis demande des recommandations de repos avec provenance.",
+      "Branche ton agent MCP sur le registre scoré. Crée un token, copie la config, puis demande une recommandation.",
     createTokenAction: "Créer un token MCP",
     createTokenHint:
       "Les tokens vivent dans Compte, ne sont affichés qu'une fois et se révoquent sans toucher à ta session web.",
@@ -517,20 +517,17 @@ export const fr: Dict = {
     cliLabel: "Installation en une commande",
     cliTitle: "Laisse le CLI écrire la config client",
     cliBody:
-      "L'installeur npm demande ton client et ton token, sauvegarde le fichier de config, écrit UseStakly, puis te laisse tester le transport.",
+      "L'installeur npm écrit la config client et lance un test de transport.",
     cliInstallCommand: "npx usestakly-mcp install",
     cliTestCommand: "npx usestakly-mcp test",
     tryLabel: "À essayer avec ton agent",
     tryTitle: "Demande une recommandation expliquée",
     tryBody:
-      "Après installation, demande à ton agent une shortlist de dépendances, puis laisse-le inspecter la provenance et logger l'outcome après test.",
+      "Après installation, demande une shortlist et une explication du score.",
     tryPrompts: [
       "Cherche une lib React table fiable avec UseStakly. Explique le score, les caveats et la provenance, puis log_usage après le test.",
       "J'ai besoin d'un ORM TypeScript. Recommande des repos GitHub avec UseStakly et compare fiabilité, fraîcheur et risque d'abandon.",
-      "Avant d'ajouter cette dépendance, utilise UseStakly pour inspecter le détail repo et ajoute-le à ma veille s'il paraît sain.",
-      "Trouve une lib de tests fiable pour TypeScript avec UseStakly. Je veux d'abord des choix établis, pas des emerging.",
-      "Trouve des alternatives emerging à Prisma côté ORM TypeScript. J'accepte plus de risque pour des projets récents avec une bonne vitalité.",
-      "Surveille les nouveaux outils OSS pour l'observabilité. Mets les options établies dans ma veille et préviens-moi si un challenger emerging apparaît."
+      "Trouve des alternatives emerging à Prisma côté ORM TypeScript. J'accepte plus de risque pour des projets récents avec une bonne vitalité."
     ],
     stepsLabel: "Installation",
     steps: [
@@ -602,11 +599,11 @@ export const fr: Dict = {
     eyebrow: "Guide de lecture",
     h1: "Comment lire UseStakly",
     intro:
-      "UseStakly sert aux décisions de dépendances. Le score aide à comparer des repos GitHub publics par maintenance, confiance d'usage et risque, sans laisser les étoiles décider seules.",
+      "Lis d'abord le score, puis les dimensions. Les étoiles ne sont qu'un contexte.",
     scoreLabel: "Score",
     scoreTitle: "Le global est un verdict de dépendance entre 0 et 1",
     scoreBody:
-      "Un score proche de 1 indique qu'un repo semble sain à adopter aujourd'hui. Un score proche de 0 indique qu'il faut enquêter ou l'éviter. La valeur garde toujours une version de formule et une date de calcul.",
+      "Proche de 1 : repo sain. Proche de 0 : inspecte ou évite. Chaque valeur garde sa formule et sa date.",
     dimensionsLabel: "Dimensions",
     dimensions: [
       {
@@ -632,7 +629,7 @@ export const fr: Dict = {
       {
         name: "Vitalité",
         body:
-          "Signaux structurels de maintenance capturés directement depuis GitHub à l'ingestion : contributeurs distincts sur 90 jours, cadence de commits sur 30 jours, présence de workflows CI, fraîcheur de la dernière release. C'est le plancher anti-slop : un repo solo fraîchement pushé sans CI ni release ne peut plus dominer le ranking sur la seule fraîcheur."
+          "Contributeurs, cadence, CI et releases. Elle évite qu'un push récent masque un projet fragile."
       }
     ],
     formulaVersionLabel: "Version de formule",

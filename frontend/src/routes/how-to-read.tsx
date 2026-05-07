@@ -68,37 +68,25 @@ export function HowToReadPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.howToRead.formulaVersionLabel}</span>
-          <h2 className="display-md !text-[1.45rem]">
-            {t.howToRead.formulaVersionTitle}
-          </h2>
-        </div>
+      <GuideDetails
+        label={t.howToRead.formulaVersionLabel}
+        title={t.howToRead.formulaVersionTitle}
+      >
         <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
           {t.howToRead.formulaVersionBody}
         </p>
-      </section>
+      </GuideDetails>
 
-      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.howToRead.vitalityLimitsLabel}</span>
-          <h2 className="display-md !text-[1.45rem]">
-            {t.howToRead.vitalityLimitsTitle}
-          </h2>
-        </div>
+      <GuideDetails
+        label={t.howToRead.vitalityLimitsLabel}
+        title={t.howToRead.vitalityLimitsTitle}
+      >
         <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
           {t.howToRead.vitalityLimitsBody}
         </p>
-      </section>
+      </GuideDetails>
 
-      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.howToRead.radarLabel}</span>
-          <h2 className="display-md !text-[1.45rem]">
-            {t.howToRead.radarTitle}
-          </h2>
-        </div>
+      <GuideDetails label={t.howToRead.radarLabel} title={t.howToRead.radarTitle}>
         <div className="grid gap-4">
           <p className="max-w-[68ch] text-[0.96rem] leading-relaxed text-fg-dim">
             {t.howToRead.radarBody}
@@ -109,7 +97,7 @@ export function HowToReadPage() {
             ))}
           </div>
         </div>
-      </section>
+      </GuideDetails>
 
       <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
         <div className="grid content-start gap-3">
@@ -125,13 +113,7 @@ export function HowToReadPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
-        <div className="grid content-start gap-3">
-          <span className="kicker">{t.howToRead.corpusLabel}</span>
-          <h2 className="display-md !text-[1.45rem]">
-            {t.howToRead.corpusTitle}
-          </h2>
-        </div>
+      <GuideDetails label={t.howToRead.corpusLabel} title={t.howToRead.corpusTitle}>
         <div className="grid gap-4">
           <p className="text-[0.96rem] leading-relaxed text-fg-dim">
             {t.howToRead.corpusBody}
@@ -148,7 +130,7 @@ export function HowToReadPage() {
             ))}
           </ul>
         </div>
-      </section>
+      </GuideDetails>
 
       <section className="grid gap-6 border-t border-line pt-8 md:grid-cols-[0.72fr_1.28fr]">
         <div className="grid content-start gap-3">
@@ -174,6 +156,34 @@ export function HowToReadPage() {
         </ol>
       </section>
     </article>
+  );
+}
+
+function GuideDetails({
+  label,
+  title,
+  children
+}: {
+  label: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group border-t border-line pt-6">
+      <summary className="grid cursor-pointer list-none gap-3 md:grid-cols-[0.72fr_1.28fr]">
+        <span className="kicker">{label}</span>
+        <span className="flex items-center justify-between gap-4">
+          <span className="display-md !text-[1.28rem]">{title}</span>
+          <span className="mono text-accent transition-transform group-open:rotate-45">
+            +
+          </span>
+        </span>
+      </summary>
+      <div className="grid gap-6 pt-5 md:grid-cols-[0.72fr_1.28fr]">
+        <span aria-hidden />
+        <div>{children}</div>
+      </div>
+    </details>
   );
 }
 
