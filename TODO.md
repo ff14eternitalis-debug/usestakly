@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-07** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien et monitoring externe Uptime Kuma sont en place sur `main`. Restent surtout : test de restore DB, page légale formelle, E2E complet et notifications de veilles d'intention.
+> **État au 2026-05-07** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien, test de restore DB et monitoring externe Uptime Kuma sont en place sur `main`. Restent surtout : stockage backup offsite/S3, page légale formelle, E2E complet et notifications de veilles d'intention.
 
 ---
 
@@ -37,8 +37,8 @@ Cap produit à venir : **UseStakly = source de vérité qualité + radar OSS ant
 - [x] Tool MCP haut niveau `recommend_github_repos`
 - [x] Tool MCP `watch_use_case`
 - [x] Doc exemples MCP : `docs/mcp-examples.md`
-- [ ] Page légale formelle (`/legal` ou `/terms`)
-- [ ] Domaine public stable et email de contact officiel
+- [x] Page légale courte (`/legal`)
+- [x] Domaine public stable et contact officiel affiché (`contact@usestakly.com`)
 
 ---
 
@@ -50,7 +50,8 @@ Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
   - Risque principal actuel : perte de données Postgres.
   - Livré 2026-05-06 : backup local Coolify activé sur `usestakly-postgres` (`z3xzjc0sy03kr6mpv8xvka7l`), cron `0 2 * * *`, DB `usestakly`, rétention locale 7 jours / 7 backups.
   - Vérifié via API Coolify `GET /api/v1/databases/z3xzjc0sy03kr6mpv8xvka7l/backups` : config `n12jqb2qn56mcmiqrwnjbh1z` active, exécution manuelle `success`.
-  - Reste à faire avant ouverture large : test de restore et stockage distant/offsite.
+  - Test de restore validé 2026-05-07 en local via Docker Desktop depuis `pg-dump-usestakly-1778119206.dmp` : tables critiques et migrations restaurées avec succès.
+  - Reste à faire avant ouverture large : stockage distant/offsite.
 
 - [x] **Ajouter une rate-limit applicative sur `/mcp`**
   - Couvrir `initialize`, `tools/list`, read tools et write tools.
@@ -220,10 +221,17 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 
 ### Phase R7 — Validation e2e
 
+- [ ] Smoke public final : landing → Lire UseStakly → Explorer → repo detail → Guide MCP → Privacy → Legal → Status, avec vérification responsive et console propre.
 - [ ] Flow user : login OAuth → search « date picker react » → voit résultats scorés → ouvre profil repo → clique Watch → (24 h plus tard en simu) reçoit notif de changement
 - [ ] Flow agent : MCP search → get_repo_quality_context → log_usage → signal propagé
 - [ ] Tests E2E Playwright sur les flows critiques
 - [x] Vérification sécu : audit mis à jour post-pivot dans `docs/security-audit-2026-04-21.md`
+
+### Phase R8 — Passe UX plus respirante
+
+- [ ] Réduire la densité des pages publiques après finalisation du hardening : plus d'espace, moins de blocs concurrents, texte plus court.
+- [ ] Prioriser les signaux coeur produit à l'écran : score, provenance, recommandation par besoin, radar, MCP.
+- [ ] Vérifier `/`, `/discover`, `/repos/$id`, `/how-to-read`, `/mcp-guide` en desktop et mobile.
 
 ---
 

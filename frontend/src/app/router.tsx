@@ -12,6 +12,7 @@ import { AccountPage } from "../routes/account";
 import { DiscoverPage } from "../routes/discover";
 import { HowToReadPage } from "../routes/how-to-read";
 import { LandingPage } from "../routes/index";
+import { LegalPage } from "../routes/legal";
 import { LoginPage } from "../routes/login";
 import { McpGuidePage } from "../routes/mcp-guide";
 import { NotificationsPage } from "../routes/notifications";
@@ -76,6 +77,12 @@ const privacyRoute = createRoute({
   component: PrivacyPage
 });
 
+const legalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/legal",
+  component: LegalPage
+});
+
 const statusRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/status",
@@ -121,6 +128,7 @@ const routeTree = rootRoute.addChildren([
   repoDetailRoute,
   loginRoute,
   privacyRoute,
+  legalRoute,
   statusRoute,
   watchlistRoute,
   notificationsRoute,

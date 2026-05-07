@@ -53,7 +53,10 @@ export const fr: Dict = {
     about: "À propos",
     mcp: "MCP",
     privacy: "Données",
+    legal: "Mentions légales",
     status: "Status",
+    contact: "Contact",
+    contactEmail: "contact@usestakly.com",
     freshness: "Fraîcheur",
     adoption: "Adoption",
     reliability: "Fiabilité",
@@ -159,6 +162,48 @@ export const fr: Dict = {
     ],
     closing:
       "Les métadonnées publiques viennent de GitHub. Le code source privé n'est pas ingéré par UseStakly."
+  },
+  legal: {
+    eyebrow: "Légal",
+    h1: "Mentions légales",
+    intro:
+      "UseStakly est une beta publique qui aide les développeurs et les agents de code à lire les signaux qualité de dépôts GitHub publics. Cette page garde les règles d'usage courtes et explicites.",
+    sections: [
+      {
+        title: "Service",
+        body:
+          "UseStakly fournit la découverte de dépôts, le scoring, la veille, les notifications et des outils MCP pour des dépôts GitHub publics. Les scores aident à décider, mais ne sont pas des garanties."
+      },
+      {
+        title: "Beta publique",
+        body:
+          "Le produit est fourni comme service beta. Les fonctionnalités, formules de scoring, couvertures de corpus et disponibilités peuvent évoluer pendant la maturation du service."
+      },
+      {
+        title: "Comptes et MCP",
+        body:
+          "La connexion OAuth sert à accéder au compte. Les tokens MCP sont des identifiants personnels pour agents et doivent rester privés. Ils peuvent être révoqués depuis la page Compte."
+      },
+      {
+        title: "Sources de données",
+        body:
+          "Les métadonnées des dépôts viennent des API publiques GitHub et des signaux d'usage UseStakly. UseStakly n'ingère pas de dépôts privés ni de code source privé."
+      },
+      {
+        title: "Licence",
+        body:
+          "Le coeur de la plateforme UseStakly est source-available sous BSL 1.1 et bascule vers Apache 2.0 à la date de changement. Le CLI npm MCP est distribué séparément sous MIT."
+      },
+      {
+        title: "Sans garantie",
+        body:
+          "UseStakly est fourni tel quel. Relis toujours une dépendance avant de l'utiliser en production, surtout pour des logiciels sensibles côté sécurité."
+      }
+    ],
+    contactTitle: "Contact officiel",
+    contactBody:
+      "Pour une question légale, privacy, sécurité ou produit, contacte",
+    contactEmail: "contact@usestakly.com"
   },
   status: {
     eyebrow: "Status",

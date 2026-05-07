@@ -25,7 +25,7 @@ Verified in the application:
 
 ## Priority 1: Schedule Coolify Database Backups
 
-Status: delivered 2026-05-06 for the local backup baseline.
+Status: delivered 2026-05-06 for the local backup baseline. Local restore test validated on 2026-05-07.
 
 Risk:
 
@@ -51,6 +51,35 @@ Current production configuration:
 - local retention: 7 days / 7 backups
 - S3/offsite backup: not configured yet
 - manual trigger on 2026-05-06: succeeded
+- local restore test on 2026-05-07: succeeded from `pg-dump-usestakly-1778119206.dmp`
+
+Restore validation:
+
+- restore target: temporary Docker container `usestakly-restore-test`
+- image: `pgvector/pgvector:pg16`
+- database: `usestakly_restore_test`
+- restore command: `pg_restore --verbose --clean --if-exists --no-acl --no-owner`
+- cleanup: temporary container removed after validation
+
+Validated restored data:
+
+| Table | Rows |
+| --- | ---: |
+| `users` | 3 |
+| `external_artifacts` | 55 |
+| `artifact_scores` | 97 |
+| `agent_tokens` | 9 |
+| `watched_artifacts` | 3 |
+| `notifications` | 0 |
+| `repo_categories` | 76 |
+| `repo_radar_snapshots` | 55 |
+
+Additional checks:
+
+- `_sqlx_migrations` restored through version `22`
+- active MCP tokens present: 2
+- GitHub corpus repos present: 55
+- sample scored repos restored with `formula_version = v2.0`
 
 CLI discovery:
 
@@ -70,8 +99,12 @@ Acceptance criteria:
 
 - scheduled backup configuration exists and is enabled. Done.
 - at least one manual backup execution succeeds. Done.
-- restore procedure is documented. Pending.
-- at least one restore is tested before wider public launch. Pending.
+- restore procedure is documented. Done.
+- at least one restore is tested before wider public launch. Done.
+
+Remaining risk:
+
+- Offsite/S3 backup storage is still not configured. Local Coolify retention protects against application-level mistakes, but not against full VPS or disk loss.
 
 ## Priority 2: Application Rate Limiting on `/mcp`
 

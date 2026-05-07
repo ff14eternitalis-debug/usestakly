@@ -33,7 +33,11 @@ export function SiteFooter() {
 
         <FooterCol title={t.footer.about}>
           <FooterLink to="/privacy">{t.footer.privacy}</FooterLink>
+          <FooterLink to="/legal">{t.footer.legal}</FooterLink>
           <FooterLink to="/status">{t.footer.status}</FooterLink>
+          <FooterExternal href={`mailto:${t.footer.contactEmail}`}>
+            {t.footer.contact}
+          </FooterExternal>
           <FooterMuted>{t.footer.selfHosted}</FooterMuted>
           <FooterMuted>{t.footer.publicFormula}</FooterMuted>
           <FooterMuted>{t.footer.localEmbeddings}</FooterMuted>
@@ -72,6 +76,7 @@ function FooterLink({
     | "/discover"
     | "/how-to-read"
     | "/privacy"
+    | "/legal"
     | "/status"
     | "/watchlist"
     | "/notifications"
@@ -86,6 +91,25 @@ function FooterLink({
       >
         {children}
       </Link>
+    </li>
+  );
+}
+
+function FooterExternal({
+  href,
+  children
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <li>
+      <a
+        href={href}
+        className="text-fg-dim hover:text-accent transition-colors"
+      >
+        {children}
+      </a>
     </li>
   );
 }

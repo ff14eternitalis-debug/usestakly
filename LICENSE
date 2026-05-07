@@ -7,7 +7,11 @@ Licensed Work: The UseStakly Platform, including but not limited to:
                - The Scoring Engine and Formulas (formula_v1.toml, formula_v2.toml)
                - The Backend API (Rust/Axum)
                - The Frontend Application (React)
-               - The MCP CLI (usestakly-mcp)
+               - The MCP Server and tools
+
+Excluded Work: The npm package in the `cli/` directory (`usestakly-mcp`) is
+               distributed separately under the MIT License declared in
+               `cli/package.json`.
 Additional Use Grant: 
     1. You may make non-commercial use of the Licensed Work. 
     2. You may use the Licensed Work for personal development, testing, and evaluation.

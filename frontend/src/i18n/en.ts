@@ -51,7 +51,10 @@ export const en = {
     about: "About",
     mcp: "MCP",
     privacy: "Privacy",
+    legal: "Legal",
     status: "Status",
+    contact: "Contact",
+    contactEmail: "contact@usestakly.com",
     freshness: "Freshness",
     adoption: "Adoption",
     reliability: "Reliability",
@@ -157,6 +160,47 @@ export const en = {
     ],
     closing:
       "Public repo metadata comes from GitHub. Private source code is not ingested by UseStakly."
+  },
+  legal: {
+    eyebrow: "Legal",
+    h1: "Legal information",
+    intro:
+      "UseStakly is a public beta that helps developers and coding agents read quality signals for public GitHub repositories. This page keeps the operating rules short and explicit.",
+    sections: [
+      {
+        title: "Service",
+        body:
+          "UseStakly provides repository discovery, scoring, watchlists, notifications, and MCP tools for public GitHub repositories. Scores are decision aids, not guarantees."
+      },
+      {
+        title: "Public beta",
+        body:
+          "The product is provided as a beta service. Features, scoring formulas, corpus coverage, and availability can change while the service matures."
+      },
+      {
+        title: "Accounts and MCP",
+        body:
+          "OAuth login is used for account access. MCP tokens are personal credentials for agents and must be kept private. Tokens can be revoked from the account page."
+      },
+      {
+        title: "Data sources",
+        body:
+          "Repository metadata comes from public GitHub APIs and UseStakly usage signals. UseStakly does not ingest private repositories or private source code."
+      },
+      {
+        title: "License",
+        body:
+          "The core UseStakly platform is source-available under BSL 1.1 and converts to Apache 2.0 on the change date. The npm MCP CLI is distributed separately under MIT."
+      },
+      {
+        title: "No warranty",
+        body:
+          "UseStakly is provided as-is. Always review a dependency yourself before using it in production, especially for security-sensitive software."
+      }
+    ],
+    contactTitle: "Official contact",
+    contactBody: "For legal, privacy, security, or product questions, contact",
+    contactEmail: "contact@usestakly.com"
   },
   status: {
     eyebrow: "Status",

@@ -15,14 +15,14 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 ### 1.1 Ops MCP / DB
 
 - [x] **Backup DB Coolify planifié** — livré 2026-05-06. Backup local quotidien sur `usestakly-postgres`, cron `0 2 * * *`, DB `usestakly`, rétention 7 jours / 7 backups, exécution manuelle `success`.
-- [ ] **Test de restore DB** — faire au moins une restauration contrôlée avant ouverture publique large. Le stockage offsite/S3 reste aussi à décider.
+- [x] **Test de restore DB** — validé 2026-05-07 en local via Docker Desktop depuis `pg-dump-usestakly-1778119206.dmp`. Tables critiques restaurées (`users`, `external_artifacts`, `artifact_scores`, `agent_tokens`, `watched_artifacts`, `notifications`, `repo_categories`, `repo_radar_snapshots`) et migrations jusqu'à `22`. Le stockage offsite/S3 reste à décider.
 - [x] **Rate-limit applicative globale `/mcp`** — livré 2026-05-06. Limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent le quota par token existant via `agent_token_events`.
 - [x] **Alerte externe** — livré 2026-05-07 avec Uptime Kuma : `UseStakly Website`, `UseStakly API Health`, `UseStakly Public Status`, `UseStakly MCP` authentifié avec token monitoring dédié.
 
 ### 1.2 Public beta gating
 
-- [ ] **Page légale `/legal` ou `/terms`** — aujourd'hui seul `/privacy` existe (`frontend/src/routes/privacy.tsx`).
-- [ ] **Email contact officiel** — domaine public stable livré (`https://www.usestakly.com` + `https://mcp.usestakly.com`). Reste à ajouter une adresse contact officielle sur landing/footer/privacy.
+- [x] **Page légale `/legal`** — livrée 2026-05-07 avec mentions beta, MCP, data sources, licence et absence de garantie.
+- [x] **Contact officiel affiché** — `contact@usestakly.com` ajouté dans le footer et la page légale. Reste à vérifier côté provider mail que l'adresse ou l'alias existe réellement.
 
 ---
 
@@ -117,6 +117,7 @@ Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positif
 
 ### 4.1 Phase R7 — E2E
 
+- [ ] Smoke public final avant annonce : page d'accueil → `/how-to-read` → `/discover` → recherche par besoin → repo detail → `/mcp-guide` → `/privacy` → `/legal` → `/status`, avec vérification responsive mobile/desktop et absence d'erreur console visible.
 - [ ] Flow user E2E complet sur stack live : login OAuth réel → search "date picker react" → ouvre profil repo → clique Watch → simule un changement de score → reçoit notif. Aujourd'hui `frontend/e2e/mvp.spec.ts` couvre des fixtures mockées (~80 lignes).
 - [ ] Flow agent MCP E2E : `search_github_repos` → `get_repo_quality_context` → `log_usage` → vérifier que le signal alimente bien `quality_signals` puis `artifact_scores`.
 - [ ] Étendre Playwright sur les flows critiques connectés (login OAuth, watch, notif).
@@ -131,6 +132,12 @@ Doc existante : `docs/audits/user-journey-audit-phase2-2026-04-24.md`. Reste à 
 - [ ] États vides connectés : watchlist vide, notifications vides, compte sans token.
 - [ ] Erreurs réelles côté UI : échec `POST /api/repos/add`, session expirée, refus auth.
 - [ ] Parcours onboarding connecté complet : login OAuth → discover → repo detail → watchlist → notifications → account/tokens.
+
+### 4.3 Passe UX plus respirante
+
+- [ ] Repasser sur les surfaces publiques (`/`, `/discover`, `/repos/$id`, `/how-to-read`, `/mcp-guide`) pour réduire la densité visuelle : moins de blocs explicatifs concurrents, plus d'espace vertical, hiérarchie de titres plus calme, CTA moins nombreux par écran.
+- [ ] Simplifier la découverte en gardant le coeur produit visible : score, provenance, besoin/recommandation, radar et MCP, sans transformer chaque écran en documentation.
+- [ ] Vérifier mobile et desktop : pas de texte trop serré, pas de formulaires qui dominent le premier écran, footer légal/contact lisible mais discret.
 - [ ] Passage mobile / responsive dédié si on veut assumer autre chose que desktop-first.
 
 ### 4.3 Doc

@@ -199,6 +199,6 @@ UseStakly is licensed under the **Business Source License 1.1** (BSL 1.1).
 - **Source Available**: The source code is public and transparent.
 - **Protection**: Production use for competing services, white-labeling, or user redirection is strictly prohibited until the Change Date.
 - **Future Open Source**: On **May 1st, 2030**, this version of the software will automatically convert to the **Apache License, Version 2.0**.
+- **MCP CLI**: The npm package in `cli/` (`usestakly-mcp`) is distributed separately under the **MIT License** to make agent installation easy.
 
 For full terms and conditions, please see the [LICENSE](./LICENSE) file.
-
