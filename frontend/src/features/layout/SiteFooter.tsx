@@ -4,7 +4,7 @@ import { Wordmark } from "../../components/Wordmark";
 import { useT } from "../../i18n";
 
 const footerLinkClass =
-  "group inline-flex w-fit items-center gap-2 border-l border-transparent pl-2 text-fg-dim transition-all duration-150 hover:-translate-y-px hover:border-accent hover:text-accent";
+  "link-underline text-[0.92rem] text-fg-dim hover:text-accent";
 
 export function SiteFooter() {
   const t = useT();
@@ -41,9 +41,6 @@ export function SiteFooter() {
           <FooterExternal href={`mailto:${t.footer.contactEmail}`}>
             {t.footer.contact}
           </FooterExternal>
-          <FooterMuted>{t.footer.selfHosted}</FooterMuted>
-          <FooterMuted>{t.footer.publicFormula}</FooterMuted>
-          <FooterMuted>{t.footer.localEmbeddings}</FooterMuted>
         </FooterCol>
       </div>
       <div className="shell flex items-center justify-between border-t border-line py-5 text-[0.78rem]">
@@ -89,9 +86,7 @@ function FooterLink({
   return (
     <li>
       <Link to={to} className={footerLinkClass}>
-        <span className="transition-transform duration-150 group-hover:translate-x-0.5">
-          {children}
-        </span>
+        {children}
       </Link>
     </li>
   );
@@ -107,9 +102,7 @@ function FooterExternal({
   return (
     <li>
       <a href={href} className={footerLinkClass}>
-        <span className="transition-transform duration-150 group-hover:translate-x-0.5">
-          {children}
-        </span>
+        {children}
       </a>
     </li>
   );
