@@ -82,6 +82,7 @@ APP_PORT=4000
 APP_BASE_URL=https://api.usestakly.com
 FRONTEND_BASE_URL=https://usestakly.com
 APP_SESSION_SECRET=
+APP_NOTIFICATION_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 DISCORD_CLIENT_ID=
@@ -95,6 +96,7 @@ L'app est auto-hébergée sur VPS via Coolify. L'auth est implémentée directem
 
 - OAuth GitHub + Discord callbacks servis par le backend
 - session persistée dans un cookie JWT signé avec `APP_SESSION_SECRET`
+- destinations de notification sensibles (ex: Discord webhook) chiffrées avec `APP_NOTIFICATION_SECRET`, séparé du secret de session
 - aucune dépendance à un SaaS d'auth (Supabase, Auth0, Clerk...) — pas de valeur ajoutée sur un VPS auto-hébergé
 
 ---

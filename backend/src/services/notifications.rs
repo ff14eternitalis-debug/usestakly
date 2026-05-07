@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     app::error::ApiError,
     domain::watchlist::{Notification, NotificationKind},
+    services::notification_channels,
 };
 
 const SCORE_DROP_THRESHOLD: f64 = 0.10;
@@ -48,6 +49,7 @@ pub async fn detect_and_emit(
     external_artifact_id: Uuid,
     prev: Option<&ScoreSnapshot>,
     new: &ScoreSnapshot,
+    notification_secret: Option<&str>,
 ) -> Result<usize, sqlx::Error> {
     let Some(prev) = prev else {
         return Ok(0);
@@ -124,10 +126,82 @@ pub async fn detect_and_emit(
             .execute(db)
             .await?;
             inserted += 1;
+
+            if let Some(secret) = notification_secret {
+                deliver_external_alert(db, *user_id, external_artifact_id, *kind, payload, secret)
+                    .await;
+            }
         }
     }
 
     Ok(inserted)
+}
+
+#[derive(FromRow)]
+struct ExternalAlertRow {
+    github_owner: Option<String>,
+    github_repo: Option<String>,
+    html_url: Option<String>,
+}
+
+async fn deliver_external_alert(
+    db: &PgPool,
+    user_id: Uuid,
+    external_artifact_id: Uuid,
+    kind: NotificationKind,
+    payload: &serde_json::Value,
+    secret: &str,
+) {
+    let row: Result<Option<ExternalAlertRow>, sqlx::Error> = sqlx::query_as(
+        r#"
+        SELECT github_owner, github_repo, html_url
+        FROM external_artifacts
+        WHERE id = $1
+        "#,
+    )
+    .bind(external_artifact_id)
+    .fetch_optional(db)
+    .await;
+
+    let Some(row) = (match row {
+        Ok(row) => row,
+        Err(err) => {
+            tracing::warn!(
+                user_id = %user_id,
+                artifact_id = %external_artifact_id,
+                error = ?err,
+                "failed to load repo for notification channel delivery"
+            );
+            return;
+        }
+    }) else {
+        return;
+    };
+
+    let repo_full_name = match (row.github_owner, row.github_repo) {
+        (Some(owner), Some(repo)) => format!("{owner}/{repo}"),
+        (_, Some(repo)) => repo,
+        _ => external_artifact_id.to_string(),
+    };
+
+    if let Err(err) = notification_channels::deliver_watch_alert(
+        db,
+        user_id,
+        secret,
+        &repo_full_name,
+        row.html_url.as_deref(),
+        kind,
+        payload,
+    )
+    .await
+    {
+        tracing::warn!(
+            user_id = %user_id,
+            artifact_id = %external_artifact_id,
+            error = ?err,
+            "failed to deliver external notification channel alert"
+        );
+    }
 }
 
 #[derive(FromRow)]

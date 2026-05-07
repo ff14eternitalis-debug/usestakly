@@ -4,6 +4,7 @@ pub mod agent_tokens;
 pub mod auth;
 pub mod health;
 pub mod me;
+pub mod notification_channels;
 pub mod notifications;
 pub mod repos;
 pub mod search;

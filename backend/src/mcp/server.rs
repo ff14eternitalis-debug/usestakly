@@ -2022,6 +2022,7 @@ mod tests {
             app_base_url: app_base_url.to_string(),
             frontend_base_url: frontend_base_url.to_string(),
             app_session_secret: None,
+            app_notification_secret: None,
             github_client_id: None,
             github_client_secret: None,
             discord_client_id: None,

@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../lib/api-client";
 import { getMcpMetrics, getPendingRepoSignals, reviewPendingRepoSignal } from "../lib/api/admin";
 import {
   createAgentToken,
+  deleteNotificationChannel,
   getAccountSummary,
   getAgentTokens,
-  revokeAgentToken
+  getNotificationChannels,
+  revokeAgentToken,
+  testNotificationChannel,
+  upsertNotificationChannel
 } from "../lib/api/account";
 import { useT } from "../i18n";
 import type { AgentTokenCreated, McpMetricsWindow } from "../lib/types";
@@ -16,6 +20,7 @@ import { AccountIdentityCard } from "../features/account/components/AccountIdent
 import { AdminMcpObservabilityPanel } from "../features/account/components/AdminMcpObservabilityPanel";
 import { AdminModerationPanel } from "../features/account/components/AdminModerationPanel";
 import { AgentTokensPanel } from "../features/account/components/AgentTokensPanel";
+import { NotificationChannelsPanel } from "../features/account/components/NotificationChannelsPanel";
 import { ReputationCard } from "../features/account/components/ReputationCard";
 
 export function AccountPage() {
@@ -27,6 +32,12 @@ export function AccountPage() {
   const [copied, setCopied] = useState(false);
   const [adminToken, setAdminToken] = useState("");
   const [mcpWindow, setMcpWindow] = useState<McpMetricsWindow>("7d");
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [notificationWebhookUrl, setNotificationWebhookUrl] = useState("");
+  const [emailCritical, setEmailCritical] = useState(true);
+  const [emailDigest, setEmailDigest] = useState(false);
+  const [webhookCritical, setWebhookCritical] = useState(true);
+  const [channelMessage, setChannelMessage] = useState<string | null>(null);
 
   const summary = useQuery({
     queryKey: ["account-summary"],
@@ -36,6 +47,11 @@ export function AccountPage() {
   const tokens = useQuery({
     queryKey: ["agent-tokens"],
     queryFn: ({ signal }) => getAgentTokens(signal)
+  });
+
+  const notificationChannels = useQuery({
+    queryKey: ["notification-channels"],
+    queryFn: ({ signal }) => getNotificationChannels(signal)
   });
 
   const pendingSignals = useQuery({
@@ -71,6 +87,53 @@ export function AccountPage() {
     }
   });
 
+  const saveEmailChannel = useMutation({
+    mutationFn: () =>
+      upsertNotificationChannel({
+        channelType: "email",
+        email: notificationEmail.trim(),
+        label: "Email",
+        criticalAlertsEnabled: emailCritical,
+        dailyDigestEnabled: emailDigest
+      }),
+    onSuccess: async () => {
+      setChannelMessage(t.account.channelSaved);
+      await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
+    }
+  });
+
+  const saveWebhookChannel = useMutation({
+    mutationFn: () =>
+      upsertNotificationChannel({
+        channelType: "discord_webhook",
+        webhookUrl: notificationWebhookUrl.trim(),
+        label: "Discord",
+        criticalAlertsEnabled: webhookCritical,
+        dailyDigestEnabled: false
+      }),
+    onSuccess: async () => {
+      setNotificationWebhookUrl("");
+      setChannelMessage(t.account.channelSaved);
+      await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
+    }
+  });
+
+  const deleteChannel = useMutation({
+    mutationFn: (id: string) => deleteNotificationChannel(id),
+    onSuccess: async () => {
+      setChannelMessage(t.account.channelDeleted);
+      await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
+    }
+  });
+
+  const testChannel = useMutation({
+    mutationFn: (id: string) => testNotificationChannel(id),
+    onSuccess: async () => {
+      setChannelMessage(t.account.channelTestSent);
+      await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
+    }
+  });
+
   const reviewSignal = useMutation({
     mutationFn: ({ id, action }: { id: string; action: "approve" | "reject" }) =>
       reviewPendingRepoSignal(id, action, adminToken),
@@ -85,6 +148,26 @@ export function AccountPage() {
       : revokeToken.error instanceof ApiError
         ? revokeToken.error.message
         : null;
+  const channelError =
+    saveEmailChannel.error instanceof ApiError
+      ? saveEmailChannel.error.message
+      : saveWebhookChannel.error instanceof ApiError
+        ? saveWebhookChannel.error.message
+        : deleteChannel.error instanceof ApiError
+          ? deleteChannel.error.message
+          : testChannel.error instanceof ApiError
+            ? testChannel.error.message
+            : null;
+
+  useEffect(() => {
+    const emailChannel = notificationChannels.data?.find(
+      (channel) => channel.channelType === "email"
+    );
+    if (!emailChannel) return;
+    setNotificationEmail((current) => current || emailChannel.destination);
+    setEmailCritical(emailChannel.criticalAlertsEnabled);
+    setEmailDigest(emailChannel.dailyDigestEnabled);
+  }, [notificationChannels.data]);
 
   async function copyToken(): Promise<void> {
     if (!created?.token) return;
@@ -162,6 +245,31 @@ export function AccountPage() {
           notEligibleLabel={t.account.notEligible}
         />
       </div>
+
+      <NotificationChannelsPanel
+        loading={notificationChannels.isLoading}
+        channels={notificationChannels.data ?? []}
+        email={notificationEmail}
+        webhookUrl={notificationWebhookUrl}
+        emailCritical={emailCritical}
+        emailDigest={emailDigest}
+        webhookCritical={webhookCritical}
+        savingEmail={saveEmailChannel.isPending}
+        savingWebhook={saveWebhookChannel.isPending}
+        deleting={deleteChannel.isPending}
+        testingId={testChannel.isPending ? testChannel.variables ?? null : null}
+        message={channelMessage}
+        error={channelError}
+        onEmailChange={setNotificationEmail}
+        onWebhookUrlChange={setNotificationWebhookUrl}
+        onEmailCriticalChange={setEmailCritical}
+        onEmailDigestChange={setEmailDigest}
+        onWebhookCriticalChange={setWebhookCritical}
+        onSaveEmail={() => saveEmailChannel.mutate()}
+        onSaveWebhook={() => saveWebhookChannel.mutate()}
+        onDelete={(id) => deleteChannel.mutate(id)}
+        onTest={(id) => testChannel.mutate(id)}
+      />
 
       <AdminModerationPanel
         adminToken={adminToken}

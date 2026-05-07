@@ -15,6 +15,7 @@ pub struct AppConfig {
     pub app_base_url: String,
     pub frontend_base_url: String,
     pub app_session_secret: Option<String>,
+    pub app_notification_secret: Option<String>,
     pub github_client_id: Option<String>,
     pub github_client_secret: Option<String>,
     pub discord_client_id: Option<String>,
@@ -64,6 +65,9 @@ impl AppConfig {
         let frontend_base_url =
             env::var("FRONTEND_BASE_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
         let app_session_secret = env::var("APP_SESSION_SECRET").ok();
+        let app_notification_secret = env::var("APP_NOTIFICATION_SECRET")
+            .ok()
+            .filter(|value| !value.trim().is_empty());
         let github_client_id = env::var("GITHUB_CLIENT_ID").ok();
         let github_client_secret = env::var("GITHUB_CLIENT_SECRET").ok();
         let discord_client_id = env::var("DISCORD_CLIENT_ID").ok();
@@ -164,6 +168,7 @@ impl AppConfig {
             app_base_url,
             frontend_base_url,
             app_session_secret,
+            app_notification_secret,
             github_client_id,
             github_client_secret,
             discord_client_id,
@@ -200,6 +205,10 @@ impl AppConfig {
         self.github_auth_enabled() || self.discord_auth_enabled()
     }
 
+    pub fn notification_secret(&self) -> Option<&str> {
+        self.app_notification_secret.as_deref()
+    }
+
     pub fn github_callback_url(&self) -> String {
         format!(
             "{}/api/auth/github/callback",
@@ -216,5 +225,47 @@ impl AppConfig {
 
     pub fn session_cookie_secure(&self) -> bool {
         self.app_base_url.starts_with("https://")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn notification_secret_prefers_dedicated_secret_over_session_secret() {
+        let config = AppConfig {
+            host: "127.0.0.1".to_string(),
+            port: 4000,
+            database_url: "postgres://localhost/test".to_string(),
+            dev_user_id: Uuid::nil(),
+            dev_user_email: "dev@example.com".to_string(),
+            dev_user_username: "dev".to_string(),
+            dev_user_display_name: None,
+            dev_user_avatar_url: None,
+            app_base_url: "http://127.0.0.1:4000".to_string(),
+            frontend_base_url: "http://localhost:5173".to_string(),
+            app_session_secret: Some("session-secret".to_string()),
+            app_notification_secret: Some("notification-secret".to_string()),
+            github_client_id: None,
+            github_client_secret: None,
+            discord_client_id: None,
+            discord_client_secret: None,
+            admin_api_token: None,
+            github_token: None,
+            scheduler_enabled: false,
+            recompute_interval_secs: 86_400,
+            mcp_auth_failure_limit_per_minute: 30,
+            mcp_read_limit_per_minute: 120,
+            mcp_write_limit_per_hour: 60,
+            mcp_log_usage_cooldown_secs: 900,
+            mcp_negative_signal_window_hours: 24,
+            active_signal_min_reputation: 0.45,
+            active_signal_default_consensus: 2,
+            active_signal_severe_consensus: 3,
+            semantic_search_enabled: false,
+        };
+
+        assert_eq!(config.notification_secret(), Some("notification-secret"));
     }
 }

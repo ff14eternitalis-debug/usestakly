@@ -23,8 +23,8 @@ use crate::{
     app::mcp_rate_limit::{McpRateLimitKey, McpRateLimiter},
     config::AppConfig,
     handlers::{
-        account, admin, agent_tokens, auth, health, me, notifications, repos, search, use_cases,
-        watchlist,
+        account, admin, agent_tokens, auth, health, me, notification_channels, notifications,
+        repos, search, use_cases, watchlist,
     },
     mcp::server as mcp_server,
     services::agent_tokens as agent_token_service,
@@ -73,6 +73,19 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/auth/logout", post(auth::logout))
         .route("/api/me", get(me::me))
         .route("/api/account/summary", get(account::account_summary))
+        .route(
+            "/api/account/notification-channels",
+            get(notification_channels::list_notification_channels)
+                .post(notification_channels::upsert_notification_channel),
+        )
+        .route(
+            "/api/account/notification-channels/{channel_id}",
+            axum::routing::delete(notification_channels::delete_notification_channel),
+        )
+        .route(
+            "/api/account/notification-channels/{channel_id}/test",
+            post(notification_channels::test_notification_channel),
+        )
         .route(
             "/api/admin/scoring/recompute",
             post(admin::recompute_scores),

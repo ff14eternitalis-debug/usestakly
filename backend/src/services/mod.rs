@@ -1,5 +1,6 @@
 pub mod agent_tokens;
 pub mod ingestion;
+pub mod notification_channels;
 pub mod notifications;
 pub mod quality;
 pub mod radar;

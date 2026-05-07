@@ -198,6 +198,21 @@ export type AgentTokenCreated = AgentTokenSummary & {
   token: string;
 };
 
+export type NotificationChannelType = "email" | "discord_webhook";
+
+export type NotificationChannelSummary = {
+  id: string;
+  channelType: NotificationChannelType;
+  label: string;
+  destination: string;
+  enabled: boolean;
+  criticalAlertsEnabled: boolean;
+  dailyDigestEnabled: boolean;
+  lastTestedAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+};
+
 export type UserReputationSummary = {
   userId: string;
   score: number;

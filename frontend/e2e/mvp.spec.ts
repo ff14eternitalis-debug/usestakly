@@ -16,11 +16,38 @@ const quality = {
   freshness: 0.91,
   adoption: 0.74,
   reliability: 0.82,
+  vitality: 0.69,
   abandonment: 0.11,
   overall: 0.84,
+  resolveCount: 7,
+  buildSuccessCount: 4,
+  buildFailureCount: 0,
+  regretCount: 0,
   flags: [],
   formulaVersion: "v1.1",
   computedAt: "2026-04-24T08:00:00Z"
+};
+
+const categories = [
+  {
+    category: "date-picker",
+    confidence: 0.86,
+    source: "github_metadata",
+    evidence: {
+      topics: ["datepicker", "timezone"],
+      words: ["date picker", "timezone"]
+    }
+  }
+];
+
+const radar = {
+  maturityBand: "established",
+  radarRelevance: 0.64,
+  trendSignal: 0.28,
+  explanation: {
+    matched: ["recent_commit", "healthy_score"],
+    note: "Stable repo with fresh metadata and low abandonment."
+  }
 };
 
 const repo = {
@@ -38,7 +65,9 @@ const repo = {
   openIssuesCount: 8,
   archived: false,
   lastCommitAt: "2026-04-20T12:00:00Z",
-  quality
+  quality,
+  categories,
+  radar
 };
 
 const repoProfile = {
@@ -46,6 +75,14 @@ const repoProfile = {
   subscribersCount: 94,
   defaultBranch: "main",
   priorsFetchedAt: "2026-04-24T08:00:00Z",
+  vitalityInputs: {
+    structuralSignalsAt: "2026-04-24T08:00:00Z",
+    distinctContributors90d: 8,
+    commits30d: 18,
+    hasCi: true,
+    releasesCount: 12,
+    lastReleaseAt: "2026-04-15T08:00:00Z"
+  },
   recentSignals: [
     {
       id: "44444444-4444-4444-8444-444444444444",
@@ -123,9 +160,79 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
       await route.fulfill(
         json({
           filter: url.searchParams.get("filter") ?? "explore",
+          sort: url.searchParams.get("sort") ?? "score",
+          limit: Number(url.searchParams.get("limit") ?? "20"),
+          offset: Number(url.searchParams.get("offset") ?? "0"),
+          count: 1,
+          hasMore: false,
           items: [repo]
         })
       );
+      return;
+    }
+
+    if (path === "/api/use-cases/recommend" && method === "POST") {
+      await route.fulfill(
+        json({
+          query: "date picker",
+          riskTolerance: "medium",
+          intent: {
+            label: "Date picker",
+            confidence: "high",
+            categories: ["date-picker"],
+            topics: ["react", "datepicker", "timezone"],
+            languages: ["TypeScript"]
+          },
+          recommendations: [
+            {
+              ...repo,
+              matchScore: 0.93,
+              recommendationScore: 0.88,
+              risk: "low",
+              reason:
+                "Matches the date picker need with TypeScript, React and timezone topics while keeping a strong UseStakly score.",
+              matchedTopics: ["react", "datepicker", "timezone"]
+            }
+          ],
+          fallbackCandidates: []
+        })
+      );
+      return;
+    }
+
+    if (path === "/api/use-cases/watch" && method === "POST") {
+      await route.fulfill(
+        json({
+          watchId: "66666666-6666-4666-8666-666666666666",
+          watch: {
+            id: "66666666-6666-4666-8666-666666666666",
+            queryText: "date picker",
+            label: "Date picker",
+            normalizedIntent: "date-picker",
+            categories: ["date-picker"],
+            topics: ["react", "datepicker", "timezone"],
+            languages: ["TypeScript"],
+            riskTolerance: "medium",
+            enabled: true,
+            matchCount: 1,
+            topMatches: [
+              {
+                artifactId: repoId,
+                fullName: repo.fullName,
+                language: repo.language,
+                matchScore: 0.93,
+                qualityScore: quality.overall
+              }
+            ],
+            createdAt: "2026-04-24T09:15:00Z"
+          }
+        })
+      );
+      return;
+    }
+
+    if (path === "/api/use-cases/watch" && method === "GET") {
+      await route.fulfill(json([]));
       return;
     }
 
@@ -157,7 +264,9 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
     }
 
     if (path === "/api/notifications") {
-      await route.fulfill(json([notification(notificationRead)]));
+      const unreadOnly = url.searchParams.get("unread") === "true";
+      const items = unreadOnly && notificationRead ? [] : [notification(notificationRead)];
+      await route.fulfill(json(items));
       return;
     }
 
@@ -226,10 +335,12 @@ test("anonymous users can browse discovery but protected routes redirect to logi
   await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
 
   await page.goto("/discover");
-  await page.getByRole("searchbox").fill("date picker react timezone");
-  await expect(page.getByRole("heading", { name: /timezone-picker/i })).toBeVisible();
+  await page.getByLabel(/tool or need/i).fill("date picker react timezone");
+  await page.getByRole("button", { name: /^recommend$/i }).click();
+  await expect(page.getByRole("link", { name: /react-dates\/timezone-picker/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /sign in to watch this need/i })).toBeVisible();
 
-  await page.getByRole("heading", { name: /timezone-picker/i }).click();
+  await page.getByRole("link", { name: /react-dates\/timezone-picker/i }).click();
   await expect(page).toHaveURL(new RegExp(`/repos/${repoId}$`));
   await expect(page.getByRole("heading", { name: "timezone-picker" })).toBeVisible();
   await expect(page.getByRole("link", { name: /sign in to watch this repo/i })).toBeVisible();
@@ -239,10 +350,13 @@ test("authenticated MVP flow covers discovery, repo profile, watchlist, and noti
   await mockUseStaklyApi(page, { authenticated: true });
 
   await page.goto("/discover");
-  await page.getByRole("searchbox").fill("date picker react timezone");
-  await expect(page.getByText("Accessible React date picker")).toBeVisible();
+  await page.getByLabel(/tool or need/i).fill("date picker react timezone");
+  await page.getByRole("button", { name: /^recommend$/i }).click();
+  await expect(page.getByText(/matches the date picker need/i)).toBeVisible();
+  await page.getByRole("button", { name: /create watch/i }).click();
+  await expect(page.getByText(/need watch created/i)).toBeVisible();
 
-  await page.getByRole("heading", { name: /timezone-picker/i }).click();
+  await page.getByRole("link", { name: /react-dates\/timezone-picker/i }).click();
   await expect(page.getByRole("heading", { name: "timezone-picker" })).toBeVisible();
   await expect(page.getByText("Recent signals")).toBeVisible();
 
@@ -300,4 +414,16 @@ test("clicking an unread notification opens the repo and marks it read", async (
 
   await page.getByLabel(/unread only/i).check();
   await expect(page.getByText("score drop")).toBeHidden();
+});
+
+test("advanced explorer still supports filtered repo search", async ({ page }) => {
+  await mockUseStaklyApi(page, { authenticated: false });
+
+  await page.goto("/discover");
+  await page.getByRole("button", { name: /advanced explorer/i }).click();
+  await page.getByRole("searchbox").fill("date picker react timezone");
+
+  await expect(page.getByRole("heading", { name: /timezone-picker/i })).toBeVisible();
+  await expect(page.getByText("Accessible React date picker")).toBeVisible();
+  await expect(page.getByText("date-picker")).toBeVisible();
 });

@@ -1,7 +1,7 @@
 # UseStakly — Secrets Rotation Playbook
 
-> Version: 1.0  
-> Dernière mise à jour: 2026-04-18
+> Version: 1.1  
+> Dernière mise à jour: 2026-05-08
 
 ## Objectif
 
@@ -54,7 +54,19 @@ Pourquoi:
 - ce secret signe les sessions backend
 - il doit être long, aléatoire, unique, et connu uniquement du propriétaire
 
-### 3. GitHub OAuth
+### 3. Chiffrement notifications
+
+À créer ou remplacer:
+
+- `APP_NOTIFICATION_SECRET`
+
+Pourquoi:
+
+- ce secret chiffre les destinations sensibles des canaux de notification, comme les webhooks Discord
+- il doit être différent de `APP_SESSION_SECRET`
+- sa rotation rend les webhooks existants indéchiffrables : les utilisateurs devront les renseigner à nouveau
+
+### 4. GitHub OAuth
 
 À créer au moment de brancher le vrai login:
 
@@ -66,7 +78,7 @@ Pourquoi:
 - ce sont les credentials du futur login GitHub
 - ils ne doivent jamais être saisis dans une conversation
 
-### 4. Token d'administration Coolify
+### 5. Token d'administration Coolify
 
 À faire tourner si tu veux repartir d'une base totalement saine:
 
@@ -87,6 +99,7 @@ Variables minimales à contrôler:
 
 - `DATABASE_URL`
 - `APP_SESSION_SECRET`
+- `APP_NOTIFICATION_SECRET`
 - `APP_BASE_URL`
 - `FRONTEND_BASE_URL`
 - `GITHUB_CLIENT_ID`
@@ -323,4 +336,3 @@ La cible saine pour UseStakly est:
 - [ ] Définir `GITHUB_CLIENT_SECRET`
 - [ ] Redéployer le backend
 - [ ] Régénérer le token API Coolify si souhaité
-

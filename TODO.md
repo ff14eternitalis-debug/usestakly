@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-07** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien, test de restore DB et monitoring externe Uptime Kuma sont en place sur `main`. Restent surtout : stockage backup offsite/S3, page légale formelle, E2E complet et notifications de veilles d'intention.
+> **État au 2026-05-08** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien, test de restore DB, monitoring externe Uptime Kuma et canaux de notification configurables sont en place. Restent surtout : stockage backup offsite/S3, E2E complet, provider email d'envoi et notifications de veilles d'intention.
 
 ---
 
@@ -143,10 +143,11 @@ Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 - [x] Détection de changement significatif : diff score T vs T-1 dans `services::notifications` (`fetch_prev_snapshot` + seuils)
 - [x] Règles d'alerte défaut : abandonment +0.20, nouveau flag `security-issue` / `broken`, score `overall` qui chute de ≥ 0.10
 - [x] Canal notification v1 : **in-app** (endpoints `/api/notifications`, route frontend `notifications.tsx`)
+- [x] Canaux sortants v1 : préférences `/account`, email de destination enregistré, Discord webhook chiffré en base via `APP_NOTIFICATION_SECRET`, test webhook et livraison des alertes critiques repo watchlist.
 - [x] Worker scheduler autonome : `services::scheduler::spawn_recompute_loop` — tokio::spawn + interval, opt-in via `APP_SCHEDULER_ENABLED`, cadence via `APP_RECOMPUTE_INTERVAL_SECS` (default 24 h). Refresh des repos watchés + repos GitHub dont les priors ont plus de 24 h via `ingest_repo`, puis `recompute_all_scores` (qui émet les notifs). Pas de run au boot.
 - [ ] **Reste à faire** : règle « maintainer silencieux 90 j » (dépend de `owner_inactive_days` côté R1)
 - [ ] **Reste à faire** : règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
-- [ ] **Reste à faire** : canal v2 email + webhook pour devs avancés
+- [ ] **Reste à faire** : provider d'envoi email transactionnel pour activer les alertes email réelles.
 - [ ] **Reste à faire** : digest email hebdomadaire pour les watchers actifs
 
 ### Phase R4 — Signaux actifs / flags toxiques (cœur produit)
@@ -211,6 +212,7 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [x] **Nouveau** : centre de notifications in-app (`routes/notifications.tsx`)
 - [x] Composant i18n EN/FR livré (`LocaleSwitch`, `locale-store`)
 - [x] Page compte v1 utile — tokens MCP, réputation user, file de modération admin légère
+- [x] Page compte : canaux de notification configurables (email + Discord webhook, avec test webhook).
 - [ ] **Reste à faire** : page compte plus complète — historique contributions, règles d'alerte perso, settings plus riches
 - [x] UI v1 de modération légère : file pending/disputed dans `/account`, review admin, dispute owner, timeline locale sur le profil repo
 - [x] TanStack Query câblé via `frontend/src/app/providers.tsx` et utilisé sur les routes actives
@@ -270,7 +272,7 @@ Reste à couvrir dans un second audit, connecté cette fois :
 ## Décisions encore ouvertes
 
 - [ ] **R1** — critère de corpus initial : top N / sur demande / via watchlist uniquement ?
-- [ ] **R3** — canal notification v1 : in-app suffit, ou email obligatoire dès le MVP ?
+- [x] **R3** — canal notification v1 : in-app + Discord webhook configurable ; email enregistré mais envoi réel dépend encore d'un provider transactionnel.
 - [ ] **R5** — token agent : JWT dédié généré par l'user, ou OAuth device flow ?
 - [x] **R6** — router frontend : TanStack Router retenu pour l'app active
 - [ ] **R6** — faut-il garder les vues libraries/snippets cachées (réactivables) ou les dégommer net ?

@@ -1,7 +1,7 @@
 # Architecture backend actuelle
 
-> Version : 1.2
-> Dernière mise à jour : 2026-05-06
+> Version : 1.3
+> Dernière mise à jour : 2026-05-08
 > Portée : backend vivant de **UseStakly** (public beta exposable)
 
 ## Vue d'ensemble
@@ -9,7 +9,7 @@
 Le backend UseStakly est une API Rust/Axum centrée sur cinq capacités produit :
 
 - découverte de repos GitHub publics scorés (lexical + sémantique optionnel + qualité)
-- watchlist + notifications in-app
+- watchlist + notifications in-app + canaux sortants configurables
 - signaux qualité modérés (consensus, réputation, review, dispute)
 - exposition MCP Streamable HTTP pour agents IA (6 tools, auth Bearer)
 - observabilité MCP et statut public pour la beta
@@ -37,7 +37,7 @@ Lecture d'env (`.env` chargé via `dotenvy`). Couvre DB, dev user, OAuth GitHub/
 
 OAuth direct **GitHub + Discord**. Session JWT signée stockée dans le cookie `usestakly_session`. Le `state` OAuth est signé et porte un `return_to` sanitizé contre les open redirects (livré 2026-04-24).
 
-Quand `APP_SESSION_SECRET` ou les couples OAuth sont absents, retombe sur un dev user injecté via `DEV_USER_*` (overridable par headers `x-debug-user-*`). **Supabase Auth n'est ni utilisé ni prévu** — l'app est auto-hébergée sur VPS via Coolify.
+Quand `APP_SESSION_SECRET` ou les couples OAuth sont absents, retombe sur un dev user injecté via `DEV_USER_*` (overridable par headers `x-debug-user-*`). `APP_NOTIFICATION_SECRET` chiffre les destinations sensibles des canaux de notification, séparément du secret de session. **Supabase Auth n'est ni utilisé ni prévu** — l'app est auto-hébergée sur VPS via Coolify.
 
 ### `handlers/`
 
@@ -54,7 +54,7 @@ Responsabilité : I/O HTTP seulement.
 - `repos_ingestion` — `POST /api/repos/add`
 - `repo_signals` — création de signaux et dispute owner
 - `repo_viewer` — état viewer-spécifique d'un repo
-- `watchlist`, `notifications`
+- `watchlist`, `notifications`, `notification_channels`
 
 ### `services/`
 
@@ -62,7 +62,7 @@ Responsabilité : logique métier.
 
 - `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
 - `repos.rs` — agrégation profils repo, réponses discovery, score provenance
-- `watchlist.rs`, `notifications.rs`
+- `watchlist.rs`, `notifications.rs`, `notification_channels.rs`
 - `scheduler.rs` — boucle opt-in `tokio::spawn` refresh quotidien des priors GitHub stale (> 24 h) + repos watchés, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation
@@ -146,6 +146,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 | 0015 | `quality_signal_review` (workflow admin) | actif |
 | 0016 | `quality_signal_events` (timeline) | actif |
 | 0017 | `repo_embeddings` (pgvector, optionnel) | actif si feature `semantic-search` |
+| 0023 | `notification_channels` (email destination + Discord webhook chiffré) | actif |
 
 ## Flux principaux
 
@@ -165,7 +166,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 4. calcul des dimensions (`compute_score`)
 5. résolution flags publics (`flags::resolve`) par consensus + réputation
 6. upsert `artifact_scores` avec snapshot précédent
-7. diff seuils → émission de notifications watchers
+7. diff seuils → émission de notifications watchers in-app + livraison Discord webhook si configurée
 
 ### Signal actif modéré
 

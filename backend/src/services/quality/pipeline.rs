@@ -259,8 +259,15 @@ async fn recompute_externals_with_config(
             abandonment: score.abandonment,
             flags: metrics.flags.clone(),
         };
-        if let Err(e) =
-            notifications::detect_and_emit(db, external.id, prev.as_ref(), &new_snapshot).await
+        let notification_secret = config.and_then(AppConfig::notification_secret);
+        if let Err(e) = notifications::detect_and_emit(
+            db,
+            external.id,
+            prev.as_ref(),
+            &new_snapshot,
+            notification_secret,
+        )
+        .await
         {
             tracing::warn!(artifact_id = %external.id, error = ?e, "failed to emit notifications");
         }

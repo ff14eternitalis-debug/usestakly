@@ -1,6 +1,6 @@
 # UseStakly — Parcours utilisateur
 
-> Version : 2.0 — 2026-04-26
+> Version : 2.1 — 2026-05-08
 > Vue à jour des flows réels du produit. La version pré-pivot (snippets, packs, registry perso) est archivée sous `docs/archive/snippets/user-journey-prepivot.md`.
 
 ## Personas
@@ -30,10 +30,11 @@
 4. User retombe sur la page d'origine (pas la landing)
 5. Sur `/repos/$id` connecté → bouton "Watch" — ajout immédiat à la watchlist
 6. `/watchlist` — liste des repos watchés, mute, remove avec confirmation explicite
-7. Si le score d'un watché bouge significativement (abandonment +0.20, score overall ↓ ≥0.10, nouveau flag `security_issue`/`broken`) → notification in-app
-8. `/notifications` — centre de notifs, mark-read on click vers le repo, retry sur erreur 401/network
+7. `/account` — configure les canaux optionnels : email de destination, Discord webhook chiffré, test webhook
+8. Si le score d'un watché bouge significativement (abandonment +0.20, score overall ↓ ≥0.10, nouveau flag `security_issue`/`broken`) → notification in-app + alerte Discord si le canal est activé
+9. `/notifications` — centre de notifs, mark-read on click vers le repo, retry sur erreur 401/network
 
-**État d'audit** : phase 2 (connecté) en cours, corrections principales livrées (return_to signé, confirm remove, error states queries, mark-read on click).
+**État d'audit** : phase 2 (connecté) en cours, corrections principales livrées (return_to signé, confirm remove, error states queries, mark-read on click, canaux sortants configurables).
 
 ## Flow 3 — Agent IA via MCP
 
