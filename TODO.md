@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-06** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP et backup DB Coolify quotidien sont en place sur `main`. Restent surtout : alerting externe, test de restore DB, page légale formelle, E2E complet et notifications de veilles d'intention.
+> **État au 2026-05-07** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien et monitoring externe Uptime Kuma sont en place sur `main`. Restent surtout : test de restore DB, page légale formelle, E2E complet et notifications de veilles d'intention.
 
 ---
 
@@ -62,12 +62,12 @@ Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
   - Garder la validation DB token dans chaque tool.
   - Ajouter un middleware pré-transport MCP pour refuser missing/invalid Bearer.
 
-- [ ] **Ajouter une alerte externe**
+- [x] **Ajouter une alerte externe**
   - Checks recommandés :
     - `GET /health`
     - `GET /api/status/public`
     - test MCP contrôlé avec token dédié monitoring
-  - Services possibles : UptimeRobot, Better Stack, Grafana Cloud ou équivalent.
+  - Livré 2026-05-07 avec Uptime Kuma : `UseStakly Website`, `UseStakly API Health`, `UseStakly Public Status`, `UseStakly MCP` authentifié avec token dédié monitoring.
 
 ---
 

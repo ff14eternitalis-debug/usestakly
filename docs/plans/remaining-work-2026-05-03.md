@@ -17,7 +17,7 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 - [x] **Backup DB Coolify planifié** — livré 2026-05-06. Backup local quotidien sur `usestakly-postgres`, cron `0 2 * * *`, DB `usestakly`, rétention 7 jours / 7 backups, exécution manuelle `success`.
 - [ ] **Test de restore DB** — faire au moins une restauration contrôlée avant ouverture publique large. Le stockage offsite/S3 reste aussi à décider.
 - [x] **Rate-limit applicative globale `/mcp`** — livré 2026-05-06. Limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent le quota par token existant via `agent_token_events`.
-- [ ] **Alerte externe** (UptimeRobot / Better Stack / Grafana Cloud) sur `GET /health`, `GET /api/status/public`, et un test MCP contrôlé avec token monitoring dédié.
+- [x] **Alerte externe** — livré 2026-05-07 avec Uptime Kuma : `UseStakly Website`, `UseStakly API Health`, `UseStakly Public Status`, `UseStakly MCP` authentifié avec token monitoring dédié.
 
 ### 1.2 Public beta gating
 
@@ -104,6 +104,16 @@ Reste côté MCP : valider un smoke réel avec token prod après déploiement, p
 ---
 
 ## Priorité 4 — Validation & dette doc
+
+### 4.0 Follow-up Herald 2026-05-06 — vrais signaux à garder
+
+Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positifs ou de règles de style notées trop sévèrement. Les signaux suivants sont néanmoins réels et doivent rester dans la dette de finition. Ils ne bloquent pas le monitoring externe ni la public beta prudente, mais ils structurent un chantier de maintenabilité.
+
+- [ ] **Refactor maintenabilité des gros fichiers/fonctions** : prioriser `frontend/src/routes/discover.tsx`, `frontend/src/features/repos/components/UseCaseSearchPanel.tsx`, `backend/src/mcp/server.rs`, `backend/src/services/repos.rs`. Objectif : extraire sous-composants/services sans changer le comportement.
+- [ ] **Boucles DB potentiellement N+1** : auditer puis batcher si nécessaire `services/use_case_watches.rs`, `services/notifications.rs`, `services/repo_categories.rs`. Priorité moyenne : chemins surtout write/backfill, pas hot path public critique.
+- [ ] **Tests ciblés sur zones complexes** : compléter autour des flows MCP metrics/admin, recommandations/use-case watches, ingestion GitHub parsing, et composants frontend complexes.
+- [ ] **Docs archives pré-pivot** : réparer ou annoter les liens cassés dans `docs/archive/snippets/**` pour éviter du bruit dans les audits automatiques.
+- [ ] **Dette UI/React à vérifier au fil de l'eau** : garder un oeil sur les listes `.map()` et les composants très conditionnels. Plusieurs alertes `missing key` Herald sont fausses, mais la règle reste utile pendant les refactors.
 
 ### 4.1 Phase R7 — E2E
 

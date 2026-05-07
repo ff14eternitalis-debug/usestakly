@@ -21,6 +21,7 @@ Verified in the application:
 - MCP write tools have quota and cooldown guards
 - `/mcp` has in-process rate limits for invalid auth by IP and valid traffic by token
 - public status endpoint exists at `/api/status/public`
+- external Uptime Kuma monitors are configured for website, health, public status, and authenticated MCP initialize
 
 ## Priority 1: Schedule Coolify Database Backups
 
@@ -138,6 +139,8 @@ Acceptance criteria:
 
 ## Priority 4: Add External Uptime Alerting
 
+Status: delivered 2026-05-07 with Uptime Kuma.
+
 Risk:
 
 Coolify health checks show local container health, but they do not notify users by default and do not fully simulate public traffic.
@@ -149,19 +152,38 @@ Use an external monitor such as UptimeRobot, Better Stack, Grafana Cloud, or ano
 Recommended checks:
 
 ```text
-GET https://<backend>/health
-GET https://<backend>/api/status/public
-POST https://<backend>/mcp
+GET https://www.usestakly.com
+GET https://mcp.usestakly.com/health
+GET https://mcp.usestakly.com/api/status/public
+POST https://mcp.usestakly.com/mcp
 ```
 
 For the MCP check, use a controlled token and a lightweight protected call. Do not use a personal agent token. Create a dedicated monitoring token and revoke it if the monitor is replaced.
 
+Current Uptime Kuma monitors:
+
+- `UseStakly Website`
+- `UseStakly API Health`
+- `UseStakly Public Status`
+- `UseStakly MCP`
+
+The MCP monitor sends an authenticated `initialize` JSON-RPC request with:
+
+```json
+{
+  "Accept": "application/json, text/event-stream",
+  "Content-Type": "application/json",
+  "MCP-Protocol-Version": "2025-06-18",
+  "Authorization": "Bearer <dedicated-monitoring-token>"
+}
+```
+
 Acceptance criteria:
 
-- external alert fires when backend is unreachable
-- external alert fires when `/api/status/public` is degraded
-- MCP monitor validates that authenticated protected tool calls work
-- alert destination is configured, for example email, Discord, Slack, or webhook
+- external alert fires when backend is unreachable. Done.
+- external alert fires when `/api/status/public` is degraded. Done.
+- MCP monitor validates that authenticated protected MCP initialize works. Done.
+- alert destination is configured, for example email, Discord, Slack, or webhook. Done via existing Uptime Kuma notification channel.
 
 ## Recommended Order
 
@@ -169,7 +191,7 @@ Acceptance criteria:
    - Local baseline done.
 2. Add `/mcp` global Authorization enforcement. Done.
 3. Add `/mcp` read/protocol rate limiting. Done.
-4. Add external uptime alerting.
+4. Add external uptime alerting. Done.
 5. Document and test restore and incident steps.
 
 ## Notes
