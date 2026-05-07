@@ -3,6 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { Wordmark } from "../../components/Wordmark";
 import { useT } from "../../i18n";
 
+const footerLinkClass =
+  "group inline-flex w-fit items-center gap-2 border-l border-transparent pl-2 text-fg-dim transition-all duration-150 hover:-translate-y-px hover:border-accent hover:text-accent";
+
 export function SiteFooter() {
   const t = useT();
   const year = new Date().getFullYear();
@@ -85,11 +88,10 @@ function FooterLink({
 }) {
   return (
     <li>
-      <Link
-        to={to}
-        className="text-fg-dim hover:text-accent transition-colors"
-      >
-        {children}
+      <Link to={to} className={footerLinkClass}>
+        <span className="transition-transform duration-150 group-hover:translate-x-0.5">
+          {children}
+        </span>
       </Link>
     </li>
   );
@@ -104,11 +106,10 @@ function FooterExternal({
 }) {
   return (
     <li>
-      <a
-        href={href}
-        className="text-fg-dim hover:text-accent transition-colors"
-      >
-        {children}
+      <a href={href} className={footerLinkClass}>
+        <span className="transition-transform duration-150 group-hover:translate-x-0.5">
+          {children}
+        </span>
       </a>
     </li>
   );
