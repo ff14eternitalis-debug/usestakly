@@ -9,12 +9,14 @@ import {
   getAccountSummary,
   getAgentTokens,
   getNotificationChannels,
+  getNotificationPreferences,
   revokeAgentToken,
   testNotificationChannel,
+  updateNotificationPreferences,
   upsertNotificationChannel
 } from "../lib/api/account";
 import { useT } from "../i18n";
-import type { AgentTokenCreated, McpMetricsWindow } from "../lib/types";
+import type { AgentTokenCreated, DigestTimePreset, McpMetricsWindow } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
 import { AccountIdentityCard } from "../features/account/components/AccountIdentityCard";
 import { AdminMcpObservabilityPanel } from "../features/account/components/AdminMcpObservabilityPanel";
@@ -37,6 +39,11 @@ export function AccountPage() {
   const [emailCritical, setEmailCritical] = useState(true);
   const [emailDigest, setEmailDigest] = useState(false);
   const [webhookCritical, setWebhookCritical] = useState(true);
+  const [webhookDigest, setWebhookDigest] = useState(false);
+  const [digestTimePreset, setDigestTimePreset] = useState<DigestTimePreset>("morning");
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+  );
   const [channelMessage, setChannelMessage] = useState<string | null>(null);
 
   const summary = useQuery({
@@ -52,6 +59,11 @@ export function AccountPage() {
   const notificationChannels = useQuery({
     queryKey: ["notification-channels"],
     queryFn: ({ signal }) => getNotificationChannels(signal)
+  });
+
+  const notificationPreferences = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: ({ signal }) => getNotificationPreferences(signal)
   });
 
   const pendingSignals = useQuery({
@@ -109,7 +121,7 @@ export function AccountPage() {
         webhookUrl: notificationWebhookUrl.trim(),
         label: "Discord",
         criticalAlertsEnabled: webhookCritical,
-        dailyDigestEnabled: false
+        dailyDigestEnabled: webhookDigest
       }),
     onSuccess: async () => {
       setNotificationWebhookUrl("");
@@ -131,6 +143,18 @@ export function AccountPage() {
     onSuccess: async () => {
       setChannelMessage(t.account.channelTestSent);
       await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
+    }
+  });
+
+  const saveNotificationPreferences = useMutation({
+    mutationFn: () =>
+      updateNotificationPreferences({
+        digestTimePreset,
+        timezone
+      }),
+    onSuccess: async () => {
+      setChannelMessage(t.account.notificationPreferencesSaved);
+      await queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
     }
   });
 
@@ -157,7 +181,9 @@ export function AccountPage() {
           ? deleteChannel.error.message
           : testChannel.error instanceof ApiError
             ? testChannel.error.message
-            : null;
+            : saveNotificationPreferences.error instanceof ApiError
+              ? saveNotificationPreferences.error.message
+              : null;
 
   useEffect(() => {
     const emailChannel = notificationChannels.data?.find(
@@ -168,6 +194,21 @@ export function AccountPage() {
     setEmailCritical(emailChannel.criticalAlertsEnabled);
     setEmailDigest(emailChannel.dailyDigestEnabled);
   }, [notificationChannels.data]);
+
+  useEffect(() => {
+    const webhookChannel = notificationChannels.data?.find(
+      (channel) => channel.channelType === "discord_webhook"
+    );
+    if (!webhookChannel) return;
+    setWebhookCritical(webhookChannel.criticalAlertsEnabled);
+    setWebhookDigest(webhookChannel.dailyDigestEnabled);
+  }, [notificationChannels.data]);
+
+  useEffect(() => {
+    if (!notificationPreferences.data) return;
+    setDigestTimePreset(notificationPreferences.data.digestTimePreset);
+    setTimezone(notificationPreferences.data.timezone);
+  }, [notificationPreferences.data]);
 
   async function copyToken(): Promise<void> {
     if (!created?.token) return;
@@ -254,8 +295,12 @@ export function AccountPage() {
         emailCritical={emailCritical}
         emailDigest={emailDigest}
         webhookCritical={webhookCritical}
+        webhookDigest={webhookDigest}
+        digestTimePreset={digestTimePreset}
+        timezone={timezone}
         savingEmail={saveEmailChannel.isPending}
         savingWebhook={saveWebhookChannel.isPending}
+        savingPreferences={saveNotificationPreferences.isPending}
         deleting={deleteChannel.isPending}
         testingId={testChannel.isPending ? testChannel.variables ?? null : null}
         message={channelMessage}
@@ -265,8 +310,12 @@ export function AccountPage() {
         onEmailCriticalChange={setEmailCritical}
         onEmailDigestChange={setEmailDigest}
         onWebhookCriticalChange={setWebhookCritical}
+        onWebhookDigestChange={setWebhookDigest}
+        onDigestTimePresetChange={setDigestTimePreset}
+        onTimezoneChange={setTimezone}
         onSaveEmail={() => saveEmailChannel.mutate()}
         onSaveWebhook={() => saveWebhookChannel.mutate()}
+        onSavePreferences={() => saveNotificationPreferences.mutate()}
         onDelete={(id) => deleteChannel.mutate(id)}
         onTest={(id) => testChannel.mutate(id)}
       />

@@ -74,6 +74,11 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/me", get(me::me))
         .route("/api/account/summary", get(account::account_summary))
         .route(
+            "/api/account/notification-preferences",
+            get(account::get_notification_preferences)
+                .put(account::update_notification_preferences),
+        )
+        .route(
             "/api/account/notification-channels",
             get(notification_channels::list_notification_channels)
                 .post(notification_channels::upsert_notification_channel),

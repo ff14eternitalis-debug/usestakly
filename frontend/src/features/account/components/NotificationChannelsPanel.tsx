@@ -1,7 +1,7 @@
 import { Button } from "../../../components/Button";
 import { useT } from "../../../i18n";
 import { formatRelative } from "../../../lib/format";
-import type { NotificationChannelSummary } from "../../../lib/types";
+import type { DigestTimePreset, NotificationChannelSummary } from "../../../lib/types";
 
 type NotificationChannelsPanelProps = {
   loading: boolean;
@@ -11,8 +11,12 @@ type NotificationChannelsPanelProps = {
   emailCritical: boolean;
   emailDigest: boolean;
   webhookCritical: boolean;
+  webhookDigest: boolean;
+  digestTimePreset: DigestTimePreset;
+  timezone: string;
   savingEmail: boolean;
   savingWebhook: boolean;
+  savingPreferences: boolean;
   deleting: boolean;
   testingId: string | null;
   message: string | null;
@@ -22,8 +26,12 @@ type NotificationChannelsPanelProps = {
   onEmailCriticalChange(value: boolean): void;
   onEmailDigestChange(value: boolean): void;
   onWebhookCriticalChange(value: boolean): void;
+  onWebhookDigestChange(value: boolean): void;
+  onDigestTimePresetChange(value: DigestTimePreset): void;
+  onTimezoneChange(value: string): void;
   onSaveEmail(): void;
   onSaveWebhook(): void;
+  onSavePreferences(): void;
   onDelete(id: string): void;
   onTest(id: string): void;
 };
@@ -36,8 +44,12 @@ export function NotificationChannelsPanel({
   emailCritical,
   emailDigest,
   webhookCritical,
+  webhookDigest,
+  digestTimePreset,
+  timezone,
   savingEmail,
   savingWebhook,
+  savingPreferences,
   deleting,
   testingId,
   message,
@@ -47,8 +59,12 @@ export function NotificationChannelsPanel({
   onEmailCriticalChange,
   onEmailDigestChange,
   onWebhookCriticalChange,
+  onWebhookDigestChange,
+  onDigestTimePresetChange,
+  onTimezoneChange,
   onSaveEmail,
   onSaveWebhook,
+  onSavePreferences,
   onDelete,
   onTest
 }: NotificationChannelsPanelProps) {
@@ -161,6 +177,15 @@ export function NotificationChannelsPanel({
               />
               {t.account.criticalAlerts}
             </label>
+            <label className="inline-flex items-center gap-2 text-[0.86rem] text-fg-dim">
+              <input
+                type="checkbox"
+                checked={webhookDigest}
+                onChange={(event) => onWebhookDigestChange(event.target.checked)}
+                className="size-4 accent-[var(--color-accent)]"
+              />
+              {t.account.dailyDigest}
+            </label>
             {webhookChannel ? (
               <ChannelMeta
                 channel={webhookChannel}
@@ -175,13 +200,50 @@ export function NotificationChannelsPanel({
               type="button"
               variant="outline"
               onClick={onSaveWebhook}
-              disabled={savingWebhook || !webhookUrl.trim()}
+              disabled={savingWebhook || (!webhookUrl.trim() && !webhookChannel)}
             >
               {savingWebhook ? t.account.savingChannel : t.account.saveWebhookChannel}
             </Button>
           </div>
         </div>
       )}
+
+      <div className="grid gap-4 rounded-[8px] border border-line bg-bg-subtle p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <label className="grid gap-1.5">
+          <span className="kicker">{t.account.digestTimeLabel}</span>
+          <select
+            className="input"
+            value={digestTimePreset}
+            onChange={(event) =>
+              onDigestTimePresetChange(event.target.value as DigestTimePreset)
+            }
+          >
+            <option value="morning">{t.account.digestMorning}</option>
+            <option value="noon">{t.account.digestNoon}</option>
+            <option value="evening">{t.account.digestEvening}</option>
+            <option value="night">{t.account.digestNight}</option>
+          </select>
+        </label>
+        <label className="grid gap-1.5">
+          <span className="kicker">{t.account.timezoneLabel}</span>
+          <input
+            className="input"
+            value={timezone}
+            onChange={(event) => onTimezoneChange(event.target.value)}
+            placeholder="Europe/Paris"
+          />
+        </label>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onSavePreferences}
+          disabled={savingPreferences || !timezone.trim()}
+        >
+          {savingPreferences
+            ? t.account.savingChannel
+            : t.account.saveNotificationPreferences}
+        </Button>
+      </div>
 
       {message ? <p className="text-[0.86rem] text-accent">{message}</p> : null}
       {error ? (

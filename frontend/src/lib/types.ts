@@ -213,6 +213,14 @@ export type NotificationChannelSummary = {
   createdAt: string;
 };
 
+export type DigestTimePreset = "morning" | "noon" | "evening" | "night";
+
+export type NotificationPreferences = {
+  digestTimePreset: DigestTimePreset;
+  digestTimeLocal: string;
+  timezone: string;
+};
+
 export type UserReputationSummary = {
   userId: string;
   score: number;

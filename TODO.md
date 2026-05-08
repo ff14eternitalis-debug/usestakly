@@ -6,7 +6,7 @@
 > Référence : `docs/strategy-pivot-2026-04-21.md` (scope) et `docs/strategy-quality-scored-registry.md` (moat et principes, toujours valides).
 > Business model : voir `docs/business/business-model-exploration.md` (privé, gitignore).
 >
-> **État au 2026-05-08** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien, test de restore DB, monitoring externe Uptime Kuma et canaux de notification configurables sont en place. Restent surtout : stockage backup offsite/S3, E2E complet, provider email d'envoi et notifications de veilles d'intention.
+> **État au 2026-05-08** : MVP public beta exposable. Discovery, repo detail, watchlist, notifications, OAuth, MCP read/write/recommend/watch-use-case, CLI npm, status public, privacy/data, guide de lecture, guide MCP, rate-limit MCP, backup DB Coolify quotidien, test de restore DB, monitoring externe Uptime Kuma, canaux de notification configurables et digest Discord quotidien sont en place. Restent surtout : stockage backup offsite/S3, E2E complet, provider email d'envoi et notifications de veilles d'intention.
 
 ---
 
@@ -144,11 +144,12 @@ Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 - [x] Règles d'alerte défaut : abandonment +0.20, nouveau flag `security-issue` / `broken`, score `overall` qui chute de ≥ 0.10
 - [x] Canal notification v1 : **in-app** (endpoints `/api/notifications`, route frontend `notifications.tsx`)
 - [x] Canaux sortants v1 : préférences `/account`, email de destination enregistré, Discord webhook chiffré en base via `APP_NOTIFICATION_SECRET`, test webhook et livraison des alertes critiques repo watchlist.
+- [x] Résumé quotidien Discord : choix horaire utilisateur (`morning/noon/evening/night`), timezone IANA, scheduler 30 min, anti-doublon par canal/jour, pas d'envoi si rien d'important.
 - [x] Worker scheduler autonome : `services::scheduler::spawn_recompute_loop` — tokio::spawn + interval, opt-in via `APP_SCHEDULER_ENABLED`, cadence via `APP_RECOMPUTE_INTERVAL_SECS` (default 24 h). Refresh des repos watchés + repos GitHub dont les priors ont plus de 24 h via `ingest_repo`, puis `recompute_all_scores` (qui émet les notifs). Pas de run au boot.
 - [ ] **Reste à faire** : règle « maintainer silencieux 90 j » (dépend de `owner_inactive_days` côté R1)
 - [ ] **Reste à faire** : règles d'alerte custom par user (seuils ajustables, mute, digest weekly)
 - [ ] **Reste à faire** : provider d'envoi email transactionnel pour activer les alertes email réelles.
-- [ ] **Reste à faire** : digest email hebdomadaire pour les watchers actifs
+- [ ] **Reste à faire** : digest email pour les watchers actifs via provider transactionnel.
 
 ### Phase R4 — Signaux actifs / flags toxiques (cœur produit)
 

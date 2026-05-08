@@ -87,6 +87,12 @@ struct ChannelSecretRow {
 }
 
 #[derive(FromRow)]
+struct ExistingChannelSecretRow {
+    destination: String,
+    secret_ciphertext: Option<String>,
+}
+
+#[derive(FromRow)]
 struct DeliveryChannelRow {
     id: Uuid,
     secret_ciphertext: Option<String>,
@@ -163,15 +169,20 @@ pub async fn upsert(
             (email, None)
         }
         NotificationChannelType::DiscordWebhook => {
-            let url = input
+            if let Some(url) = input
                 .webhook_url
                 .as_deref()
-                .ok_or_else(|| ApiError::bad_request("webhookUrl is required"))?;
-            let url = validate_discord_webhook_url(url)?;
-            let masked = mask_discord_webhook_url(&url);
-            let encrypted = encrypt_webhook_url(secret, &url)
-                .map_err(|_| ApiError::internal("failed to encrypt webhook URL"))?;
-            (masked, Some(encrypted))
+                .filter(|value| !value.trim().is_empty())
+            {
+                let url = validate_discord_webhook_url(url)?;
+                let masked = mask_discord_webhook_url(&url);
+                let encrypted = encrypt_webhook_url(secret, &url)
+                    .map_err(|_| ApiError::internal("failed to encrypt webhook URL"))?;
+                (masked, Some(encrypted))
+            } else {
+                let existing = existing_channel_secret(db, user_id, "discord_webhook").await?;
+                (existing.destination, existing.secret_ciphertext)
+            }
         }
     };
 
@@ -209,6 +220,25 @@ pub async fn upsert(
     .await?;
 
     row.try_into()
+}
+
+async fn existing_channel_secret(
+    db: &PgPool,
+    user_id: Uuid,
+    channel_type: &str,
+) -> Result<ExistingChannelSecretRow, ApiError> {
+    sqlx::query_as(
+        r#"
+        SELECT destination, secret_ciphertext
+        FROM notification_channels
+        WHERE user_id = $1 AND channel_type = $2
+        "#,
+    )
+    .bind(user_id)
+    .bind(channel_type)
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(|| ApiError::bad_request("webhookUrl is required"))
 }
 
 pub async fn delete(db: &PgPool, user_id: Uuid, channel_id: Uuid) -> Result<(), ApiError> {

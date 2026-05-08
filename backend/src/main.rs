@@ -27,9 +27,15 @@ async fn main() -> anyhow::Result<()> {
     if config.scheduler_enabled {
         let interval = Duration::from_secs(config.recompute_interval_secs);
         services::scheduler::spawn_recompute_loop(db.clone(), config.clone(), interval);
+        let digest_interval = Duration::from_secs(config.digest_interval_secs);
+        services::scheduler::spawn_digest_loop(db.clone(), config.clone(), digest_interval);
         info!(
             interval_secs = config.recompute_interval_secs,
             "scheduler: recompute loop spawned"
+        );
+        info!(
+            interval_secs = config.digest_interval_secs,
+            "scheduler: digest loop spawned"
         );
     } else {
         info!("scheduler: disabled (set APP_SCHEDULER_ENABLED=true to enable)");

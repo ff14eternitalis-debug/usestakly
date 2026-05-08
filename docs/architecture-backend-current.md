@@ -9,7 +9,7 @@
 Le backend UseStakly est une API Rust/Axum centrée sur cinq capacités produit :
 
 - découverte de repos GitHub publics scorés (lexical + sémantique optionnel + qualité)
-- watchlist + notifications in-app + canaux sortants configurables
+- watchlist + notifications in-app + canaux sortants configurables + digest Discord quotidien
 - signaux qualité modérés (consensus, réputation, review, dispute)
 - exposition MCP Streamable HTTP pour agents IA (6 tools, auth Bearer)
 - observabilité MCP et statut public pour la beta
@@ -62,7 +62,7 @@ Responsabilité : logique métier.
 
 - `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
 - `repos.rs` — agrégation profils repo, réponses discovery, score provenance
-- `watchlist.rs`, `notifications.rs`, `notification_channels.rs`
+- `watchlist.rs`, `notifications.rs`, `notification_channels.rs`, `notification_digest.rs`
 - `scheduler.rs` — boucle opt-in `tokio::spawn` refresh quotidien des priors GitHub stale (> 24 h) + repos watchés, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation
@@ -147,6 +147,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 | 0016 | `quality_signal_events` (timeline) | actif |
 | 0017 | `repo_embeddings` (pgvector, optionnel) | actif si feature `semantic-search` |
 | 0023 | `notification_channels` (email destination + Discord webhook chiffré) | actif |
+| 0024 | `digest_time_local`, `timezone`, `notification_digest_deliveries` | actif |
 
 ## Flux principaux
 
@@ -167,6 +168,14 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 5. résolution flags publics (`flags::resolve`) par consensus + réputation
 6. upsert `artifact_scores` avec snapshot précédent
 7. diff seuils → émission de notifications watchers in-app + livraison Discord webhook si configurée
+
+### Digest quotidien
+
+1. l'utilisateur choisit un créneau simple dans `/account` (`morning`, `noon`, `evening`, `night`) et son fuseau IANA
+2. le scheduler digest tourne par défaut toutes les 30 minutes (`APP_DIGEST_INTERVAL_SECS`)
+3. il sélectionne les canaux `daily_digest_enabled = TRUE`, dont l'heure locale tombe dans la fenêtre courante
+4. `notification_digest_deliveries` garantit un seul digest par canal et par date locale
+5. aucun message n'est envoyé si aucune alerte repo ou candidat radar important n'existe sur les dernières 24 h
 
 ### Signal actif modéré
 

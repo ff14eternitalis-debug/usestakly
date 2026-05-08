@@ -99,6 +99,18 @@ export function apiPatch<T>(
   });
 }
 
+export function apiPut<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal
+): Promise<T> {
+  return request<T>(path, {
+    method: "PUT",
+    body: JSON.stringify(body),
+    signal
+  });
+}
+
 export function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
   return request<T>(path, {
     method: "DELETE",

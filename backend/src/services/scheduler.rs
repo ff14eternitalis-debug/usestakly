@@ -9,6 +9,7 @@ use crate::{
     config::AppConfig,
     services::{
         ingestion::github::{build_client, ingest_repo},
+        notification_digest,
         quality::recompute_all_scores,
     },
 };
@@ -22,6 +23,17 @@ pub fn spawn_recompute_loop(db: PgPool, config: AppConfig, interval: Duration) {
         loop {
             ticker.tick().await;
             run_cycle(&db, &config).await;
+        }
+    });
+}
+
+pub fn spawn_digest_loop(db: PgPool, config: AppConfig, interval: Duration) {
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(interval);
+        ticker.tick().await;
+        loop {
+            ticker.tick().await;
+            run_digest_cycle(&db, &config).await;
         }
     });
 }
@@ -40,6 +52,21 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
             "scheduler: cycle done"
         ),
         Err(e) => tracing::error!(error = ?e, "scheduler: recompute failed"),
+    }
+}
+
+async fn run_digest_cycle(db: &PgPool, config: &AppConfig) {
+    let window_minutes = i64::try_from(config.digest_interval_secs / 60).unwrap_or(30);
+    match notification_digest::run_due_digests(
+        db,
+        config.notification_secret(),
+        chrono::Utc::now(),
+        window_minutes,
+    )
+    .await
+    {
+        Ok(delivered) => tracing::info!(delivered, "scheduler: digest cycle done"),
+        Err(e) => tracing::warn!(error = ?e, "scheduler: digest cycle failed"),
     }
 }
 
@@ -154,6 +181,14 @@ mod tests {
     #[test]
     fn corpus_refresh_stale_after_is_24_hours() {
         assert_eq!(corpus_refresh_stale_after().as_secs(), 86_400);
+    }
+
+    #[test]
+    fn digest_scheduler_window_uses_interval_minutes() {
+        assert_eq!(
+            i64::try_from(Duration::from_secs(1_800).as_secs() / 60).unwrap(),
+            30
+        );
     }
 
     #[test]

@@ -24,6 +24,7 @@ pub struct AppConfig {
     pub github_token: Option<String>,
     pub scheduler_enabled: bool,
     pub recompute_interval_secs: u64,
+    pub digest_interval_secs: u64,
     pub mcp_auth_failure_limit_per_minute: usize,
     pub mcp_read_limit_per_minute: usize,
     pub mcp_write_limit_per_hour: u32,
@@ -86,6 +87,15 @@ impl AppConfig {
         if recompute_interval_secs < 60 {
             return Err(anyhow!(
                 "APP_RECOMPUTE_INTERVAL_SECS must be >= 60 (got {recompute_interval_secs})"
+            ));
+        }
+        let digest_interval_secs = env::var("APP_DIGEST_INTERVAL_SECS")
+            .unwrap_or_else(|_| "1800".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_DIGEST_INTERVAL_SECS must be a valid u64"))?;
+        if digest_interval_secs < 60 {
+            return Err(anyhow!(
+                "APP_DIGEST_INTERVAL_SECS must be >= 60 (got {digest_interval_secs})"
             ));
         }
         let mcp_auth_failure_limit_per_minute = env::var("APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE")
@@ -177,6 +187,7 @@ impl AppConfig {
             github_token,
             scheduler_enabled,
             recompute_interval_secs,
+            digest_interval_secs,
             mcp_auth_failure_limit_per_minute,
             mcp_read_limit_per_minute,
             mcp_write_limit_per_hour,
@@ -255,6 +266,7 @@ mod tests {
             github_token: None,
             scheduler_enabled: false,
             recompute_interval_secs: 86_400,
+            digest_interval_secs: 1_800,
             mcp_auth_failure_limit_per_minute: 30,
             mcp_read_limit_per_minute: 120,
             mcp_write_limit_per_hour: 60,

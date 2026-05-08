@@ -87,6 +87,9 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
+APP_SCHEDULER_ENABLED=true
+APP_RECOMPUTE_INTERVAL_SECS=86400
+APP_DIGEST_INTERVAL_SECS=1800
 RUST_LOG=info
 ```
 
@@ -97,6 +100,7 @@ L'app est auto-hébergée sur VPS via Coolify. L'auth est implémentée directem
 - OAuth GitHub + Discord callbacks servis par le backend
 - session persistée dans un cookie JWT signé avec `APP_SESSION_SECRET`
 - destinations de notification sensibles (ex: Discord webhook) chiffrées avec `APP_NOTIFICATION_SECRET`, séparé du secret de session
+- scheduler opt-in : refresh GitHub quotidien via `APP_RECOMPUTE_INTERVAL_SECS`, digest Discord vérifié toutes les 30 min via `APP_DIGEST_INTERVAL_SECS`
 - aucune dépendance à un SaaS d'auth (Supabase, Auth0, Clerk...) — pas de valeur ajoutée sur un VPS auto-hébergé
 
 ---

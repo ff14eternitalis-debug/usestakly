@@ -1,9 +1,11 @@
-import { apiDelete, apiGet, apiPost } from "../api-client";
+import { apiDelete, apiGet, apiPost, apiPut } from "../api-client";
 import type {
   AccountSummary,
   AgentTokenCreated,
   AgentTokenSummary,
+  DigestTimePreset,
   NotificationChannelSummary,
+  NotificationPreferences,
   NotificationChannelType
 } from "../types";
 
@@ -54,5 +56,24 @@ export function deleteNotificationChannel(id: string): Promise<void> {
 export function testNotificationChannel(id: string): Promise<{ ok: boolean }> {
   return apiPost<{ ok: boolean }>(
     `/api/account/notification-channels/${id}/test`
+  );
+}
+
+export function getNotificationPreferences(
+  signal?: AbortSignal
+): Promise<NotificationPreferences> {
+  return apiGet<NotificationPreferences>(
+    "/api/account/notification-preferences",
+    signal
+  );
+}
+
+export function updateNotificationPreferences(body: {
+  digestTimePreset: DigestTimePreset;
+  timezone: string;
+}): Promise<NotificationPreferences> {
+  return apiPut<NotificationPreferences>(
+    "/api/account/notification-preferences",
+    body
   );
 }

@@ -4,7 +4,10 @@ use crate::{
     app::{AppState, error::ApiError},
     auth::resolve_current_user,
     domain::account::AccountSummary,
-    services::trust::reputation,
+    services::{
+        account_preferences::{self, NotificationPreferences, UpdateNotificationPreferences},
+        trust::reputation,
+    },
 };
 
 pub async fn account_summary(
@@ -20,4 +23,23 @@ pub async fn account_summary(
         active_signal_default_consensus: state.config.active_signal_default_consensus,
         active_signal_severe_consensus: state.config.active_signal_severe_consensus,
     }))
+}
+
+pub async fn get_notification_preferences(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<NotificationPreferences>, ApiError> {
+    let user = resolve_current_user(&state.db, &state.config, &headers).await?;
+    let preferences = account_preferences::get(&state.db, user.id).await?;
+    Ok(Json(preferences))
+}
+
+pub async fn update_notification_preferences(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<UpdateNotificationPreferences>,
+) -> Result<Json<NotificationPreferences>, ApiError> {
+    let user = resolve_current_user(&state.db, &state.config, &headers).await?;
+    let preferences = account_preferences::update(&state.db, user.id, req).await?;
+    Ok(Json(preferences))
 }
