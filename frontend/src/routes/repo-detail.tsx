@@ -1,5 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../lib/api-client";
@@ -19,10 +19,12 @@ import { RepoHeader } from "../features/repos/components/RepoHeader";
 import { RepoMetricsPanel } from "../features/repos/components/RepoMetricsPanel";
 import { RepoSignalsList } from "../features/repos/components/RepoSignalsList";
 import { ReportSignalForm } from "../features/repos/components/ReportSignalForm";
+import { useSeoOverride } from "../seo/seo-context";
 
 export function RepoDetailPage() {
   const t = useT();
   const { id } = useParams({ from: "/repos/$id" });
+  const { setOverride } = useSeoOverride();
   const isAuthed = useAuthStore((s) => s.status === "authenticated");
   const queryClient = useQueryClient();
   const [signal, setSignal] = useState("deprecated");
@@ -34,6 +36,23 @@ export function RepoDetailPage() {
     queryKey: ["repo", id],
     queryFn: ({ signal }) => getRepoProfile(id, signal)
   });
+
+  useEffect(() => {
+    setOverride(null);
+  }, [id, setOverride]);
+
+  useEffect(() => {
+    const data = profile.data;
+    if (!data || data.artifactId !== id) return;
+    const desc =
+      data.description?.trim().slice(0, 300) ||
+      `Quality score and signals for ${data.fullName} on UseStakly.`;
+    setOverride({
+      title: `${data.fullName} — UseStakly`,
+      description: desc,
+      ogType: "article"
+    });
+  }, [profile.data, id, setOverride]);
 
   const watchlistQuery = useQuery({
     queryKey: ["watchlist"],

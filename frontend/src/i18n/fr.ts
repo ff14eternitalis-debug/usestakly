@@ -69,10 +69,13 @@ export const fr: Dict = {
   },
   landing: {
     eyebrow: "Beta publique · formula_v1",
-    h1Part1: "UseStakly",
+    h1Part1: "UseStakly —",
     h1Part2: "Choisis tes repos GitHub OSS avec un score qualité transparent.",
-    intro:
-      "Un radar OSS pour comparer les repos par qualité, provenance et dérive dans le temps.",
+    introBefore:
+      "UseStakly est l'observatoire open-source des dépôts GitHub publics : ",
+    introStrong: "scores qualité transparents",
+    introAfter:
+      ", provenance et signaux d'usage progressifs via MCP—pour comparer les projets au-delà des seules étoiles.",
     openObservatory: "Explorer les repos",
     readGuide: "Lire UseStakly",
     signInForWatchlist: "Se connecter pour la veille",

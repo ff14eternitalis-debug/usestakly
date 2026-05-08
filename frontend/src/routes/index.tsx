@@ -31,12 +31,15 @@ function Hero() {
 
           <h1 className="display-xl">
             {t.landing.h1Part1}
+            {" "}
             <br />
             <span className="accent">{t.landing.h1Part2}</span>
           </h1>
 
           <p className="max-w-[56ch] text-[1.08rem] md:text-[1.15rem] leading-[1.55] text-fg-dim">
-            {t.landing.intro}
+            {t.landing.introBefore}
+            <strong className="font-semibold text-fg">{t.landing.introStrong}</strong>
+            {t.landing.introAfter}
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -582,6 +585,7 @@ function ClosingCTA() {
             <span className="kicker">{t.landing.closingEyebrow}</span>
             <h2 className="display-lg max-w-[20ch]">
               {t.landing.closingH2Part1}
+              {" "}
               <br />
               <span className="accent">{t.landing.closingH2Part2}</span>
             </h2>

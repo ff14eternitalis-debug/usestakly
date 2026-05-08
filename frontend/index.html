@@ -3,7 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="UseStakly — a quality-scored observatory of public open-source GitHub repositories." />
+    <meta
+      name="description"
+      content="UseStakly is the open-source observatory for public GitHub repos: transparent scores, provenance, MCP usage—for developers and AI agents. Public beta."
+    />
+    <link rel="canonical" href="%SITE_ORIGIN%/" />
+    <meta property="og:site_name" content="UseStakly" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="UseStakly — the open-source observatory" />
+    <meta
+      property="og:description"
+      content="UseStakly is the open-source observatory for public GitHub repos: transparent scores, provenance, MCP usage—for developers and AI agents. Public beta."
+    />
+    <meta property="og:url" content="%SITE_ORIGIN%/" />
+    <meta property="og:image" content="%SITE_ORIGIN%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="UseStakly — open-source observatory for GitHub quality scores" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="UseStakly — the open-source observatory" />
+    <meta
+      name="twitter:description"
+      content="UseStakly is the open-source observatory for public GitHub repos: transparent scores, provenance, MCP usage—for developers and AI agents. Public beta."
+    />
+    <meta name="twitter:image" content="%SITE_ORIGIN%/og-image.png" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#08090b" />
     <link
@@ -39,8 +64,67 @@
       rel="stylesheet"
     />
     <title>UseStakly — the open-source observatory</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "%SITE_ORIGIN%/#organization",
+            "name": "UseStakly",
+            "url": "%SITE_ORIGIN%/",
+            "logo": "%SITE_ORIGIN%/usestackly-logo-white-lime.svg",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "email": "contact@usestakly.com",
+              "contactType": "customer support",
+              "availableLanguage": ["English", "French"]
+            },
+            "description": "Open-source observatory scoring public GitHub repositories with transparent quality signals and MCP integration."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_ORIGIN%/#website",
+            "url": "%SITE_ORIGIN%/",
+            "name": "UseStakly",
+            "description": "UseStakly is the open-source observatory for public GitHub repos: transparent scores, provenance, MCP usage—for developers and AI agents. Public beta.",
+            "inLanguage": ["en", "fr"],
+            "publisher": { "@id": "%SITE_ORIGIN%/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "%SITE_ORIGIN%/#software",
+            "name": "UseStakly",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "url": "%SITE_ORIGIN%/",
+            "description": "Quality-scored discovery, watchlists, notifications, and MCP tools for public GitHub repositories.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "publisher": { "@id": "%SITE_ORIGIN%/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <div>
+        <h1>UseStakly — the open-source observatory</h1>
+        <p>
+          UseStakly is the open-source observatory for public GitHub repositories. It surfaces transparent quality scores,
+          provenance, and MCP usage signals so developers and coding agents compare dependencies beyond stars alone.
+        </p>
+        <p>
+          Explore the Discover page, read how scores are built, and install the MCP endpoint. Enable JavaScript for the
+          full application.
+        </p>
+        <p><a href="/discover">Discover repositories</a> · <a href="/how-to-read">How to read scores</a></p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

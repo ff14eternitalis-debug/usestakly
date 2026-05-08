@@ -8,6 +8,8 @@ import {
 
 import { AppHeader } from "../features/layout/AppHeader";
 import { SiteFooter } from "../features/layout/SiteFooter";
+import { DocumentMeta } from "../seo/DocumentMeta";
+import { SeoOverrideProvider } from "../seo/seo-context";
 import { AccountPage } from "../routes/account";
 import { DiscoverPage } from "../routes/discover";
 import { HowToReadPage } from "../routes/how-to-read";
@@ -25,13 +27,16 @@ import { useAuthStore } from "../state/auth-store";
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen flex flex-col">
-      <AppHeader />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <SiteFooter />
-    </div>
+    <SeoOverrideProvider>
+      <DocumentMeta />
+      <div className="min-h-screen flex flex-col">
+        <AppHeader />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <SiteFooter />
+      </div>
+    </SeoOverrideProvider>
   )
 });
 

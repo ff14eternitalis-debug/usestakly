@@ -67,10 +67,13 @@ export const en = {
   },
   landing: {
     eyebrow: "Public beta · formula_v1",
-    h1Part1: "UseStakly",
+    h1Part1: "UseStakly —",
     h1Part2: "Choose GitHub OSS with a transparent quality score.",
-    intro:
-      "An OSS radar for comparing repositories by quality, provenance, and drift over time.",
+    introBefore:
+      "UseStakly is the open-source observatory for public GitHub repositories: ",
+    introStrong: "transparent quality scores",
+    introAfter:
+      ", provenance, and progressive usage signals from MCP agents—so you compare repos beyond stars alone.",
     openObservatory: "Explore repositories",
     readGuide: "Read UseStakly",
     signInForWatchlist: "Sign in for watchlist",
