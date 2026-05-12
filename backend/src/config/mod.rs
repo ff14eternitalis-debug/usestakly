@@ -59,24 +59,20 @@ impl AppConfig {
             env::var("DEV_USER_EMAIL").unwrap_or_else(|_| "dev@project-k.local".to_string());
         let dev_user_username =
             env::var("DEV_USER_USERNAME").unwrap_or_else(|_| "projectk-dev".to_string());
-        let dev_user_display_name = env::var("DEV_USER_DISPLAY_NAME").ok();
-        let dev_user_avatar_url = env::var("DEV_USER_AVATAR_URL").ok();
+        let dev_user_display_name = optional_env("DEV_USER_DISPLAY_NAME");
+        let dev_user_avatar_url = optional_env("DEV_USER_AVATAR_URL");
         let app_base_url =
             env::var("APP_BASE_URL").unwrap_or_else(|_| format!("http://{}:{}", host, port));
         let frontend_base_url =
             env::var("FRONTEND_BASE_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
-        let app_session_secret = env::var("APP_SESSION_SECRET").ok();
-        let app_notification_secret = env::var("APP_NOTIFICATION_SECRET")
-            .ok()
-            .filter(|value| !value.trim().is_empty());
-        let github_client_id = env::var("GITHUB_CLIENT_ID").ok();
-        let github_client_secret = env::var("GITHUB_CLIENT_SECRET").ok();
-        let discord_client_id = env::var("DISCORD_CLIENT_ID").ok();
-        let discord_client_secret = env::var("DISCORD_CLIENT_SECRET").ok();
-        let admin_api_token = env::var("ADMIN_API_TOKEN").ok();
-        let github_token = env::var("GITHUB_TOKEN")
-            .ok()
-            .filter(|s| !s.trim().is_empty());
+        let app_session_secret = optional_env("APP_SESSION_SECRET");
+        let app_notification_secret = optional_env("APP_NOTIFICATION_SECRET");
+        let github_client_id = optional_env("GITHUB_CLIENT_ID");
+        let github_client_secret = optional_env("GITHUB_CLIENT_SECRET");
+        let discord_client_id = optional_env("DISCORD_CLIENT_ID");
+        let discord_client_secret = optional_env("DISCORD_CLIENT_SECRET");
+        let admin_api_token = optional_env("ADMIN_API_TOKEN");
+        let github_token = optional_env("GITHUB_TOKEN");
         let scheduler_enabled = env::var("APP_SCHEDULER_ENABLED")
             .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
             .unwrap_or(false);
@@ -239,6 +235,21 @@ impl AppConfig {
     }
 }
 
+fn optional_env(name: &str) -> Option<String> {
+    env::var(name)
+        .ok()
+        .and_then(|value| optional_env_value(&value))
+}
+
+fn optional_env_value(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -279,5 +290,15 @@ mod tests {
         };
 
         assert_eq!(config.notification_secret(), Some("notification-secret"));
+    }
+
+    #[test]
+    fn optional_env_value_treats_empty_or_whitespace_as_missing() {
+        assert_eq!(optional_env_value(""), None);
+        assert_eq!(optional_env_value("   "), None);
+        assert_eq!(
+            optional_env_value(" client-id "),
+            Some("client-id".to_string())
+        );
     }
 }
