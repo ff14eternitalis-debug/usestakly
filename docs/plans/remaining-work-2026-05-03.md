@@ -30,18 +30,18 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 
 Items qui ont déjà du code ou des migrations en place mais ne sont pas terminés.
 
-### 2.1 Notifications use case watches (Lot 3 du plan use-case)
+### 2.1 Notifications use case watches (Lot 3 du plan use-case) ✅ livré 2026-05-12
 
-Migration 0020 + endpoints + UI livrés. **Aucune notification n'est jamais émise** sur ces watches.
+Migration 0020 + endpoints + UI livrés. Les notifications sont maintenant branchées via le scheduler.
 
-- [ ] Étendre `services/scheduler.rs` pour itérer les `use_case_watches.enabled = true`.
-- [ ] Recalculer les matches via `services/recommendations.rs::recommend_for_use_case`, comparer avec `use_case_watch_matches` persistés.
-- [ ] Émettre les 4 types de notifications définis dans le plan via `services/notifications.rs` :
+- [x] Étendre `services/scheduler.rs` pour itérer les `use_case_watches.enabled = true`.
+- [x] Recalculer les matches via `services/recommendations.rs::recommend_for_use_case`, comparer avec `use_case_watch_matches` persistés.
+- [x] Émettre les 4 types de notifications définis dans le plan :
   - `use_case_new_candidate` — nouveau repo entre dans le top N
   - `use_case_best_candidate_changed` — meilleur repo change
   - `use_case_quality_drop` — repo du top baisse de score ≥ 0.10
   - `use_case_flag_added` — repo recommandé prend un flag toxique
-- [ ] Anti-bruit : max 1 notification par watch par jour au MVP, mettre à jour `last_notified_at`.
+- [x] Anti-bruit : max 1 notification batch par watch par jour au MVP, mise à jour de `last_notified_at`.
 
 ### 2.2 MCP cohérence intent (Lot 4 du plan use-case + Phase 4 du plan radar) ✅ livré 2026-05-06
 
@@ -118,9 +118,10 @@ Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positif
 ### 4.1 Phase R7 — E2E
 
 - [ ] Smoke public final avant annonce : page d'accueil → `/how-to-read` → `/discover` → recherche par besoin → repo detail → `/mcp-guide` → `/privacy` → `/legal` → `/status`, avec vérification responsive mobile/desktop et absence d'erreur console visible.
-- [ ] Flow user E2E complet sur stack live : login OAuth réel → search "date picker react" → ouvre profil repo → clique Watch → simule un changement de score → reçoit notif. Aujourd'hui `frontend/e2e/mvp.spec.ts` couvre des fixtures mockées (~80 lignes).
-- [ ] Flow agent MCP E2E : `search_github_repos` → `get_repo_quality_context` → `log_usage` → vérifier que le signal alimente bien `quality_signals` puis `artifact_scores`.
-- [ ] Étendre Playwright sur les flows critiques connectés (login OAuth, watch, notif).
+- [x] Flow local sans mocks API : `npm run test:e2e:real` lance Postgres Docker, backend local, seed SQL, puis couvre landing → discover → repo detail → watchlist → notification → account token → MCP initialize/search.
+- [ ] Flow user E2E complet sur stack live : login OAuth réel → search "date picker react" → ouvre profil repo → clique Watch → simule un changement de score → reçoit notif.
+- [ ] Flow agent MCP complet : `search_github_repos` → `get_repo_quality_context` → `log_usage` → vérifier que le signal alimente bien `quality_signals` puis `artifact_scores`.
+- [ ] Décider si `test:e2e:real` devient un workflow GitHub Actions manuel/nightly avec Postgres, ou reste un release gate local documenté.
 
 ### 4.2 Audit parcours utilisateur — phase 2 connectée
 

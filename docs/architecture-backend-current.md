@@ -117,6 +117,8 @@ Garde-fous write (config via env) :
 - quota par token : `APP_MCP_WRITE_LIMIT_PER_HOUR`
 - cooldown anti-doublon : `APP_MCP_LOG_USAGE_COOLDOWN_SECS`
 - fenêtre négatifs : `APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS`
+- limite MCP globale par IP pour auth absente/invalide : `APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`
+- limite MCP transport/reads par token valide : `APP_MCP_READ_LIMIT_PER_MINUTE`
 - réputation min : `APP_ACTIVE_SIGNAL_MIN_REPUTATION`
 - consensus actif : `APP_ACTIVE_SIGNAL_DEFAULT_CONSENSUS` / `APP_ACTIVE_SIGNAL_SEVERE_CONSENSUS`
 - refus enregistrés en `agent_token_events` avec `kind='mcp_guard_rejection'`
@@ -148,6 +150,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 | 0017 | `repo_embeddings` (pgvector, optionnel) | actif si feature `semantic-search` |
 | 0023 | `notification_channels` (email destination + Discord webhook chiffré) | actif |
 | 0024 | `digest_time_local`, `timezone`, `notification_digest_deliveries` | actif |
+| 0025 | `use_case_*` notification kinds + flags persistés sur `use_case_watch_matches` | actif |
 
 ## Flux principaux
 
@@ -168,6 +171,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 5. résolution flags publics (`flags::resolve`) par consensus + réputation
 6. upsert `artifact_scores` avec snapshot précédent
 7. diff seuils → émission de notifications watchers in-app + livraison Discord webhook si configurée
+8. réévaluation des `use_case_watches` actives par le scheduler : nouveau candidat, meilleur candidat changé, quality drop, nouveau flag, avec cooldown 24 h par watch
 
 ### Digest quotidien
 
@@ -207,12 +211,13 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 - 32+ tests purs côté backend (compute, flags, weighting, reputation, MCP server, ingestion parsing, mcp_metrics window parser)
 - aucun service Postgres dans la CI : tout test DB-bound est mocké ou isolé derrière une feature
 - E2E Playwright frontend : `frontend/e2e/mvp.spec.ts` (mocks API, filet anti-régression UI)
+- E2E réel local : `frontend/e2e/real-api.spec.ts` via `npm run test:e2e:real` (Postgres Docker + backend local + seed SQL, sans mocks API)
 - CI installe Chromium et upload `playwright-report/` en artifact
 
 ## Dette restante
 
 - pas de couverture intégration DB en CI (Postgres non provisionné)
-- pas encore de rate-limit applicative globale `/mcp` (initialize + tools/list + reads) — les writes ont quota/cooldown
+- rate-limit applicative globale `/mcp` livrée en local runtime ; la couverture CI reste limitée aux tests unitaires/purs
 - backoff + ETags sur ingestion GitHub à venir (R1 reste)
 - `owner_inactive_days` non calculé → règle "maintainer silencieux 90 j" R3 bloquée
 - réputation v2 runtime livrée ; formula_v2 (compte neuf = poids 0) + Graphe Sybil OAuth GitHub à venir

@@ -10,12 +10,15 @@ const seedPath = path.join(frontendDir, "e2e", "real-api-seed.sql");
 const port = process.env.E2E_PORT || "5173";
 const apiPort = process.env.REAL_E2E_API_PORT || "4100";
 const apiBase = `http://127.0.0.1:${apiPort}`;
+const e2eDatabase = process.env.REAL_E2E_DATABASE || "project_k_e2e";
+const databaseUrl = `postgres://postgres:postgres@localhost:5432/${e2eDatabase}`;
 
 let backendProcess;
 let stoppingBackend = false;
 
 try {
   await run("docker", ["compose", "up", "-d"], { cwd: repoRoot });
+  await recreateE2eDatabase();
   backendProcess = startBackend();
   await waitForHealth(`${apiBase}/health`, 60_000);
   await seedDatabase();
@@ -42,7 +45,7 @@ function startBackend() {
     cwd: backendDir,
     env: {
       ...process.env,
-      DATABASE_URL: "postgres://postgres:postgres@localhost:5432/project_k",
+      DATABASE_URL: databaseUrl,
       APP_PORT: apiPort,
       DEV_USER_ID: "00000000-0000-0000-0000-000000000001",
       DEV_USER_EMAIL: "dev@usestakly.local",
@@ -84,7 +87,31 @@ async function seedDatabase() {
     "-U",
     "postgres",
     "-d",
-    "project_k",
+    e2eDatabase,
+    "-v",
+    "ON_ERROR_STOP=1"
+  ], {
+    cwd: repoRoot,
+    input: sql
+  });
+}
+
+async function recreateE2eDatabase() {
+  const quoted = e2eDatabase.replace(/"/g, "\"\"");
+  const sql = [
+    `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${e2eDatabase.replace(/'/g, "''")}';`,
+    `DROP DATABASE IF EXISTS "${quoted}";`,
+    `CREATE DATABASE "${quoted}";`
+  ].join("\n");
+  await run("docker", [
+    "exec",
+    "-i",
+    "usestakly-db",
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "postgres",
     "-v",
     "ON_ERROR_STOP=1"
   ], {

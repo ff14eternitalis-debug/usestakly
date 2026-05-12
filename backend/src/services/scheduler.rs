@@ -11,6 +11,7 @@ use crate::{
         ingestion::github::{build_client, ingest_repo},
         notification_digest,
         quality::recompute_all_scores,
+        use_case_watches,
     },
 };
 
@@ -43,15 +44,34 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
     tracing::info!("scheduler: cycle start");
 
     let refreshed = refresh_github_repos(db, config).await;
-    match recompute_all_scores(db).await {
-        Ok(report) => tracing::info!(
-            refreshed,
-            externals_processed = report.externals_processed,
-            formula_version = %report.formula_version,
+    let recompute_ok = match recompute_all_scores(db).await {
+        Ok(report) => {
+            tracing::info!(
+                refreshed,
+                externals_processed = report.externals_processed,
+                formula_version = %report.formula_version,
+                elapsed_ms = start.elapsed().as_millis() as u64,
+                "scheduler: cycle done"
+            );
+            true
+        }
+        Err(e) => {
+            tracing::error!(error = ?e, "scheduler: recompute failed");
+            false
+        }
+    };
+
+    if !recompute_ok {
+        return;
+    }
+
+    match use_case_watches::evaluate_enabled_watches(db, config).await {
+        Ok(inserted) => tracing::info!(
+            inserted,
             elapsed_ms = start.elapsed().as_millis() as u64,
-            "scheduler: cycle done"
+            "scheduler: use-case watch notifications done"
         ),
-        Err(e) => tracing::error!(error = ?e, "scheduler: recompute failed"),
+        Err(e) => tracing::warn!(error = ?e, "scheduler: use-case watch notifications failed"),
     }
 }
 

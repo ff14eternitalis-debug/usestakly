@@ -37,6 +37,10 @@ pub enum NotificationKind {
     AbandonmentUp,
     FlagAdded,
     FlagSevere,
+    UseCaseNewCandidate,
+    UseCaseBestCandidateChanged,
+    UseCaseQualityDrop,
+    UseCaseFlagAdded,
 }
 
 #[derive(Debug, Clone, Serialize)]

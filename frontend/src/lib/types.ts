@@ -291,7 +291,11 @@ export type NotificationKind =
   | "score_drop"
   | "abandonment_up"
   | "flag_added"
-  | "flag_severe";
+  | "flag_severe"
+  | "use_case_new_candidate"
+  | "use_case_best_candidate_changed"
+  | "use_case_quality_drop"
+  | "use_case_flag_added";
 
 export type Notification = {
   id: string;

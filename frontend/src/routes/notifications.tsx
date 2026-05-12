@@ -12,7 +12,11 @@ const KIND_TONE: Record<NotificationKind, "danger" | "warn" | "info" | "neutral"
   flag_severe: "danger",
   score_drop: "warn",
   abandonment_up: "warn",
-  flag_added: "info"
+  flag_added: "info",
+  use_case_new_candidate: "info",
+  use_case_best_candidate_changed: "info",
+  use_case_quality_drop: "warn",
+  use_case_flag_added: "info"
 };
 
 function payloadSummary(notif: Notification): string | null {
@@ -34,6 +38,23 @@ function payloadSummary(notif: Notification): string | null {
   if (notif.kind === "flag_added" || notif.kind === "flag_severe") {
     const flag = p.flag;
     if (typeof flag === "string") return `flag: ${flag}`;
+  }
+  if (notif.kind === "use_case_quality_drop") {
+    const prev = p.previous_quality;
+    const next = p.current_quality;
+    if (typeof prev === "number" && typeof next === "number") {
+      return `quality ${prev.toFixed(2)} â†’ ${next.toFixed(2)}`;
+    }
+  }
+  if (notif.kind === "use_case_flag_added") {
+    const flag = p.flag;
+    if (typeof flag === "string") return `radar flag: ${flag}`;
+  }
+  if (notif.kind === "use_case_new_candidate") {
+    return "entered a watched need";
+  }
+  if (notif.kind === "use_case_best_candidate_changed") {
+    return "now the top match for a watched need";
   }
   return null;
 }
@@ -73,7 +94,13 @@ export function NotificationsPage() {
     if (kind === "score_drop") return t.notifications.labelScoreDrop;
     if (kind === "abandonment_up") return t.notifications.labelAbandonmentUp;
     if (kind === "flag_added") return t.notifications.labelFlagAdded;
-    return t.notifications.labelFlagSevere;
+    if (kind === "flag_severe") return t.notifications.labelFlagSevere;
+    if (kind === "use_case_new_candidate") return t.notifications.labelUseCaseNewCandidate;
+    if (kind === "use_case_best_candidate_changed") {
+      return t.notifications.labelUseCaseBestCandidateChanged;
+    }
+    if (kind === "use_case_quality_drop") return t.notifications.labelUseCaseQualityDrop;
+    return t.notifications.labelUseCaseFlagAdded;
   }
 
   const emptyBody = unreadOnly

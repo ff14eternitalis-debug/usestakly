@@ -67,7 +67,11 @@ const NOTIFICATION_LABELS: Record<string, string> = {
   score_drop: "score drop",
   abandonment_up: "abandonment rising",
   flag_added: "new flag",
-  flag_severe: "severe flag"
+  flag_severe: "severe flag",
+  use_case_new_candidate: "new radar candidate",
+  use_case_best_candidate_changed: "best radar candidate changed",
+  use_case_quality_drop: "radar candidate quality drop",
+  use_case_flag_added: "radar candidate flag"
 };
 
 export function notificationLabel(kind: string): string {

@@ -458,6 +458,10 @@ export const en = {
     labelAbandonmentUp: "abandonment rising",
     labelFlagAdded: "new flag",
     labelFlagSevere: "severe flag",
+    labelUseCaseNewCandidate: "new radar candidate",
+    labelUseCaseBestCandidateChanged: "best radar candidate changed",
+    labelUseCaseQualityDrop: "radar quality drop",
+    labelUseCaseFlagAdded: "radar flag",
     markingRead: "marking…"
   },
   login: {

@@ -1,16 +1,16 @@
 # UseStakly — Plan d'action : recherche par besoin + veille d'intention
 
 > Version : 0.1 — 2026-04-29
-> **Statut (2026-05-06)** : Lots 1, 2, 3 (hors notifs), 4, 5 livrés sur `main`. Lot 3 notifications reste ouvert. Reste consolidé dans `docs/plans/remaining-work-2026-05-03.md`.
+> **Statut (2026-05-12)** : Lots 1, 2, 3, 4, 5 livrés sur `main`. Reste consolidé dans `docs/plans/remaining-work-2026-05-03.md`.
 >
 > **Livré** :
 > - Lot 1 : `services/recommendations.rs` (754 l, parser intent + ranking + `parse_intent`/`recommend_for_use_case`), endpoint `POST /api/use-cases/recommend` (handler `use_cases.rs`).
 > - Lot 2 : `frontend/src/features/repos/components/UseCaseSearchPanel.tsx` (241 l) intégré sur `/discover`, intention détectée + shortlist expliquée + CTA "créer veille".
-> - Lot 3 (partiel) : migrations 0020 (`use_case_queries`, `use_case_watches`, `use_case_watch_matches`), endpoints `GET/POST /api/use-cases/watch`, sous-section `Besoins` dans `/watchlist`. **Notifications non câblées** (`use_case_new_candidate` / `use_case_quality_drop` / `use_case_flag_added` / `use_case_best_candidate_changed` jamais émis ; le scheduler `services/scheduler.rs` ne traite pas les `use_case_watches`).
+> - Lot 3 : migrations 0020/0025 (`use_case_queries`, `use_case_watches`, `use_case_watch_matches`, notification kinds `use_case_*`), endpoints `GET/POST /api/use-cases/watch`, sous-section `Besoins` dans `/watchlist`, notifications scheduler avec cooldown 24 h par watch.
 > - Lot 5 : `scripts/seed-public-corpus.ps1` réorganisé par familles (UI kits, ORM, Auth, Validation, HTTP, Testing, video, etc.).
 >
 > **Reste** :
-> - Lot 3 notifications : étendre `services/scheduler.rs` pour réévaluer les watches actives, comparer avec `use_case_watch_matches`, émettre les 4 types de notifications via `services/notifications.rs`.
+> - Lot 3 notifications : livré le 2026-05-12. Le scheduler réévalue les watches actives, compare avec `use_case_watch_matches`, émet les 4 types de notifications `use_case_*`, puis met à jour `last_checked_at` / `last_notified_at`.
 > - Lot 4 MCP : livré le 2026-05-06. `recommend_github_repos` consomme le même service que l'API HTTP, expose des sections `stable_picks` / `emerging_picks` / `fallback_candidates`, et `watch_use_case` crée une veille d'intention.
 >
 > Objectif : transformer UseStakly de "je connais un repo, est-il fiable ?" vers "j'ai un besoin, quels outils OSS fiables dois-je regarder et surveiller ?"

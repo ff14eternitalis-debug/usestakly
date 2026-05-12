@@ -462,6 +462,10 @@ export const fr: Dict = {
     labelAbandonmentUp: "abandon qui grimpe",
     labelFlagAdded: "nouveau flag",
     labelFlagSevere: "flag sévère",
+    labelUseCaseNewCandidate: "nouveau candidat radar",
+    labelUseCaseBestCandidateChanged: "meilleur candidat radar changé",
+    labelUseCaseQualityDrop: "qualité radar en baisse",
+    labelUseCaseFlagAdded: "flag radar",
     markingRead: "marquage…"
   },
   login: {

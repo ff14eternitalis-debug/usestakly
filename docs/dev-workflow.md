@@ -163,6 +163,34 @@ cd ../frontend
 npm run build
 ```
 
+### E2E réel local sans mocks
+
+Le filet Playwright par défaut (`npm run test:e2e`) garde des mocks API pour rester rapide et compatible CI.
+Pour auditer le parcours réel avec Postgres local, backend lancé et API non mockée :
+
+```powershell
+cd frontend
+npm run test:e2e:real
+```
+
+Ce script :
+
+1. lance uniquement le Postgres du `docker-compose.yml` ;
+2. recrée une base dédiée `project_k_e2e` pour éviter tout conflit avec la base dev ;
+3. démarre le backend local sur `127.0.0.1:4100` ;
+4. seed une base locale déterministe via `frontend/e2e/real-api-seed.sql` ;
+5. lance `frontend/e2e/real-api.spec.ts`.
+
+Parcours couvert : landing → discover → repo detail → watchlist → notifications → account token → MCP initialize/search.
+
+Notes :
+
+- Docker Desktop doit être démarré.
+- Le script utilise le conteneur `usestakly-db` du projet, mais une DB dédiée `project_k_e2e` ; il ne touche pas à ta DB dev `project_k`.
+- Il ne touche pas aux conteneurs d'autres projets, notamment `kois-story`.
+- En fin de run, le script arrête le backend enfant et stoppe le Postgres compose.
+- Ce test est un bon "release gate" local. Il n'est pas encore branché dans la CI principale.
+
 ## Résolution de problèmes fréquents
 
 ### `Accès refusé` sur `target/...exe` au build

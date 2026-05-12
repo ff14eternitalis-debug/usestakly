@@ -5,7 +5,7 @@
 > **Livré** :
 > - Phase 1 : migrations 0021 (`repo_categories`) + 0022 (`repo_radar_snapshots`), `domain::repo::RepoRadarSnapshot`, `services::radar` (commits `21eed4d`, `5fc9164`).
 > - Phase 2 : mode "Emerging radar" dans `frontend/src/routes/discover.tsx` (toggle Reliable/Radar, `maturity_bands=emerging,experimental`, `sort=trend`), explication maturité sur `RepoHeader.tsx` + `RepoCard.tsx` (commits `b5e3a29`, `6a8c617`, `5c6ffdf`). `RepoSort::Trend` câblé dans `services/repos.rs`.
-> - Phase 3 : sections séparées `Besoins` / `Repos` dans `frontend/src/routes/watchlist.tsx`, persistance via `services/use_case_watches.rs` + migration 0020 (commit `497c9d4`). **Notifications use case non branchées** — voir reste.
+> - Phase 3 : sections séparées `Besoins` / `Repos` dans `frontend/src/routes/watchlist.tsx`, persistance via `services/use_case_watches.rs` + migrations 0020/0025. Notifications use case branchées via scheduler le 2026-05-12.
 > - Phase 5 : classification catégories à l'ingestion via `services/repo_categories.rs` (signaux README + métadonnées GitHub), seed `scripts/seed-public-corpus.ps1` organisé par familles (UI kits, ORM, Auth, Testing, etc.).
 >
 > **Reste** :

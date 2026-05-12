@@ -584,6 +584,45 @@ fn watch_alert_message(
                 fields: vec![json!({ "name": "Flag", "value": flag, "inline": true })],
             }
         }
+        NotificationKind::UseCaseNewCandidate => WatchAlertMessage {
+            title: format!("{repo_full_name}: new radar candidate"),
+            content: format!("UseStakly alert: {repo_full_name} entered a watched need."),
+            description: "A repository entered the recommendations for a watched need.".to_string(),
+            color: 8_900_331,
+            fields: vec![],
+        },
+        NotificationKind::UseCaseBestCandidateChanged => WatchAlertMessage {
+            title: format!("{repo_full_name}: best radar candidate changed"),
+            content: format!(
+                "UseStakly alert: {repo_full_name} is now the top match for a watched need."
+            ),
+            description: "The leading recommendation changed for a watched need.".to_string(),
+            color: 8_900_331,
+            fields: vec![],
+        },
+        NotificationKind::UseCaseQualityDrop => WatchAlertMessage {
+            title: format!("{repo_full_name}: radar candidate quality dropped"),
+            content: format!("UseStakly alert: {repo_full_name} dropped in a watched need."),
+            description: "A repository in a watched need crossed the quality-drop threshold."
+                .to_string(),
+            color: 16_744_996,
+            fields: vec![],
+        },
+        NotificationKind::UseCaseFlagAdded => {
+            let flag = payload
+                .get("flag")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("new flag");
+            WatchAlertMessage {
+                title: format!("{repo_full_name}: radar candidate flag"),
+                content: format!(
+                    "UseStakly alert: {repo_full_name} received flag `{flag}` in a watched need."
+                ),
+                description: "A repository in a watched need received a new flag.".to_string(),
+                color: 16_744_996,
+                fields: vec![json!({ "name": "Flag", "value": flag, "inline": true })],
+            }
+        }
     }
 }
 
