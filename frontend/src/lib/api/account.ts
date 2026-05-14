@@ -8,6 +8,7 @@ import type {
   NotificationPreferences,
   NotificationChannelType
 } from "../types";
+import type { Locale } from "../../state/locale-store";
 
 export function getAccountSummary(signal?: AbortSignal): Promise<AccountSummary> {
   return apiGet<AccountSummary>("/api/account/summary", signal);
@@ -42,6 +43,7 @@ export function upsertNotificationChannel(body: {
   enabled?: boolean;
   criticalAlertsEnabled?: boolean;
   dailyDigestEnabled?: boolean;
+  emailLocale?: Locale;
 }): Promise<NotificationChannelSummary> {
   return apiPost<NotificationChannelSummary>(
     "/api/account/notification-channels",
@@ -53,9 +55,12 @@ export function deleteNotificationChannel(id: string): Promise<void> {
   return apiDelete(`/api/account/notification-channels/${id}`);
 }
 
-export function testNotificationChannel(id: string): Promise<{ ok: boolean }> {
+export function testNotificationChannel(
+  id: string,
+  locale: Locale
+): Promise<{ ok: boolean }> {
   return apiPost<{ ok: boolean }>(
-    `/api/account/notification-channels/${id}/test`
+    `/api/account/notification-channels/${id}/test?locale=${encodeURIComponent(locale)}`
   );
 }
 
@@ -71,6 +76,7 @@ export function getNotificationPreferences(
 export function updateNotificationPreferences(body: {
   digestTimePreset: DigestTimePreset;
   timezone: string;
+  emailLocale: Locale;
 }): Promise<NotificationPreferences> {
   return apiPut<NotificationPreferences>(
     "/api/account/notification-preferences",

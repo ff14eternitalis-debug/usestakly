@@ -219,6 +219,7 @@ export type NotificationPreferences = {
   digestTimePreset: DigestTimePreset;
   digestTimeLocal: string;
   timezone: string;
+  emailLocale: "en" | "fr";
 };
 
 export type UserReputationSummary = {

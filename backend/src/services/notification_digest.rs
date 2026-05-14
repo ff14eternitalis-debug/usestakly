@@ -8,7 +8,7 @@ use crate::{
     app::error::ApiError,
     config::AppConfig,
     services::{
-        email_templates::{EmailSection, render_digest_email},
+        email_templates::{EmailLocale, EmailSection, render_digest_email},
         notification_channels::{decrypt_webhook_url, send_email},
     },
 };
@@ -71,6 +71,7 @@ struct DueDigestChannelRow {
     secret_ciphertext: Option<String>,
     digest_time_local: String,
     timezone: String,
+    email_locale: String,
 }
 
 #[derive(Debug, FromRow)]
@@ -118,7 +119,8 @@ pub async fn run_due_digests(
           c.destination,
           c.secret_ciphertext,
           u.digest_time_local,
-          u.timezone
+          u.timezone,
+          u.email_locale
         FROM notification_channels c
         JOIN users u ON u.id = c.user_id
         WHERE c.enabled = TRUE
@@ -167,7 +169,15 @@ pub async fn run_due_digests(
                     Err(ApiError::internal("missing webhook secret"))
                 }
             }
-            "email" => post_email_digest(config, &row.destination, &content).await,
+            "email" => {
+                post_email_digest(
+                    config,
+                    &row.destination,
+                    &content,
+                    EmailLocale::parse_lossy(&row.email_locale),
+                )
+                .await
+            }
             _ => Err(ApiError::internal("unknown notification channel type")),
         };
 
@@ -295,27 +305,38 @@ async fn post_email_digest(
     config: &AppConfig,
     to: &str,
     content: &DigestContent,
+    locale: EmailLocale,
 ) -> Result<(), ApiError> {
-    let email = render_digest_email(&digest_email_sections(content));
+    let email = render_digest_email(locale, &digest_email_sections(content, locale));
     send_email(config, to, &email)
         .await
         .map_err(|err| ApiError::bad_request(err.to_string()))
 }
 
-fn digest_email_sections(content: &DigestContent) -> Vec<EmailSection> {
-    [
-        ("Repos to watch", &content.abandonment_up),
-        ("Scores down", &content.score_drops),
-        ("New flags", &content.new_flags),
-        ("New radar candidates", &content.radar_candidates),
-    ]
-    .into_iter()
-    .filter(|(_, items)| !items.is_empty())
-    .map(|(title, items)| EmailSection {
-        title: title.to_string(),
-        items: items.iter().take(5).cloned().collect(),
-    })
-    .collect()
+fn digest_email_sections(content: &DigestContent, locale: EmailLocale) -> Vec<EmailSection> {
+    let labels = match locale {
+        EmailLocale::En => [
+            ("Repos to watch", &content.abandonment_up),
+            ("Scores down", &content.score_drops),
+            ("New flags", &content.new_flags),
+            ("New radar candidates", &content.radar_candidates),
+        ],
+        EmailLocale::Fr => [
+            ("Dépôts à surveiller", &content.abandonment_up),
+            ("Scores en baisse", &content.score_drops),
+            ("Nouveaux flags", &content.new_flags),
+            ("Nouveaux candidats radar", &content.radar_candidates),
+        ],
+    };
+
+    labels
+        .into_iter()
+        .filter(|(_, items)| !items.is_empty())
+        .map(|(title, items)| EmailSection {
+            title: title.to_string(),
+            items: items.iter().take(5).cloned().collect(),
+        })
+        .collect()
 }
 
 fn digest_fields(content: &DigestContent) -> Vec<serde_json::Value> {

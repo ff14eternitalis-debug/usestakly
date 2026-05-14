@@ -22,8 +22,9 @@ use crate::{
     app::error::ApiError,
     config::AppConfig,
     domain::watchlist::NotificationKind,
+    services::account_preferences::validate_email_locale,
     services::email_templates::{
-        EmailField, EmailTemplate, render_test_email, render_watch_alert_email,
+        EmailField, EmailLocale, EmailTemplate, render_test_email, render_watch_alert_email,
     },
 };
 
@@ -76,6 +77,7 @@ pub struct UpsertNotificationChannel {
     pub enabled: Option<bool>,
     pub critical_alerts_enabled: Option<bool>,
     pub daily_digest_enabled: Option<bool>,
+    pub email_locale: Option<String>,
 }
 
 #[derive(FromRow)]
@@ -112,6 +114,7 @@ struct DeliveryChannelRow {
     channel_type: String,
     destination: String,
     secret_ciphertext: Option<String>,
+    email_locale: String,
 }
 
 pub struct WatchAlertDelivery<'a> {
@@ -210,6 +213,14 @@ pub async fn upsert(
             }
         }
     };
+    if let Some(locale) = input.email_locale.as_deref() {
+        let email_locale = validate_email_locale(locale)?;
+        sqlx::query("UPDATE users SET email_locale = $2, updated_at = NOW() WHERE id = $1")
+            .bind(user_id)
+            .bind(email_locale)
+            .execute(db)
+            .await?;
+    }
 
     let row: ChannelRow = sqlx::query_as(
         r#"
@@ -286,6 +297,7 @@ pub async fn send_test(
     secret: &str,
     config: &AppConfig,
     channel_id: Uuid,
+    locale: EmailLocale,
 ) -> Result<(), ApiError> {
     let row: ChannelSecretRow = sqlx::query_as(
         r#"
@@ -301,7 +313,7 @@ pub async fn send_test(
     .ok_or_else(|| ApiError::not_found("Notification channel not found"))?;
 
     let result = match NotificationChannelType::from_db(row.channel_type)? {
-        NotificationChannelType::Email => post_email_test_message(config, &row.destination)
+        NotificationChannelType::Email => post_email_test_message(config, &row.destination, locale)
             .await
             .map_err(|err| ApiError::bad_request(err.to_string())),
         NotificationChannelType::DiscordWebhook => {
@@ -346,12 +358,13 @@ pub async fn deliver_watch_alert(
 ) -> Result<usize, ApiError> {
     let rows: Vec<DeliveryChannelRow> = sqlx::query_as(
         r#"
-        SELECT id, channel_type, destination, secret_ciphertext
-        FROM notification_channels
-        WHERE user_id = $1
-          AND channel_type IN ('discord_webhook', 'email')
-          AND enabled = TRUE
-          AND critical_alerts_enabled = TRUE
+        SELECT c.id, c.channel_type, c.destination, c.secret_ciphertext, u.email_locale
+        FROM notification_channels c
+        JOIN users u ON u.id = c.user_id
+        WHERE c.user_id = $1
+          AND c.channel_type IN ('discord_webhook', 'email')
+          AND c.enabled = TRUE
+          AND c.critical_alerts_enabled = TRUE
         "#,
     )
     .bind(user_id)
@@ -369,6 +382,7 @@ pub async fn deliver_watch_alert(
                     delivery.repo_url,
                     delivery.kind,
                     delivery.payload,
+                    EmailLocale::parse_lossy(&row.email_locale),
                 )
                 .await
                 {
@@ -550,8 +564,12 @@ async fn post_discord_test_message(webhook_url: &str) -> Result<(), anyhow::Erro
     Ok(())
 }
 
-async fn post_email_test_message(config: &AppConfig, to: &str) -> Result<(), anyhow::Error> {
-    send_email(config, to, &render_test_email()).await
+async fn post_email_test_message(
+    config: &AppConfig,
+    to: &str,
+    locale: EmailLocale,
+) -> Result<(), anyhow::Error> {
+    send_email(config, to, &render_test_email(locale)).await
 }
 
 async fn post_discord_watch_alert(
@@ -596,6 +614,7 @@ async fn post_email_watch_alert(
     repo_url: Option<&str>,
     kind: NotificationKind,
     payload: &serde_json::Value,
+    locale: EmailLocale,
 ) -> Result<(), anyhow::Error> {
     let message = watch_alert_message(repo_full_name, kind, payload);
     let fields = message
@@ -617,6 +636,7 @@ async fn post_email_watch_alert(
         })
         .collect::<Vec<_>>();
     let email = render_watch_alert_email(
+        locale,
         &format!("[UseStakly] {}", message.title),
         &message.title,
         &message.content,
