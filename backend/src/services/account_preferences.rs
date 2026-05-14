@@ -22,7 +22,7 @@ pub struct NotificationPreferences {
 pub struct UpdateNotificationPreferences {
     pub digest_time_preset: String,
     pub timezone: String,
-    pub email_locale: String,
+    pub email_locale: Option<String>,
 }
 
 #[derive(FromRow)]
@@ -59,14 +59,18 @@ pub async fn update(
 ) -> Result<NotificationPreferences, ApiError> {
     let digest_time_local = digest_time_for_preset(&input.digest_time_preset)?.to_string();
     let timezone = validate_timezone(&input.timezone)?;
-    let email_locale = validate_email_locale(&input.email_locale)?;
+    let email_locale = input
+        .email_locale
+        .as_deref()
+        .map(validate_email_locale)
+        .transpose()?;
 
     let row: PreferencesRow = sqlx::query_as(
         r#"
         UPDATE users
         SET digest_time_local = $2,
             timezone = $3,
-            email_locale = $4,
+            email_locale = COALESCE($4, email_locale),
             updated_at = NOW()
         WHERE id = $1
         RETURNING digest_time_local, timezone, email_locale
@@ -75,7 +79,7 @@ pub async fn update(
     .bind(user_id)
     .bind(&digest_time_local)
     .bind(&timezone)
-    .bind(&email_locale)
+    .bind(email_locale.as_deref())
     .fetch_one(db)
     .await?;
 
