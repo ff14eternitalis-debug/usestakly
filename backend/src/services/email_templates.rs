@@ -17,6 +17,8 @@ pub struct EmailSection {
     pub items: Vec<String>,
 }
 
+const LOGO_URL: &str = "https://usestakly.com/usestackly-logo-white-lime.png";
+
 pub fn render_test_email() -> EmailTemplate {
     let subject = "UseStakly notification channel connected";
     let body = "UseStakly can now send critical watch alerts to this email address.";
@@ -139,8 +141,8 @@ fn branded_email(
               <td style="padding:0 0 16px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td style="width:34px;height:34px;border:1px solid #2a2c33;border-radius:8px;background:#111216;text-align:center;vertical-align:middle;">
-                      <span style="font:800 19px/34px ui-monospace,SFMono-Regular,Cascadia Code,Menlo,monospace;color:#b6ff3c;">U</span>
+                    <td style="vertical-align:middle;">
+                      <img src="{}" width="42" height="40" alt="UseStakly" style="display:block;width:42px;height:40px;border:0;outline:none;text-decoration:none;" />
                     </td>
                     <td style="padding-left:12px;font:700 20px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#f5f6f7;">UseStakly</td>
                   </tr>
@@ -168,6 +170,7 @@ fn branded_email(
   </body>
 </html>"#,
         escape_html(text.lines().next().unwrap_or(subject)),
+        LOGO_URL,
         escape_html(eyebrow),
         escape_html(title),
         escape_html(text),
@@ -213,6 +216,12 @@ mod tests {
         assert!(email.html.contains("#111216"));
         assert!(email.html.contains("#1d1f25"));
         assert!(email.html.contains("#b6ff3c"));
+        assert!(
+            email
+                .html
+                .contains("https://usestakly.com/usestackly-logo-white-lime.png")
+        );
+        assert!(email.html.contains("alt=\"UseStakly\""));
         assert!(email.html.contains("public beta"));
     }
 
