@@ -130,10 +130,10 @@ fn branded_email(
 
     let html = format!(
         r#"<!doctype html>
-<html>
+<html lang="en">
   <body style="margin:0;padding:0;background:#08090b;color:#f5f6f7;">
-    <div style="display:none;max-height:0;overflow:hidden;color:#08090b;">{}</div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#08090b;margin:0;padding:32px 16px;">
+    <div style="display:none;max-height:0;overflow:hidden;color:#08090b;" translate="no" class="notranslate">{}</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" translate="no" class="notranslate" style="background:#08090b;margin:0;padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;border-collapse:collapse;">
@@ -142,9 +142,9 @@ fn branded_email(
                 <table role="presentation" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="vertical-align:middle;">
-                      <img src="{}" width="42" height="40" alt="UseStakly" style="display:block;width:42px;height:40px;border:0;outline:none;text-decoration:none;" />
+                      <img src="{}" width="42" height="40" alt="UseStakly" translate="no" class="notranslate" style="display:block;width:42px;height:40px;border:0;outline:none;text-decoration:none;" />
                     </td>
-                    <td style="padding-left:12px;font:700 20px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#f5f6f7;">UseStakly</td>
+                    <td translate="no" class="notranslate" style="padding-left:12px;font:700 20px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#f5f6f7;">UseStakly</td>
                   </tr>
                 </table>
               </td>
@@ -159,7 +159,7 @@ fn branded_email(
               </td>
             </tr>
             <tr>
-              <td style="padding:18px 4px 0 4px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b6e77;">
+              <td translate="no" class="notranslate" style="padding:18px 4px 0 4px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b6e77;">
                 UseStakly public beta · OSS quality radar for developers and agents.
               </td>
             </tr>
@@ -222,6 +222,9 @@ mod tests {
                 .contains("https://usestakly.com/usestackly-logo-white-lime.png")
         );
         assert!(email.html.contains("alt=\"UseStakly\""));
+        assert!(email.html.contains("<html lang=\"en\">"));
+        assert!(email.html.contains("translate=\"no\""));
+        assert!(email.html.contains("class=\"notranslate\""));
         assert!(email.html.contains("public beta"));
     }
 
