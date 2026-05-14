@@ -83,6 +83,14 @@ pub async fn update(
     .fetch_one(db)
     .await?;
 
+    tracing::info!(
+        user_id = %user_id,
+        timezone = %row.timezone,
+        digest_time_local = %row.digest_time_local,
+        email_locale = %row.email_locale,
+        "notification preferences updated"
+    );
+
     Ok(NotificationPreferences {
         digest_time_preset: preset_for_time(&row.digest_time_local),
         digest_time_local: row.digest_time_local,

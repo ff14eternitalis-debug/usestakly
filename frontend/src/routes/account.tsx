@@ -151,10 +151,13 @@ export function AccountPage() {
   });
 
   const saveNotificationPreferences = useMutation({
-    mutationFn: () =>
+    mutationFn: (next?: {
+      digestTimePreset?: DigestTimePreset;
+      timezone?: string;
+    }) =>
       updateNotificationPreferences({
-        digestTimePreset,
-        timezone,
+        digestTimePreset: next?.digestTimePreset ?? digestTimePreset,
+        timezone: next?.timezone ?? timezone,
         emailLocale: locale
       }),
     onSuccess: async (preferences) => {
@@ -319,10 +322,15 @@ export function AccountPage() {
         onWebhookCriticalChange={setWebhookCritical}
         onWebhookDigestChange={setWebhookDigest}
         onDigestTimePresetChange={setDigestTimePreset}
-        onTimezoneChange={setTimezone}
+        onTimezoneChange={(value) => {
+          setTimezone(value);
+          saveNotificationPreferences.mutate({ timezone: value });
+        }}
         onSaveEmail={() => saveEmailChannel.mutate()}
         onSaveWebhook={() => saveWebhookChannel.mutate()}
-        onSavePreferences={() => saveNotificationPreferences.mutate()}
+        onSavePreferences={() =>
+          saveNotificationPreferences.mutate({ digestTimePreset, timezone })
+        }
         onDelete={(id) => deleteChannel.mutate(id)}
         onTest={(id) => testChannel.mutate(id)}
       />
