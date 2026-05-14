@@ -8,6 +8,7 @@ export const fr: Dict = {
     watchlist: "Veille",
     notifications: "Notifications",
     account: "Compte",
+    profile: "Mon profil",
     signIn: "Connexion",
     signOut: "déconnexion"
   },

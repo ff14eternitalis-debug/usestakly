@@ -6,6 +6,7 @@ export const en = {
     watchlist: "Watchlist",
     notifications: "Notifications",
     account: "Account",
+    profile: "My profile",
     signIn: "Sign in",
     signOut: "sign out"
   },

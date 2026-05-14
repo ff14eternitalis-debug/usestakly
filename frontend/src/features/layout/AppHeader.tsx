@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 import { LocaleSwitch } from "../../components/LocaleSwitch";
 import { Wordmark } from "../../components/Wordmark";
@@ -14,6 +15,8 @@ export function AppHeader() {
   const t = useT();
   const { status, user } = useAuthStore();
   const isAuthed = status === "authenticated";
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const unreadQuery = useQuery({
     queryKey: ["notifications", "unread"],
@@ -24,6 +27,38 @@ export function AppHeader() {
     staleTime: 30_000
   });
   const unread = unreadQuery.data?.unread ?? 0;
+  const displayName = user?.displayName ?? user?.username ?? "UseStakly";
+  const accountLabel = user?.username ? `@${user.username}` : displayName;
+  const avatarFallback = displayName.trim().charAt(0).toUpperCase() || "U";
+
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-[color:var(--color-bg)]/80 backdrop-blur-xl backdrop-saturate-150">
@@ -67,21 +102,80 @@ export function AppHeader() {
             <LocaleSwitch />
           </div>
           {isAuthed ? (
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Link
-                to="/account"
-                className="hidden rounded-[6px] border border-transparent px-2.5 py-1.5 text-[0.82rem] font-medium text-fg-dim transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)] hover:text-accent sm:inline-flex"
-                title={user?.email ?? undefined}
-              >
-                @{user?.username ?? "anon"}
-              </Link>
+            <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
-                onClick={() => void logout()}
-                className="mono rounded-[5px] border border-transparent px-2.5 py-1.5 text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)]"
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
+                onClick={() => setProfileMenuOpen((open) => !open)}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface p-0.5 transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)] focus-visible:border-accent focus-visible:outline-none"
+                title={user?.email ?? accountLabel}
               >
-                {t.nav.signOut}
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="size-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="inline-flex size-full items-center justify-center rounded-full bg-accent font-mono text-[0.9rem] font-semibold text-[color:var(--color-accent-ink)]">
+                    {avatarFallback}
+                  </span>
+                )}
               </button>
+
+              {profileMenuOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-60 rounded-[8px] border border-line bg-surface p-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
+                >
+                  <div className="flex items-center gap-3 border-b border-line px-2 pb-3 pt-1">
+                    <div className="inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-bg">
+                      {user?.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-mono text-[0.8rem] font-semibold text-accent">
+                          {avatarFallback}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[0.86rem] font-medium text-fg">
+                        {displayName}
+                      </p>
+                      <p className="truncate text-[0.74rem] text-fg-muted">
+                        {accountLabel}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/account"
+                    role="menuitem"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="mt-2 flex w-full items-center rounded-[6px] px-3 py-2 text-left text-[0.86rem] text-fg-dim transition-colors hover:bg-[color:var(--color-accent-glow)] hover:text-accent"
+                  >
+                    {t.nav.profile}
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      void logout();
+                    }}
+                    className="mono flex w-full items-center rounded-[6px] px-3 py-2 text-left text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:bg-[color:var(--color-accent-glow)] hover:text-accent"
+                  >
+                    {t.nav.signOut}
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <Link
