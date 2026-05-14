@@ -63,6 +63,6 @@ pub async fn test_notification_channel(
         .config
         .notification_secret()
         .ok_or_else(|| ApiError::internal("APP_NOTIFICATION_SECRET is required"))?;
-    notification_channels::send_test(&state.db, user.id, secret, channel_id).await?;
+    notification_channels::send_test(&state.db, user.id, secret, &state.config, channel_id).await?;
     Ok(Json(TestNotificationChannelResponse { ok: true }))
 }

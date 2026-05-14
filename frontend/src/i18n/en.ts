@@ -474,7 +474,7 @@ export const en = {
     continueGithub: "Continue with GitHub",
     continueDiscord: "Continue with Discord",
     privacy:
-      "No emails are sent, no marketing list. OAuth is the entire handshake — we learn your username and avatar, nothing more."
+      "No marketing list. Email is only used for account identity and notification channels you configure."
   },
   mcpGuide: {
     eyebrow: "MCP guide",

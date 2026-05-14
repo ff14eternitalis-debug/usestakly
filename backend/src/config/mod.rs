@@ -22,6 +22,12 @@ pub struct AppConfig {
     pub discord_client_secret: Option<String>,
     pub admin_api_token: Option<String>,
     pub github_token: Option<String>,
+    pub email_smtp_host: String,
+    pub email_smtp_port: u16,
+    pub email_smtp_username: Option<String>,
+    pub email_smtp_password: Option<String>,
+    pub email_from_address: String,
+    pub email_from_name: String,
     pub scheduler_enabled: bool,
     pub recompute_interval_secs: u64,
     pub digest_interval_secs: u64,
@@ -73,6 +79,19 @@ impl AppConfig {
         let discord_client_secret = optional_env("DISCORD_CLIENT_SECRET");
         let admin_api_token = optional_env("ADMIN_API_TOKEN");
         let github_token = optional_env("GITHUB_TOKEN");
+        let email_smtp_host =
+            env::var("APP_EMAIL_SMTP_HOST").unwrap_or_else(|_| "smtp-relay.brevo.com".to_string());
+        let email_smtp_port = env::var("APP_EMAIL_SMTP_PORT")
+            .unwrap_or_else(|_| "587".to_string())
+            .parse::<u16>()
+            .map_err(|_| anyhow!("APP_EMAIL_SMTP_PORT must be a valid u16"))?;
+        let email_smtp_username = optional_env("APP_EMAIL_SMTP_USERNAME");
+        let email_smtp_password =
+            optional_env("APP_EMAIL_SMTP_PASSWORD").or_else(|| optional_env("BREVO_SMTP_KEY"));
+        let email_from_address = env::var("APP_EMAIL_FROM_ADDRESS")
+            .unwrap_or_else(|_| "noreply@usestakly.com".to_string());
+        let email_from_name =
+            env::var("APP_EMAIL_FROM_NAME").unwrap_or_else(|_| "UseStakly".to_string());
         let scheduler_enabled = env::var("APP_SCHEDULER_ENABLED")
             .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
             .unwrap_or(false);
@@ -181,6 +200,12 @@ impl AppConfig {
             discord_client_secret,
             admin_api_token,
             github_token,
+            email_smtp_host,
+            email_smtp_port,
+            email_smtp_username,
+            email_smtp_password,
+            email_from_address,
+            email_from_name,
             scheduler_enabled,
             recompute_interval_secs,
             digest_interval_secs,
@@ -214,6 +239,10 @@ impl AppConfig {
 
     pub fn notification_secret(&self) -> Option<&str> {
         self.app_notification_secret.as_deref()
+    }
+
+    pub fn email_enabled(&self) -> bool {
+        self.email_smtp_username.is_some() && self.email_smtp_password.is_some()
     }
 
     pub fn github_callback_url(&self) -> String {
@@ -275,6 +304,12 @@ mod tests {
             discord_client_secret: None,
             admin_api_token: None,
             github_token: None,
+            email_smtp_host: "smtp-relay.brevo.com".to_string(),
+            email_smtp_port: 587,
+            email_smtp_username: None,
+            email_smtp_password: None,
+            email_from_address: "noreply@usestakly.com".to_string(),
+            email_from_name: "UseStakly".to_string(),
             scheduler_enabled: false,
             recompute_interval_secs: 86_400,
             digest_interval_secs: 1_800,
@@ -300,5 +335,53 @@ mod tests {
             optional_env_value(" client-id "),
             Some("client-id".to_string())
         );
+    }
+
+    #[test]
+    fn email_is_enabled_only_with_smtp_credentials() {
+        let mut config = AppConfig {
+            host: "127.0.0.1".to_string(),
+            port: 4000,
+            database_url: "postgres://localhost/test".to_string(),
+            dev_user_id: Uuid::nil(),
+            dev_user_email: "dev@example.com".to_string(),
+            dev_user_username: "dev".to_string(),
+            dev_user_display_name: None,
+            dev_user_avatar_url: None,
+            app_base_url: "http://127.0.0.1:4000".to_string(),
+            frontend_base_url: "http://localhost:5173".to_string(),
+            app_session_secret: None,
+            app_notification_secret: None,
+            github_client_id: None,
+            github_client_secret: None,
+            discord_client_id: None,
+            discord_client_secret: None,
+            admin_api_token: None,
+            github_token: None,
+            email_smtp_host: "smtp-relay.brevo.com".to_string(),
+            email_smtp_port: 587,
+            email_smtp_username: None,
+            email_smtp_password: None,
+            email_from_address: "noreply@usestakly.com".to_string(),
+            email_from_name: "UseStakly".to_string(),
+            scheduler_enabled: false,
+            recompute_interval_secs: 86_400,
+            digest_interval_secs: 1_800,
+            mcp_auth_failure_limit_per_minute: 30,
+            mcp_read_limit_per_minute: 120,
+            mcp_write_limit_per_hour: 60,
+            mcp_log_usage_cooldown_secs: 900,
+            mcp_negative_signal_window_hours: 24,
+            active_signal_min_reputation: 0.45,
+            active_signal_default_consensus: 2,
+            active_signal_severe_consensus: 3,
+            semantic_search_enabled: false,
+        };
+
+        assert!(!config.email_enabled());
+        config.email_smtp_username = Some("smtp-user".to_string());
+        assert!(!config.email_enabled());
+        config.email_smtp_password = Some("smtp-password".to_string());
+        assert!(config.email_enabled());
     }
 }

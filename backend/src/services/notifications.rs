@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     app::error::ApiError,
+    config::AppConfig,
     domain::watchlist::{Notification, NotificationKind},
     services::notification_channels,
 };
@@ -49,6 +50,7 @@ pub async fn detect_and_emit(
     external_artifact_id: Uuid,
     prev: Option<&ScoreSnapshot>,
     new: &ScoreSnapshot,
+    config: Option<&AppConfig>,
     notification_secret: Option<&str>,
 ) -> Result<usize, sqlx::Error> {
     let Some(prev) = prev else {
@@ -128,8 +130,16 @@ pub async fn detect_and_emit(
             inserted += 1;
 
             if let Some(secret) = notification_secret {
-                deliver_external_alert(db, *user_id, external_artifact_id, *kind, payload, secret)
-                    .await;
+                deliver_external_alert(
+                    db,
+                    *user_id,
+                    external_artifact_id,
+                    *kind,
+                    payload,
+                    config,
+                    secret,
+                )
+                .await;
             }
         }
     }
@@ -150,6 +160,7 @@ async fn deliver_external_alert(
     external_artifact_id: Uuid,
     kind: NotificationKind,
     payload: &serde_json::Value,
+    config: Option<&AppConfig>,
     secret: &str,
 ) {
     let row: Result<Option<ExternalAlertRow>, sqlx::Error> = sqlx::query_as(
@@ -184,14 +195,26 @@ async fn deliver_external_alert(
         _ => external_artifact_id.to_string(),
     };
 
+    let Some(config) = config else {
+        tracing::warn!(
+            user_id = %user_id,
+            artifact_id = %external_artifact_id,
+            "skipping external notification delivery because AppConfig is missing"
+        );
+        return;
+    };
+
     if let Err(err) = notification_channels::deliver_watch_alert(
         db,
         user_id,
-        secret,
-        &repo_full_name,
-        row.html_url.as_deref(),
-        kind,
-        payload,
+        notification_channels::WatchAlertDelivery {
+            secret,
+            config,
+            repo_full_name: &repo_full_name,
+            repo_url: row.html_url.as_deref(),
+            kind,
+            payload,
+        },
     )
     .await
     {

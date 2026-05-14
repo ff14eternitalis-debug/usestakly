@@ -478,7 +478,7 @@ export const fr: Dict = {
     continueGithub: "Continuer avec GitHub",
     continueDiscord: "Continuer avec Discord",
     privacy:
-      "Aucun e-mail envoyé, aucune liste marketing. OAuth est toute la poignée de main — on apprend ton pseudo et ton avatar, rien de plus."
+      "Aucune liste marketing. L'email sert seulement à l'identité du compte et aux canaux de notification que tu configures."
   },
   mcpGuide: {
     eyebrow: "Guide MCP",

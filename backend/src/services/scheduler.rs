@@ -77,13 +77,7 @@ async fn run_cycle(db: &PgPool, config: &AppConfig) {
 
 async fn run_digest_cycle(db: &PgPool, config: &AppConfig) {
     let window_minutes = i64::try_from(config.digest_interval_secs / 60).unwrap_or(30);
-    match notification_digest::run_due_digests(
-        db,
-        config.notification_secret(),
-        chrono::Utc::now(),
-        window_minutes,
-    )
-    .await
+    match notification_digest::run_due_digests(db, config, chrono::Utc::now(), window_minutes).await
     {
         Ok(delivered) => tracing::info!(delivered, "scheduler: digest cycle done"),
         Err(e) => tracing::warn!(error = ?e, "scheduler: digest cycle failed"),

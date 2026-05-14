@@ -4,6 +4,10 @@ use aes_gcm::{
 };
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Utc};
+use lettre::{
+    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor, message::Mailbox,
+    transport::smtp::authentication::Credentials,
+};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -12,7 +16,7 @@ use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 use validator::ValidateEmail;
 
-use crate::{app::error::ApiError, domain::watchlist::NotificationKind};
+use crate::{app::error::ApiError, config::AppConfig, domain::watchlist::NotificationKind};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -83,6 +87,7 @@ struct ChannelRow {
 struct ChannelSecretRow {
     id: Uuid,
     channel_type: String,
+    destination: String,
     secret_ciphertext: Option<String>,
 }
 
@@ -95,7 +100,18 @@ struct ExistingChannelSecretRow {
 #[derive(FromRow)]
 struct DeliveryChannelRow {
     id: Uuid,
+    channel_type: String,
+    destination: String,
     secret_ciphertext: Option<String>,
+}
+
+pub struct WatchAlertDelivery<'a> {
+    pub secret: &'a str,
+    pub config: &'a AppConfig,
+    pub repo_full_name: &'a str,
+    pub repo_url: Option<&'a str>,
+    pub kind: NotificationKind,
+    pub payload: &'a serde_json::Value,
 }
 
 impl TryFrom<ChannelRow> for NotificationChannelSummary {
@@ -259,11 +275,12 @@ pub async fn send_test(
     db: &PgPool,
     user_id: Uuid,
     secret: &str,
+    config: &AppConfig,
     channel_id: Uuid,
 ) -> Result<(), ApiError> {
     let row: ChannelSecretRow = sqlx::query_as(
         r#"
-        SELECT id, channel_type, secret_ciphertext
+        SELECT id, channel_type, destination, secret_ciphertext
         FROM notification_channels
         WHERE id = $1 AND user_id = $2 AND enabled = TRUE
         "#,
@@ -274,21 +291,23 @@ pub async fn send_test(
     .await?
     .ok_or_else(|| ApiError::not_found("Notification channel not found"))?;
 
-    if NotificationChannelType::from_db(row.channel_type)?
-        != NotificationChannelType::DiscordWebhook
-    {
-        return Err(ApiError::bad_request(
-            "test send is only available for Discord webhooks",
-        ));
-    }
+    let result = match NotificationChannelType::from_db(row.channel_type)? {
+        NotificationChannelType::Email => post_email_test_message(config, &row.destination)
+            .await
+            .map_err(|err| ApiError::bad_request(err.to_string())),
+        NotificationChannelType::DiscordWebhook => {
+            let ciphertext = row
+                .secret_ciphertext
+                .ok_or_else(|| ApiError::internal("missing webhook secret"))?;
+            let webhook_url = decrypt_webhook_url(secret, &ciphertext)
+                .map_err(|_| ApiError::internal("failed to decrypt webhook URL"))?;
+            post_discord_test_message(&webhook_url)
+                .await
+                .map_err(|err| ApiError::bad_request(err.to_string()))
+        }
+    };
 
-    let ciphertext = row
-        .secret_ciphertext
-        .ok_or_else(|| ApiError::internal("missing webhook secret"))?;
-    let webhook_url = decrypt_webhook_url(secret, &ciphertext)
-        .map_err(|_| ApiError::internal("failed to decrypt webhook URL"))?;
-
-    match post_discord_test_message(&webhook_url).await {
+    match result {
         Ok(()) => {
             sqlx::query(
                 "UPDATE notification_channels SET last_tested_at = NOW(), last_error = NULL, updated_at = NOW() WHERE id = $1",
@@ -299,15 +318,14 @@ pub async fn send_test(
             Ok(())
         }
         Err(err) => {
-            let message = err.to_string();
             sqlx::query(
                 "UPDATE notification_channels SET last_error = $2, updated_at = NOW() WHERE id = $1",
             )
             .bind(row.id)
-            .bind(message.chars().take(240).collect::<String>())
+            .bind(err.message.chars().take(240).collect::<String>())
             .execute(db)
             .await?;
-            Err(ApiError::bad_request(message))
+            Err(err)
         }
     }
 }
@@ -315,18 +333,14 @@ pub async fn send_test(
 pub async fn deliver_watch_alert(
     db: &PgPool,
     user_id: Uuid,
-    secret: &str,
-    repo_full_name: &str,
-    repo_url: Option<&str>,
-    kind: NotificationKind,
-    payload: &serde_json::Value,
+    delivery: WatchAlertDelivery<'_>,
 ) -> Result<usize, ApiError> {
     let rows: Vec<DeliveryChannelRow> = sqlx::query_as(
         r#"
-        SELECT id, secret_ciphertext
+        SELECT id, channel_type, destination, secret_ciphertext
         FROM notification_channels
         WHERE user_id = $1
-          AND channel_type = 'discord_webhook'
+          AND channel_type IN ('discord_webhook', 'email')
           AND enabled = TRUE
           AND critical_alerts_enabled = TRUE
         "#,
@@ -337,31 +351,71 @@ pub async fn deliver_watch_alert(
 
     let mut delivered = 0usize;
     for row in rows {
-        let Some(ciphertext) = row.secret_ciphertext else {
-            continue;
-        };
-        let webhook_url = match decrypt_webhook_url(secret, &ciphertext) {
-            Ok(url) => url,
-            Err(err) => {
-                update_delivery_error(db, row.id, &format!("failed to decrypt webhook URL: {err}"))
-                    .await?;
-                continue;
-            }
-        };
-
-        match post_discord_watch_alert(&webhook_url, repo_full_name, repo_url, kind, payload).await
-        {
-            Ok(()) => {
-                sqlx::query(
-                    "UPDATE notification_channels SET last_error = NULL, updated_at = NOW() WHERE id = $1",
+        match NotificationChannelType::from_db(row.channel_type.clone())? {
+            NotificationChannelType::Email => {
+                match post_email_watch_alert(
+                    delivery.config,
+                    &row.destination,
+                    delivery.repo_full_name,
+                    delivery.repo_url,
+                    delivery.kind,
+                    delivery.payload,
                 )
-                .bind(row.id)
-                .execute(db)
-                .await?;
-                delivered += 1;
+                .await
+                {
+                    Ok(()) => {
+                        sqlx::query(
+                            "UPDATE notification_channels SET last_error = NULL, updated_at = NOW() WHERE id = $1",
+                        )
+                        .bind(row.id)
+                        .execute(db)
+                        .await?;
+                        delivered += 1;
+                    }
+                    Err(err) => {
+                        update_delivery_error(db, row.id, &err.to_string()).await?;
+                    }
+                }
             }
-            Err(err) => {
-                update_delivery_error(db, row.id, &err.to_string()).await?;
+            NotificationChannelType::DiscordWebhook => {
+                let Some(ciphertext) = row.secret_ciphertext else {
+                    continue;
+                };
+                let webhook_url = match decrypt_webhook_url(delivery.secret, &ciphertext) {
+                    Ok(url) => url,
+                    Err(err) => {
+                        update_delivery_error(
+                            db,
+                            row.id,
+                            &format!("failed to decrypt webhook URL: {err}"),
+                        )
+                        .await?;
+                        continue;
+                    }
+                };
+
+                match post_discord_watch_alert(
+                    &webhook_url,
+                    delivery.repo_full_name,
+                    delivery.repo_url,
+                    delivery.kind,
+                    delivery.payload,
+                )
+                .await
+                {
+                    Ok(()) => {
+                        sqlx::query(
+                            "UPDATE notification_channels SET last_error = NULL, updated_at = NOW() WHERE id = $1",
+                        )
+                        .bind(row.id)
+                        .execute(db)
+                        .await?;
+                        delivered += 1;
+                    }
+                    Err(err) => {
+                        update_delivery_error(db, row.id, &err.to_string()).await?;
+                    }
+                }
             }
         }
     }
@@ -487,6 +541,16 @@ async fn post_discord_test_message(webhook_url: &str) -> Result<(), anyhow::Erro
     Ok(())
 }
 
+async fn post_email_test_message(config: &AppConfig, to: &str) -> Result<(), anyhow::Error> {
+    send_email(
+        config,
+        to,
+        "UseStakly notification channel connected",
+        "UseStakly can now send critical watch alerts to this email address.",
+    )
+    .await
+}
+
 async fn post_discord_watch_alert(
     webhook_url: &str,
     repo_full_name: &str,
@@ -519,6 +583,69 @@ async fn post_discord_watch_alert(
     if !response.status().is_success() {
         anyhow::bail!("Discord webhook returned HTTP {}", response.status());
     }
+    Ok(())
+}
+
+async fn post_email_watch_alert(
+    config: &AppConfig,
+    to: &str,
+    repo_full_name: &str,
+    repo_url: Option<&str>,
+    kind: NotificationKind,
+    payload: &serde_json::Value,
+) -> Result<(), anyhow::Error> {
+    let message = watch_alert_message(repo_full_name, kind, payload);
+    let mut body = format!("{}\n\n{}\n", message.content, message.description);
+    if let Some(url) = repo_url {
+        body.push_str(&format!("\nRepository: {url}\n"));
+    }
+    for field in &message.fields {
+        let name = field
+            .get("name")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("Detail");
+        let value = field
+            .get("value")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
+        if !value.is_empty() {
+            body.push_str(&format!("\n{name}: {value}\n"));
+        }
+    }
+
+    send_email(config, to, &format!("[UseStakly] {}", message.title), &body).await
+}
+
+pub(crate) async fn send_email(
+    config: &AppConfig,
+    to: &str,
+    subject: &str,
+    body: &str,
+) -> Result<(), anyhow::Error> {
+    let (Some(username), Some(password)) = (
+        config.email_smtp_username.as_deref(),
+        config.email_smtp_password.as_deref(),
+    ) else {
+        anyhow::bail!("email SMTP is not configured");
+    };
+
+    let from: Mailbox = Mailbox::new(
+        Some(config.email_from_name.clone()),
+        config.email_from_address.parse()?,
+    );
+    let to: Mailbox = to.parse()?;
+    let email = Message::builder()
+        .from(from)
+        .to(to)
+        .subject(subject)
+        .body(body.to_string())?;
+    let creds = Credentials::new(username.to_string(), password.to_string());
+    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(&config.email_smtp_host)?
+        .port(config.email_smtp_port)
+        .credentials(creds)
+        .build();
+
+    mailer.send(email).await?;
     Ok(())
 }
 

@@ -132,7 +132,7 @@ export function NotificationChannelsPanel({
             {emailChannel ? (
               <ChannelMeta
                 channel={emailChannel}
-                testable={false}
+                testable
                 deleting={deleting}
                 testingId={testingId}
                 onDelete={onDelete}

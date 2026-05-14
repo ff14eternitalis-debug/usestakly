@@ -265,6 +265,7 @@ async fn recompute_externals_with_config(
             external.id,
             prev.as_ref(),
             &new_snapshot,
+            config,
             notification_secret,
         )
         .await

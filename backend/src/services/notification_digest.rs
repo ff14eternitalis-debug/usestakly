@@ -4,7 +4,11 @@ use serde_json::json;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use crate::{app::error::ApiError, services::notification_channels::decrypt_webhook_url};
+use crate::{
+    app::error::ApiError,
+    config::AppConfig,
+    services::notification_channels::{decrypt_webhook_url, send_email},
+};
 
 pub fn digest_time_for_preset(preset: &str) -> Result<&'static str, ApiError> {
     match preset {
@@ -59,6 +63,8 @@ fn parse_hhmm_minutes(value: &str) -> Result<i64, ApiError> {
 struct DueDigestChannelRow {
     user_id: Uuid,
     channel_id: Uuid,
+    channel_type: String,
+    destination: String,
     secret_ciphertext: Option<String>,
     digest_time_local: String,
     timezone: String,
@@ -96,20 +102,17 @@ impl DigestContent {
 
 pub async fn run_due_digests(
     db: &PgPool,
-    notification_secret: Option<&str>,
+    config: &AppConfig,
     now: DateTime<Utc>,
     window_minutes: i64,
 ) -> Result<usize, ApiError> {
-    let Some(secret) = notification_secret else {
-        tracing::warn!("digest scheduler: APP_NOTIFICATION_SECRET missing");
-        return Ok(0);
-    };
-
     let rows: Vec<DueDigestChannelRow> = sqlx::query_as(
         r#"
         SELECT
           c.user_id,
           c.id AS channel_id,
+          c.channel_type,
+          c.destination,
           c.secret_ciphertext,
           u.digest_time_local,
           u.timezone
@@ -117,7 +120,7 @@ pub async fn run_due_digests(
         JOIN users u ON u.id = c.user_id
         WHERE c.enabled = TRUE
           AND c.daily_digest_enabled = TRUE
-          AND c.channel_type = 'discord_webhook'
+          AND c.channel_type IN ('discord_webhook', 'email')
         "#,
     )
     .fetch_all(db)
@@ -141,15 +144,28 @@ pub async fn run_due_digests(
             continue;
         }
 
-        let result = if let Some(ciphertext) = row.secret_ciphertext.as_deref() {
-            match decrypt_webhook_url(secret, ciphertext) {
-                Ok(webhook_url) => post_discord_digest(&webhook_url, &content).await,
-                Err(err) => Err(ApiError::internal(format!(
-                    "failed to decrypt webhook URL: {err}"
-                ))),
+        let result = match row.channel_type.as_str() {
+            "discord_webhook" => {
+                let Some(secret) = config.notification_secret() else {
+                    tracing::warn!("digest scheduler: APP_NOTIFICATION_SECRET missing");
+                    mark_digest_failed(db, delivery_id, "APP_NOTIFICATION_SECRET missing").await?;
+                    update_channel_error(db, row.channel_id, "APP_NOTIFICATION_SECRET missing")
+                        .await?;
+                    continue;
+                };
+                if let Some(ciphertext) = row.secret_ciphertext.as_deref() {
+                    match decrypt_webhook_url(secret, ciphertext) {
+                        Ok(webhook_url) => post_discord_digest(&webhook_url, &content).await,
+                        Err(err) => Err(ApiError::internal(format!(
+                            "failed to decrypt webhook URL: {err}"
+                        ))),
+                    }
+                } else {
+                    Err(ApiError::internal("missing webhook secret"))
+                }
             }
-        } else {
-            Err(ApiError::internal("missing webhook secret"))
+            "email" => post_email_digest(config, &row.destination, &content).await,
+            _ => Err(ApiError::internal("unknown notification channel type")),
         };
 
         match result {
@@ -270,6 +286,35 @@ async fn post_discord_digest(webhook_url: &str, content: &DigestContent) -> Resu
         )));
     }
     Ok(())
+}
+
+async fn post_email_digest(
+    config: &AppConfig,
+    to: &str,
+    content: &DigestContent,
+) -> Result<(), ApiError> {
+    let body = digest_email_body(content);
+    send_email(config, to, "UseStakly daily watch digest", &body)
+        .await
+        .map_err(|err| ApiError::bad_request(err.to_string()))
+}
+
+fn digest_email_body(content: &DigestContent) -> String {
+    let mut sections = Vec::new();
+    for (name, items) in [
+        ("Repos to watch", &content.abandonment_up),
+        ("Scores down", &content.score_drops),
+        ("New flags", &content.new_flags),
+        ("New radar candidates", &content.radar_candidates),
+    ] {
+        if !items.is_empty() {
+            sections.push(format!(
+                "{name}\n{}",
+                items.iter().take(5).cloned().collect::<Vec<_>>().join("\n")
+            ));
+        }
+    }
+    format!("UseStakly daily watch digest.\n\n{}", sections.join("\n\n"))
 }
 
 fn digest_fields(content: &DigestContent) -> Vec<serde_json::Value> {

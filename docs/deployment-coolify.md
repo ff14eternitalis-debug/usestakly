@@ -83,6 +83,12 @@ APP_BASE_URL=https://api.usestakly.com
 FRONTEND_BASE_URL=https://usestakly.com
 APP_SESSION_SECRET=
 APP_NOTIFICATION_SECRET=
+APP_EMAIL_SMTP_HOST=smtp-relay.brevo.com
+APP_EMAIL_SMTP_PORT=587
+APP_EMAIL_SMTP_USERNAME=
+APP_EMAIL_SMTP_PASSWORD=
+APP_EMAIL_FROM_ADDRESS=noreply@usestakly.com
+APP_EMAIL_FROM_NAME=UseStakly
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 DISCORD_CLIENT_ID=
@@ -100,7 +106,8 @@ L'app est auto-hébergée sur VPS via Coolify. L'auth est implémentée directem
 - OAuth GitHub + Discord callbacks servis par le backend
 - session persistée dans un cookie JWT signé avec `APP_SESSION_SECRET`
 - destinations de notification sensibles (ex: Discord webhook) chiffrées avec `APP_NOTIFICATION_SECRET`, séparé du secret de session
-- scheduler opt-in : refresh GitHub quotidien via `APP_RECOMPUTE_INTERVAL_SECS`, digest Discord vérifié toutes les 30 min via `APP_DIGEST_INTERVAL_SECS`
+- alertes email via Brevo SMTP si `APP_EMAIL_SMTP_USERNAME` et `APP_EMAIL_SMTP_PASSWORD` sont configurés ; l'expéditeur vérifié est `UseStakly <noreply@usestakly.com>`
+- scheduler opt-in : refresh GitHub quotidien via `APP_RECOMPUTE_INTERVAL_SECS`, digests email/Discord vérifiés toutes les 30 min via `APP_DIGEST_INTERVAL_SECS`
 - aucune dépendance à un SaaS d'auth (Supabase, Auth0, Clerk...) — pas de valeur ajoutée sur un VPS auto-hébergé
 
 ---
