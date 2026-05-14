@@ -1,5 +1,6 @@
 pub mod account_preferences;
 pub mod agent_tokens;
+pub mod email_templates;
 pub mod ingestion;
 pub mod notification_channels;
 pub mod notification_digest;

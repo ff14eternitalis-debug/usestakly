@@ -7,7 +7,10 @@ use uuid::Uuid;
 use crate::{
     app::error::ApiError,
     config::AppConfig,
-    services::notification_channels::{decrypt_webhook_url, send_email},
+    services::{
+        email_templates::{EmailSection, render_digest_email},
+        notification_channels::{decrypt_webhook_url, send_email},
+    },
 };
 
 pub fn digest_time_for_preset(preset: &str) -> Result<&'static str, ApiError> {
@@ -293,28 +296,26 @@ async fn post_email_digest(
     to: &str,
     content: &DigestContent,
 ) -> Result<(), ApiError> {
-    let body = digest_email_body(content);
-    send_email(config, to, "UseStakly daily watch digest", &body)
+    let email = render_digest_email(&digest_email_sections(content));
+    send_email(config, to, &email)
         .await
         .map_err(|err| ApiError::bad_request(err.to_string()))
 }
 
-fn digest_email_body(content: &DigestContent) -> String {
-    let mut sections = Vec::new();
-    for (name, items) in [
+fn digest_email_sections(content: &DigestContent) -> Vec<EmailSection> {
+    [
         ("Repos to watch", &content.abandonment_up),
         ("Scores down", &content.score_drops),
         ("New flags", &content.new_flags),
         ("New radar candidates", &content.radar_candidates),
-    ] {
-        if !items.is_empty() {
-            sections.push(format!(
-                "{name}\n{}",
-                items.iter().take(5).cloned().collect::<Vec<_>>().join("\n")
-            ));
-        }
-    }
-    format!("UseStakly daily watch digest.\n\n{}", sections.join("\n\n"))
+    ]
+    .into_iter()
+    .filter(|(_, items)| !items.is_empty())
+    .map(|(title, items)| EmailSection {
+        title: title.to_string(),
+        items: items.iter().take(5).cloned().collect(),
+    })
+    .collect()
 }
 
 fn digest_fields(content: &DigestContent) -> Vec<serde_json::Value> {

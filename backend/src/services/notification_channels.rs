@@ -5,7 +5,9 @@ use aes_gcm::{
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Utc};
 use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor, message::Mailbox,
+    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    message::Mailbox,
+    message::{MultiPart, SinglePart},
     transport::smtp::authentication::Credentials,
 };
 use reqwest::Url;
@@ -16,7 +18,14 @@ use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 use validator::ValidateEmail;
 
-use crate::{app::error::ApiError, config::AppConfig, domain::watchlist::NotificationKind};
+use crate::{
+    app::error::ApiError,
+    config::AppConfig,
+    domain::watchlist::NotificationKind,
+    services::email_templates::{
+        EmailField, EmailTemplate, render_test_email, render_watch_alert_email,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -542,13 +551,7 @@ async fn post_discord_test_message(webhook_url: &str) -> Result<(), anyhow::Erro
 }
 
 async fn post_email_test_message(config: &AppConfig, to: &str) -> Result<(), anyhow::Error> {
-    send_email(
-        config,
-        to,
-        "UseStakly notification channel connected",
-        "UseStakly can now send critical watch alerts to this email address.",
-    )
-    .await
+    send_email(config, to, &render_test_email()).await
 }
 
 async fn post_discord_watch_alert(
@@ -595,32 +598,40 @@ async fn post_email_watch_alert(
     payload: &serde_json::Value,
 ) -> Result<(), anyhow::Error> {
     let message = watch_alert_message(repo_full_name, kind, payload);
-    let mut body = format!("{}\n\n{}\n", message.content, message.description);
-    if let Some(url) = repo_url {
-        body.push_str(&format!("\nRepository: {url}\n"));
-    }
-    for field in &message.fields {
-        let name = field
-            .get("name")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("Detail");
-        let value = field
-            .get("value")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("");
-        if !value.is_empty() {
-            body.push_str(&format!("\n{name}: {value}\n"));
-        }
-    }
+    let fields = message
+        .fields
+        .iter()
+        .filter_map(|field| {
+            let name = field
+                .get("name")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("Detail");
+            let value = field
+                .get("value")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("");
+            (!value.is_empty()).then(|| EmailField {
+                name: name.to_string(),
+                value: value.to_string(),
+            })
+        })
+        .collect::<Vec<_>>();
+    let email = render_watch_alert_email(
+        &format!("[UseStakly] {}", message.title),
+        &message.title,
+        &message.content,
+        &message.description,
+        repo_url,
+        &fields,
+    );
 
-    send_email(config, to, &format!("[UseStakly] {}", message.title), &body).await
+    send_email(config, to, &email).await
 }
 
 pub(crate) async fn send_email(
     config: &AppConfig,
     to: &str,
-    subject: &str,
-    body: &str,
+    email: &EmailTemplate,
 ) -> Result<(), anyhow::Error> {
     let (Some(username), Some(password)) = (
         config.email_smtp_username.as_deref(),
@@ -637,8 +648,12 @@ pub(crate) async fn send_email(
     let email = Message::builder()
         .from(from)
         .to(to)
-        .subject(subject)
-        .body(body.to_string())?;
+        .subject(&email.subject)
+        .multipart(
+            MultiPart::alternative()
+                .singlepart(SinglePart::plain(email.text.clone()))
+                .singlepart(SinglePart::html(email.html.clone())),
+        )?;
     let creds = Credentials::new(username.to_string(), password.to_string());
     let transport = if config.email_smtp_port == 465 {
         AsyncSmtpTransport::<Tokio1Executor>::relay(&config.email_smtp_host)?
