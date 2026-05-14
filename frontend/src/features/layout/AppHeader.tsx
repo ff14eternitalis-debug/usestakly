@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
@@ -13,6 +13,7 @@ import { logout } from "../auth/hooks";
 
 export function AppHeader() {
   const t = useT();
+  const navigate = useNavigate();
   const { status, user } = useAuthStore();
   const isAuthed = status === "authenticated";
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -59,6 +60,12 @@ export function AppHeader() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [profileMenuOpen]);
+
+  async function handleSignOut() {
+    setProfileMenuOpen(false);
+    await logout();
+    await navigate({ to: "/" });
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-[color:var(--color-bg)]/80 backdrop-blur-xl backdrop-saturate-150">
@@ -167,8 +174,7 @@ export function AppHeader() {
                     type="button"
                     role="menuitem"
                     onClick={() => {
-                      setProfileMenuOpen(false);
-                      void logout();
+                      void handleSignOut();
                     }}
                     className="mono flex w-full items-center rounded-[6px] px-3 py-2 text-left text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted transition-colors hover:bg-[color:var(--color-accent-glow)] hover:text-accent"
                   >
