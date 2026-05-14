@@ -640,7 +640,12 @@ pub(crate) async fn send_email(
         .subject(subject)
         .body(body.to_string())?;
     let creds = Credentials::new(username.to_string(), password.to_string());
-    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(&config.email_smtp_host)?
+    let transport = if config.email_smtp_port == 465 {
+        AsyncSmtpTransport::<Tokio1Executor>::relay(&config.email_smtp_host)?
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&config.email_smtp_host)?
+    };
+    let mailer = transport
         .port(config.email_smtp_port)
         .credentials(creds)
         .build();
