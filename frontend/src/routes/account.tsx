@@ -26,6 +26,10 @@ import { AgentTokensPanel } from "../features/account/components/AgentTokensPane
 import { NotificationChannelsPanel } from "../features/account/components/NotificationChannelsPanel";
 import { ReputationCard } from "../features/account/components/ReputationCard";
 
+function detectTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
 export function AccountPage() {
   const t = useT();
   const queryClient = useQueryClient();
@@ -43,9 +47,6 @@ export function AccountPage() {
   const [webhookCritical, setWebhookCritical] = useState(true);
   const [webhookDigest, setWebhookDigest] = useState(false);
   const [digestTimePreset, setDigestTimePreset] = useState<DigestTimePreset>("morning");
-  const [timezone, setTimezone] = useState(
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
-  );
   const [channelMessage, setChannelMessage] = useState<string | null>(null);
 
   const summary = useQuery({
@@ -153,16 +154,14 @@ export function AccountPage() {
   const saveNotificationPreferences = useMutation({
     mutationFn: (next?: {
       digestTimePreset?: DigestTimePreset;
-      timezone?: string;
     }) =>
       updateNotificationPreferences({
         digestTimePreset: next?.digestTimePreset ?? digestTimePreset,
-        timezone: next?.timezone ?? timezone,
+        timezone: detectTimezone(),
         emailLocale: locale
       }),
     onSuccess: async (preferences) => {
       setDigestTimePreset(preferences.digestTimePreset);
-      setTimezone(preferences.timezone);
       setChannelMessage(t.account.notificationPreferencesSaved);
       await queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
     }
@@ -217,7 +216,6 @@ export function AccountPage() {
   useEffect(() => {
     if (!notificationPreferences.data) return;
     setDigestTimePreset(notificationPreferences.data.digestTimePreset);
-    setTimezone(notificationPreferences.data.timezone);
   }, [notificationPreferences.data]);
 
   async function copyToken(): Promise<void> {
@@ -307,7 +305,6 @@ export function AccountPage() {
         webhookCritical={webhookCritical}
         webhookDigest={webhookDigest}
         digestTimePreset={digestTimePreset}
-        timezone={timezone}
         savingEmail={saveEmailChannel.isPending}
         savingWebhook={saveWebhookChannel.isPending}
         savingPreferences={saveNotificationPreferences.isPending}
@@ -322,14 +319,10 @@ export function AccountPage() {
         onWebhookCriticalChange={setWebhookCritical}
         onWebhookDigestChange={setWebhookDigest}
         onDigestTimePresetChange={setDigestTimePreset}
-        onTimezoneChange={(value) => {
-          setTimezone(value);
-          saveNotificationPreferences.mutate({ timezone: value });
-        }}
         onSaveEmail={() => saveEmailChannel.mutate()}
         onSaveWebhook={() => saveWebhookChannel.mutate()}
         onSavePreferences={() =>
-          saveNotificationPreferences.mutate({ digestTimePreset, timezone })
+          saveNotificationPreferences.mutate({ digestTimePreset })
         }
         onDelete={(id) => deleteChannel.mutate(id)}
         onTest={(id) => testChannel.mutate(id)}

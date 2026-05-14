@@ -3,26 +3,6 @@ import { useT } from "../../../i18n";
 import { formatRelative } from "../../../lib/format";
 import type { DigestTimePreset, NotificationChannelSummary } from "../../../lib/types";
 
-const TIMEZONE_OPTIONS = [
-  "UTC",
-  "Europe/Paris",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Madrid",
-  "Europe/Rome",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Toronto",
-  "America/Sao_Paulo",
-  "Africa/Casablanca",
-  "Asia/Dubai",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Australia/Sydney"
-] as const;
-
 type NotificationChannelsPanelProps = {
   loading: boolean;
   channels: NotificationChannelSummary[];
@@ -33,7 +13,6 @@ type NotificationChannelsPanelProps = {
   webhookCritical: boolean;
   webhookDigest: boolean;
   digestTimePreset: DigestTimePreset;
-  timezone: string;
   savingEmail: boolean;
   savingWebhook: boolean;
   savingPreferences: boolean;
@@ -48,7 +27,6 @@ type NotificationChannelsPanelProps = {
   onWebhookCriticalChange(value: boolean): void;
   onWebhookDigestChange(value: boolean): void;
   onDigestTimePresetChange(value: DigestTimePreset): void;
-  onTimezoneChange(value: string): void;
   onSaveEmail(): void;
   onSaveWebhook(): void;
   onSavePreferences(): void;
@@ -66,7 +44,6 @@ export function NotificationChannelsPanel({
   webhookCritical,
   webhookDigest,
   digestTimePreset,
-  timezone,
   savingEmail,
   savingWebhook,
   savingPreferences,
@@ -81,7 +58,6 @@ export function NotificationChannelsPanel({
   onWebhookCriticalChange,
   onWebhookDigestChange,
   onDigestTimePresetChange,
-  onTimezoneChange,
   onSaveEmail,
   onSaveWebhook,
   onSavePreferences,
@@ -93,11 +69,6 @@ export function NotificationChannelsPanel({
   const webhookChannel = channels.find(
     (channel) => channel.channelType === "discord_webhook"
   );
-  const timezoneOptions = TIMEZONE_OPTIONS.includes(
-    timezone as (typeof TIMEZONE_OPTIONS)[number]
-  )
-    ? TIMEZONE_OPTIONS
-    : [timezone, ...TIMEZONE_OPTIONS];
 
   return (
     <section className="surface grid gap-5 p-5">
@@ -233,7 +204,7 @@ export function NotificationChannelsPanel({
         </div>
       )}
 
-      <div className="grid gap-4 rounded-[8px] border border-line bg-bg-subtle p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+      <div className="grid gap-4 rounded-[8px] border border-line bg-bg-subtle p-4 md:grid-cols-[1fr_auto] md:items-end">
         <label className="grid gap-1.5">
           <span className="kicker">{t.account.digestTimeLabel}</span>
           <select
@@ -249,25 +220,11 @@ export function NotificationChannelsPanel({
             <option value="night">{t.account.digestNight}</option>
           </select>
         </label>
-        <label className="grid gap-1.5">
-          <span className="kicker">{t.account.timezoneLabel}</span>
-          <select
-            className="input"
-            value={timezone}
-            onChange={(event) => onTimezoneChange(event.target.value)}
-          >
-            {timezoneOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
         <Button
           type="button"
           variant="outline"
           onClick={onSavePreferences}
-          disabled={savingPreferences || !timezone.trim()}
+          disabled={savingPreferences}
         >
           {savingPreferences
             ? t.account.savingChannel
