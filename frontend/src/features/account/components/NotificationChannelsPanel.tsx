@@ -207,18 +207,36 @@ export function NotificationChannelsPanel({
       <div className="grid gap-4 rounded-[8px] border border-line bg-bg-subtle p-4 md:grid-cols-[1fr_auto] md:items-end">
         <label className="grid gap-1.5">
           <span className="kicker">{t.account.digestTimeLabel}</span>
-          <select
-            className="input"
-            value={digestTimePreset}
-            onChange={(event) =>
-              onDigestTimePresetChange(event.target.value as DigestTimePreset)
-            }
+          <div
+            className="grid grid-cols-2 gap-1 rounded-[8px] border border-line bg-bg p-1 sm:grid-cols-4"
+            role="group"
+            aria-label={t.account.digestTimeLabel}
           >
-            <option value="morning">{t.account.digestMorning}</option>
-            <option value="noon">{t.account.digestNoon}</option>
-            <option value="evening">{t.account.digestEvening}</option>
-            <option value="night">{t.account.digestNight}</option>
-          </select>
+            <DigestTimeButton
+              value="morning"
+              current={digestTimePreset}
+              label={t.account.digestMorning}
+              onSelect={onDigestTimePresetChange}
+            />
+            <DigestTimeButton
+              value="noon"
+              current={digestTimePreset}
+              label={t.account.digestNoon}
+              onSelect={onDigestTimePresetChange}
+            />
+            <DigestTimeButton
+              value="evening"
+              current={digestTimePreset}
+              label={t.account.digestEvening}
+              onSelect={onDigestTimePresetChange}
+            />
+            <DigestTimeButton
+              value="night"
+              current={digestTimePreset}
+              label={t.account.digestNight}
+              onSelect={onDigestTimePresetChange}
+            />
+          </div>
         </label>
         <Button
           type="button"
@@ -239,6 +257,34 @@ export function NotificationChannelsPanel({
         </p>
       ) : null}
     </section>
+  );
+}
+
+function DigestTimeButton({
+  value,
+  current,
+  label,
+  onSelect
+}: {
+  value: DigestTimePreset;
+  current: DigestTimePreset;
+  label: string;
+  onSelect(value: DigestTimePreset): void;
+}) {
+  const selected = value === current;
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onSelect(value)}
+      className={`min-h-10 rounded-[6px] px-3 text-center text-[0.84rem] font-medium transition ${
+        selected
+          ? "bg-accent text-bg"
+          : "text-fg-dim hover:bg-surface hover:text-fg"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
