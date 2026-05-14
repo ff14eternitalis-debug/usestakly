@@ -3,6 +3,26 @@ import { useT } from "../../../i18n";
 import { formatRelative } from "../../../lib/format";
 import type { DigestTimePreset, NotificationChannelSummary } from "../../../lib/types";
 
+const TIMEZONE_OPTIONS = [
+  "UTC",
+  "Europe/Paris",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Sao_Paulo",
+  "Africa/Casablanca",
+  "Asia/Dubai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney"
+] as const;
+
 type NotificationChannelsPanelProps = {
   loading: boolean;
   channels: NotificationChannelSummary[];
@@ -73,6 +93,11 @@ export function NotificationChannelsPanel({
   const webhookChannel = channels.find(
     (channel) => channel.channelType === "discord_webhook"
   );
+  const timezoneOptions = TIMEZONE_OPTIONS.includes(
+    timezone as (typeof TIMEZONE_OPTIONS)[number]
+  )
+    ? TIMEZONE_OPTIONS
+    : [timezone, ...TIMEZONE_OPTIONS];
 
   return (
     <section className="surface grid gap-5 p-5">
@@ -226,12 +251,17 @@ export function NotificationChannelsPanel({
         </label>
         <label className="grid gap-1.5">
           <span className="kicker">{t.account.timezoneLabel}</span>
-          <input
+          <select
             className="input"
             value={timezone}
             onChange={(event) => onTimezoneChange(event.target.value)}
-            placeholder="Europe/Paris"
-          />
+          >
+            {timezoneOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <Button
           type="button"

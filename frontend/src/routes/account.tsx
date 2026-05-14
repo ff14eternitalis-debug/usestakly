@@ -157,7 +157,9 @@ export function AccountPage() {
         timezone,
         emailLocale: locale
       }),
-    onSuccess: async () => {
+    onSuccess: async (preferences) => {
+      setDigestTimePreset(preferences.digestTimePreset);
+      setTimezone(preferences.timezone);
       setChannelMessage(t.account.notificationPreferencesSaved);
       await queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
     }
