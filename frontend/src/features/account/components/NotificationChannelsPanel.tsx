@@ -277,9 +277,10 @@ function DigestTimeButton({
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(value)}
+      style={selected ? { color: "#08090b" } : undefined}
       className={`min-h-10 rounded-[6px] px-3 text-center text-[0.84rem] font-medium transition ${
         selected
-          ? "bg-accent text-[#08090b]"
+          ? "bg-accent"
           : "text-fg-dim hover:bg-surface hover:text-fg"
       }`}
     >
