@@ -318,7 +318,10 @@ export function AccountPage() {
         onEmailDigestChange={setEmailDigest}
         onWebhookCriticalChange={setWebhookCritical}
         onWebhookDigestChange={setWebhookDigest}
-        onDigestTimePresetChange={setDigestTimePreset}
+        onDigestTimePresetChange={(value) => {
+          setDigestTimePreset(value);
+          saveNotificationPreferences.mutate({ digestTimePreset: value });
+        }}
         onSaveEmail={() => saveEmailChannel.mutate()}
         onSaveWebhook={() => saveWebhookChannel.mutate()}
         onSavePreferences={() =>
