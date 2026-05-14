@@ -175,6 +175,7 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
                 .allow_methods([
                     Method::GET,
                     Method::POST,
+                    Method::PUT,
                     Method::PATCH,
                     Method::DELETE,
                     Method::OPTIONS,

@@ -279,7 +279,7 @@ function DigestTimeButton({
       onClick={() => onSelect(value)}
       className={`min-h-10 rounded-[6px] px-3 text-center text-[0.84rem] font-medium transition ${
         selected
-          ? "bg-accent text-bg"
+          ? "bg-accent text-[#08090b]"
           : "text-fg-dim hover:bg-surface hover:text-fg"
       }`}
     >
