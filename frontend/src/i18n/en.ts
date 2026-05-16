@@ -403,7 +403,47 @@ export const en = {
     entriesPlural: "entries",
     noSignals: "No signals reported yet. The observatory is listening.",
     passive: "passive",
-    reported: "reported"
+    reported: "reported",
+    scoreSnapshotTitle: "Score snapshot",
+    scoreSnapshotCurrent: "Current overall (v2)",
+    scoreSnapshotPrevious: "Previous formula (v1.1)",
+    scoreSnapshotComputed: "computed"
+  },
+  repoExplanation: {
+    title: "Why this result",
+    included: "Included because",
+    caveats: "Caveats",
+    filterAutoHint:
+      "Reliable mode hides repos below the quality floor (low overall, high abandonment, or severe flags).",
+    codes: {
+      filter_auto_pass: "Passes the Reliable (auto) quality gate",
+      filter_strict_pass: "Passes the Strict quality gate",
+      filter_explore: "Shown in Explore mode (no quality gate)",
+      quality_overall_strong: "Strong overall quality score",
+      quality_overall_moderate: "Moderate overall quality score",
+      reliability_high: "High reliability from usage signals",
+      abandonment_low: "Low abandonment risk",
+      freshness_high: "Fresh recent activity",
+      lexical_match_strong: "Strong match to your search terms",
+      lexical_match: "Matches your search terms",
+      topic_match: "Matches topics in your query",
+      category_match: "Matches a category tied to your query",
+      topics_filter_applied: "Matches your topic filters",
+      radar_emerging: "Radar marks this repo as emerging",
+      radar_established: "Radar marks this repo as established",
+      radar_watch_band: "Radar suggests extra caution for this band",
+      flag_security: "Public security flag on record",
+      flag_broken: "Marked as broken by contributors",
+      flag_deprecated: "Marked as deprecated",
+      flag_unmaintained: "Marked as unmaintained or abandoned",
+      flag_public: "Community flag on record",
+      archived_repo: "Repository is archived on GitHub",
+      no_score_yet: "Not scored yet in the registry"
+    },
+    filterSummary: {
+      auto_hides_low_quality:
+        "Reliable mode hides repos below the quality floor (low overall, high abandonment, or severe flags)."
+    }
   },
   watchlist: {
     eyebrow: "Watchlist",

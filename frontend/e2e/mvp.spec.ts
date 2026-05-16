@@ -24,8 +24,26 @@ const quality = {
   buildFailureCount: 0,
   regretCount: 0,
   flags: [],
-  formulaVersion: "v1.1",
+  formulaVersion: "v2.0",
   computedAt: "2026-04-24T08:00:00Z"
+};
+
+const recommendationExplanation = {
+  includedBecause: ["filter_auto_pass", "quality_overall_strong", "reliability_high"],
+  caveats: [] as string[]
+};
+
+const scoreSnapshot = {
+  formulaVersion: "v2.0",
+  overall: 0.84,
+  freshness: 0.91,
+  adoption: 0.74,
+  reliability: 0.82,
+  abandonment: 0.11,
+  vitality: 0.69,
+  computedAt: "2026-04-24T08:00:00Z",
+  previousFormulaVersion: "v1.1",
+  previousOverall: 0.79
 };
 
 const categories = [
@@ -67,7 +85,8 @@ const repo = {
   lastCommitAt: "2026-04-20T12:00:00Z",
   quality,
   categories,
-  radar
+  radar,
+  recommendationExplanation
 };
 
 const repoProfile = {
@@ -83,6 +102,7 @@ const repoProfile = {
     releasesCount: 12,
     lastReleaseAt: "2026-04-15T08:00:00Z"
   },
+  scoreSnapshot,
   recentSignals: [
     {
       id: "44444444-4444-4444-8444-444444444444",
@@ -165,6 +185,7 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
           offset: Number(url.searchParams.get("offset") ?? "0"),
           count: 1,
           hasMore: false,
+          filterSummary: { messageCode: "auto_hides_low_quality" },
           items: [repo]
         })
       );
@@ -426,4 +447,10 @@ test("advanced explorer still supports filtered repo search", async ({ page }) =
   await expect(page.getByRole("heading", { name: /timezone-picker/i })).toBeVisible();
   await expect(page.getByText("Accessible React date picker")).toBeVisible();
   await expect(page.getByText("date-picker")).toBeVisible();
+  await expect(page.getByText(/Why this result/i)).toBeVisible();
+  await expect(page.getByText(/Passes the Reliable/i)).toBeVisible();
+
+  await page.goto(`/repos/${repoId}`);
+  await expect(page.getByText(/Score snapshot/i)).toBeVisible();
+  await expect(page.getByText(/Previous formula/i)).toBeVisible();
 });

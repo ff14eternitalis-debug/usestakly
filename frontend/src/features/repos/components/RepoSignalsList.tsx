@@ -53,7 +53,7 @@ export function RepoSignalsList({
                     <p className="mono text-[0.76rem] text-fg-muted">
                       {statusLabel}: {signal.reviewStatus}
                     </p>
-                    {signal.events.slice(0, 3).map((event, eventIndex) => (
+                    {signal.events.slice(0, 5).map((event, eventIndex) => (
                       <p key={eventIndex} className="mono text-[0.74rem] text-fg-muted">
                         {event.eventKind} · {formatRelative(event.createdAt)}
                         {event.note ? ` · ${event.note}` : ""}

@@ -39,6 +39,28 @@ export type RepoRadarSnapshot = {
   explanation: unknown;
 };
 
+export type RecommendationExplanation = {
+  includedBecause: string[];
+  caveats: string[];
+};
+
+export type ScoreSnapshot = {
+  formulaVersion: string;
+  overall: number | null;
+  freshness: number | null;
+  adoption: number | null;
+  reliability: number | null;
+  abandonment: number | null;
+  vitality: number | null;
+  computedAt: string;
+  previousFormulaVersion: string | null;
+  previousOverall: number | null;
+};
+
+export type SearchFilterSummary = {
+  messageCode: string | null;
+};
+
 export type VitalityInputs = {
   structuralSignalsAt: string | null;
   distinctContributors90d: number | null;
@@ -66,6 +88,7 @@ export type RepoSearchResult = {
   quality: QualityContext | null;
   categories: RepoCategory[];
   radar: RepoRadarSnapshot | null;
+  recommendationExplanation?: RecommendationExplanation | null;
 };
 
 export type RepoSignalEvent = {
@@ -94,6 +117,7 @@ export type RepoProfile = RepoSearchResult & {
   priorsFetchedAt: string | null;
   vitalityInputs: VitalityInputs;
   recentSignals: RepoSignal[];
+  scoreSnapshot?: ScoreSnapshot | null;
 };
 
 export type RepoViewerState = {
@@ -109,6 +133,7 @@ export type RepoSearchResponse = {
   count: number;
   hasMore: boolean;
   items: RepoSearchResult[];
+  filterSummary?: SearchFilterSummary | null;
 };
 
 export type IntentConfidence = "high" | "medium" | "low";

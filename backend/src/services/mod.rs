@@ -9,6 +9,7 @@ pub mod quality;
 pub mod radar;
 pub mod recommendations;
 pub mod repo_categories;
+pub mod repo_explain;
 pub mod repos;
 pub mod scheduler;
 pub mod semantic_search;

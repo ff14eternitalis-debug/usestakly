@@ -17,8 +17,11 @@ import { useAuthStore } from "../state/auth-store";
 import { OwnerDisputePanel } from "../features/repos/components/OwnerDisputePanel";
 import { RepoHeader } from "../features/repos/components/RepoHeader";
 import { RepoMetricsPanel } from "../features/repos/components/RepoMetricsPanel";
+import { RepoRecommendationExplanation } from "../features/repos/components/RepoRecommendationExplanation";
+import { RepoScoreHistory } from "../features/repos/components/RepoScoreHistory";
 import { RepoSignalsList } from "../features/repos/components/RepoSignalsList";
 import { ReportSignalForm } from "../features/repos/components/ReportSignalForm";
+import { labelsForExplanation } from "../lib/repo-explanation";
 import { useSeoOverride } from "../seo/seo-context";
 
 export function RepoDetailPage() {
@@ -140,6 +143,7 @@ export function RepoDetailPage() {
   }
 
   const repo = profile.data;
+  const explanation = labelsForExplanation(t.repoExplanation, repo.recommendationExplanation);
   const q = repo.quality;
   const signalError = createSignal.error instanceof ApiError ? createSignal.error.message : null;
   const disputeError =
@@ -243,6 +247,22 @@ export function RepoDetailPage() {
       </section>
 
       <ScoreProvenancePanel repo={repo} />
+
+      <RepoRecommendationExplanation
+        title={t.repoExplanation.title}
+        includedLabel={t.repoExplanation.included}
+        caveatsLabel={t.repoExplanation.caveats}
+        includedBecause={explanation.included}
+        caveats={explanation.caveats}
+      />
+
+      <RepoScoreHistory
+        title={t.repoDetail.scoreSnapshotTitle}
+        currentLabel={t.repoDetail.scoreSnapshotCurrent}
+        previousLabel={t.repoDetail.scoreSnapshotPrevious}
+        computedLabel={t.repoDetail.scoreSnapshotComputed}
+        snapshot={repo.scoreSnapshot}
+      />
 
       <hr className="hairline" />
 

@@ -23,13 +23,27 @@ UseStakly is already in a healthy public beta state. Local verification on 2026-
 
 The remaining work should improve production confidence and product clarity, not restart broad architecture.
 
+### Plan revision (2026-05-16, post-merge Tasks 1–2)
+
+Tasks 1–2 merged on `main`. Tasks 3–5 were revised against the real codebase:
+
+- Do **not** reuse the field name `explanation` on repo DTOs — `RepoRadarSnapshot.explanation` already exists (radar JSON).
+- `artifact_scores` is **one row per `(repo, formula_version)`** (UPSERT) — not a score time series without a migration or an explicit MVP scope.
+- `RepoProfile.recent_signals` + `RepoSignalsList` already cover much of the signal timeline — extend, do not duplicate blindly.
+- Search responses only include **included** repos — `excludedByAuto` belongs on the **search response meta**, not per card, unless scope is narrowed.
+- Reuse patterns from `services/recommendations.rs` (`reason`), admin explain logic (shared service, not a public clone of the admin endpoint).
+- Task 4 should **extend** `docs/functional-checks.md`, not fork a second checklist.
+- Task 5 **repo/MCP splits run after Task 3** (or split `repos.rs` before Task 3 backend if you prefer less merge pain).
+
+**Branch for Task 3+:** `feat/repo-explanations` from updated `main`.
+
 ## Execution Order
 
-1. GitHub ingestion reliability.
-2. Scoring/trust formula v2 completion.
+1. GitHub ingestion reliability. ✅ merged
+2. Scoring/trust formula v2 completion. ✅ merged
 3. Discovery and repo-detail explanations.
-4. Live validation gates.
-5. Maintainability refactors.
+4. Live validation gates (can run in parallel with Task 3 — docs/scripts only).
+5. Maintainability refactors (**after Task 3**, especially `services/repos.rs`).
 
 This order improves data quality first, then trust weighting, then exposes better explanations in the UI, then validates the live paths, then reduces code size risk.
 
@@ -285,62 +299,107 @@ git add backend/scoring/formula_v2.toml backend/src/services/quality/weighting.r
 git commit -m "Finish formula v2 trust weighting"
 ```
 
+**Implementation note (merged):** Runtime paths are `services/trust/reputation.rs` (`active_signal_review_weight`, `requires_strict_active_review_with_trust`), `handlers/repo_signals.rs`, and `services/quality/formula.rs` (`TrustWeights` loader). Tests: `cargo test services::trust::reputation` (not `weighting::tests::new_account`). Owner dispute notes use `owner-confidence` in admin review context.
+
 ---
 
 ## Task 3: Discovery And Repo Detail Explanations
 
-**Goal:** Help users understand why a repo appears, why it is excluded, and how its score changed.
+**Goal:** Help users understand why a repo appears in **this** search or profile context, with honest score-change UX — without duplicating radar explanations, use-case `reason` strings, or the admin-only scoring breakdown.
+
+**Aligns with:** `docs/plans/remaining-work-2026-05-03.md` §3.3 (public UX; admin explain stays admin).
 
 **Files:**
-- Modify: `backend/src/services/repos.rs`
+- Modify: `backend/src/domain/repo.rs` (new DTO types)
+- Modify: `backend/src/services/repos.rs` (or `backend/src/services/repos/search.rs` + `profile.rs` if split early)
+- Optional new: `backend/src/services/repos/explain.rs` (pure builders shared by search + profile)
 - Modify: `backend/src/handlers/repos_query.rs`
 - Modify: `frontend/src/lib/types.ts`
 - Modify: `frontend/src/components/RepoCard.tsx`
 - Modify: `frontend/src/routes/discover.tsx`
 - Modify: `frontend/src/routes/repo-detail.tsx`
 - Create: `frontend/src/features/repos/components/RepoRecommendationExplanation.tsx`
-- Create: `frontend/src/features/repos/components/RepoScoreHistory.tsx`
-- Create: `frontend/src/features/repos/components/RepoSignalTimeline.tsx`
+- Create: `frontend/src/features/repos/components/RepoScoreHistory.tsx` (MVP scope — see Step 2)
+- Modify: `frontend/src/features/repos/components/RepoSignalsList.tsx` **or** thin `RepoSignalTimeline.tsx` wrapper (see Step 4)
+- Test: `backend/src/services/repos.rs` (explanation builders)
 - Test: `frontend/e2e/mvp.spec.ts`
 
-- [ ] **Step 1: Add backend explanation fields**
+### Naming and API shape (required)
 
-Extend repo search/profile DTOs with fields like:
+- Use **`recommendationExplanation`** (camelCase in JSON), not `explanation`, to avoid clashing with `radar.explanation`.
+- Shape:
 
 ```ts
-explanation: {
+recommendationExplanation: {
   includedBecause: string[];
   caveats: string[];
-  excludedByAuto?: string[];
 }
 ```
 
-Backend source should derive these from existing fields:
+- **`excludedByAuto`** — only on **`RepoSearchResponse`** when `filter === "auto"`, not on each item:
 
-- Quality dimensions.
-- Flags.
-- Radar maturity.
-- Filter mode.
-- Lexical/topic match.
+```ts
+// RepoSearchResponse (search only)
+filterSummary?: {
+  excludedCount?: number;
+  excludedExamples?: string[]; // short human labels, cap at 3
+};
+```
+
+Per-repo `excludedByAuto` on cards is **out of scope** unless you add a debug/admin mode later.
+
+- **Use-case panel:** keep `recommendations[].reason` from `services/recommendations.rs`; optionally map the same builder for lexical search rows so copy feels consistent.
+
+### Reuse (do not rebuild)
+
+| Existing | Use for |
+|----------|---------|
+| `RepoMetricsPanel` + `ScoreBar` on repo detail | Dimension bars — do not duplicate on discover cards |
+| `radar.explanation` + `radarSummary()` on `RepoCard` | Radar copy — link, do not merge into `recommendationExplanation` |
+| `GET /api/admin/scoring/explain/{repo_id}` | Admin audit only — extract **public-safe** bullet builders in `services/`, not expose admin route |
+| `RepoProfile.recent_signals` | Signal history source |
+
+- [x] **Step 1: Backend explanation builders + search/profile fields**
+
+Add `RecommendationExplanation` in `domain/repo.rs`. Implement pure builders (suggested module `services/repos/explain.rs`) from data already loaded in search/profile:
+
+- Active filter mode (`auto` / `strict` / `explore`) and whether quality gates passed.
+- Top 1–2 quality dimensions vs thresholds (e.g. reliability, abandonment).
+- Public flags and radar `maturity_band` (reference radar separately in UI).
+- Lexical/topic match when `q` or topics are present.
+
+Attach `recommendationExplanation` to each `RepoSearchResult` and to `RepoProfile.repo`.
+
+For `filter === "auto"`, add optional `filterSummary` on `RepoSearchResponse` (counts or short examples of repos filtered out — implement only if a cheap SQL-side or post-filter hook exists; otherwise document `excludedCount: null` and defer).
 
 Run:
 
 ```powershell
 cd backend
-cargo test services::repos
+cargo test services::repos explain
 ```
 
-Expected: existing repo service tests pass, new explanation tests pass.
+Expected: new unit tests on builders; existing `services::repos` tests pass.
 
-- [ ] **Step 2: Add score history endpoint data to repo profile**
+- [x] **Step 2: Score change UX on repo profile (pick one MVP)** — shipped **option A** (snapshot + optional v1.1 delta)
 
-Use existing DB history if already available through `artifact_scores` snapshots or score records.
+`artifact_scores` stores **one current row** per `(external_artifact_id, formula_version)` via UPSERT — there is **no** chronological history table today.
 
-Acceptance:
+**Pick exactly one for this task:**
 
-- Repo detail response includes chronological score points.
-- Empty history returns an empty array.
-- Dates use ISO strings.
+| Option | Work | User sees |
+|--------|------|-----------|
+| **A (recommended MVP)** | No migration | `scoreSnapshot`: current overall + dimensions + `computedAt` + optional delta vs previous formula version row if v1.1 row exists |
+| **B** | Migration `artifact_score_snapshots` + write on recompute | `scoreHistory: { scoredAt, overall }[]` |
+| **C** | Defer chart | Only `computedAt` + link to `/how-to-read` |
+
+If **B**: add migration, append in `quality/pipeline.rs` on recompute, query last N points in profile.
+
+Acceptance (all options):
+
+- Repo profile JSON documents which option shipped.
+- Empty history → `scoreHistory: []` or omitted per option.
+- Dates are ISO 8601 strings.
 
 Run:
 
@@ -349,27 +408,20 @@ cd backend
 cargo test handlers::repos_query services::repos
 ```
 
-Expected: tests pass.
+- [x] **Step 3: Frontend types + `RepoRecommendationExplanation`**
 
-- [ ] **Step 3: Add frontend types and explanation component**
+Update `frontend/src/lib/types.ts` with `recommendationExplanation` and search `filterSummary`.
 
-Update `frontend/src/lib/types.ts`.
-
-Create `RepoRecommendationExplanation.tsx` with props:
+Create `RepoRecommendationExplanation.tsx`:
 
 ```ts
 type RepoRecommendationExplanationProps = {
   includedBecause: string[];
   caveats: string[];
-  excludedByAuto?: string[];
 };
 ```
 
-Acceptance:
-
-- Shows included reasons first.
-- Shows caveats in quieter styling.
-- Does not render empty sections.
+Wire on `RepoCard` (discover) and repo detail header area. Do not render empty sections. Keep radar block unchanged.
 
 Run:
 
@@ -378,20 +430,16 @@ cd frontend
 npm run build
 ```
 
-Expected: TypeScript build passes.
+- [x] **Step 4: Score history + signals UI** — `RepoScoreHistory` + extended `RepoSignalsList` events
 
-- [ ] **Step 4: Add score history and signal timeline components**
-
-Create:
-
-- `RepoScoreHistory.tsx`: compact trend list or simple SVG-free chart using div bars.
-- `RepoSignalTimeline.tsx`: chronological list of signal events with kind, status, and date.
+- **`RepoScoreHistory.tsx`:** implement per Step 2 option (bars/list or snapshot-only).
+- **Signals:** prefer extending `RepoSignalsList` (show more events, clearer timeline) over a parallel list. Add `RepoSignalTimeline.tsx` only if it stays a thin wrapper (under 80 lines).
 
 Acceptance:
 
-- Components handle empty states.
+- Empty states for no history / no signals.
 - No nested cards inside cards.
-- Text fits mobile width.
+- Mobile-friendly text width.
 
 Run:
 
@@ -400,17 +448,14 @@ cd frontend
 npm run build
 ```
 
-Expected: build passes.
+- [x] **Step 5: E2E coverage**
 
-- [ ] **Step 5: Add E2E coverage**
-
-Update `frontend/e2e/mvp.spec.ts` mocked API data to include explanation, history, and signal timeline fields.
+Update `frontend/e2e/mvp.spec.ts` mocks with `recommendationExplanation`, score field(s) from Step 2, and existing `recentSignals` shape.
 
 Acceptance:
 
-- Discovery shows at least one explanation reason.
-- Repo detail shows score history section.
-- Repo detail shows signal timeline or empty timeline state.
+- Discover: at least one `includedBecause` visible on a result card.
+- Repo detail: score section matches chosen MVP; signals section visible or empty state.
 
 Run:
 
@@ -419,11 +464,7 @@ cd frontend
 npm run test:e2e
 ```
 
-Expected: Playwright tests pass.
-
-- [ ] **Step 6: Commit**
-
-Run:
+- [ ] **Step 6: Commit** (à faire par l'utilisateur)
 
 ```powershell
 cd backend
@@ -436,38 +477,45 @@ npm run build
 npm run test:e2e
 ```
 
-Commit:
-
 ```powershell
-git add backend/src/services/repos.rs backend/src/handlers/repos_query.rs frontend/src/lib/types.ts frontend/src/components/RepoCard.tsx frontend/src/routes/discover.tsx frontend/src/routes/repo-detail.tsx frontend/src/features/repos/components/RepoRecommendationExplanation.tsx frontend/src/features/repos/components/RepoScoreHistory.tsx frontend/src/features/repos/components/RepoSignalTimeline.tsx frontend/e2e/mvp.spec.ts
-git commit -m "Explain repo recommendations and score history"
+git add backend/src/domain/repo.rs backend/src/services/repos.rs backend/src/handlers/repos_query.rs `
+  frontend/src/lib/types.ts frontend/src/components/RepoCard.tsx `
+  frontend/src/routes/discover.tsx frontend/src/routes/repo-detail.tsx `
+  frontend/src/features/repos/components/RepoRecommendationExplanation.tsx `
+  frontend/src/features/repos/components/RepoScoreHistory.tsx `
+  frontend/e2e/mvp.spec.ts
+# plus explain.rs, migration, RepoSignalsList — if touched
+git commit -m "Explain repo recommendations and score snapshot on profile"
 ```
 
 ---
 
 ## Task 4: Live Validation Gates
 
-**Goal:** Add repeatable live validation for real OAuth and real MCP behavior without making fast CI fragile.
+**Goal:** Add repeatable **live/staging** validation for OAuth and MCP without making fast CI fragile. **Extend** the existing checklist — do not maintain two divergent lists.
+
+**Base doc:** `docs/functional-checks.md` (sections A–J). This task adds automation + prod-oriented pointers.
 
 **Files:**
-- Create: `docs/validation/live-release-checklist.md`
+- Modify: `docs/functional-checks.md` (new section **K. Live / staging** or annotate H/I for prod URLs)
+- Create: `docs/validation/live-release-checklist.md` (**thin wrapper**: env vars, prod base URLs, link to functional-checks, rollback notes only)
 - Create: `scripts/mcp-live-smoke.ps1`
-- Modify: `frontend/scripts/run-real-e2e.mjs`
+- Modify: `frontend/scripts/run-real-e2e.mjs` (cross-link only, unless a flag is missing)
 - Modify: `docs/dev-workflow.md`
 
-- [ ] **Step 1: Write the live release checklist**
+- [ ] **Step 1: Extend functional checks + thin live wrapper**
 
-Create `docs/validation/live-release-checklist.md`.
+In `docs/functional-checks.md`, add a short **Live / staging** section:
 
-Required sections:
+- Required env vars (`APP_SESSION_SECRET`, OAuth, `usk_` monitoring token, prod `FRONTEND_BASE_URL`).
+- Pointer: OAuth B1–B4, Discover C*, MCP H1–H10, CLI I1–I3 already defined above — re-run against prod/staging URLs.
+- Data check after deploy: signal in `quality_signals`, `artifact_scores.computed_at` moves on recompute.
 
-- Environment variables needed.
-- OAuth flow: login, return-to behavior, logout.
-- Discovery flow: search, repo detail, watch.
-- Notifications flow: watchlist alert or seeded notification.
-- MCP flow: `initialize`, `tools/list`, `search_github_repos`, `get_repo_quality_context`, `log_usage`.
-- Data check: signal appears in `quality_signals`, score recompute updates `artifact_scores`.
-- Rollback notes: frontend-only vs backend deploy.
+Create `docs/validation/live-release-checklist.md` as a **one-page deploy gate** (not a duplicate of A–J):
+
+- Base URLs (`https://api…`, `https://…/mcp`).
+- Ordered go/no-go (health → status public → MCP smoke script → manual OAuth if needed).
+- Rollback: frontend-only vs backend vs DB migration.
 
 - [ ] **Step 2: Add MCP smoke script**
 
@@ -490,6 +538,7 @@ Acceptance:
 - Calls `search_github_repos`.
 - Calls `get_repo_quality_context`.
 - Optionally calls `log_usage` only when `-WriteSignal` is passed, to avoid accidental production writes.
+- Maps to functional-checks **H2, H4, H5** (and H7 only with `-WriteSignal`).
 
 - [ ] **Step 3: Document local and live usage**
 
@@ -499,7 +548,9 @@ Update `docs/dev-workflow.md` with:
 .\scripts\mcp-live-smoke.ps1 -Endpoint "https://api.usestakly.com/mcp" -Token "usk_..."
 ```
 
-Also document the write-signal mode separately and warn that it records a real signal.
+Document `frontend/scripts/run-real-e2e.mjs` + `npm run test:e2e:real` (Postgres + `e2e/real-api.spec.ts`) as the **local** full-stack path; smoke script as the **remote MCP** path.
+
+Warn: `-WriteSignal` records a real signal in the target environment.
 
 - [ ] **Step 4: Commit**
 
@@ -516,8 +567,8 @@ npm test
 Commit:
 
 ```powershell
-git add docs/validation/live-release-checklist.md scripts/mcp-live-smoke.ps1 docs/dev-workflow.md frontend/scripts/run-real-e2e.mjs
-git commit -m "Add live validation gates"
+git add docs/functional-checks.md docs/validation/live-release-checklist.md scripts/mcp-live-smoke.ps1 docs/dev-workflow.md frontend/scripts/run-real-e2e.mjs
+git commit -m "Add live validation gates and MCP smoke script"
 ```
 
 ---
@@ -525,6 +576,10 @@ git commit -m "Add live validation gates"
 ## Task 5: Maintainability Refactors
 
 **Goal:** Reduce risk in the largest files without changing behavior.
+
+**When:** **After Task 3 is merged** (avoids merge conflicts on `services/repos.rs` and `discover.tsx`). Exception: you may split `services/repos.rs` **before** Task 3 Step 1 if you want explanation code to land directly in `repos/search.rs` + `repos/profile.rs`.
+
+**Size baseline (2026-05-16):** `backend/src/mcp/server.rs` ~1920 lines, `backend/src/services/repos.rs` ~750 lines, `frontend/src/routes/discover.tsx` ~690 lines. Target: ≤200 lines per new file (workspace rule).
 
 **Files:**
 - Modify: `backend/src/mcp/server.rs`
@@ -539,7 +594,7 @@ git commit -m "Add live validation gates"
 - Modify: `frontend/src/routes/discover.tsx`
 - Create: `frontend/src/features/repos/components/DiscoverFilters.tsx`
 - Create: `frontend/src/features/repos/components/DiscoverResults.tsx`
-- Create: `frontend/src/features/repos/components/UseCaseSearchPanel.tsx` if not already extracted there
+- `frontend/src/features/repos/components/UseCaseSearchPanel.tsx` — **already extracted**; do not recreate
 
 - [ ] **Step 1: Capture baseline behavior**
 
@@ -581,12 +636,12 @@ git commit -m "Refactor MCP tool mapping helpers"
 
 - [ ] **Step 3: Split repo service search/profile helpers**
 
-Move pure search normalization, sorting, and profile assembly helpers out of `backend/src/services/repos.rs`.
+Move pure search normalization, sorting, profile assembly, and **explanation builders** (from Task 3) out of `backend/src/services/repos.rs` into `backend/src/services/repos/{mod,search,profile,explain}.rs`.
 
 Acceptance:
 
-- Public service API remains stable for handlers and MCP.
-- Tests for `services::repos` still pass.
+- Public service API remains stable for handlers and MCP (`search_github_repos`, `get_repo_profile` re-exports unchanged).
+- Tests for `services::repos` and explanation builders still pass.
 
 Run:
 
@@ -659,11 +714,11 @@ Expected: all pass.
 
 This plan is complete when:
 
-- GitHub ingestion handles rate-limit signals and release metadata reliably.
-- Formula v2 trust behavior prevents fresh accounts from steering severe active signals.
-- Discovery and repo detail explain recommendation reasons, caveats, score history, and signal timeline.
-- Live OAuth and MCP validation have documented, repeatable commands.
-- The largest files are reduced through behavior-preserving extractions.
+- GitHub ingestion handles rate-limit signals and release metadata reliably (ETag **persistence** and 429 backoff remain optional follow-ups in `remaining-work` §2.4).
+- Formula v2 trust behavior prevents fresh accounts from steering severe active signals (Sybil graph still deferred).
+- Discovery and repo detail expose `recommendationExplanation`; repo profile exposes the **chosen** score MVP (snapshot and/or history); signals UX is improved without conflicting with `radar.explanation`.
+- Live/staging validation is documented via `functional-checks` + `mcp-live-smoke.ps1` + dev-workflow cross-links.
+- `mcp/server.rs`, `services/repos/*`, and `discover.tsx` are split with no tool/schema/URL behavior change.
 - `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `npm run build`, `npm run test:e2e`, and `cli npm test` pass.
 
 ## Deferred Work
@@ -672,3 +727,5 @@ This plan is complete when:
 - Nightly GitHub Actions workflow with Postgres for `test:e2e:real`.
 - Large-scale search calibration on a broader corpus.
 - Full public visual redesign pass for every marketing/documentation page.
+- GitHub ingestion: ETag DB persistence, exponential backoff on 429, quota monitoring (`remaining-work` §2.4).
+- Per-repo `excludedByAuto` without search-level `filterSummary` (debug/admin only if ever needed).
