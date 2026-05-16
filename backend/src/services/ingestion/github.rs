@@ -1,7 +1,9 @@
 use std::collections::HashSet;
+use std::time::Duration as StdDuration;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use chrono::{DateTime, Duration, Utc};
+use http::{HeaderMap, HeaderValue, StatusCode, header::IF_NONE_MATCH};
 use octocrab::Octocrab;
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -18,6 +20,7 @@ const COMMITS_30D_WINDOW: i64 = 30;
 const COMMITS_PER_PAGE: u8 = 100;
 const COMMITS_MAX_PAGES: u32 = 5;
 const README_CLASSIFICATION_MAX_BYTES: usize = 80_000;
+const GITHUB_SECONDARY_RATE_LIMIT_MARKER: &str = "secondary rate limit";
 
 pub struct GitHubRepoMetadata {
     pub github_id: i64,
@@ -69,11 +72,10 @@ pub async fn fetch_repo(
             ApiError::not_found(format!("github repo not found: {owner}/{name}"))
         }
         octocrab::Error::GitHub { source, .. }
-            if source.status_code.as_u16() == 403 || source.status_code.as_u16() == 429 =>
+            if source.status_code == StatusCode::FORBIDDEN
+                || source.status_code == StatusCode::TOO_MANY_REQUESTS =>
         {
-            ApiError::forbidden(
-                "GitHub API rate limit reached or access denied; retry later or verify GITHUB_TOKEN",
-            )
+            github_api_failure("GitHub repo fetch", source.status_code, &source.message)
         }
         other => ApiError::internal(format!("github fetch failed: {other}")),
     })?;
@@ -138,6 +140,115 @@ struct CommitTally {
 struct GitHubReadmeResponse {
     content: Option<String>,
     encoding: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum GitHubRateLimitKind {
+    Primary {
+        reset_at: Option<DateTime<Utc>>,
+        retry_after: Option<StdDuration>,
+    },
+    Secondary,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubReleaseSummary {
+    published_at: Option<DateTime<Utc>>,
+}
+
+fn classify_rate_limit(
+    status: StatusCode,
+    headers: &HeaderMap,
+    body: &str,
+) -> Option<GitHubRateLimitKind> {
+    if status != StatusCode::FORBIDDEN && status != StatusCode::TOO_MANY_REQUESTS {
+        return None;
+    }
+
+    let body_lower = body.to_ascii_lowercase();
+    if body_lower.contains(GITHUB_SECONDARY_RATE_LIMIT_MARKER) {
+        return Some(GitHubRateLimitKind::Secondary);
+    }
+
+    let remaining = header_str(headers, "x-ratelimit-remaining");
+    if remaining == Some("0") || status == StatusCode::TOO_MANY_REQUESTS {
+        return Some(GitHubRateLimitKind::Primary {
+            reset_at: header_str(headers, "x-ratelimit-reset")
+                .and_then(|value| value.parse::<i64>().ok())
+                .and_then(|value| DateTime::<Utc>::from_timestamp(value, 0)),
+            retry_after: header_str(headers, "retry-after")
+                .and_then(|value| value.parse::<u64>().ok())
+                .map(StdDuration::from_secs),
+        });
+    }
+
+    None
+}
+
+fn header_str<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
+    headers.get(name).and_then(|value| value.to_str().ok())
+}
+
+fn summarize_releases(releases: &[GitHubReleaseSummary]) -> (i32, Option<DateTime<Utc>>) {
+    let count = releases.len() as i32;
+    let last = releases
+        .iter()
+        .filter_map(|release| release.published_at)
+        .max();
+    (count, last)
+}
+
+fn conditional_request_headers(etag: Option<&str>) -> Option<HeaderMap> {
+    let etag = etag?.trim();
+    if etag.is_empty() {
+        return None;
+    }
+
+    let value = HeaderValue::from_str(etag).ok()?;
+    let mut headers = HeaderMap::new();
+    headers.insert(IF_NONE_MATCH, value);
+    Some(headers)
+}
+
+fn github_rate_limit_message(kind: &GitHubRateLimitKind) -> String {
+    match kind {
+        GitHubRateLimitKind::Primary {
+            reset_at,
+            retry_after,
+        } => {
+            let mut message = "GitHub API primary rate limit reached".to_string();
+            if let Some(reset_at) = reset_at {
+                message.push_str(&format!("; resets at {}", reset_at.to_rfc3339()));
+            }
+            if let Some(retry_after) = retry_after {
+                message.push_str(&format!("; retry after {} seconds", retry_after.as_secs()));
+            }
+            message
+        }
+        GitHubRateLimitKind::Secondary => {
+            "GitHub API secondary rate limit reached; retry after a short backoff".to_string()
+        }
+    }
+}
+
+fn github_api_failure(context: &str, status: StatusCode, message: &str) -> ApiError {
+    let headers = HeaderMap::new();
+    if let Some(kind) = classify_rate_limit(status, &headers, message) {
+        return ApiError::forbidden(format!("{context}: {}", github_rate_limit_message(&kind)));
+    }
+
+    match status {
+        StatusCode::FORBIDDEN => {
+            ApiError::forbidden(format!("{context}: GitHub returned 403 ({message})"))
+        }
+        StatusCode::TOO_MANY_REQUESTS => {
+            ApiError::forbidden(format!("{context}: GitHub returned 429 ({message})"))
+        }
+        _ => ApiError::internal(format!(
+            "{context}: GitHub returned {} ({message})",
+            status.as_u16()
+        )),
+    }
 }
 
 fn tally_commits(commits: &[CommitSummary], cutoff_30d: DateTime<Utc>) -> CommitTally {
@@ -226,7 +337,8 @@ async fn fetch_structural_signals(client: &Octocrab, owner: &str, name: &str) ->
         Err(err) => {
             tracing::warn!(
                 target: "ingestion::github::structural",
-                "releases fetch failed for {owner}/{name}: {err}"
+                "releases fetch failed for {owner}/{name}: {}",
+                err.message
             );
             (None, None)
         }
@@ -296,17 +408,27 @@ async fn fetch_releases_summary(
     client: &Octocrab,
     owner: &str,
     name: &str,
-) -> Result<(i32, Option<DateTime<Utc>>), octocrab::Error> {
-    let page = client
-        .repos(owner, name)
-        .releases()
-        .list()
-        .per_page(100)
-        .send()
-        .await?;
-    let count = page.items.len() as i32;
-    let last = page.items.iter().filter_map(|r| r.published_at).max();
-    Ok((count, last))
+) -> Result<(i32, Option<DateTime<Utc>>), ApiError> {
+    fetch_releases_summary_with_etag(client, owner, name, None).await
+}
+
+async fn fetch_releases_summary_with_etag(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    etag: Option<&str>,
+) -> Result<(i32, Option<DateTime<Utc>>), ApiError> {
+    let path = format!("/repos/{owner}/{name}/releases?per_page=100");
+    let releases: Vec<GitHubReleaseSummary> = client
+        .get_with_headers(path, None::<&()>, conditional_request_headers(etag))
+        .await
+        .map_err(|err| match err {
+            octocrab::Error::GitHub { source, .. } => {
+                github_api_failure("GitHub releases fetch", source.status_code, &source.message)
+            }
+            other => ApiError::internal(format!("GitHub releases fetch failed: {other}")),
+        })?;
+    Ok(summarize_releases(&releases))
 }
 
 async fn fetch_readme_for_classification(
@@ -338,10 +460,13 @@ async fn fetch_readme_text(
             return Ok(None);
         }
         Err(octocrab::Error::GitHub { source, .. })
-            if source.status_code.as_u16() == 403 || source.status_code.as_u16() == 429 =>
+            if source.status_code == StatusCode::FORBIDDEN
+                || source.status_code == StatusCode::TOO_MANY_REQUESTS =>
         {
-            return Err(ApiError::forbidden(
-                "GitHub README fetch rate limited or denied",
+            return Err(github_api_failure(
+                "GitHub README fetch",
+                source.status_code,
+                &source.message,
             ));
         }
         Err(other) => {
@@ -546,7 +671,8 @@ pub fn parse_github_repo_input(input: &str) -> Result<(String, String), ApiError
 #[cfg(test)]
 mod tests {
     use super::{CommitSummary, parse_github_repo_input, tally_commits};
-    use chrono::{Duration, Utc};
+    use chrono::{Duration, TimeZone, Utc};
+    use http::{HeaderMap, HeaderValue, StatusCode, header::IF_NONE_MATCH};
 
     #[test]
     fn parses_owner_repo() {
@@ -644,5 +770,118 @@ mod tests {
         }];
         let tally = tally_commits(&commits, cutoff_30d);
         assert_eq!(tally.commits_30d, 1);
+    }
+
+    #[test]
+    fn github_rate_limit_headers_detect_primary_limit() {
+        let headers = github_rate_limit_headers("0", "1778791697", None);
+        let limit = super::classify_rate_limit(StatusCode::FORBIDDEN, &headers, "");
+
+        assert!(matches!(
+            limit,
+            Some(super::GitHubRateLimitKind::Primary { .. })
+        ));
+    }
+
+    #[test]
+    fn github_rate_limit_body_detects_secondary_limit() {
+        let headers = github_rate_limit_headers("42", "1778791697", None);
+        let limit = super::classify_rate_limit(
+            StatusCode::FORBIDDEN,
+            &headers,
+            "You have exceeded a secondary rate limit. Please wait a few minutes.",
+        );
+
+        assert!(matches!(limit, Some(super::GitHubRateLimitKind::Secondary)));
+    }
+
+    #[test]
+    fn github_api_failure_maps_secondary_limit_with_context() {
+        let err = super::github_api_failure(
+            "GitHub releases fetch",
+            StatusCode::FORBIDDEN,
+            "You have exceeded a secondary rate limit.",
+        );
+
+        assert_eq!(err.status, StatusCode::FORBIDDEN);
+        assert!(err.message.contains("GitHub releases fetch"));
+        assert!(err.message.contains("secondary rate limit"));
+    }
+
+    #[test]
+    fn github_api_failure_maps_access_denied_with_status_context() {
+        let err = super::github_api_failure(
+            "GitHub releases fetch",
+            StatusCode::FORBIDDEN,
+            "Resource not accessible by integration",
+        );
+
+        assert_eq!(err.status, StatusCode::FORBIDDEN);
+        assert!(err.message.contains("GitHub releases fetch"));
+        assert!(err.message.contains("403"));
+    }
+
+    #[test]
+    fn release_summary_selects_newest_published_release() {
+        let old = Utc.with_ymd_and_hms(2026, 4, 1, 12, 0, 0).unwrap();
+        let new = Utc.with_ymd_and_hms(2026, 5, 2, 12, 0, 0).unwrap();
+        let releases = vec![
+            super::GitHubReleaseSummary {
+                published_at: Some(old),
+            },
+            super::GitHubReleaseSummary {
+                published_at: Some(new),
+            },
+            super::GitHubReleaseSummary { published_at: None },
+        ];
+
+        let (count, last_release_at) = super::summarize_releases(&releases);
+
+        assert_eq!(count, 3);
+        assert_eq!(last_release_at, Some(new));
+    }
+
+    #[test]
+    fn release_summary_handles_empty_releases() {
+        let (count, last_release_at) = super::summarize_releases(&[]);
+
+        assert_eq!(count, 0);
+        assert_eq!(last_release_at, None);
+    }
+
+    #[test]
+    fn conditional_headers_include_etag_when_present() {
+        let headers = super::conditional_request_headers(Some(r#""abc123""#))
+            .expect("etag should build headers");
+
+        assert_eq!(
+            headers
+                .get(IF_NONE_MATCH)
+                .and_then(|value| value.to_str().ok()),
+            Some(r#""abc123""#)
+        );
+    }
+
+    #[test]
+    fn conditional_headers_skip_blank_etag() {
+        assert!(super::conditional_request_headers(Some("   ")).is_none());
+        assert!(super::conditional_request_headers(None).is_none());
+    }
+
+    fn github_rate_limit_headers(
+        remaining: &str,
+        reset: &str,
+        retry_after: Option<&str>,
+    ) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-ratelimit-remaining",
+            HeaderValue::from_str(remaining).unwrap(),
+        );
+        headers.insert("x-ratelimit-reset", HeaderValue::from_str(reset).unwrap());
+        if let Some(retry_after) = retry_after {
+            headers.insert("retry-after", HeaderValue::from_str(retry_after).unwrap());
+        }
+        headers
     }
 }
