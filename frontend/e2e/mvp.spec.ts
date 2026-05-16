@@ -89,6 +89,62 @@ const repo = {
   recommendationExplanation
 };
 
+const dimensionStates = [
+  {
+    key: "freshness",
+    value: 0.91,
+    displayState: "measured",
+    source: "github_metadata",
+    confidence: "high",
+    asOf: "2026-04-24T08:00:00Z",
+    summary: "Derived from the latest default-branch commit timestamp."
+  },
+  {
+    key: "adoption",
+    value: 0.74,
+    displayState: "measured",
+    source: "usage_signals",
+    confidence: "medium",
+    asOf: "2026-04-24T08:00:00Z",
+    summary: "Backed by recorded resolve outcomes on UseStakly."
+  },
+  {
+    key: "reliability",
+    value: 0.82,
+    displayState: "measured",
+    source: "usage_signals",
+    confidence: "medium",
+    asOf: "2026-04-24T08:00:00Z",
+    summary: "Build success ratio from logged MCP outcomes."
+  },
+  {
+    key: "abandonment",
+    value: 0.11,
+    displayState: "measured",
+    source: "formula_derived",
+    confidence: "high",
+    asOf: "2026-04-24T08:00:00Z",
+    summary: "Combines freshness decay and weighted regret signals."
+  },
+  {
+    key: "vitality",
+    value: 0.69,
+    displayState: "measured",
+    source: "github_metadata",
+    confidence: "high",
+    asOf: "2026-04-24T08:00:00Z",
+    summary: "Structural maintainer activity captured at ingestion."
+  }
+];
+
+const ingestionStatus = {
+  priorsFetchedAt: "2026-04-24T08:00:00Z",
+  structuralSignalsAt: "2026-04-24T08:00:00Z",
+  structuralStale: false,
+  structuralComplete: true,
+  partialFields: [] as string[]
+};
+
 const repoProfile = {
   ...repo,
   subscribersCount: 94,
@@ -102,6 +158,9 @@ const repoProfile = {
     releasesCount: 12,
     lastReleaseAt: "2026-04-15T08:00:00Z"
   },
+  dimensionStates,
+  proofTier: "community_backed",
+  ingestionStatus,
   scoreSnapshot,
   recentSignals: [
     {
@@ -279,6 +338,18 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
 
     if (path === "/api/use-cases/watch" && method === "GET") {
       await route.fulfill(json([]));
+      return;
+    }
+
+    if (path === `/api/repos/${repoId}/refresh` && method === "POST") {
+      await route.fulfill(
+        json({
+          refreshed: true,
+          artifactId: repoId,
+          structuralSignalsAt: ingestionStatus.structuralSignalsAt,
+          ingestionStatus
+        })
+      );
       return;
     }
 

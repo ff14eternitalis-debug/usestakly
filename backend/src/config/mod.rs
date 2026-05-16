@@ -45,6 +45,8 @@ pub struct AppConfig {
     pub active_signal_default_consensus: u32,
     pub active_signal_severe_consensus: u32,
     pub semantic_search_enabled: bool,
+    pub structural_stale_secs: u64,
+    pub repo_refresh_cooldown_secs: u64,
 }
 
 impl AppConfig {
@@ -166,6 +168,14 @@ impl AppConfig {
         let semantic_search_enabled = env::var("APP_SEMANTIC_SEARCH_ENABLED")
             .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
             .unwrap_or(false);
+        let structural_stale_secs = env::var("APP_STRUCTURAL_STALE_SECS")
+            .unwrap_or_else(|_| "172800".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_STRUCTURAL_STALE_SECS must be a valid u64"))?;
+        let repo_refresh_cooldown_secs = env::var("APP_REPO_REFRESH_COOLDOWN_SECS")
+            .unwrap_or_else(|_| "900".to_string())
+            .parse::<u64>()
+            .map_err(|_| anyhow!("APP_REPO_REFRESH_COOLDOWN_SECS must be a valid u64"))?;
 
         Ok(Self {
             host,
@@ -207,6 +217,8 @@ impl AppConfig {
             active_signal_default_consensus,
             active_signal_severe_consensus,
             semantic_search_enabled,
+            structural_stale_secs,
+            repo_refresh_cooldown_secs,
         })
     }
 
@@ -314,6 +326,8 @@ mod tests {
             active_signal_default_consensus: 2,
             active_signal_severe_consensus: 3,
             semantic_search_enabled: false,
+            structural_stale_secs: 172_800,
+            repo_refresh_cooldown_secs: 900,
         };
 
         assert_eq!(config.notification_secret(), Some("notification-secret"));
@@ -371,6 +385,8 @@ mod tests {
             active_signal_default_consensus: 2,
             active_signal_severe_consensus: 3,
             semantic_search_enabled: false,
+            structural_stale_secs: 172_800,
+            repo_refresh_cooldown_secs: 900,
         };
 
         assert!(!config.email_enabled());

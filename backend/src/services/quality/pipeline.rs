@@ -136,6 +136,104 @@ pub async fn recompute_all_scores_with_config(
     })
 }
 
+pub async fn recompute_external_artifact(
+    db: &PgPool,
+    config: Option<&AppConfig>,
+    artifact_id: Uuid,
+) -> Result<()> {
+    let formula = load_v2()?;
+    let now = Utc::now();
+
+    let external: ExternalRow = sqlx::query_as(
+        r#"
+        SELECT
+          id,
+          last_commit_at,
+          structural_signals_at,
+          distinct_contributors_90d,
+          commits_30d,
+          has_ci,
+          last_release_at
+        FROM external_artifacts
+        WHERE id = $1
+        "#,
+    )
+    .bind(artifact_id)
+    .fetch_optional(db)
+    .await
+    .context("loading external artifact for recompute")?
+    .ok_or_else(|| anyhow::anyhow!("external artifact not found"))?;
+
+    let signal_rows: Vec<PassiveSignalRow> = sqlx::query_as(
+        r#"
+        SELECT id, external_artifact_id, signal::text AS signal, actor_user_id, created_at
+        FROM quality_signals
+        WHERE external_artifact_id = $1 AND is_passive = TRUE
+        ORDER BY created_at
+        "#,
+    )
+    .bind(artifact_id)
+    .fetch_all(db)
+    .await
+    .context("loading passive signals for artifact")?;
+
+    let signals: Vec<SignalObservation> = signal_rows
+        .into_iter()
+        .map(|row| SignalObservation {
+            signal_id: row.id,
+            external_artifact_id: row.external_artifact_id,
+            outcome: row.signal,
+            actor_user_id: row.actor_user_id,
+            created_at: row.created_at,
+        })
+        .collect();
+
+    let reputations = reputation::list_user_reputations(db)
+        .await
+        .map_err(|e| anyhow::anyhow!("loading user reputations: {}", e.message))?;
+    let approved_flags = load_active_flag_consensus(db, &reputations, config).await?;
+    let counts = aggregate_weighted_counts(&signals, &reputations, &formula.weighting);
+    let metrics = build_metrics(
+        counts,
+        external.last_commit_at.unwrap_or(now),
+        approved_flags
+            .get(&artifact_id)
+            .cloned()
+            .unwrap_or_else(|| normalize_flags(vec![])),
+        VitalityInputs {
+            structural_signals_at: external.structural_signals_at,
+            distinct_contributors_90d: external.distinct_contributors_90d,
+            commits_30d: external.commits_30d,
+            has_ci: external.has_ci,
+            last_release_at: external.last_release_at,
+        },
+    );
+    let score = compute_score(&metrics, &formula, now);
+    let prev = notifications::fetch_prev_snapshot(db, artifact_id, &formula.meta.version).await?;
+    upsert_external_score(db, artifact_id, &score, &metrics, &formula.meta.version).await?;
+    let new_snapshot = ScoreSnapshot {
+        overall: score.overall,
+        abandonment: score.abandonment,
+        flags: metrics.flags.clone(),
+    };
+    if let Err(e) = notifications::detect_and_emit(
+        db,
+        artifact_id,
+        prev.as_ref(),
+        &new_snapshot,
+        config,
+        config.and_then(AppConfig::notification_secret),
+    )
+    .await
+    {
+        tracing::warn!(artifact_id = %artifact_id, error = ?e, "failed to emit notifications");
+    }
+    crate::services::radar::refresh_repo_radar_snapshot(db, artifact_id)
+        .await
+        .map_err(|e| anyhow::anyhow!("radar refresh failed: {}", e.message))?;
+    Ok(())
+}
+
 #[derive(sqlx::FromRow)]
 struct ExternalRow {
     id: Uuid,

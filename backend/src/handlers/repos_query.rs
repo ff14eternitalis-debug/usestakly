@@ -96,7 +96,7 @@ pub async fn get_repo(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RepoProfile>, ApiError> {
-    let profile = get_repo_profile(&state.db, id).await?;
+    let profile = get_repo_profile(&state.db, &state.config, id).await?;
     Ok(Json(profile))
 }
 

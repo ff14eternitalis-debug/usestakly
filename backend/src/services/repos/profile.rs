@@ -3,14 +3,21 @@ use uuid::Uuid;
 
 use crate::{
     app::error::ApiError,
+    config::AppConfig,
     domain::repo::{RepoProfile, RepoSignal},
     services::{quality::load_v2, trust::signal_events},
 };
 
 use super::rows::{ProfileRow, SignalRow};
 
-pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProfile, ApiError> {
-    let formula_version = load_v2()?.meta.version;
+pub async fn get_repo_profile(
+    db: &PgPool,
+    config: &AppConfig,
+    artifact_id: Uuid,
+) -> Result<RepoProfile, ApiError> {
+    let formula = load_v2()?;
+    let formula_version = formula.meta.version.clone();
+    let reliability_min_sample = f64::from(formula.dimensions.reliability.min_sample);
 
     let row: ProfileRow = sqlx::query_as(
         r#"
@@ -99,7 +106,12 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
     .fetch_optional(db)
     .await?;
 
-    Ok(row.into_profile(signals, previous_overall))
+    Ok(row.into_profile(
+        signals,
+        previous_overall,
+        config.structural_stale_secs,
+        reliability_min_sample,
+    ))
 }
 
 pub async fn get_repo_signals(db: &PgPool, artifact_id: Uuid) -> Result<Vec<RepoSignal>, ApiError> {

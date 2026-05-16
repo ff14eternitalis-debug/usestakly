@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::domain::reference::QualityContext;
+use crate::domain::{
+    quality_display::{DimensionState, IngestionStatus},
+    reference::QualityContext,
+};
 
 /// Why this repo appears in the current search/profile context (not radar JSON).
 #[derive(Debug, Clone, Serialize, Default, PartialEq, Eq)]
@@ -110,6 +113,9 @@ pub struct RepoProfile {
     pub default_branch: Option<String>,
     pub priors_fetched_at: Option<DateTime<Utc>>,
     pub vitality_inputs: VitalityInputs,
+    pub dimension_states: Vec<DimensionState>,
+    pub proof_tier: String,
+    pub ingestion_status: IngestionStatus,
     pub recent_signals: Vec<RepoSignal>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub score_snapshot: Option<ScoreSnapshot>,

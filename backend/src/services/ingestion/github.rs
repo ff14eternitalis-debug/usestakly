@@ -13,6 +13,8 @@ use serde::Deserialize;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
+use super::structural_extras;
+
 use crate::{
     app::error::ApiError,
     config::AppConfig,
@@ -223,7 +225,7 @@ enum GitHubRateLimitKind {
 }
 
 #[derive(Debug, Deserialize)]
-struct GitHubReleaseSummary {
+pub(crate) struct GitHubReleaseSummary {
     published_at: Option<DateTime<Utc>>,
 }
 
@@ -240,10 +242,10 @@ struct GitHubEventActor {
     login: String,
 }
 
-struct GitHubJsonResponse<T> {
-    data: Option<T>,
-    etag: Option<String>,
-    not_modified: bool,
+pub(crate) struct GitHubJsonResponse<T> {
+    pub(crate) data: Option<T>,
+    pub(crate) etag: Option<String>,
+    pub(crate) not_modified: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -254,12 +256,6 @@ struct OwnerActivitySummary {
 
 struct OwnerActivityFetch {
     summary: OwnerActivitySummary,
-    etag: Option<String>,
-}
-
-struct ReleaseSummaryFetch {
-    releases_count: Option<i32>,
-    last_release_at: Option<DateTime<Utc>>,
     etag: Option<String>,
 }
 
@@ -296,7 +292,7 @@ fn header_str<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     headers.get(name).and_then(|value| value.to_str().ok())
 }
 
-fn summarize_releases(releases: &[GitHubReleaseSummary]) -> (i32, Option<DateTime<Utc>>) {
+pub(crate) fn summarize_releases(releases: &[GitHubReleaseSummary]) -> (i32, Option<DateTime<Utc>>) {
     let count = releases.len() as i32;
     let last = releases
         .iter()
@@ -384,7 +380,7 @@ fn github_api_failure(context: &str, status: StatusCode, message: &str) -> ApiEr
     }
 }
 
-async fn github_get_json_with_etag<T>(
+pub(crate) async fn github_get_json_with_etag<T>(
     client: &Octocrab,
     path: &str,
     etag: Option<&str>,
@@ -527,41 +523,33 @@ async fn fetch_structural_signals(
             }
         };
 
-    let has_ci = match fetch_has_ci(client, owner, name).await {
-        Ok(value) => Some(value),
-        Err(err) => {
-            tracing::warn!(
-                target: "ingestion::github::structural",
-                "has_ci fetch failed for {owner}/{name}: {err}"
-            );
-            None
-        }
-    };
+    let has_ci = structural_extras::detect_has_ci(client, owner, name).await;
 
-    let (releases_count, last_release_at, releases_etag) = match fetch_releases_summary_with_etag(
-        client,
-        owner,
-        name,
-        existing.releases_etag.as_deref(),
-        existing.releases_count,
-        existing.last_release_at,
-    )
-    .await
-    {
-        Ok(summary) => (
-            summary.releases_count,
-            summary.last_release_at,
-            summary.etag,
-        ),
-        Err(err) => {
-            tracing::warn!(
-                target: "ingestion::github::structural",
-                "releases fetch failed for {owner}/{name}: {}",
-                err.message
-            );
-            (None, None, existing.releases_etag.clone())
-        }
-    };
+    let (releases_count, last_release_at, releases_etag) =
+        match structural_extras::fetch_releases_with_fallback(
+            client,
+            owner,
+            name,
+            existing.releases_etag.as_deref(),
+            existing.releases_count,
+            existing.last_release_at,
+        )
+        .await
+        {
+            Ok(summary) => (
+                summary.releases_count,
+                summary.last_release_at,
+                summary.etag,
+            ),
+            Err(err) => {
+                tracing::warn!(
+                    target: "ingestion::github::structural",
+                    "releases fetch failed for {owner}/{name}: {}",
+                    err.message
+                );
+                (None, None, existing.releases_etag.clone())
+            }
+        };
 
     let owner_activity = match fetch_owner_activity_summary(
         client,
@@ -664,49 +652,6 @@ async fn fetch_commits_since(
         }
     }
     Ok(summaries)
-}
-
-async fn fetch_has_ci(client: &Octocrab, owner: &str, name: &str) -> Result<bool, octocrab::Error> {
-    match client
-        .repos(owner, name)
-        .get_content()
-        .path(".github/workflows")
-        .send()
-        .await
-    {
-        Ok(content) => Ok(!content.items.is_empty()),
-        Err(octocrab::Error::GitHub { source, .. }) if source.status_code.as_u16() == 404 => {
-            Ok(false)
-        }
-        Err(err) => Err(err),
-    }
-}
-
-async fn fetch_releases_summary_with_etag(
-    client: &Octocrab,
-    owner: &str,
-    name: &str,
-    etag: Option<&str>,
-    existing_count: Option<i32>,
-    existing_last_release_at: Option<DateTime<Utc>>,
-) -> Result<ReleaseSummaryFetch, ApiError> {
-    let path = format!("/repos/{owner}/{name}/releases?per_page=100");
-    let response: GitHubJsonResponse<Vec<GitHubReleaseSummary>> =
-        github_get_json_with_etag(client, &path, etag, "GitHub releases fetch").await?;
-    if response.not_modified {
-        return Ok(ReleaseSummaryFetch {
-            releases_count: existing_count,
-            last_release_at: existing_last_release_at,
-            etag: response.etag,
-        });
-    }
-    let releases = response.data.unwrap_or_default();
-    let (count, last_release_at) = summarize_releases(&releases);
-    Ok(ReleaseSummaryFetch {
-        releases_count: Some(count),
-        last_release_at,
-        etag: response.etag,
-    })
 }
 
 struct ReadmeFetch {

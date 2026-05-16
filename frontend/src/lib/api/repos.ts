@@ -1,8 +1,15 @@
 import { apiGet, apiPost } from "../api-client";
-import type { RepoProfile, RepoViewerState } from "../types";
+import type { RefreshRepoResponse, RepoProfile, RepoViewerState } from "../types";
 
 export function getRepoProfile(id: string, signal?: AbortSignal): Promise<RepoProfile> {
   return apiGet<RepoProfile>(`/api/repos/${id}`, signal);
+}
+
+export function refreshRepoProfile(
+  id: string,
+  signal?: AbortSignal
+): Promise<RefreshRepoResponse> {
+  return apiPost<RefreshRepoResponse>(`/api/repos/${id}/refresh`, {}, signal);
 }
 
 export function getRepoViewerState(

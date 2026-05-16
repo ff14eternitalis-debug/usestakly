@@ -125,6 +125,7 @@ pub fn build_app(config: AppConfig, db: PgPool) -> Router {
         .route("/api/repos/add", post(repos::add_repo))
         .route("/api/repos/search", get(repos::search_repos))
         .route("/api/repos/{repo_id}", get(repos::get_repo))
+        .route("/api/repos/{repo_id}/refresh", post(repos::refresh_repo))
         .route(
             "/api/repos/{repo_id}/viewer-state",
             get(repos::get_repo_viewer_state),

@@ -8,7 +8,7 @@ use crate::{
     domain::repo::RepoCategory,
     services::{
         ingestion::github::{build_client, ingest_repo, parse_github_repo_input},
-        quality::recompute_all_scores_with_config,
+        quality::recompute_external_artifact,
         repos::find_github_artifact_id,
     },
 };
@@ -60,7 +60,13 @@ pub async fn add_repo(
     let client = build_client(token)?;
     let (artifact_id, meta, categories) =
         ingest_repo(&client, &state.db, &state.config, &owner, &name).await?;
-    let report = recompute_all_scores_with_config(&state.db, Some(&state.config)).await?;
+    recompute_external_artifact(&state.db, Some(&state.config), artifact_id)
+        .await
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let formula_version = crate::services::quality::load_v2()
+        .map_err(|e| ApiError::internal(format!("loading formula: {e}")))?
+        .meta
+        .version;
 
     Ok(Json(AddRepoResponse {
         artifact_id,
@@ -80,7 +86,7 @@ pub async fn add_repo(
         archived: meta.archived,
         default_branch: meta.default_branch,
         last_commit_at: meta.last_commit_at,
-        formula_version: report.formula_version,
+        formula_version,
         categories,
     }))
 }

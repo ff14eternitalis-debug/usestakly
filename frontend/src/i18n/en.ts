@@ -407,7 +407,26 @@ export const en = {
     scoreSnapshotTitle: "Score snapshot",
     scoreSnapshotCurrent: "Current overall (v2)",
     scoreSnapshotPrevious: "Previous formula (v1.1)",
-    scoreSnapshotComputed: "computed"
+    scoreSnapshotComputed: "computed",
+    refreshingGithub: "Refreshing GitHub structural signals in the background…",
+    structuralIncomplete:
+      "Some GitHub structural signals are missing or stale. A background refresh may improve vitality and CI/release data."
+  },
+  dimensionDisplay: {
+    states: {
+      measured: "Measured",
+      awaiting_community: "Awaiting community proof",
+      neutral_default: "Neutral default",
+      growing: "Growing",
+      not_captured: "Not captured yet",
+      partial: "Partial capture",
+      missing_commit: "Missing commit data"
+    },
+    proofTier: {
+      corpus_only: "Corpus-backed (GitHub)",
+      usage_limited: "Limited UseStakly usage",
+      community_backed: "Community-backed"
+    }
   },
   repoExplanation: {
     title: "Why this result",

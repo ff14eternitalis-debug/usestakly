@@ -68,7 +68,29 @@ export type VitalityInputs = {
   hasCi: boolean | null;
   releasesCount: number | null;
   lastReleaseAt: string | null;
+  ownerLastActivityAt?: string | null;
+  ownerInactiveDays?: number | null;
 };
+
+export type DimensionState = {
+  key: string;
+  value: number | null;
+  displayState: string;
+  source: string;
+  confidence: string;
+  asOf: string;
+  summary: string;
+};
+
+export type IngestionStatus = {
+  priorsFetchedAt: string | null;
+  structuralSignalsAt: string | null;
+  structuralStale: boolean;
+  structuralComplete: boolean;
+  partialFields: string[];
+};
+
+export type ProofTier = "corpus_only" | "usage_limited" | "community_backed";
 
 export type RepoSearchResult = {
   artifactId: string;
@@ -116,8 +138,18 @@ export type RepoProfile = RepoSearchResult & {
   defaultBranch: string | null;
   priorsFetchedAt: string | null;
   vitalityInputs: VitalityInputs;
+  dimensionStates: DimensionState[];
+  proofTier: ProofTier;
+  ingestionStatus: IngestionStatus;
   recentSignals: RepoSignal[];
   scoreSnapshot?: ScoreSnapshot | null;
+};
+
+export type RefreshRepoResponse = {
+  refreshed: boolean;
+  artifactId: string;
+  structuralSignalsAt: string | null;
+  ingestionStatus: IngestionStatus;
 };
 
 export type RepoViewerState = {

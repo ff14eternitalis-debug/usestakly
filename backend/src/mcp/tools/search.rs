@@ -99,6 +99,17 @@ pub(crate) fn radar_brief(radar: &crate::domain::repo::RepoRadarSnapshot) -> Rad
 }
 
 pub(crate) fn radar_summary(radar: &crate::domain::repo::RepoRadarSnapshot) -> String {
+    let reasons = radar
+        .explanation
+        .get("reasons")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let corpus_backed = reasons.contains(&"corpus_backed");
     let base = match radar.maturity_band.as_str() {
         "established" => "Radar: established baseline with mature quality and activity signals.",
         "emerging" => {
@@ -111,11 +122,18 @@ pub(crate) fn radar_summary(radar: &crate::domain::repo::RepoRadarSnapshot) -> S
         "noisy" => "Radar: weak category signal; treat it as a lead, not a recommendation.",
         _ => "Radar: maturity signal is available; inspect the repo context before use.",
     };
+    let base = if corpus_backed {
+        format!(
+            "{base} Corpus-backed: strong GitHub activity; UseStakly community proof may still be pending."
+        )
+    } else {
+        base.to_string()
+    };
     if radar.trend_signal >= 0.85 {
         format!("{base} Trend signal is strong.")
     } else if radar.trend_signal >= 0.55 {
         format!("{base} Trend signal is visible.")
     } else {
-        base.to_string()
+        base
     }
 }

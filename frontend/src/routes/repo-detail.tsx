@@ -1,5 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../lib/api-client";
@@ -7,7 +7,8 @@ import {
   createRepoSignal,
   disputeRepoSignal,
   getRepoProfile,
-  getRepoViewerState
+  getRepoViewerState,
+  refreshRepoProfile
 } from "../lib/api/repos";
 import { formatRelative, scoreTone } from "../lib/format";
 import { addRepoToWatchlist, getWatchlist, removeRepoFromWatchlist } from "../lib/api/watchlist";
@@ -17,6 +18,7 @@ import { useAuthStore } from "../state/auth-store";
 import { OwnerDisputePanel } from "../features/repos/components/OwnerDisputePanel";
 import { RepoHeader } from "../features/repos/components/RepoHeader";
 import { RepoMetricsPanel } from "../features/repos/components/RepoMetricsPanel";
+import { StructuralRefreshBanner } from "../features/repos/components/StructuralRefreshBanner";
 import { RepoRecommendationExplanation } from "../features/repos/components/RepoRecommendationExplanation";
 import { RepoScoreHistory } from "../features/repos/components/RepoScoreHistory";
 import { RepoSignalsList } from "../features/repos/components/RepoSignalsList";
@@ -34,6 +36,8 @@ export function RepoDetailPage() {
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [evidenceDescription, setEvidenceDescription] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
+  const [structuralRefreshing, setStructuralRefreshing] = useState(false);
+  const refreshAttempted = useRef(false);
 
   const profile = useQuery({
     queryKey: ["repo", id],
@@ -43,6 +47,25 @@ export function RepoDetailPage() {
   useEffect(() => {
     setOverride(null);
   }, [id, setOverride]);
+
+  useEffect(() => {
+    const data = profile.data;
+    if (!data || data.artifactId !== id || refreshAttempted.current) return;
+    const needsRefresh =
+      data.ingestionStatus.structuralStale ||
+      !data.ingestionStatus.structuralComplete;
+    if (!needsRefresh) return;
+    refreshAttempted.current = true;
+    setStructuralRefreshing(true);
+    void refreshRepoProfile(id)
+      .then(() => queryClient.invalidateQueries({ queryKey: ["repo", id] }))
+      .catch(() => undefined)
+      .finally(() => setStructuralRefreshing(false));
+  }, [profile.data, id, queryClient]);
+
+  useEffect(() => {
+    refreshAttempted.current = false;
+  }, [id]);
 
   useEffect(() => {
     const data = profile.data;
@@ -181,6 +204,16 @@ export function RepoDetailPage() {
         viewOnGithubLabel={t.common.viewOnGithub}
       />
 
+      <StructuralRefreshBanner
+        proofTier={repo.proofTier}
+        ingestionStatus={repo.ingestionStatus}
+        refreshing={structuralRefreshing}
+        proofTierLabels={t.dimensionDisplay.proofTier}
+        refreshingLabel={t.repoDetail.refreshingGithub}
+        incompleteLabel={t.repoDetail.structuralIncomplete}
+        howToReadLabel={t.repoDetail.scoreGuideAction}
+      />
+
       <hr className="hairline" />
 
       <RepoMetricsPanel
@@ -193,11 +226,7 @@ export function RepoDetailPage() {
         reliabilityLabel={t.repoDetail.reliability}
         abandonmentLabel={t.repoDetail.abandonment}
         vitalityLabel={t.repoDetail.vitality}
-        freshnessHint={t.repoDetail.freshnessHint}
-        adoptionHint={t.repoDetail.adoptionHint}
-        reliabilityHint={t.repoDetail.reliabilityHint}
-        abandonmentHint={t.repoDetail.abandonmentHint}
-        vitalityHint={t.repoDetail.vitalityHint}
+        dimensionDisplayStates={t.dimensionDisplay.states}
         vitalityCollectiveLabel={t.repoDetail.vitalityCollective}
         vitalityCadenceLabel={t.repoDetail.vitalityCadence}
         vitalityCiLabel={t.repoDetail.vitalityCi}

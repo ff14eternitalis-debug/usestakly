@@ -11,7 +11,15 @@ use crate::domain::{
         VitalityInputs,
     },
 };
-use crate::services::repo_explain::{self, ExplainContext, ExplainRepoInput};
+use crate::services::{
+    quality::{
+        dimension_state::{
+            build_dimension_states_from_quality, derive_proof_tier, proof_tier_str,
+        },
+        ingestion_status::build_ingestion_status,
+    },
+    repo_explain::{self, ExplainContext, ExplainRepoInput},
+};
 
 use super::normalize::normalize_public_signal;
 
@@ -184,7 +192,10 @@ impl ProfileRow {
         self,
         recent_signals: Vec<RepoSignal>,
         previous_overall: Option<f64>,
+        structural_stale_secs: u64,
+        reliability_min_sample: f64,
     ) -> RepoProfile {
+        let now = Utc::now();
         let approved_flags = self.quality_flags.clone().unwrap_or_default();
         let repo = RepoRow {
             artifact_id: self.artifact_id,
@@ -241,21 +252,38 @@ impl ProfileRow {
             },
             previous_overall,
         });
+        let vitality_inputs = VitalityInputs {
+            structural_signals_at: self.structural_signals_at,
+            distinct_contributors_90d: self.distinct_contributors_90d,
+            commits_30d: self.commits_30d,
+            has_ci: self.has_ci,
+            releases_count: self.releases_count,
+            last_release_at: self.last_release_at,
+            owner_last_activity_at: self.owner_last_activity_at,
+            owner_inactive_days: self.owner_inactive_days,
+        };
+        let dimension_states = build_dimension_states_from_quality(
+            repo.quality.as_ref(),
+            &vitality_inputs,
+            reliability_min_sample,
+            now,
+        );
+        let proof_tier = proof_tier_str(derive_proof_tier(&dimension_states)).to_string();
+        let ingestion_status = build_ingestion_status(
+            self.priors_fetched_at,
+            &vitality_inputs,
+            structural_stale_secs,
+            now,
+        );
         RepoProfile {
             repo,
             subscribers_count: self.subscribers_count,
             default_branch: self.default_branch,
             priors_fetched_at: self.priors_fetched_at,
-            vitality_inputs: VitalityInputs {
-                structural_signals_at: self.structural_signals_at,
-                distinct_contributors_90d: self.distinct_contributors_90d,
-                commits_30d: self.commits_30d,
-                has_ci: self.has_ci,
-                releases_count: self.releases_count,
-                last_release_at: self.last_release_at,
-                owner_last_activity_at: self.owner_last_activity_at,
-                owner_inactive_days: self.owner_inactive_days,
-            },
+            vitality_inputs,
+            dimension_states,
+            proof_tier,
+            ingestion_status,
             recent_signals: recent_signals
                 .into_iter()
                 .filter(|signal| {

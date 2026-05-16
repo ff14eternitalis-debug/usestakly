@@ -75,6 +75,22 @@ pub fn compute_radar_snapshot(input: &RepoRadarInput) -> RepoRadarSnapshot {
             reasons.push("clear_category");
             reasons.push("recent_activity");
             "emerging"
+        } else if corpus_backed_established(input, freshness, abandonment, contributors_90d, commits_30d)
+        {
+            reasons.push("corpus_backed");
+            reasons.push("community_proof_pending");
+            "established"
+        } else if corpus_backed_emerging(
+            input,
+            has_clear_category,
+            has_activity,
+            has_structure,
+            abandonment,
+            contributors_90d,
+        ) {
+            reasons.push("corpus_backed");
+            reasons.push("community_proof_pending");
+            "emerging"
         } else {
             reasons.push("thin_evidence");
             "experimental"
@@ -177,6 +193,83 @@ pub async fn upsert_repo_radar_snapshot(
     .execute(db)
     .await?;
     Ok(())
+}
+
+fn corpus_backed_established(
+    input: &RepoRadarInput,
+    freshness: f64,
+    abandonment: f64,
+    contributors_90d: i32,
+    commits_30d: i32,
+) -> bool {
+    !input.archived
+        && freshness >= 0.65
+        && abandonment <= 0.20
+        && contributors_90d >= 8
+        && commits_30d >= 20
+        && (input.has_ci.unwrap_or(false) || input.releases_count.unwrap_or_default() > 0)
+}
+
+fn corpus_backed_emerging(
+    input: &RepoRadarInput,
+    has_clear_category: bool,
+    has_activity: bool,
+    has_structure: bool,
+    abandonment: f64,
+    contributors_90d: i32,
+) -> bool {
+    !input.archived
+        && has_clear_category
+        && has_activity
+        && has_structure
+        && abandonment <= 0.30
+        && contributors_90d >= 3
+        && (input.quality_overall.unwrap_or(0.0) < 0.70 || input.quality_overall.is_none())
+}
+
+pub async fn refresh_repo_radar_snapshot(db: &PgPool, artifact_id: Uuid) -> Result<(), ApiError> {
+    let row = sqlx::query_as::<_, RepoRadarRow>(
+        r#"
+        SELECT
+          e.id AS artifact_id,
+          e.archived,
+          e.stars_count,
+          e.last_commit_at,
+          e.commits_30d,
+          e.distinct_contributors_90d,
+          e.has_ci,
+          e.releases_count,
+          ascore.freshness::float8 AS quality_freshness,
+          ascore.abandonment::float8 AS quality_abandonment,
+          ascore.vitality::float8 AS quality_vitality,
+          ascore.overall::float8 AS quality_overall,
+          ascore.flags AS quality_flags,
+          COALESCE((
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'category', rc.category,
+                'confidence', rc.confidence,
+                'source', rc.source,
+                'evidence', rc.evidence
+              )
+              ORDER BY rc.confidence DESC, rc.category
+            )
+            FROM repo_categories rc
+            WHERE rc.external_artifact_id = e.id
+          ), '[]'::jsonb) AS categories
+        FROM external_artifacts e
+        LEFT JOIN artifact_scores ascore
+          ON ascore.external_artifact_id = e.id
+          AND ascore.formula_version = 'v2.0'
+        WHERE e.id = $1
+        "#,
+    )
+    .bind(artifact_id)
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("Repository not found"))?;
+    let snapshot = compute_radar_snapshot(&row.into_input());
+    upsert_repo_radar_snapshot(db, artifact_id, &snapshot).await
 }
 
 #[derive(sqlx::FromRow)]

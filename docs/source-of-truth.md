@@ -48,6 +48,17 @@ If docs disagree with code, verify code first:
 - frontend routes: `frontend/src/app/router.tsx`
 - CLI version: `cli/package.json`
 
+## Corpus vs community proof (display layer)
+
+Two truths coexist on every repo profile:
+
+- **GitHub corpus (observable)** — freshness, vitality, CI, releases, contributor cadence. Ingested into `external_artifacts` and surfaced via `dimension_states` with `source: github_metadata` and `ingestion_status`.
+- **UseStakly community (decisional)** — adoption and reliability from passive MCP `log_usage` and weighted signals. Surfaced via `dimension_states` with `source: usage_signals` or `neutral_default` until `min_sample` builds in `formula_v2.toml`.
+
+`proof_tier` (`corpus_only` | `usage_limited` | `community_backed`) is a **label for agents and UI**, not a replacement for the scoring formula. Radar may mark large active OSS as `corpus_backed` / established before community proof exists; strict MCP filters still require usage where configured.
+
+Background refresh: `POST /api/repos/{id}/refresh` re-ingests GitHub metadata and recomputes **one** artifact (`recompute_external_artifact`). Cooldown: `APP_REPO_REFRESH_COOLDOWN_SECS` (default 900). Stale structural signals: `APP_STRUCTURAL_STALE_SECS` (default 172800 = 48h).
+
 ## Legacy Boundary
 
 The snippets product is abandoned.

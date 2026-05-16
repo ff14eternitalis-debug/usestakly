@@ -240,7 +240,7 @@ impl McpServer {
                 ErrorData::invalid_params(format!("repo not ingested: {owner}/{name}"), None)
             })?;
 
-        let profile = repos_service::get_repo_profile(&self.state.db, artifact_id)
+        let profile = repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
             .await
             .map_err(map_api_error)?;
 
@@ -333,7 +333,7 @@ impl McpServer {
             .map_err(map_anyhow)?;
 
         let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let profile = repos_service::get_repo_profile(&self.state.db, artifact_id)
+        let profile = repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
             .await
             .map_err(map_api_error)?;
         let q = profile.repo.quality.as_ref();
@@ -629,6 +629,15 @@ mod tests {
                 last_release_at: Some(computed_at),
                 owner_last_activity_at: Some(computed_at),
                 owner_inactive_days: Some(0),
+            },
+            dimension_states: Vec::new(),
+            proof_tier: "community_backed".to_string(),
+            ingestion_status: crate::domain::quality_display::IngestionStatus {
+                priors_fetched_at: Some(computed_at),
+                structural_signals_at: Some(computed_at),
+                structural_stale: false,
+                structural_complete: true,
+                partial_fields: Vec::new(),
             },
             score_snapshot: None,
             recent_signals: vec![RepoSignal {
@@ -1110,6 +1119,8 @@ mod tests {
             active_signal_default_consensus: 2,
             active_signal_severe_consensus: 3,
             semantic_search_enabled: false,
+            structural_stale_secs: 172_800,
+            repo_refresh_cooldown_secs: 900,
         }
     }
 }

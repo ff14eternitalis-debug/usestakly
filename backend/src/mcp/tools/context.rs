@@ -3,6 +3,8 @@ use rmcp::schemars;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use serde_json::Value;
+
 use super::common::Provenance;
 use super::search::radar_brief;
 
@@ -42,6 +44,9 @@ pub struct RepoContextOutput {
     pub quality_build_failure_count: i32,
     pub quality_regret_count: i32,
     pub flags: Vec<String>,
+    pub proof_tier: String,
+    pub dimension_states: Value,
+    pub ingestion_status: Value,
     pub radar: Option<super::search::RadarBrief>,
     pub recent_signals: Vec<SignalSummary>,
 }
@@ -120,6 +125,9 @@ pub(crate) fn into_context_output(
             .unwrap_or_default(),
         quality_regret_count: q.as_ref().map(|q| q.regret_count).unwrap_or_default(),
         flags: q.map(|q| q.flags).unwrap_or_default(),
+        proof_tier: profile.proof_tier,
+        dimension_states: serde_json::to_value(&profile.dimension_states).unwrap_or(Value::Null),
+        ingestion_status: serde_json::to_value(&profile.ingestion_status).unwrap_or(Value::Null),
         radar,
         recent_signals: profile
             .recent_signals

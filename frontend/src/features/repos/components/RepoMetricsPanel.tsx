@@ -1,12 +1,12 @@
-import { ScoreBar } from "../../../components/ScoreBar";
 import {
-  abandonmentTone,
   formatRelative,
   formatScore,
   formatStars,
   scoreTone
 } from "../../../lib/format";
+import { stateForKey } from "../../../lib/dimension-display";
 import type { RepoProfile, VitalityInputs } from "../../../lib/types";
+import { DimensionScoreRow } from "./DimensionScoreRow";
 
 function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   if (tone === "danger") return "var(--color-danger)";
@@ -38,11 +38,6 @@ type RepoMetricsPanelProps = {
   reliabilityLabel: string;
   abandonmentLabel: string;
   vitalityLabel: string;
-  freshnessHint: string;
-  adoptionHint: string;
-  reliabilityHint: string;
-  abandonmentHint: string;
-  vitalityHint: string;
   vitalityCollectiveLabel: string;
   vitalityCadenceLabel: string;
   vitalityCiLabel: string;
@@ -58,6 +53,7 @@ type RepoMetricsPanelProps = {
   lastCommitLabel: string;
   priorsFetchedLabel: string;
   defaultBranchLabel: string;
+  dimensionDisplayStates: Record<string, string>;
 };
 
 function formatNullableNumber(value: number | null): string {
@@ -133,11 +129,6 @@ export function RepoMetricsPanel({
   reliabilityLabel,
   abandonmentLabel,
   vitalityLabel,
-  freshnessHint,
-  adoptionHint,
-  reliabilityHint,
-  abandonmentHint,
-  vitalityHint,
   vitalityCollectiveLabel,
   vitalityCadenceLabel,
   vitalityCiLabel,
@@ -152,10 +143,12 @@ export function RepoMetricsPanel({
   subscribersLabel,
   lastCommitLabel,
   priorsFetchedLabel,
-  defaultBranchLabel
+  defaultBranchLabel,
+  dimensionDisplayStates
 }: RepoMetricsPanelProps) {
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
+  const states = repo.dimensionStates;
 
   return (
     <section className="grid gap-8 md:grid-cols-[280px_1fr] md:gap-14">
@@ -190,39 +183,34 @@ export function RepoMetricsPanel({
       <div className="grid gap-6">
         <span className="kicker">{dimensionsLabel}</span>
         <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
-          <ScoreBar
+          <DimensionScoreRow
             label={freshnessLabel}
-            value={q?.freshness ?? null}
-            tone={scoreTone(q?.freshness ?? null)}
-            hint={freshnessHint}
+            dimension={stateForKey(states, "freshness")}
+            displayStateLabels={dimensionDisplayStates}
           />
-          <ScoreBar
+          <DimensionScoreRow
             label={adoptionLabel}
-            value={q?.adoption ?? null}
-            tone={scoreTone(q?.adoption ?? null)}
-            hint={adoptionHint}
+            dimension={stateForKey(states, "adoption")}
+            displayStateLabels={dimensionDisplayStates}
           />
-          <ScoreBar
+          <DimensionScoreRow
             label={reliabilityLabel}
-            value={q?.reliability ?? null}
-            tone={scoreTone(q?.reliability ?? null)}
-            hint={reliabilityHint}
+            dimension={stateForKey(states, "reliability")}
+            displayStateLabels={dimensionDisplayStates}
           />
-          <ScoreBar
+          <DimensionScoreRow
             label={abandonmentLabel}
-            value={q?.abandonment ?? null}
-            tone={abandonmentTone(q?.abandonment ?? null)}
+            dimension={stateForKey(states, "abandonment")}
             invert
-            hint={abandonmentHint}
+            displayStateLabels={dimensionDisplayStates}
           />
         </div>
 
         <div className="surface p-5 grid gap-4">
-          <ScoreBar
+          <DimensionScoreRow
             label={vitalityLabel}
-            value={q?.vitality ?? null}
-            tone={scoreTone(q?.vitality ?? null)}
-            hint={vitalityHint}
+            dimension={stateForKey(states, "vitality")}
+            displayStateLabels={dimensionDisplayStates}
           />
           <VitalityBreakdown
             inputs={repo.vitalityInputs}
