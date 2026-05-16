@@ -18,7 +18,7 @@
 
 UseStakly helps developers and coding agents choose open-source GitHub repositories with a transparent score instead of relying on stars alone.
 
-`UseStakly` is the current product name. `Project-K` is the historical working name and may still appear in paths, migrations, and archived documents.
+`UseStakly` is the only active product name.
 
 ## Product Scope
 
@@ -189,8 +189,6 @@ Start here:
 - [docs/deployment-coolify.md](./docs/deployment-coolify.md)
 - [docs/architecture-backend-current.md](./docs/architecture-backend-current.md)
 - [docs/security-audit-2026-04-21.md](./docs/security-audit-2026-04-21.md)
-
-Archived snippets-era docs live under `docs/archive/snippets/` and are not the source of truth for the current product.
 
 ## License
 

@@ -6,7 +6,7 @@ This file provides guidance to Gemini CLI when working with code in this reposit
 
 ## Produit
 
-- Nom produit : **UseStakly**. Nom de travail historique : **Project-K** (Komorebi). Pas de renommage spontané — voir `docs/plans/rename-to-usestakly.md`.
+- Nom produit : **UseStakly**. Utiliser uniquement ce nom dans les docs et surfaces actives. Les anciens noms pré-pivot ne décrivent pas le produit actuel.
 - Objectif : **veille GitHub OSS**. UseStakly score des repos GitHub publics pour aider devs et agents IA à choisir leurs dépendances autrement que par les stars.
 - État : **public beta exposée et redéployée**. Ops MCP critiques en place (backup DB, Bearer `/mcp`, rate-limit IP/token, Uptime Kuma). Restent surtout : backup offsite/S3, polish release.
 - Trois piliers : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents** (6 tools, CLI npm `usestakly-mcp`).
@@ -17,7 +17,7 @@ This file provides guidance to Gemini CLI when working with code in this reposit
 - `backend/` — API Rust (Axum 0.8 + SQLx 0.8 + rmcp 1.5). Migrations au boot. Binaire `seed_github`.
 - `frontend/` — React 19 + Vite 7 + Tailwind v4 + TanStack Router + Query + Zustand. E2E Playwright.
 - `cli/` — package npm `usestakly-mcp` (v0.1.4).
-- `docs/` — `docs/source-of-truth.md`, `docs/README.md`, `docs/plans/remaining-work-2026-05-03.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`. Archives = historique.
+- `docs/` — `docs/source-of-truth.md`, `docs/README.md`, `docs/plans/remaining-work-2026-05-03.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`.
 - `docker-compose.yml` — uniquement Postgres (`project_k`, `:5432`).
 
 ## Commandes

@@ -116,7 +116,7 @@ Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positif
 - [ ] **Refactor maintenabilité des gros fichiers/fonctions** : prioriser `frontend/src/routes/discover.tsx`, `frontend/src/features/repos/components/UseCaseSearchPanel.tsx`, `backend/src/mcp/server.rs`, `backend/src/services/repos.rs`. Objectif : extraire sous-composants/services sans changer le comportement.
 - [ ] **Boucles DB potentiellement N+1** : auditer puis batcher si nécessaire `services/use_case_watches.rs`, `services/notifications.rs`, `services/repo_categories.rs`. Priorité moyenne : chemins surtout write/backfill, pas hot path public critique.
 - [ ] **Tests ciblés sur zones complexes** : compléter autour des flows MCP metrics/admin, recommandations/use-case watches, ingestion GitHub parsing, et composants frontend complexes.
-- [ ] **Docs archives pré-pivot** : réparer ou annoter les liens cassés dans `docs/archive/snippets/**` pour éviter du bruit dans les audits automatiques.
+- [x] **Docs pré-pivot** : retirées des docs actives pour éviter le bruit dans les audits automatiques et les décisions agents.
 - [ ] **Dette UI/React à vérifier au fil de l'eau** : garder un oeil sur les listes `.map()` et les composants très conditionnels. Plusieurs alertes `missing key` Herald sont fausses, mais la règle reste utile pendant les refactors.
 
 ### 4.1 Phase R7 — E2E
@@ -153,7 +153,7 @@ Doc existante : `docs/audits/user-journey-audit-phase2-2026-04-24.md`. Reste à 
 
 ## Items explicitement déférés (pas dans l'ordre de priorité)
 
-- `R6` : faut-il garder les vues libraries/snippets cachées (réactivables) ou les dégommer net ? Schéma DB conservé en l'état.
+- `R6` : vues libraries/snippets retirées de l'app active ; schéma DB conservé uniquement pour compatibilité historique.
 - `R5` token agent : JWT dédié vs OAuth device flow. Implémentation actuelle (`usk_<64 hex>` SHA-256) suffit au MVP.
 - "Intuition couche 2" : POC quand ? Jamais, post-MVP, post-traction ?
 

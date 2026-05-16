@@ -78,7 +78,7 @@ Voir doc dédiée : `docs/ops-mcp-coolify-hardening.md`.
 
 | Retiré | Devenir |
 |---|---|
-| Libraries / snippets (CRUD, UI, discovery publique) | Schéma DB conservé (tables non droppées), **endpoints + UI dormants**. Réactivables plus tard si un use-case émerge. |
+| Libraries / snippets (CRUD, UI, discovery publique) | Produit retiré. Schéma DB conservé uniquement pour compatibilité historique ; aucune surface runtime active à réintroduire sans demande explicite. |
 | Tier Team / registry privé | Retiré du roadmap. Le scope est 100 % repos GitHub publics OSS. |
 | Couverture npm / crates.io / shadcn | Reporté. MVP = GitHub uniquement. |
 | Seed corpus manuel de 200–500 snippets (ancienne Phase 10) | Remplacé par ingestion automatique des repos GitHub. |
@@ -280,7 +280,7 @@ Reste à couvrir dans un second audit, connecté cette fois :
 - [x] **R3** — canal notification v1 : in-app + Discord webhook configurable ; email enregistré mais envoi réel dépend encore d'un provider transactionnel.
 - [ ] **R5** — token agent : JWT dédié généré par l'user, ou OAuth device flow ?
 - [x] **R6** — router frontend : TanStack Router retenu pour l'app active
-- [ ] **R6** — faut-il garder les vues libraries/snippets cachées (réactivables) ou les dégommer net ?
+- [x] **R6** — vues libraries/snippets retirées de l'app active ; ne pas les réactiver sans demande explicite.
 - [ ] **Intuition couche 2** : POC quand ? Jamais, post-MVP, post-traction ?
 
 ---

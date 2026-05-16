@@ -6,7 +6,7 @@ This file provides guidance to Codex (and other CLI agents) when working with co
 
 ## Produit
 
-- Nom produit : **UseStakly**. Nom de travail historique : **Project-K** (Komorebi). Les deux cohabitent encore dans certains chemins (DB `project_k`, repo). Pas de renommage spontané — voir `docs/plans/rename-to-usestakly.md`.
+- Nom produit : **UseStakly**. Utiliser uniquement ce nom dans les docs et surfaces actives. Les anciens noms pré-pivot ne décrivent pas le produit actuel.
 - Objectif : **veille GitHub OSS**. UseStakly score des repos GitHub publics pour aider devs et agents IA à choisir leurs dépendances autrement que par les stars.
 - État : **public beta exposée et redéployée**. Ops MCP critiques en place (backup DB Coolify + restore testé, Bearer obligatoire sur `/mcp`, rate-limit `/mcp` par IP/token, alerte Uptime Kuma). Restent surtout : backup offsite/S3, polish release, validation continue.
 - Trois piliers actifs : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents** (6 tools, CLI npm `usestakly-mcp`).
@@ -17,7 +17,7 @@ This file provides guidance to Codex (and other CLI agents) when working with co
 - `backend/` — API Rust (Axum 0.8 + SQLx 0.8 + rmcp 1.5). Migrations dans `backend/migrations/` exécutées au boot par `sqlx::migrate!`. Binaire `seed_github` pour bootstrap corpus.
 - `frontend/` — React 19 + Vite 7 + Tailwind v4 + TypeScript. Routing **TanStack Router**. E2E Playwright (`frontend/e2e/mvp.spec.ts`).
 - `cli/` — package npm `usestakly-mcp` publié, point d'installation MCP pour agents externes.
-- `docs/` — commencer par `docs/source-of-truth.md`, `docs/README.md`, `docs/plans/remaining-work-2026-05-03.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`. Archives sous `docs/archive/` (historique uniquement).
+- `docs/` — commencer par `docs/source-of-truth.md`, `docs/README.md`, `docs/plans/remaining-work-2026-05-03.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`.
 - `deploy/coolify/` — cible de déploiement (voir `docs/deployment-coolify.md`, `docs/ops-mcp-coolify-hardening.md`).
 - `scripts/seed-public-corpus.ps1` — seed corpus public via API.
 - `docker-compose.yml` — uniquement Postgres local (`pgvector/pgvector:pg17`, DB `project_k`, `:5432`).

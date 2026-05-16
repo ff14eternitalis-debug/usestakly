@@ -1,7 +1,7 @@
 # UseStakly — Parcours utilisateur
 
 > Version : 2.1 — 2026-05-08
-> Vue à jour des flows réels du produit. La version pré-pivot (snippets, packs, registry perso) est archivée sous `docs/archive/snippets/user-journey-prepivot.md`.
+> Vue à jour des flows réels du produit. Les parcours pré-pivot snippets/packs/registry perso ont été retirés des docs actives.
 
 ## Personas
 

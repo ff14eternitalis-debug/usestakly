@@ -34,7 +34,6 @@ Read in this order:
 ## Completed plans (historical only)
 
 - `docs/plans/next-useful-work-2026-05-16.md` — merged on `main`; do not use for open work
-- `docs/plans/docs-source-of-truth-legacy-cleanup-2026-05-16.md` — this cleanup plan
 
 ## Runtime Truth Beats Docs
 
@@ -52,15 +51,9 @@ If docs disagree with code, verify code first:
 ## Legacy Boundary
 
 The snippets product is abandoned.
-Legacy tables and archived docs may remain for compatibility and history, but they are not product guidance.
+Legacy tables may remain for migration compatibility, but they are not product guidance.
 
 Never add or revive snippets/libraries UI, API, MCP tools, or roadmap items unless the user explicitly asks for that legacy product.
-
-## Archives
-
-Everything under `docs/archive/` is historical.
-Archived docs may mention snippets, Project-K, old local paths, old MCP tool names, and old business assumptions.
-Do not use archived docs as source of truth for implementation.
 
 ## Drift Audit
 

@@ -240,4 +240,4 @@ Si on y va :
 
 ---
 
-> Pour l'état d'avancement actuel, voir `TODO.md` v5.5. Pour le scope tenu depuis le pivot, voir `strategy-pivot-2026-04-21.md`. Les anciens plans `mvp-one-shot-blueprint.md` et `product-vision-and-safety.md` ont été archivés sous `docs/archive/snippets/`.
+> Pour l'état d'avancement actuel, voir `docs/source-of-truth.md` et `docs/plans/remaining-work-2026-05-03.md`. Pour le scope tenu depuis le pivot, voir `strategy-pivot-2026-04-21.md`.

@@ -19,7 +19,10 @@ $patterns = @(
   "/api/snippets",
   "search_library",
   "get_snippet",
-  "Project-DK/Project-K"
+  ("Project" + "-K"),
+  ("Projet" + " K"),
+  ("Komo" + "rebi"),
+  ("Project" + "-DK")
 )
 
 $activeRoots = @(
