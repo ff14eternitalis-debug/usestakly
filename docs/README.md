@@ -3,21 +3,24 @@
 > **Veille GitHub OSS avec scoring qualité**, consommable par des devs et des agents IA via MCP.
 > Public beta exposable au 2026-04-26 (TODO v5.5). Ouverture publique large conditionnée à la finition ops MCP.
 
-`UseStakly` est le nom produit retenu. `Project-K` reste le nom de travail historique encore présent dans certains chemins techniques (DB `project_k`, repo).
+`UseStakly` est le seul nom produit actif.
 
 ## Comment lire cette doc
 
 | Tu es… | Lis dans cet ordre |
 |---|---|
+| Agent / onboarding | [`source-of-truth.md`](./source-of-truth.md) → `../AGENTS.md` → `architecture-backend-current.md` |
 | Découverte du produit | `strategy-pivot-2026-04-21.md` → `strategy-quality-scored-registry.md` → `../README.md` |
-| Tu codes | `../TODO.md` → `architecture-backend-current.md` → `mcp-protocol.md` |
+| Tu codes | `plans/remaining-work-2026-05-03.md` → `architecture-backend-current.md` → `mcp-protocol.md` |
 | Tu opères / déploies | `deployment-coolify.md` → `ops-mcp-coolify-hardening.md` → `security-secrets-playbook.md` |
 | Tu intègres un agent | `mcp-protocol.md` → `mcp-cli-release.md` → `mcp-examples.md` → `mcp-endpoint-security.md` |
 
 ## Index
 
-### Source de vérité d'exécution
-- [`../TODO.md`](../TODO.md) — checklist globale, version 5.5
+### Source de vérité
+- [`source-of-truth.md`](./source-of-truth.md) — routage doc et runtime pour agents
+- [`plans/remaining-work-2026-05-03.md`](./plans/remaining-work-2026-05-03.md) — backlog priorisé actuel
+- [`../TODO.md`](../TODO.md) — roadmap historique (ne pas utiliser seule pour le backlog)
 - [`../CLAUDE.md`](../CLAUDE.md) — instructions agent Claude Code (synthèse projet)
 - [`../AGENTS.md`](../AGENTS.md) — équivalent Codex
 - [`../GEMINI.md`](../GEMINI.md) — équivalent Gemini
@@ -50,6 +53,7 @@
 - [`audits/user-journey-audit-2026-04-23.md`](./audits/user-journey-audit-2026-04-23.md) — phase 1 (anonyme)
 - [`audits/user-journey-audit-phase2-2026-04-24.md`](./audits/user-journey-audit-phase2-2026-04-24.md) — phase 2 (connecté), corrections livrées
 - [`validation/formula-v1.1-smoke-test-2026-04-24.md`](./validation/formula-v1.1-smoke-test-2026-04-24.md) — smoke test scoring v1.1
+- [`validation/live-release-checklist.md`](./validation/live-release-checklist.md) — go/no-go post-déploiement (MCP smoke inclus)
 
 ### Plans
 - [`plans/remaining-work-2026-05-03.md`](./plans/remaining-work-2026-05-03.md) — **vue priorisée du reste à terminer** (audit faux positifs + items vraiment ouverts)
@@ -57,18 +61,10 @@
 - [`plans/anti-slop-vitality-v2.md`](./plans/anti-slop-vitality-v2.md) — formula v2 vitality (livré, followup release_at)
 - [`plans/source-of-truth-oss-radar-plan.md`](./plans/source-of-truth-oss-radar-plan.md) — radar maturity (phases 1/2/3/5 livrées, 4/6 partielles)
 - [`plans/use-case-recommendation-watch-plan.md`](./plans/use-case-recommendation-watch-plan.md) — recherche par besoin (lots 1/2/3/5 livrés hors notifs, 4 MCP ouvert)
-- [`plans/rename-to-usestakly.md`](./plans/rename-to-usestakly.md) — transition `Project-K` → `UseStakly`
 - [`domain-proposals.md`](./domain-proposals.md) — propositions de noms de domaine
-
-### Archives
-- [`archive/snippets/`](./archive/snippets/) — docs de l'ancien produit snippets (abandonné au pivot)
-- [`archive/business-prepivot/`](./archive/business-prepivot/) — analyses business pré-pivot (concurrence, marché, finance) — non valides depuis le 2026-04-21
-
-> Les archives ne sont **plus une source de vérité**. Elles vivent pour la traçabilité de la réflexion produit, pas pour décrire l'état présent.
 
 ## Conventions
 
 - Chaque doc active porte une **version** et une **date** dans son en-tête
 - Les docs de stratégie ont une section "Décisions encore ouvertes" datée
 - Les snapshots (audits, validations) sont **immuables** une fois écrits — créer un nouveau fichier daté plutôt que modifier l'ancien
-- Les docs pré-pivot sont déplacées dans `archive/`, pas modifiées (préserve l'historique de réflexion)

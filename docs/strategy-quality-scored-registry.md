@@ -2,7 +2,9 @@
 
 > Version : 1.2 — 2026-04-26
 > Statut : **moat valide, scope resserré au pivot 2026-04-21**
-> Lien : ce doc pose les principes de fond. Le scope produit actuel est dans `strategy-pivot-2026-04-21.md`. L'exécution vit dans `TODO.md` v5.5.
+> Lien : ce doc pose les principes de fond. Le scope produit actuel est dans `strategy-pivot-2026-04-21.md`. L'exécution priorisée vit dans `docs/plans/remaining-work-2026-05-03.md`.
+
+> **Principles-only (2026-05-16)** : moat data-lock-in, signaux d'usage > stars, télémétrie passive, evidence obligatoire, anti-gaming — toujours valides. Tableaux business multi-tier, GTM équipes, exemples snippets internes et MVP 6–8 semaines sont historiques.
 
 > ### Bandeau de réconciliation post-pivot
 >
@@ -238,4 +240,4 @@ Si on y va :
 
 ---
 
-> Pour l'état d'avancement actuel, voir `TODO.md` v5.5. Pour le scope tenu depuis le pivot, voir `strategy-pivot-2026-04-21.md`. Les anciens plans `mvp-one-shot-blueprint.md` et `product-vision-and-safety.md` ont été archivés sous `docs/archive/snippets/`.
+> Pour l'état d'avancement actuel, voir `docs/source-of-truth.md` et `docs/plans/remaining-work-2026-05-03.md`. Pour le scope tenu depuis le pivot, voir `strategy-pivot-2026-04-21.md`.

@@ -221,5 +221,5 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 - rate-limit applicative globale `/mcp` livrée en local runtime ; la couverture CI reste limitée aux tests unitaires/purs
 - ingestion GitHub : ETags releases/README/events + backoff borné livrés ; monitoring quota GitHub restant encore à formaliser
 - `owner_inactive_days` calculé ; règle "maintainer silencieux 90 j" R3 encore à brancher côté notifications
-- réputation v2 runtime livrée ; formula_v2 (compte neuf = poids 0) + Graphe Sybil OAuth GitHub à venir
+- réputation v2 runtime + trust formula_v2 livrés (`new_account_active_signal_weight = 0.0` dans `formula_v2.toml`) ; Graphe Sybil OAuth GitHub à venir
 - doc reproduction tests + tests fonctionnels acceptée comme dette pré-ouverture externe

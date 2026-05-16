@@ -1,6 +1,6 @@
 # UseStakly — Stack technique
 
-> Version : 2.0 — 2026-04-26
+> Version : 2.1 — 2026-05-16
 > Vue à jour de la stack réellement déployée en public beta. Pour les détails de structure, voir `architecture-backend-current.md`.
 
 ## Vue d'ensemble
@@ -71,7 +71,7 @@ toml = "0.8"                 # scoring/formula_v1.toml
 
 ## CLI MCP (`cli/`)
 
-- Package npm public `usestakly-mcp` (v0.1.3 au 2026-04-26)
+- Package npm public `usestakly-mcp` (v0.1.4 — voir `cli/package.json`)
 - Node ≥18, `type: "module"`, ESM
 - Tests : `node --test`
 - Install agent : `npx usestakly-mcp install` configure Codex / Cursor avec Bearer + endpoint configurable
@@ -81,7 +81,7 @@ toml = "0.8"                 # scoring/formula_v1.toml
 - PostgreSQL 16 + pgvector
 - Image dev : `pgvector/pgvector:pg17`
 - Migrations via `sqlx::migrate!` (compile-time, exécutées au boot)
-- 17 migrations (1–9 legacy snippets dormantes, 10–17 actives produit GitHub)
+- 27 migrations (`0001`–`0027` ; `0001`–`0009` legacy snippets dormantes, `0010`+ produit GitHub actif)
 - Extension `vector` créée via `ensure_optional_extensions` si présente dans `pg_available_extensions`
 
 ## Auth & secrets

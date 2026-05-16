@@ -1,5 +1,7 @@
 # Audit de sécurité — post-pivot GitHub observability
 
+> Snapshot warning: audit daté 2026-04-21/23. L'autorisation MCP, le rate-limit `/mcp` et l'ingestion GitHub ont avancé depuis. État courant : `docs/ops-mcp-coolify-hardening.md`, `docs/mcp-endpoint-security.md`, `docs/architecture-backend-current.md`.
+
 > Version : 2 — mise à jour le 2026-04-23  
 > Portée : produit vivant **UseStakly** après pivot GitHub, incluant `repos/add`, watchlist, MCP read/write, signaux actifs, modération, dispute owner et audit trail.  
 > Branche : `main`
@@ -71,7 +73,7 @@ Cette partie est maintenant défendable pour un MVP fermé.
 Conséquence :
 
 - il faut considérer comme à faire tourner au minimum les secrets locaux réellement exposés pendant les sessions passées
-- le playbook [docs/security-secrets-playbook.md](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/docs/security-secrets-playbook.md) reste la procédure de référence
+- le playbook [docs/security-secrets-playbook.md](./security-secrets-playbook.md) reste la procédure de référence
 
 ### Auth web — OK
 

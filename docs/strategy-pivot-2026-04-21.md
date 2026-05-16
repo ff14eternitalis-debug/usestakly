@@ -89,7 +89,7 @@ POC pas planifié — post-traction.
 - Rate-limit applicative globale `/mcp` (initialize + tools/list + reads)
 - Alerte externe sur `/health`, `/api/status/public`, MCP test
 - Page légale `/legal` ou `/terms`, domaine + email contact officiel
-- formula_v2 (compte neuf = poids 0, usage prod surpondéré) + Graphe Sybil OAuth GitHub
+- trust formula_v2 livré (compte neuf poids actif 0 pour reviews sévères) ; Graphe Sybil OAuth GitHub reste à venir
 - `owner_inactive_days` côté R1 → débloque la règle « maintainer silencieux 90 j » R3
 - Cadence refresh ingestion automatique + ETags + backoff GitHub
 - Critère corpus formel (top N par langage / sur demande / via watchlist)

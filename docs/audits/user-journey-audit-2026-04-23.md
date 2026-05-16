@@ -1,5 +1,7 @@
 # User Journey Audit — 2026-04-23
 
+> Snapshot daté 2026-04-23. Les liens fichiers utilisent des chemins relatifs au repo (anciennes références absolues historiques corrigées). Pour l'état produit courant : `docs/source-of-truth.md`.
+
 ## Scope
 
 Audit du parcours utilisateur sur l'application locale `http://localhost:5173`, avec backend local `http://localhost:4000`.
@@ -60,11 +62,11 @@ Cause probable :
 
 Références :
 
-- [frontend/src/app/router.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/app/router.tsx)
-- [frontend/src/features/auth/hooks.ts](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/features/auth/hooks.ts)
-- [frontend/src/routes/watchlist.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/watchlist.tsx)
-- [frontend/src/routes/notifications.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/notifications.tsx)
-- [frontend/src/routes/account.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/account.tsx)
+- [frontend/src/app/router.tsx](frontend/src/app/router.tsx)
+- [frontend/src/features/auth/hooks.ts](frontend/src/features/auth/hooks.ts)
+- [frontend/src/routes/watchlist.tsx](frontend/src/routes/watchlist.tsx)
+- [frontend/src/routes/notifications.tsx](frontend/src/routes/notifications.tsx)
+- [frontend/src/routes/account.tsx](frontend/src/routes/account.tsx)
 
 Recommandation :
 
@@ -86,7 +88,7 @@ Constat :
 
 Référence :
 
-- [frontend/src/routes/discover.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/discover.tsx)
+- [frontend/src/routes/discover.tsx](frontend/src/routes/discover.tsx)
 
 Recommandation :
 
@@ -107,8 +109,8 @@ Constat :
 
 Références :
 
-- [frontend/src/routes/repo-detail.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/repo-detail.tsx)
-- [frontend/src/features/repos/components/RepoHeader.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/features/repos/components/RepoHeader.tsx)
+- [frontend/src/routes/repo-detail.tsx](frontend/src/routes/repo-detail.tsx)
+- [frontend/src/features/repos/components/RepoHeader.tsx](frontend/src/features/repos/components/RepoHeader.tsx)
 
 Recommandation :
 
@@ -132,8 +134,8 @@ Constat :
 
 Références :
 
-- [frontend/src/features/layout/AppHeader.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/features/layout/AppHeader.tsx)
-- [frontend/src/routes/index.tsx](/C:/Users/forgo/Documents/Code/Project-DK/Project-K/frontend/src/routes/index.tsx)
+- [frontend/src/features/layout/AppHeader.tsx](frontend/src/features/layout/AppHeader.tsx)
+- [frontend/src/routes/index.tsx](frontend/src/routes/index.tsx)
 
 Recommandation :
 
