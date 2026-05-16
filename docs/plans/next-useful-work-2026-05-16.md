@@ -37,6 +37,31 @@ Tasks 1–2 merged on `main`. Tasks 3–5 were revised against the real codebase
 
 **Branch for Task 3+:** `feat/repo-explanations` from updated `main`.
 
+### Completion update (2026-05-16)
+
+Plan completed and merged on `main`.
+
+Merged work:
+
+- Tasks 1–2: PR #2, merge `293a74e`, commits `14253d3` and `f8ee911`.
+- Task 3: PR #3, merge `ddd26a7`, commit `3b8968e`.
+- Task 4: PR #4, merge `02350a9`, commit `07b1ebf`.
+- Task 5: PR #5, merge `98f3ef6`, commit `83fc4d0`.
+
+Final local verification:
+
+- `cd backend && cargo fmt --check` — OK
+- `cd backend && cargo clippy --all-targets -- -D warnings` — OK
+- `cd backend && cargo test` — OK, 134 tests
+- `cd frontend && npm run build` — OK
+- `cd frontend && npm run test:e2e` — OK, 4 passed / 1 real-api test skipped by default
+- `cd cli && npm test` — OK, 6 tests
+
+Residual follow-ups:
+
+- Vite still warns that the main JS bundle is above 500 kB (`~529 kB` after minification). Code-splitting is a good follow-up, not a blocker.
+- Deferred items remain listed at the bottom of this plan.
+
 ## Execution Order
 
 1. GitHub ingestion reliability. ✅ merged
@@ -464,7 +489,7 @@ cd frontend
 npm run test:e2e
 ```
 
-- [ ] **Step 6: Commit** (à faire par l'utilisateur)
+- [x] **Step 6: Commit** — merged in PR #3 (`ddd26a7`, commit `3b8968e`)
 
 ```powershell
 cd backend
@@ -552,7 +577,7 @@ Document `frontend/scripts/run-real-e2e.mjs` + `npm run test:e2e:real` (Postgres
 
 Warn: `-WriteSignal` records a real signal in the target environment.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit** — merged in PR #4 (`02350a9`, commit `07b1ebf`)
 
 Run:
 
