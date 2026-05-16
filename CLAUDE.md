@@ -93,10 +93,10 @@ Package npm public `usestakly-mcp` (v0.1.4 — voir `cli/package.json`).
 
 ### Scope produit
 
-- Le produit vivant est : **discovery repos GitHub publics scorés**, **profil repo**, **watchlist**, **notifications in-app**, **MCP read + write v1 + recommend**.
+- Le produit vivant est : **discovery repos GitHub publics scorés**, **profil repo**, **watchlist**, **notifications in-app/outbound**, **MCP read + write + recommend + watch_use_case**.
 - Les tables legacy `libraries` / `snippets` peuvent encore exister en base ; cela **n'autorise pas** à relancer ce produit.
 - Si une tâche touche une zone legacy snippets : suppression des surfaces mortes, conservation prudente des migrations et données, protection du produit GitHub actif.
-- `TODO.md` v5.5 est la source de vérité d'exécution. Les docs `docs/archive/snippets/` et `docs/archive/business-prepivot/` sont historiques uniquement.
+- La source de vérité d'exécution est `docs/source-of-truth.md` + `docs/plans/remaining-work-2026-05-03.md`. `TODO.md` est une roadmap historique longue. Les docs `docs/archive/snippets/` et `docs/archive/business-prepivot/` sont historiques uniquement.
 
 ### Principes produit à respecter
 

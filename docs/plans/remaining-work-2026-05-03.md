@@ -3,8 +3,9 @@
 > **Snapshot** : passe complète sur `TODO.md` v5.5 + `docs/plans/*` + état réel du code.
 > Les faux positifs détectés (items marqués TODO mais déjà livrés) ont été corrigés directement dans les docs concernées (`TODO.md`, `docs/plans/source-of-truth-oss-radar-plan.md`, `docs/plans/use-case-recommendation-watch-plan.md`, `docs/plans/anti-slop-vitality-v2.md`).
 >
+> Last reconciled with code: 2026-05-16.
 > Cette doc liste **uniquement** ce qui reste vraiment ouvert, organisé par priorité d'exécution.
-> À mettre à jour à chaque vague de finition. Source de vérité opérationnelle = `TODO.md` ; ce fichier en est la vue priorisée à l'instant T.
+> À mettre à jour à chaque vague de finition. Source de vérité opérationnelle = `docs/source-of-truth.md` + ce backlog priorisé. `TODO.md` reste une roadmap historique longue.
 
 ---
 
