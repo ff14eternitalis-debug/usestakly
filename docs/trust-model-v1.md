@@ -1,7 +1,7 @@
 # Trust model actuel
 
-> Version : 1.1
-> Dernière mise à jour : 2026-04-23
+> Version : 1.2
+> Dernière mise à jour : 2026-05-16
 > Portée : règles de confiance actives dans UseStakly post-pivot
 
 ## Objectif
@@ -54,8 +54,19 @@ Conditions v1 :
 
 - score de réputation au-dessus du seuil configuré
 - compte suffisamment ancien
+- volume minimal de signaux passifs
+- minimum de vrai usage (`resolve`, `re_resolve`, `build_success`, `build_failure`, `regret`)
 
 Un compte neuf avec un bon score brut ne doit pas compter trop vite dans le consensus public.
+
+Depuis le 2026-05-16, `scoring/formula_v2.toml` expose aussi une section `[trust]` :
+
+- `new_account_active_signal_weight = 0.0`
+- `min_real_usage_for_active_weight = 2`
+- `owner_dispute_min_reputation = 0.35`
+- `severe_signal_low_trust_review = true`
+
+Conséquence : un compte qui a peu de vrai usage peut passer certains garde-fous d'API, mais son poids de review actif reste nul pour les signaux sévères jusqu'à ce qu'il ait au moins deux signaux d'usage réels. Ces signaux partent donc en review stricte au lieu de pouvoir nourrir trop vite le flux public.
 
 ### 3. Consensus avant exposition publique
 
@@ -82,6 +93,7 @@ Le runtime actuel ajoute une couche v2 légère :
 - un reporter à faible poids trust (`unproven` / score faible) déclenche aussi une **review stricte** pour certains signaux actifs sévères
 - cela concerne aujourd'hui `security_issue`, `broken` et `doesnt_match_claim`
 - l'objectif est d'éviter qu'un compte juste au-dessus du seuil d'éligibilité fasse entrer trop facilement un signal sévère dans le flux public
+- la note de soumission journalise `active-weight`, ce qui permet de distinguer un reporter expérimenté d'un compte encore trop neuf
 
 La review admin passe par les endpoints d'administration et par le panneau de modération du compte.
 
@@ -112,6 +124,7 @@ Le runtime actuel ajoute aussi un contexte trust owner à la modération :
 - la dispute journalise désormais le niveau trust de l'owner qui conteste
 - la file admin expose le score / tier / usage de cet owner
 - un signal accepté puis disputé revient dans la boucle de review admin au lieu de disparaître du radar opérationnel
+- la note de dispute inclut maintenant `owner-confidence=normal|low-trust-review` selon le seuil `owner_dispute_min_reputation`
 
 Le support owner a aussi été étendu en **best effort** :
 
@@ -164,7 +177,6 @@ Les tools MCP write (`log_usage`, `watch_repo`) sont protégés par :
 ## Ce que le modèle actuel ne garantit pas encore
 
 - résistance forte aux Sybil attacks
-- pondération fine par réputation avancée
 - support complet des organisations GitHub privées
 - double validation admin pour tous les cas sensibles
 
@@ -172,7 +184,7 @@ Les tools MCP write (`log_usage`, `watch_repo`) sont protégés par :
 
 La suite du trust model devrait prioritairement ajouter :
 
-- réputation pondérée plus riche
+- graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte, historique repo)
 - ownership org privé / rôles fins
 - anti-poisoning avancé sur `log_usage`
 - règles de review plus fortes pour les signaux sévères

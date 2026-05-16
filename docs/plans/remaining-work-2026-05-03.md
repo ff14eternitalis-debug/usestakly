@@ -54,13 +54,16 @@ Migration 0020 + endpoints + UI livrés. Les notifications sont maintenant branc
 
 Reste côté MCP : valider un smoke réel avec token prod après déploiement, puis garder la doc d'exemples à jour quand de nouveaux patterns d'agents apparaissent.
 
-### 2.3 Bug capture `last_release_at` (followup formula v2)
+### 2.3 Bug capture `last_release_at` (followup formula v2) ✅ livré 2026-05-16
 
-- [ ] Investiguer `services/ingestion/github.rs::fetch_releases_summary` : 4/25 repos seulement ont `last_release_at` populé alors que tokio, vitest, eslint, rust, prisma ont des releases visibles. Probablement pagination ou parsing du payload `/releases`. Pas bloquant (vitality utilise neutre 0.5 quand NULL) mais améliore la qualité du score.
+- [x] Investiguer `services/ingestion/github.rs::fetch_releases_summary` : 4/25 repos seulement avaient `last_release_at` populé alors que tokio, vitest, eslint, rust, prisma ont des releases visibles. Livré 2026-05-16 : le fetch releases utilise maintenant un DTO local minimal (`published_at`) via `/repos/{owner}/{repo}/releases?per_page=100`, avec résumé testé et sélection du `published_at` le plus récent.
+  - Vérification live GitHub 2026-05-16 sans token : `tokio-rs/tokio` → `2026-05-08T12:53:37Z`, `vitest-dev/vitest` → `2026-05-11T14:38:28Z`, `prisma/prisma` → `2026-04-22T14:19:23Z`.
+  - Support ETag helper ajouté côté requêtes conditionnelles ; la persistance DB des ETags reste ouverte pour une future migration si le quota GitHub devient un vrai point chaud.
 
 ### 2.4 Phase R1 ingestion — finition
 
 - [ ] **Rate-limit handling GitHub** : ETags / conditional requests, backoff sur 429, monitoring du quota restant. Aujourd'hui un 429 lève une `forbidden` brute (`services/ingestion/github.rs`).
+  - Avancement 2026-05-16 : classification locale des primary/secondary rate limits ajoutée, messages d'erreur contextualisés pour repo/README/releases, helper `If-None-Match` disponible pour requêtes conditionnelles. Reste : persister les ETags, backoff/retry effectif, et monitoring quota restant.
 - [ ] **Computation `owner_inactive_days`** côté events API GitHub — préalable à la règle d'alerte "maintainer silencieux 90j" (Phase R3).
 - [x] **Cadence refresh corpus entier** : livré 2026-05-06. Le scheduler opt-in refresh les repos watchés + tout repo GitHub dont `priors_fetched_at` est NULL ou vieux de plus de 24 h.
 - [ ] **Critère corpus v1 formel** : top N par langage, sur demande, ou via watchlist uniquement ? Aujourd'hui : seed manuel via `seed-public-corpus.ps1`.
@@ -79,7 +82,8 @@ Reste côté MCP : valider un smoke réel avec token prod après déploiement, p
 
 ### 3.2 Phase R4 — Trust formula v2
 
-- [ ] Pondération réputation owner/reporter formula_v2 : compte neuf = poids 0, historique d'usage prod surpondéré. Le fichier `formula_v2.toml` existe et la pipeline charge `load_v2()` par défaut, mais le facteur "compte neuf = poids 0" reste à implémenter dans `weighting.rs`.
+- [x] Pondération réputation owner/reporter formula_v2 : compte neuf = poids 0 pour review active sévère, seuil owner dispute explicite, et notes d'audit enrichies. Livré 2026-05-16 via `[trust]` dans `formula_v2.toml`, `UserReputation::active_signal_review_weight`, `requires_strict_active_review_with_trust`, et notes `active-weight` / `owner-confidence`.
+- [ ] Pondération plus riche par historique d'usage prod : surpondérer explicitement les reporters/owners avec signaux d'usage longs et sains dans les décisions de review admin.
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte).
 
 ### 3.3 Phase R6 — Polish frontend

@@ -10,7 +10,7 @@ use crate::{
     auth::resolve_current_user,
     domain::quality::{CreateSignalRequest, SignalKind},
     services::{
-        quality::{RecordSignalInput, recompute_all_scores_with_config, record_signal},
+        quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
         trust::{repo_owners, reputation, signal_events, signal_reviews},
     },
 };
@@ -42,10 +42,14 @@ pub async fn create_repo_signal(
             state.config.active_signal_min_reputation
         )));
     }
+    let trust = load_v2()
+        .map_err(|err| ApiError::internal(format!("loading scoring formula v2: {err}")))?
+        .trust;
+    let active_review_weight = reputation.active_signal_review_weight(&trust);
     let strict_review = matches!(
         payload.signal,
         SignalKind::SecurityIssue | SignalKind::Broken | SignalKind::DoesntMatchClaim
-    ) && reputation.requires_strict_active_review();
+    ) && reputation.requires_strict_active_review_with_trust(&trust);
     let review_status = if matches!(payload.signal, SignalKind::SecurityIssue) || strict_review {
         "pending".to_string()
     } else {
@@ -53,17 +57,19 @@ pub async fn create_repo_signal(
     };
     let submitted_note = if strict_review {
         Some(format!(
-            "reporter-tier={} score={:.2} usage={} strict-review=true",
+            "reporter-tier={} score={:.2} usage={} active-weight={:.2} strict-review=true",
             reputation.tier.as_str(),
             reputation.score,
-            reputation.usage_signal_count()
+            reputation.usage_signal_count(),
+            active_review_weight
         ))
     } else {
         Some(format!(
-            "reporter-tier={} score={:.2} usage={}",
+            "reporter-tier={} score={:.2} usage={} active-weight={:.2}",
             reputation.tier.as_str(),
             reputation.score,
-            reputation.usage_signal_count()
+            reputation.usage_signal_count(),
+            active_review_weight
         ))
     };
 
@@ -120,11 +126,20 @@ pub async fn dispute_repo_signal(
     let record =
         signal_reviews::dispute_signal(&state.db, signal_id, user.id, payload.reason.trim())
             .await?;
+    let trust = load_v2()
+        .map_err(|err| ApiError::internal(format!("loading scoring formula v2: {err}")))?
+        .trust;
+    let owner_confidence = if owner_reputation.score >= trust.owner_dispute_min_reputation {
+        "normal"
+    } else {
+        "low-trust-review"
+    };
     let dispute_note = format!(
-        "owner-tier={} owner-score={:.2} owner-usage={} reason={}",
+        "owner-tier={} owner-score={:.2} owner-usage={} owner-confidence={} reason={}",
         owner_reputation.tier.as_str(),
         owner_reputation.score,
         owner_reputation.usage_signal_count(),
+        owner_confidence,
         payload.reason.trim()
     );
     signal_events::record_signal_event(
