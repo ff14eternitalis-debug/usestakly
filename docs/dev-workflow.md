@@ -190,6 +190,27 @@ Notes :
 - Il ne touche pas aux conteneurs d'autres projets, notamment `kois-story`.
 - En fin de run, le script arrête le backend enfant et stoppe le Postgres compose.
 - Ce test est un bon "release gate" local. Il n'est pas encore branché dans la CI principale.
+- Implémentation : `frontend/scripts/run-real-e2e.mjs`. Checklist manuelle prod/staging : [`docs/validation/live-release-checklist.md`](validation/live-release-checklist.md).
+
+### Smoke MCP (staging / prod)
+
+Pour valider uniquement l'endpoint Streamable HTTP MCP sur une URL distante (sans Playwright) :
+
+```powershell
+# Depuis la racine du dépôt
+$env:USESTAKLY_MCP_TOKEN = "usk_..."   # token monitoring depuis /account sur l'env cible
+.\scripts\mcp-live-smoke.ps1 -Endpoint "https://api.usestakly.com/mcp" -Token $env:USESTAKLY_MCP_TOKEN
+```
+
+Local (backend sur `:4000`) :
+
+```powershell
+.\scripts\mcp-live-smoke.ps1 -Endpoint "http://127.0.0.1:4000/mcp" -Token "usk_..."
+```
+
+Le script enchaîne `initialize` → `search_github_repos` → `get_repo_quality_context` (équivalent checks **H2**, **H4**, **H5** dans [`docs/functional-checks.md`](functional-checks.md)). Option `-WriteSignal` appelle aussi `log_usage` (**H7**) et **persiste un signal** dans la base de l'environnement cible — ne pas l'utiliser en prod sans intention.
+
+Alternative CLI : `npx usestakly-mcp test --endpoint … --token …` (voir section **I** de la checklist).
 
 ## Résolution de problèmes fréquents
 

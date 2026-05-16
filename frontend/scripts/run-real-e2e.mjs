@@ -1,3 +1,9 @@
+/**
+ * Local full-stack E2E gate: Docker Postgres → backend :4100 → Playwright real-api.spec.ts.
+ * Entry: `npm run test:e2e:real` from frontend/.
+ * Remote MCP-only gate: repo-root `scripts/mcp-live-smoke.ps1` (see docs/dev-workflow.md).
+ * Deploy go/no-go wrapper: docs/validation/live-release-checklist.md
+ */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";

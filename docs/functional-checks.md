@@ -87,6 +87,22 @@ Format : chaque check est un test minimal **un seul outil ou une seule action**,
 - [ ] **J3 — Dispute owner** : un OAuth GitHub matchant l'owner d'un repo flag peut soumettre une dispute (transition logguée dans `quality_signal_events`).
 - [ ] **J4 — Audit endpoint** : `GET /api/admin/scoring/explain/{repo_id}` (avec admin token) renvoie le breakdown signal par signal avec `outcome_weight × reporter_weight × dedup_weight`.
 
+## K. Live / staging
+
+Réutilise les sections **A–J** ci-dessus en remplaçant `http://localhost:4000` par l'URL API cible (ex. `https://api.usestakly.com`) et le frontend par l'URL publique (ex. `https://usestakly.com`). Gate ordonné : [`docs/validation/live-release-checklist.md`](validation/live-release-checklist.md).
+
+### Variables d'environnement (cible deploy)
+
+- [ ] **K0 — Secrets présents** : `APP_SESSION_SECRET`, `FRONTEND_BASE_URL` (CORS), credentials OAuth GitHub si auth publique, `GITHUB_TOKEN` pour ingestion, token monitoring `usk_…` (création via **G1** sur l'env cible).
+- [ ] **K1 — Health prod** : équivalent **A1–A2** sur l'API déployée (`/health`, `/api/status/public` avec `seedRepoCount > 0`, `formulaVersion = "v2.0"`).
+- [ ] **K2 — OAuth prod** (si activé) : **B2–B4** dans le navigateur sur l'URL frontend de l'environnement.
+- [ ] **K3 — Discover / repo** (spot) : **C1**, **D1–D3** sur au moins un repo du corpus seedé.
+- [ ] **K4 — MCP smoke automatisé** : `.\scripts\mcp-live-smoke.ps1 -Endpoint "https://api…/mcp" -Token "usk_…"` — couvre **H2**, **H4**, **H5** ; **H7** uniquement avec `-WriteSignal` (écrit un vrai signal).
+- [ ] **K5 — MCP manuel complémentaire** (optionnel) : **H3**, **H6**, **H8–H10** et CLI **I1–I3** si le release touche MCP ou le package npm.
+- [ ] **K6 — Données après deploy** (staging ou prod contrôlée) : après `log_usage` volontaire, ligne dans `quality_signals` ; après `POST /api/admin/scoring/recompute`, `artifact_scores.computed_at` avance pour le repo concerné.
+
+Local full-stack sans ce script MCP : `cd frontend && npm run test:e2e:real` — voir [`docs/dev-workflow.md`](dev-workflow.md#e2e-réel-local-sans-mocks).
+
 ---
 
 ## Quand cette checklist tombe en faux positif
@@ -99,4 +115,4 @@ Si un check rate alors que le code n'a pas changé sur ce flow, vérifier dans l
 4. Cookie session présent (DevTools → Application → Cookies).
 5. Pour MCP : token actif et non révoqué dans `agent_tokens`.
 
-Cette checklist est volontairement **non automatisée** — c'est un go/no-go manuel. Pour les tests E2E automatisés, voir `frontend/e2e/mvp.spec.ts` (couverture partielle, à étendre — voir Phase R7 dans `docs/plans/remaining-work-2026-05-03.md`).
+Cette checklist est volontairement **non automatisée** sauf **K4** (smoke MCP) et le parcours local `test:e2e:real`. Pour les tests E2E CI, voir `frontend/e2e/mvp.spec.ts` (couverture partielle — Phase R7 dans `docs/plans/remaining-work-2026-05-03.md`).
