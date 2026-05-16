@@ -59,6 +59,7 @@ Available MCP tools:
 - `get_repo_quality_context`
 - `log_usage`
 - `watch_repo`
+- `watch_use_case`
 
 ## Data Quality
 
@@ -168,11 +169,8 @@ Already implemented:
 
 Known operations gaps before a wider launch:
 
-- configure scheduled Coolify database backups
-- add application-level rate limiting for all `/mcp` calls, including reads, `initialize`, and `tools/list` (writes already have per-token quota and cooldown)
-- add external uptime alerting for `/health`, `/api/status/public`, and a controlled MCP check
-- ship a formal legal page (`/legal` or `/terms`)
-- pick a stable public domain and an official contact email
+- configure offsite/S3 database backups (local Coolify backups are in place)
+- continue release validation (`docs/validation/live-release-checklist.md`, `scripts/mcp-live-smoke.ps1`)
 
 See [docs/ops-mcp-coolify-hardening.md](./docs/ops-mcp-coolify-hardening.md).
 
@@ -180,8 +178,10 @@ See [docs/ops-mcp-coolify-hardening.md](./docs/ops-mcp-coolify-hardening.md).
 
 Start here:
 
+- [docs/source-of-truth.md](./docs/source-of-truth.md)
 - [docs/README.md](./docs/README.md)
-- [TODO.md](./TODO.md)
+- [docs/plans/remaining-work-2026-05-03.md](./docs/plans/remaining-work-2026-05-03.md)
+- [TODO.md](./TODO.md) (historical roadmap)
 - [docs/mcp-protocol.md](./docs/mcp-protocol.md)
 - [docs/mcp-examples.md](./docs/mcp-examples.md)
 - [docs/mcp-cli-release.md](./docs/mcp-cli-release.md)

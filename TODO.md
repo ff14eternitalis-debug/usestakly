@@ -1,5 +1,7 @@
 # UseStakly — TODO MVP / Public Beta
 
+> **Document historique** — conserve la roadmap détaillée v5.x. Pour le backlog priorisé actuel, utiliser `docs/plans/remaining-work-2026-05-03.md` et `docs/source-of-truth.md`.
+
 > Version : 5.6 — 2026-05-06 (+ radar MCP, watch_use_case)
 > **Pivot produit acté** : on abandonne la bibliothèque de snippets.
 > Nouveau produit : **outil de veille GitHub qui réduit le bruit des stars et offre un vrai suivi des repos publics OSS**.
@@ -91,7 +93,7 @@ Ce qui est déjà fait est **agnostique au scope** et reste pertinent :
 - **Auth OAuth GitHub + Discord avec session JWT cookie** (Phase 4) — essentielle pour le nouveau flow (watchlist, réputation)
 - **Migration 0010 `quality_signals`** avec table `external_artifacts`, `quality_signals`, `artifact_scores` — **exactement** ce qu'il faut pour le nouveau produit
 - **`scoring/formula_v1.toml`** + service `capture::record_signal` + service `scoring::recompute_all_scores` — gardent leur valeur, cible à ajuster
-- **Endpoint `POST /api/snippets/:id/signals`** — sera refactoré pour viser `external_artifacts`
+- **Endpoint signals pré-pivot (snippets era)** — refactoré vers `POST /api/repos/:id/signals` + `external_artifacts`
 - **Endpoints `/api/resolve` et `/api/search` avec filter auto/strict/explore** — filtres OK, source à repointer sur `external_artifacts`
 - **Endpoint admin `/api/admin/scoring/recompute`** — OK
 - Audit sécu commit `4e16c0a` validé (voir `docs/security-audit-2026-04-21.md`)
@@ -112,8 +114,8 @@ Pipeline neuf. C'est le cœur du nouveau produit : sans repos ingérés, rien à
 - [x] Endpoint `POST /api/repos/add` — user propose un repo à ingérer (`handlers::repos`)
 - [x] Mapping `github.com/owner/repo` → UUID `external_artifact_id` (idempotent)
 - [x] Binary `seed_github` pour bootstrap corpus manuel
-- [ ] **Reste à faire** : rate-limit handling (ETags conditional requests, backoff, quota monitoring)
-- [ ] **Reste à faire** : computation priors dérivés côté events API (`owner_inactive_days`)
+- [x] **Livré 2026-05-16** : ingestion GitHub fiabilisée (ETags releases/README/events, backoff borné, classification rate-limit) — migration `0027`, voir `remaining-work` §2.4 pour monitoring quota optionnel.
+- [x] **Livré 2026-05-16** : `owner_inactive_days` et champs ETag persistés — migration `0027`.
 - [x] Cadence refresh automatique : scheduler opt-in, default 24 h, refresh des repos watchés + corpus GitHub stale (`priors_fetched_at` NULL ou > 24 h) via `services::scheduler`.
 - [ ] **Reste à faire** : critère corpus v1 formel — **à trancher** entre top N par langage / sur demande / via watchlist uniquement
 - [x] Endpoint admin `POST /api/admin/ingest/github` pour backfill ciblé (`backend/src/handlers/admin.rs::ingest_github_repo`, route câblée dans `app/mod.rs`)
@@ -156,7 +158,7 @@ Le deuxième pilier. C'est ce qui manque sur GitHub aujourd'hui.
 
 Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 
-- [x] Endpoint `POST /api/repos/:id/signals` — refactor de `/api/snippets/:id/signals`, évidence obligatoire
+- [x] Endpoint `POST /api/repos/:id/signals` — remplace l'endpoint signals legacy pré-pivot, évidence obligatoire
 - [x] Politique flags toxiques v1 — `deprecated`, `broken`, `security_issue` : evidence + **consensus N users distincts** avec réputation > seuil avant exposition publique
 - [x] Processus modéré v1 pour `security_issue` — création en `pending`, publication retardée jusqu'à review admin
 - [x] Appel / dispute par l'owner (via OAuth GitHub matching login)
@@ -167,7 +169,7 @@ Gardé de Phase 6/9 v4, adapté aux repos GitHub publics.
 - [x] Réputation utilisateur v2 runtime — score pondéré par usage réel, outcomes positifs, fiabilité build et pénalité regret ; éligibilité active exige désormais un minimum de vrai usage
 - [x] Pondération réputation reporter v2 dans le workflow de modération — reporters faibles sur signaux actifs sévères (`broken`, `doesnt_match_claim`, `security_issue`) passent en review stricte/pending au lieu d'une acceptation automatique
 - [x] Pondération trust owner v1 dans les disputes/reviews — la file admin remonte maintenant aussi le contexte trust du compte owner qui conteste, et les signaux acceptés puis disputés reviennent dans la boucle de review
-- [ ] Pondération réputation owner / reporter plus riche dans les reviews elles-mêmes — formula_v2, compte neuf = poids 0, historique d'usage prod = surpondéré
+- [x] Pondération réputation owner / reporter v2 dans les reviews sensibles — livré 2026-05-16 via `[trust]` dans `formula_v2.toml` (compte neuf poids actif 0 pour signaux sévères).
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 
 ### Phase R5 — MCP adapté aux repos et besoins

@@ -129,10 +129,12 @@ Recommended baseline:
   - read tools
   - write tools
 
-Current coverage:
+Current coverage (delivered 2026-05-06):
 
-- write tools have token quota and cooldown guards
-- read tools and protocol calls do not yet have a global application rate limit
+- write tools have token quota and cooldown guards via `agent_token_events`
+- unauthenticated or invalid `/mcp` requests are throttled per IP (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`)
+- authenticated protocol/read calls are throttled per token (`APP_MCP_READ_LIMIT_PER_MINUTE`)
+- middleware rejects `/mcp` without Bearer before transport (Priority 3)
 
 Acceptance criteria:
 

@@ -1,5 +1,7 @@
 # Archive — Business docs pré-pivot
 
+> **Historical only.** Not source of truth. See `docs/archive/README.md` and `docs/source-of-truth.md`.
+
 Ces documents ont été produits **avant le pivot du 2026-04-21** vers la veille GitHub OSS. Ils analysent un produit qui n'existe plus :
 
 - assistant IA pour bibliothèques de snippets personnels

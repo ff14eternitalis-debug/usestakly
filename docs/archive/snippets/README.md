@@ -1,5 +1,7 @@
 # Archive — Ancien Produit Snippets
 
+> **Historical only.** Not source of truth. See `docs/archive/README.md` and `docs/source-of-truth.md`.
+
 Ces documents correspondent à l'ancien produit centré sur les bibliothèques et snippets de code.
 
 Ils sont conservés pour mémoire, migration historique et contexte de conception, mais **ne sont plus la source de vérité** pour le produit actif.

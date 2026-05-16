@@ -10,12 +10,28 @@
 
 ---
 
+## Plan revision (2026-05-16, verified against `origin/main`)
+
+Verified on `main` after merge of `next-useful-work` (PR #5) and live-validation gates (PR #4). **Executed 2026-05-16** on branch `feat/docs-source-of-truth-cleanup` (audit script + `docs/source-of-truth.md` + agent entrypoints reconciled).
+
+**Confirmed gaps (not false positives):** missing `docs/source-of-truth.md`, `docs/archive/README.md`, `scripts/audit-doc-source-truth.ps1`; stale `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` (date, CLI v0.1.3 vs 0.1.4, MCP rate-limit wording, beta/ops status); stale `docs/tech-stack.md` (17 vs 27 migrations); contradictory `docs/ops-mcp-coolify-hardening.md`; stale `docs/architecture-backend-current.md` (formula_v2 trust); `TODO.md` R1 items open despite `0027`; `Project-DK/Project-K` in `docs/dev-workflow.md`.
+
+**Nuances:**
+
+- MCP runtime truth = **both** `backend/src/mcp/server.rs` (tool handlers, `#[tool_router]`) **and** `backend/src/mcp/tools/*` (DTOs, mappers). Do not drop `server.rs` from the map.
+- `docs/plans/next-useful-work-2026-05-16.md` is a **completed historical plan** — link for traceability, not execution backlog.
+- `TODO.md` = long historical roadmap; **`docs/plans/remaining-work-2026-05-03.md`** = current prioritized backlog (reconcile, do not replace wholesale).
+- Archives: **banner warnings only** — no line-by-line rewrites under `docs/archive/`.
+- Validation spine already on `main`: `docs/validation/live-release-checklist.md` + `scripts/mcp-live-smoke.ps1` — promote in `source-of-truth.md`, do not duplicate.
+
+---
+
 ## Findings From The 2026-05-16 Audit
 
 These are the concrete mismatches found before writing this plan:
 
-- `AGENTS.md` still says the project state reflects `2026-05-06`, references `TODO v5.5`, says wider launch is blocked by MCP backup/rate-limit/alerting, and says there is no global MCP rate-limit. The code now has `/mcp` auth failure limits by IP and authenticated limits by token in `backend/src/app/mod.rs` plus env config in `backend/src/config/mod.rs`.
-- `AGENTS.md` and `docs/tech-stack.md` document CLI `usestakly-mcp` as `v0.1.3`, but `cli/package.json` is `0.1.4`.
+- `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` still say the project state reflects `2026-05-06` (where dated), reference `TODO v5.5`, say wider launch is blocked by MCP backup/rate-limit/alerting (partially stale), and say there is no global MCP rate-limit. The code now has `/mcp` auth failure limits by IP and authenticated limits by token in `backend/src/app/mod.rs` plus env config in `backend/src/config/mod.rs`.
+- `AGENTS.md`, `CLAUDE.md`, and `docs/tech-stack.md` document CLI `usestakly-mcp` as `v0.1.3`, but `cli/package.json` is `0.1.4`.
 - `docs/tech-stack.md` says there are 17 migrations; `backend/migrations/` now has 27 migrations through `0027_github_ingestion_reliability.sql`.
 - `TODO.md` still lists R1 ETags/backoff and `owner_inactive_days` as open even though migration `0027` and `backend/src/services/ingestion/github.rs` now persist endpoint ETags, handle 304, apply bounded backoff, and store owner inactivity.
 - `docs/ops-mcp-coolify-hardening.md` marks Priority 2 as delivered, but its "Current coverage" section still says read/protocol calls do not have a global application rate limit.
@@ -25,8 +41,9 @@ These are the concrete mismatches found before writing this plan:
 
 ## Desired End State
 
-- Agents start from `AGENTS.md`, `README.md`, `docs/README.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`, `docs/trust-model-v1.md`, and `docs/plans/remaining-work-2026-05-03.md`.
-- `TODO.md` is either renamed in practice as a historical roadmap snapshot or rewritten as a current status index. It must not be the primary execution source if it contains old phase narrative.
+- Agents start from `docs/source-of-truth.md`, then `AGENTS.md` (and mirror updates in `CLAUDE.md` / `GEMINI.md`), `README.md`, `docs/README.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`, `docs/trust-model-v1.md`, and `docs/plans/remaining-work-2026-05-03.md`.
+- Live/staging validation: `docs/validation/live-release-checklist.md` + `scripts/mcp-live-smoke.ps1` (already on `main`).
+- `TODO.md` carries a clear **historical roadmap** banner at the top; execution backlog lives in `remaining-work-2026-05-03.md`. Demote stale open items (R1 ETags, formula_v2 trust) to `[x]` or move notes to `remaining-work` — do not re-narrate the whole file.
 - Legacy snippets docs remain in `docs/archive/snippets/`, but active docs never ask agents to treat them as implementation guidance.
 - Every active doc that mentions legacy snippets says the same thing: database tables may remain for compatibility; no product surface should be reintroduced without explicit user request.
 - MCP rate-limit, formula v2 trust, migration count, CLI version, GitHub ingestion reliability, and validation status all match the code.
@@ -39,8 +56,10 @@ These are the concrete mismatches found before writing this plan:
 Modify:
 
 - `AGENTS.md` - primary agent instruction file; must be the sharpest source of truth.
+- `CLAUDE.md` - keep in sync with `AGENTS.md` (CLI version, MCP rate-limit, beta/ops status, formula_v2 trust).
+- `GEMINI.md` - keep in sync with `AGENTS.md` (same stale fields as of 2026-05-16 audit).
 - `README.md` - repo entrypoint for humans and agents.
-- `TODO.md` - convert from old phase-heavy execution source into current beta status or clearly demote it.
+- `TODO.md` - add historical banner; fix known stale R1/trust bullets; stop routing agents here for execution.
 - `docs/README.md` - documentation index and routing table.
 - `docs/tech-stack.md` - versions, migrations, CLI version, hosting state.
 - `docs/ops-mcp-coolify-hardening.md` - reconcile delivered MCP rate-limit coverage.
@@ -62,7 +81,7 @@ Create:
 Do not modify:
 
 - `backend/migrations/0001` through `0009` only to remove history. They are database history and must stay unless a separate DB deprecation plan exists.
-- Archived pre-pivot content line-by-line unless adding archive banners. Preserving history is fine; routing agents away from it is the goal.
+- Archived pre-pivot content line-by-line. **Only add archive banners** at folder/README tops; preserving history is the goal; routing agents away from archives is the goal.
 
 ---
 
@@ -74,7 +93,7 @@ Do not modify:
 - Modify: `docs/README.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: Create `docs/source-of-truth.md`**
+- [x] **Step 1: Create `docs/source-of-truth.md`**
 
 Create a concise map with these sections:
 
@@ -107,12 +126,22 @@ Read in this order:
 5. `docs/trust-model-v1.md`
 6. `docs/plans/remaining-work-2026-05-03.md`
 
+## Validation (live / staging)
+
+- `docs/validation/live-release-checklist.md` — ordered go/no-go after deploy
+- `scripts/mcp-live-smoke.ps1` — remote MCP smoke (no Cursor MCP required)
+
+## Completed plans (historical only)
+
+- `docs/plans/next-useful-work-2026-05-16.md` — merged on `main`; do not use for open work
+
 ## Runtime Truth Beats Docs
 
 If docs disagree with code, verify code first:
 
 - backend routes: `backend/src/app/mod.rs`
-- MCP tools: `backend/src/mcp/server.rs`
+- MCP tool handlers: `backend/src/mcp/server.rs` (`#[tool_router]`, `build_service`)
+- MCP DTOs/mappers: `backend/src/mcp/tools/*` (not a substitute for `server.rs`)
 - config/env: `backend/src/config/mod.rs` and `.env.example`
 - scoring formula: `backend/scoring/formula_v2.toml`
 - migrations: `backend/migrations/`
@@ -133,7 +162,7 @@ Archived docs may mention snippets, Project-K, old local paths, old MCP tools, a
 Do not use archived docs as source of truth for implementation.
 ```
 
-- [ ] **Step 2: Link it from `docs/README.md`**
+- [x] **Step 2: Link it from `docs/README.md`**
 
 In `docs/README.md`, change the "Tu codes" row so it starts with `source-of-truth.md`, then `architecture-backend-current.md`, then `mcp-protocol.md`.
 
@@ -143,7 +172,7 @@ Expected row:
 | Tu codes | `source-of-truth.md` → `architecture-backend-current.md` → `mcp-protocol.md` → `plans/remaining-work-2026-05-03.md` |
 ```
 
-- [ ] **Step 3: Link it from root `README.md`**
+- [x] **Step 3: Link it from root `README.md`**
 
 Add a short "Source of truth" paragraph near the top:
 
@@ -151,7 +180,7 @@ Add a short "Source of truth" paragraph near the top:
 For current implementation work, start with [`docs/source-of-truth.md`](./docs/source-of-truth.md). Archived snippets-era documents are history only and must not drive current product work.
 ```
 
-- [ ] **Step 4: Verify links**
+- [x] **Step 4: Verify links**
 
 Run:
 
@@ -165,7 +194,7 @@ Expected:
 - docs README routes coding agents through `source-of-truth.md`
 - source-of-truth doc states archives are not product guidance
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add README.md docs/README.md docs/source-of-truth.md
@@ -179,10 +208,14 @@ git commit -m "Document current source of truth"
 **Files:**
 
 - Modify: `AGENTS.md`
+- Modify: `CLAUDE.md`
+- Modify: `GEMINI.md`
 - Modify: `README.md`
 - Modify: `docs/README.md`
 
-- [ ] **Step 1: Update `AGENTS.md` header and product state**
+Apply the same factual updates to all three agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`): date header, beta/ops status, CLI `0.1.4`, MCP rate-limit gotcha, formula_v2 trust delivered, `watch_use_case` in product scope where missing.
+
+- [x] **Step 1: Update `AGENTS.md` header and product state**
 
 Replace the stale state lines with:
 
@@ -196,7 +229,7 @@ Replace the public beta bullet with:
 - État : **public beta exposée et redéployée**. Les blocs ops MCP critiques sont en place : backup local Coolify + restore testé, Authorization obligatoire sur `/mcp`, rate-limit `/mcp` par IP/token, alerte externe Uptime Kuma. Restent surtout : backup offsite/S3, règles notification avancées, validation continue et polish.
 ```
 
-- [ ] **Step 2: Fix CLI version in `AGENTS.md`**
+- [x] **Step 2: Fix CLI version in `AGENTS.md`**
 
 Replace:
 
@@ -210,7 +243,7 @@ with:
 Package npm `usestakly-mcp` (v0.1.4 au 2026-05-16, voir `cli/package.json`).
 ```
 
-- [ ] **Step 3: Fix MCP gotcha in `AGENTS.md`**
+- [x] **Step 3: Fix MCP gotcha in `AGENTS.md`**
 
 Replace the stale rate-limit gotcha:
 
@@ -224,7 +257,7 @@ with:
 - **Rate-limit MCP** : middleware `/mcp` in-process par IP pour auth absente/invalide (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et par token valide pour transport/read (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent en plus quota/cooldowns persistés via `agent_token_events` (migration 0014).
 ```
 
-- [ ] **Step 4: Fix formula v2 trust gotcha in `AGENTS.md`**
+- [x] **Step 4: Fix formula v2 trust gotcha in `AGENTS.md`**
 
 Replace:
 
@@ -238,7 +271,7 @@ with:
 - **Modération** : migrations 0015/0016 (review + events). Réputation v2 runtime et trust `[formula_v2].trust` livrés (compte neuf poids actif 0 pour signaux sévères). Sybil OAuth GitHub reste à venir.
 ```
 
-- [ ] **Step 5: Add `watch_use_case` to MCP scope in `AGENTS.md`**
+- [x] **Step 5: Add `watch_use_case` to MCP scope in `AGENTS.md`**
 
 Replace:
 
@@ -252,7 +285,7 @@ with:
 - Produit vivant : **discovery repos GitHub publics scorés**, **profil repo**, **watchlist**, **notifications in-app/outbound**, **MCP read + write + recommend + watch_use_case**.
 ```
 
-- [ ] **Step 6: Verify against code**
+- [x] **Step 6: Verify against code**
 
 Run:
 
@@ -268,10 +301,10 @@ Expected:
 - CLI version is `0.1.4`
 - formula v2 trust keys exist
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
-git add AGENTS.md README.md docs/README.md
+git add AGENTS.md CLAUDE.md GEMINI.md README.md docs/README.md
 git commit -m "Refresh agent documentation entrypoints"
 ```
 
@@ -287,7 +320,7 @@ git commit -m "Refresh agent documentation entrypoints"
 - Modify: `docs/architecture-backend-current.md`
 - Modify: `docs/plans/remaining-work-2026-05-03.md`
 
-- [ ] **Step 1: Update `docs/tech-stack.md`**
+- [x] **Step 1: Update `docs/tech-stack.md`**
 
 Change:
 
@@ -325,7 +358,7 @@ to:
 - 27 migrations au 2026-05-16 : `0001`–`0009` legacy snippets/auth/generations dormantes, `0010`–`0027` actives ou optionnelles pour le produit GitHub courant.
 ```
 
-- [ ] **Step 2: Fix `docs/ops-mcp-coolify-hardening.md` Priority 2 current coverage**
+- [x] **Step 2: Fix `docs/ops-mcp-coolify-hardening.md` Priority 2 current coverage**
 
 Replace:
 
@@ -347,7 +380,7 @@ Current coverage:
 - remaining limitation: the read/protocol limiter is per backend process, not distributed across multiple instances
 ```
 
-- [ ] **Step 3: Fix `docs/architecture-backend-current.md` debt**
+- [x] **Step 3: Fix `docs/architecture-backend-current.md` debt**
 
 Replace:
 
@@ -372,7 +405,13 @@ Also add missing migration rows if absent:
 | 0026 | email locale preference | actif |
 ```
 
-- [ ] **Step 4: Reconcile R1 in `TODO.md`**
+- [x] **Step 4: Demote stale items in `TODO.md` (historical, not primary backlog)**
+
+Add at top of `TODO.md`:
+
+```markdown
+> **Historical roadmap** — not the primary execution source. For open prioritized work, use `docs/plans/remaining-work-2026-05-03.md`. For current routing, use `docs/source-of-truth.md`.
+```
 
 Replace the two stale R1 open items:
 
@@ -389,7 +428,7 @@ with:
 - [x] Computation priors dérivés côté events API (`owner_last_activity_at`, `owner_inactive_days`) — livré 2026-05-16 comme input read-only.
 ```
 
-- [ ] **Step 5: Reconcile formula v2 trust in `TODO.md`**
+- [x] **Step 5: Reconcile formula v2 trust in `TODO.md`**
 
 Replace:
 
@@ -404,7 +443,7 @@ with:
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte)
 ```
 
-- [ ] **Step 6: Ensure `remaining-work` stays canonical for open items**
+- [x] **Step 6: Ensure `remaining-work` stays canonical for open items**
 
 In `docs/plans/remaining-work-2026-05-03.md`, add at top:
 
@@ -413,19 +452,19 @@ In `docs/plans/remaining-work-2026-05-03.md`, add at top:
 > This file is the current prioritized backlog. Older phase narratives in `TODO.md` are historical context when they disagree with this file.
 ```
 
-- [ ] **Step 7: Verify no known stale status remains in active docs**
+- [x] **Step 7: Verify no known stale status remains in active docs**
 
 Run:
 
 ```powershell
-rg -n "v0\\.1\\.3|17 migrations|read tools and protocol calls do not yet|pas encore de rate-limit globale|rate-limit handling \\(ETags|computation priors dérivés côté events API|formula_v2 \\(compte neuf = poids 0\\).*à venir" AGENTS.md README.md TODO.md docs -g "*.md"
+rg -n "v0\\.1\\.3|17 migrations|read tools and protocol calls do not yet|pas encore de rate-limit globale|rate-limit handling \\(ETags|computation priors dérivés côté events API|formula_v2 \\(compte neuf = poids 0\\).*à venir" AGENTS.md CLAUDE.md GEMINI.md README.md TODO.md docs -g "*.md"
 ```
 
 Expected:
 
 - No matches in active docs except archived files or this plan.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add TODO.md docs/tech-stack.md docs/ops-mcp-coolify-hardening.md docs/architecture-backend-current.md docs/plans/remaining-work-2026-05-03.md
@@ -444,7 +483,7 @@ git commit -m "Reconcile docs with current runtime status"
 - Modify: `docs/strategy-quality-scored-registry.md`
 - Modify: `docs/strategy-pivot-2026-04-21.md`
 
-- [ ] **Step 1: Create `docs/archive/README.md`**
+- [x] **Step 1: Create `docs/archive/README.md`**
 
 Create:
 
@@ -470,7 +509,7 @@ For current work, use:
 5. `docs/plans/remaining-work-2026-05-03.md`
 ```
 
-- [ ] **Step 2: Strengthen `docs/archive/snippets/README.md`**
+- [x] **Step 2: Strengthen `docs/archive/snippets/README.md`**
 
 Add this at the top:
 
@@ -478,7 +517,7 @@ Add this at the top:
 > Archive warning: the snippets/library product is abandoned. These docs are retained only for historical reasoning. Do not implement routes, UI, MCP tools, or roadmap items from this folder unless the user explicitly asks to revive the legacy product.
 ```
 
-- [ ] **Step 3: Strengthen `docs/archive/business-prepivot/README.md`**
+- [x] **Step 3: Strengthen `docs/archive/business-prepivot/README.md`**
 
 Add this at the top:
 
@@ -486,7 +525,7 @@ Add this at the top:
 > Archive warning: pre-pivot business assumptions are not current UseStakly strategy. Current product scope is GitHub OSS discovery, scoring, watchlists, notifications, and MCP.
 ```
 
-- [ ] **Step 4: Demote `docs/strategy-quality-scored-registry.md` to principles-only**
+- [x] **Step 4: Demote `docs/strategy-quality-scored-registry.md` to principles-only**
 
 Add this immediately below the title/front matter:
 
@@ -496,7 +535,7 @@ Add this immediately below the title/front matter:
 > Current implementation truth lives in `docs/source-of-truth.md`, `docs/architecture-backend-current.md`, and `docs/mcp-protocol.md`.
 ```
 
-- [ ] **Step 5: Update `docs/strategy-pivot-2026-04-21.md` open status**
+- [x] **Step 5: Update `docs/strategy-pivot-2026-04-21.md` open status**
 
 Where the file says `owner_inactive_days` is future, change it to:
 
@@ -510,7 +549,7 @@ Where it says formula v2 account weight is future, change it to:
 - Formula v2 trust now sets new account active signal weight to `0.0`; Sybil-resistant GitHub graph remains open.
 ```
 
-- [ ] **Step 6: Verify archives are clearly marked**
+- [x] **Step 6: Verify archives are clearly marked**
 
 Run:
 
@@ -525,7 +564,7 @@ Expected:
 - business pre-pivot README has pre-pivot warning
 - strategy-quality doc says principles-only
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add docs/archive/README.md docs/archive/snippets/README.md docs/archive/business-prepivot/README.md docs/strategy-quality-scored-registry.md docs/strategy-pivot-2026-04-21.md
@@ -542,7 +581,7 @@ git commit -m "Quarantine legacy documentation"
 - Modify: `docs/security-audit-2026-04-21.md`
 - Modify: `docs/dev-workflow.md`
 
-- [ ] **Step 1: Add snapshot warnings to dated audits**
+- [x] **Step 1: Add snapshot warnings to dated audits**
 
 At the top of `docs/audits/user-journey-audit-2026-04-23.md`, add:
 
@@ -556,7 +595,7 @@ At the top of `docs/security-audit-2026-04-21.md`, add:
 > Snapshot warning: dated security audit from 2026-04-21. Current MCP authorization/rate-limit and GitHub ingestion hardening have advanced since this file. Use `docs/ops-mcp-coolify-hardening.md`, `docs/mcp-endpoint-security.md`, and `docs/architecture-backend-current.md` for current status.
 ```
 
-- [ ] **Step 2: Replace old local paths in active docs**
+- [x] **Step 2: Replace old local paths in active docs**
 
 In `docs/dev-workflow.md`, replace:
 
@@ -570,7 +609,7 @@ with:
 C:\Users\forgo\Documents\Code\usestakly\backend\target
 ```
 
-- [ ] **Step 3: Neutralize absolute links in `user-journey-audit`**
+- [x] **Step 3: Neutralize absolute links in `user-journey-audit`**
 
 Replace each markdown link target like:
 
@@ -586,7 +625,7 @@ with a relative code path in backticks:
 
 Do this for every `Project-DK/Project-K` link in the file.
 
-- [ ] **Step 4: Neutralize absolute link in `security-audit`**
+- [x] **Step 4: Neutralize absolute link in `security-audit`**
 
 Replace:
 
@@ -600,7 +639,7 @@ with:
 `docs/security-secrets-playbook.md`
 ```
 
-- [ ] **Step 5: Verify no active docs contain old local paths**
+- [x] **Step 5: Verify no active docs contain old local paths**
 
 Run:
 
@@ -613,7 +652,7 @@ Expected:
 - Matches are allowed only in `docs/archive/`, `docs/plans/rename-to-usestakly.md`, or explicit historical-name notes in active docs.
 - No active docs should contain `Project-DK/Project-K` absolute local links.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add docs/audits/user-journey-audit-2026-04-23.md docs/security-audit-2026-04-21.md docs/dev-workflow.md
@@ -630,7 +669,7 @@ git commit -m "Remove stale local paths from active docs"
 - Modify: `docs/dev-workflow.md`
 - Modify: `docs/source-of-truth.md`
 
-- [ ] **Step 1: Create `scripts/audit-doc-source-truth.ps1`**
+- [x] **Step 1: Create `scripts/audit-doc-source-truth.ps1`**
 
 Create:
 
@@ -653,9 +692,12 @@ $patterns = @(
 
 $activeRoots = @(
   "AGENTS.md",
+  "CLAUDE.md",
+  "GEMINI.md",
   "README.md",
   "TODO.md",
   "docs/README.md",
+  "docs/source-of-truth.md",
   "docs/architecture-backend-current.md",
   "docs/mcp-protocol.md",
   "docs/trust-model-v1.md",
@@ -664,7 +706,8 @@ $activeRoots = @(
   "docs/dev-workflow.md",
   "docs/security-audit-2026-04-21.md",
   "docs/audits/user-journey-audit-2026-04-23.md",
-  "docs/plans/remaining-work-2026-05-03.md"
+  "docs/plans/remaining-work-2026-05-03.md",
+  "docs/validation/live-release-checklist.md"
 )
 
 $failed = $false
@@ -688,7 +731,7 @@ if ($failed) {
 Write-Host "Documentation drift audit passed." -ForegroundColor Green
 ```
 
-- [ ] **Step 2: Document the audit command in `docs/dev-workflow.md`**
+- [x] **Step 2: Document the audit command in `docs/dev-workflow.md`**
 
 Add:
 
@@ -704,7 +747,7 @@ Run this before handing large docs changes to another agent:
 The script scans active docs for stale snippet-era tools, old local paths, stale MCP rate-limit status, old CLI versions, and migration-count drift.
 ````
 
-- [ ] **Step 3: Link audit from `docs/source-of-truth.md`**
+- [x] **Step 3: Link audit from `docs/source-of-truth.md`**
 
 Add:
 
@@ -714,7 +757,7 @@ Add:
 Run `.\scripts\audit-doc-source-truth.ps1` after documentation edits. A failure means an active doc may still contain a stale legacy reference.
 ```
 
-- [ ] **Step 4: Run the audit**
+- [x] **Step 4: Run the audit**
 
 Run:
 
@@ -728,7 +771,7 @@ Expected:
 Documentation drift audit passed.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add scripts/audit-doc-source-truth.ps1 docs/dev-workflow.md docs/source-of-truth.md
@@ -743,7 +786,7 @@ git commit -m "Add documentation drift audit"
 
 - All documentation files touched above.
 
-- [ ] **Step 1: Check current branch state**
+- [x] **Step 1: Check current branch state**
 
 Run:
 
@@ -756,13 +799,13 @@ Expected:
 - on the cleanup branch
 - no untracked files except intentional files before final commit
 
-- [ ] **Step 2: Run stale-doc scans**
+- [x] **Step 2: Run stale-doc scans**
 
 Run:
 
 ```powershell
 .\scripts\audit-doc-source-truth.ps1
-rg -n "snippets|libraries|search_library|get_snippet|/api/snippets|Project-DK|Project-K|Supabase|v0.1.3|17 migrations|pas encore de rate-limit globale|read tools and protocol calls do not yet" AGENTS.md README.md TODO.md docs -g "*.md"
+rg -n "snippets|libraries|search_library|get_snippet|/api/snippets|Project-DK|Project-K|Supabase|v0.1.3|17 migrations|pas encore de rate-limit globale|read tools and protocol calls do not yet" AGENTS.md CLAUDE.md GEMINI.md README.md TODO.md docs -g "*.md"
 ```
 
 Expected:
@@ -771,7 +814,7 @@ Expected:
 - second command may show archive matches and allowed historical-name notes only
 - no active source-of-truth doc contains stale implementation guidance
 
-- [ ] **Step 3: Run docs-adjacent code verification**
+- [x] **Step 3: Run docs-adjacent code verification**
 
 Run:
 
@@ -788,7 +831,7 @@ Expected:
 - backend targeted tests pass
 - CLI tests pass
 
-- [ ] **Step 4: Review changed files**
+- [x] **Step 4: Review changed files**
 
 Run:
 
@@ -803,7 +846,7 @@ Expected:
 - no archive content was rewritten beyond archive warnings
 - active docs route agents to current source-of-truth docs
 
-- [ ] **Step 5: Final commit if anything remains**
+- [x] **Step 5: Final commit if anything remains**
 
 If `git status --short` shows remaining intentional changes:
 
@@ -816,7 +859,7 @@ git commit -m "Finalize documentation source of truth cleanup"
 
 ## Completion Criteria
 
-- `AGENTS.md` no longer says the MCP global rate-limit is missing.
+- `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` no longer say the MCP global rate-limit is missing.
 - Active docs no longer claim ETag/backoff or `owner_inactive_days` are unimplemented.
 - Active docs no longer claim formula v2 trust account weight is future.
 - CLI version and migration count match the repository.

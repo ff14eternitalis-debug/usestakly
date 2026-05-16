@@ -225,7 +225,7 @@ Get-Process usestakly-backend -ErrorAction SilentlyContinue | Stop-Process -Forc
 Fix durable (PowerShell admin, à faire une fois) :
 
 ```powershell
-Add-MpPreference -ExclusionPath "C:\Users\forgo\Documents\Code\Project-DK\Project-K\backend\target"
+Add-MpPreference -ExclusionPath "C:\Users\forgo\Documents\Code\usestakly\backend\target"
 Add-MpPreference -ExclusionPath "C:\Users\forgo\.cargo"
 Add-MpPreference -ExclusionPath "C:\Users\forgo\.rustup"
 ```
@@ -296,3 +296,15 @@ Un script créé « au cas où » dérive du réel dès la première évolution 
 - Onboarding d'un second dev sur le projet.
 - Setup d'une CI qui a besoin d'une DB propre avant chaque run.
 - Frustration répétée et mesurable : si tu tapes la même commande 10× dans une semaine, automatise.
+
+## Documentation drift audit
+
+Après toute modification de doc active (`AGENTS.md`, `CLAUDE.md`, `docs/*.md`, etc.) :
+
+```powershell
+.\scripts\audit-doc-source-truth.ps1
+```
+
+Le script échoue si des motifs obsolètes (ancienne version CLI npm, ancien décompte de migrations, ancien wording rate-limit MCP, chemins locaux historiques du monorepo, etc.) réapparaissent dans les fichiers actifs listés dans le script.
+
+Voir aussi `docs/source-of-truth.md` pour le routage doc agent.

@@ -1,13 +1,15 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. Reflète l'état au 2026-05-16.
+
+> Source de vérité doc : `docs/source-of-truth.md`. Backlog priorisé : `docs/plans/remaining-work-2026-05-03.md` (pas `TODO.md` seul).
 
 ## Produit
 
 - Nom produit : **UseStakly**. Nom de travail historique : **Project-K** (Komorebi). Les deux cohabitent encore dans certains chemins et docs (DB `project_k`, repo). Ne pas faire de renommage spontané — voir `docs/plans/rename-to-usestakly.md`.
 - Objectif produit : **veille GitHub OSS**. UseStakly score des repos GitHub publics pour aider des devs et des agents IA à choisir de meilleures dépendances qu'avec les seules stars.
-- État au 2026-04-26 : **public beta exposable** (TODO v5.5). Pas encore d'ouverture publique large — l'intention explicite est de déployer pour auditer en conditions réelles, pas pour chasser des users.
-- Trois piliers actifs : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents IA** (5 tools, CLI npm `usestakly-mcp` publié).
+- État au 2026-05-16 : **public beta exposée et redéployée**. Ops MCP critiques en place (backup DB Coolify + restore testé, Bearer obligatoire sur `/mcp`, rate-limit `/mcp` par IP/token, alerte Uptime Kuma). Restent surtout : backup offsite/S3, polish release, validation continue.
+- Trois piliers actifs : **discovery qualité-scored** + **watchlist / notifications** + **MCP pour agents IA** (6 tools, CLI npm `usestakly-mcp` publié).
 - Le pivot du 2026-04-21 a abandonné l'ancien produit de **bibliothèque de snippets**. Le schéma SQL historique (`libraries`, `snippets`, `snippet_versions`…) reste présent en base, mais **ne pas réintroduire** de surfaces produit snippets sans demande explicite.
 
 ## Layout monorepo
@@ -15,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `backend/` — API Rust (Axum 0.8 + SQLx 0.8 + rmcp 1.5). Migrations Postgres dans `backend/migrations/` exécutées automatiquement au boot par `sqlx::migrate!` dans `backend/src/db/mod.rs`. Binaire `seed_github` pour bootstrap corpus.
 - `frontend/` — React 19 + Vite 7 + Tailwind v4 + TypeScript. Routing **TanStack Router** (`frontend/src/app/router.tsx`). E2E Playwright (`frontend/e2e/mvp.spec.ts`).
 - `cli/` — package npm `usestakly-mcp` (Node ≥18) publié sur registry. `npx usestakly-mcp install` configure Codex/Cursor avec `Authorization: Bearer usk_...` pointant vers le backend.
-- `docs/` — docs produit et techniques. Commencer par `docs/README.md`, puis `TODO.md`, `docs/strategy-pivot-2026-04-21.md`, `docs/architecture-backend-current.md` et `docs/mcp-protocol.md`.
+- `docs/` — commencer par `docs/source-of-truth.md`, `docs/README.md`, `docs/plans/remaining-work-2026-05-03.md`, `docs/architecture-backend-current.md`, `docs/mcp-protocol.md`. Archives sous `docs/archive/` (historique uniquement).
 - `deploy/coolify/` — cible de déploiement (voir `docs/deployment-coolify.md`, `docs/ops-mcp-coolify-hardening.md`).
 - `scripts/seed-public-corpus.ps1` — seed corpus public via API.
 - `docker-compose.yml` — uniquement Postgres local (image `pgvector/pgvector:pg17`, DB `project_k`, port 5432).
@@ -62,7 +64,7 @@ Découpage par couches (dans `backend/src/`) :
 - `services/` — logique métier : `ingestion/github`, `repos`, `watchlist`, `notifications`, `scheduler`, `semantic_search` (feature-gated), `agent_tokens`, sous-domaines `quality/` (`formula`, `compute`, `flags`, `weighting`, `pipeline`, `capture`) et `trust/` (`reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events`, `mcp_metrics`).
 - `domain/` — types actifs : `account`, `agent_token`, `quality`, `repo`, `reference`, `watchlist`.
 - `db/` — pool + runner migrations + `ensure_optional_extensions`.
-- `mcp/` — serveur MCP Streamable HTTP. 5 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`. Auth Bearer `usk_<64 hex>` SHA-256.
+- `mcp/` — Streamable HTTP : handlers dans `server.rs` (`#[tool_router]`), DTOs/mappers dans `tools/*`. 6 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`, `watch_use_case`. Auth Bearer `usk_<64 hex>` SHA-256.
 
 Séparation à respecter pour tout nouveau code : `handler` (I/O) → `service` (logique) → `query` (DB).
 
@@ -79,7 +81,7 @@ Séparation à respecter pour tout nouveau code : `handler` (I/O) → `service` 
 
 ## CLI MCP (`cli/`)
 
-Package npm public `usestakly-mcp` (v0.1.3 au 2026-04-26).
+Package npm public `usestakly-mcp` (v0.1.4 — voir `cli/package.json`).
 
 - `npx usestakly-mcp install` — configure Codex / Cursor avec un token `usk_...` valide et le bon endpoint.
 - `npx usestakly-mcp test` — vérifie connectivité et auth.
@@ -121,8 +123,8 @@ Aucun service Postgres provisionné en CI ; tout test DB-bound doit mocker ou ê
 - `docker-compose.yml` ne démarre **que** Postgres : backend et frontend tournent en local hors Docker.
 - **Scheduler** (`services::scheduler::spawn_recompute_loop`) **opt-in** : `APP_SCHEDULER_ENABLED=true` pour activer, `APP_RECOMPUTE_INTERVAL_SECS` pour la cadence (default 86400). Refresh des watchés via `ingest_repo` puis `recompute_all_scores`. Pas de run au boot. Laissé OFF en dev pour ne pas taper l'API GitHub.
 - **Serveur MCP** monté à `/mcp` via `rmcp::StreamableHttpService` (`route_service` dans `app::build_app`). **Authorization Bearer requise dès `initialize`/`tools/list`** depuis `5a10ca4` (middleware pré-transport, doc `docs/mcp-endpoint-security.md`). Tokens `usk_<64 hex>` hashés SHA-256 (table `agent_tokens`, migration 0013), plaintext affiché une seule fois à la création via `POST /api/agent-tokens`.
-- **Rate-limit MCP par token** sur les writes via `agent_token_events` (migration 0014). Quota global multi-token / par IP **pas encore implémenté** — c'est l'item ops #2 de `docs/ops-mcp-coolify-hardening.md`.
-- **Moderation signals** : migrations 0015 (`quality_signal_review`) et 0016 (`quality_signal_events`). Garde-fous v1 (consensus + réputation + review admin + cooldown anti-spam) en place. Réputation v2 runtime livrée. Formula_v2 (compte neuf = poids 0) + Sybil OAuth restent à venir.
+- **Rate-limit MCP** : writes via `agent_token_events` (0014) ; protocole/read et échecs auth via limites IP/token dans `app/mod.rs` + `APP_MCP_*` (voir `docs/ops-mcp-coolify-hardening.md`).
+- **Moderation signals** : migrations 0015/0016. Réputation v2 runtime et trust `[formula_v2].trust` livrés (`new_account_active_signal_weight = 0.0`). Sybil OAuth GitHub reste à venir.
 - **Scoring formula v1.1** (livré 2026-04-24) : pondération `outcome_weight × reporter_weight × dedup_weight` dans `services/quality/weighting.rs`. Fichier `scoring/formula_v1.toml` section `[weighting]`. Endpoint admin `GET /api/admin/scoring/explain/{repo_id}` pour breakdown signal par signal.
 - **Semantic search** (R2b) derrière feature Cargo `semantic-search` (default OFF). Migration 0017 `repo_embeddings`, fastembed + pgvector. **OFF en prod par défaut** (`APP_SEMANTIC_SEARCH_ENABLED=false`) — calibration ranking hybride bundle `17ade16` à valider sur corpus plus large.
 - **Archived GitHub ≠ abandon** : ne pas câbler `archived=true` comme trigger unique d'abandon dans `formula_v2`.
