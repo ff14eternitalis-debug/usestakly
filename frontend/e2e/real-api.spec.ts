@@ -57,8 +57,9 @@ test("real API flow covers discovery, watchlist, notifications, account token, a
 
   await page
     .getByRole("banner")
-    .getByRole("link", { name: "@usestakly-dev" })
+    .getByRole("button", { name: /@usestakly-dev/ })
     .click();
+  await page.getByRole("menuitem", { name: /my profile/i }).click();
   await expect(page).toHaveURL(/\/account$/);
   await page.getByPlaceholder("e.g. claude-desktop, cursor, codex").fill("real api audit");
   await page.getByRole("button", { name: /create token/i }).click();

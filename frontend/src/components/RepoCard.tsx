@@ -118,8 +118,8 @@ export function RepoCard({
             title={t.repoExplanation.title}
             includedLabel={t.repoExplanation.included}
             caveatsLabel={t.repoExplanation.caveats}
-            includedBecause={explanation.included}
-            caveats={explanation.caveats}
+            includedBecause={explanation.included.slice(0, 2)}
+            caveats={explanation.caveats.slice(0, 1)}
           />
         ) : null}
 

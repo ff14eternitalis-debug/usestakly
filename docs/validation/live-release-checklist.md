@@ -3,6 +3,8 @@
 > Version : 1.0 — 2026-05-16  
 > One-page go/no-go after a backend or full-stack deploy. Detailed steps live in [`docs/functional-checks.md`](../functional-checks.md).
 
+Latest validation report: [`live-release-report-2026-05-16.md`](live-release-report-2026-05-16.md).
+
 ## URLs (adjust per environment)
 
 | Surface | Example (production) | Example (local) |

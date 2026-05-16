@@ -627,6 +627,8 @@ mod tests {
                 has_ci: Some(true),
                 releases_count: Some(40),
                 last_release_at: Some(computed_at),
+                owner_last_activity_at: Some(computed_at),
+                owner_inactive_days: Some(0),
             },
             score_snapshot: None,
             recent_signals: vec![RepoSignal {

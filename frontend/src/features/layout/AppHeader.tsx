@@ -114,6 +114,7 @@ export function AppHeader() {
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={profileMenuOpen}
+                aria-label={`${t.nav.profile}: ${accountLabel}`}
                 onClick={() => setProfileMenuOpen((open) => !open)}
                 className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface p-0.5 transition-colors hover:border-accent hover:bg-[color:var(--color-accent-glow)] focus-visible:border-accent focus-visible:outline-none"
                 title={user?.email ?? accountLabel}

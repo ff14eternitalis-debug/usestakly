@@ -176,6 +176,31 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
       return;
     }
 
+    if (path === "/api/status/public") {
+      await route.fulfill(
+        json({
+          status: "ok",
+          checkedAt: "2026-05-16T12:00:00Z",
+          api: { status: "ok" },
+          database: { status: "ok" },
+          registry: { status: "ok", repoCount: 42 },
+          mcp: {
+            status: "ok",
+            tools: [
+              "search_github_repos",
+              "recommend_github_repos",
+              "get_repo_quality_context",
+              "log_usage",
+              "watch_repo",
+              "watch_use_case"
+            ]
+          },
+          formula: { version: "v2.0" }
+        })
+      );
+      return;
+    }
+
     if (path === "/api/repos/search") {
       await route.fulfill(
         json({
@@ -453,4 +478,45 @@ test("advanced explorer still supports filtered repo search", async ({ page }) =
   await page.goto(`/repos/${repoId}`);
   await expect(page.getByText(/Score snapshot/i)).toBeVisible();
   await expect(page.getByText(/Previous formula/i)).toBeVisible();
+});
+
+test("public beta pages are reachable without console errors", async ({ page }) => {
+  await mockUseStaklyApi(page, { authenticated: false });
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    const text = message.text();
+    if (
+      message.type() === "error" &&
+      !text.includes("401 (Unauthorized)")
+    ) {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto("/how-to-read");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto("/discover");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto(`/repos/${repoId}`);
+  await expect(page.getByRole("heading", { name: "timezone-picker" })).toBeVisible();
+
+  await page.goto("/mcp-guide");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto("/privacy");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto("/legal");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await page.goto("/status");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByText("v2.0")).toBeVisible();
+
+  expect(consoleErrors).toEqual([]);
 });

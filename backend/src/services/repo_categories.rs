@@ -266,7 +266,9 @@ impl BackfillRepoRow {
                 releases_count: self.releases_count,
                 last_release_at: self.last_release_at,
                 captured_at: self.structural_signals_at,
+                ..Default::default()
             },
+            ingestion: Default::default(),
         }
     }
 }
@@ -466,6 +468,7 @@ mod tests {
             subscribers_count: 0,
             last_commit_at: Some(Utc::now()),
             structural: StructuralSignals::default(),
+            ingestion: Default::default(),
         }
     }
 
