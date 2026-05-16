@@ -596,7 +596,7 @@ git commit -m "Add live validation gates and MCP smoke script"
 - Create: `frontend/src/features/repos/components/DiscoverResults.tsx`
 - `frontend/src/features/repos/components/UseCaseSearchPanel.tsx` — **already extracted**; do not recreate
 
-- [ ] **Step 1: Capture baseline behavior**
+- [x] **Step 1: Capture baseline behavior**
 
 Run:
 
@@ -611,7 +611,7 @@ npm run test:e2e
 
 Expected: all pass before refactor.
 
-- [ ] **Step 2: Split MCP pure mappers first**
+- [x] **Step 2: Split MCP pure mappers first**
 
 Move serialization helpers and output mapping functions from `backend/src/mcp/server.rs` into focused files under `backend/src/mcp/tools/`.
 
@@ -634,7 +634,7 @@ git add backend/src/mcp/server.rs backend/src/mcp/tools
 git commit -m "Refactor MCP tool mapping helpers"
 ```
 
-- [ ] **Step 3: Split repo service search/profile helpers**
+- [x] **Step 3: Split repo service search/profile helpers**
 
 Move pure search normalization, sorting, profile assembly, and **explanation builders** (from Task 3) out of `backend/src/services/repos.rs` into `backend/src/services/repos/{mod,search,profile,explain}.rs`.
 
@@ -658,7 +658,7 @@ git add backend/src/services/repos.rs backend/src/services/repos
 git commit -m "Refactor repo service search and profile helpers"
 ```
 
-- [ ] **Step 4: Split Discover page UI**
+- [x] **Step 4: Split Discover page UI**
 
 Extract from `frontend/src/routes/discover.tsx`:
 
@@ -688,7 +688,7 @@ git add frontend/src/routes/discover.tsx frontend/src/features/repos/components
 git commit -m "Refactor discovery route components"
 ```
 
-- [ ] **Step 5: Final full verification**
+- [x] **Step 5: Final full verification**
 
 Run:
 
