@@ -62,12 +62,11 @@ Reste côté MCP : valider un smoke réel avec token prod après déploiement, p
 
 ### 2.4 Phase R1 ingestion — finition
 
-- [ ] **Rate-limit handling GitHub** : ETags / conditional requests, backoff sur 429, monitoring du quota restant. Aujourd'hui un 429 lève une `forbidden` brute (`services/ingestion/github.rs`).
-  - Avancement 2026-05-16 : classification locale des primary/secondary rate limits ajoutée, messages d'erreur contextualisés pour repo/README/releases, helper `If-None-Match` disponible pour requêtes conditionnelles. Reste : persister les ETags, backoff/retry effectif, et monitoring quota restant.
-- [ ] **Computation `owner_inactive_days`** côté events API GitHub — préalable à la règle d'alerte "maintainer silencieux 90j" (Phase R3).
+- [x] **Rate-limit handling GitHub** : livré partiellement le 2026-05-16. Les ETags releases/README/events sont persistés, les réponses `304 Not Modified` conservent les valeurs existantes, et les secondary/`Retry-After` courts utilisent un backoff borné. Reste ouvert : dashboard/monitoring du quota GitHub restant.
+- [x] **Computation `owner_inactive_days`** côté events API GitHub — livré le 2026-05-16 comme input read-only (`owner_last_activity_at`, `owner_inactive_days`). La règle d'alerte "maintainer silencieux 90j" reste séparée en Phase R3.
 - [x] **Cadence refresh corpus entier** : livré 2026-05-06. Le scheduler opt-in refresh les repos watchés + tout repo GitHub dont `priors_fetched_at` est NULL ou vieux de plus de 24 h.
 - [ ] **Critère corpus v1 formel** : top N par langage, sur demande, ou via watchlist uniquement ? Aujourd'hui : seed manuel via `seed-public-corpus.ps1`.
-- [ ] **Tests unitaires parsing GitHub** : aucun test sur `services/ingestion/github.rs` au-delà des helpers `decode_readme_content` et `parse_github_repo_input`.
+- [x] **Tests unitaires parsing GitHub** : ingestion GitHub couvre maintenant parsing releases, conditional headers, rate-limit classification/backoff, et owner activity.
 
 ---
 

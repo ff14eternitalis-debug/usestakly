@@ -415,7 +415,7 @@ git commit -m "Polish public beta pages and route loading"
 
 **Files:**
 
-- Create: `backend/migrations/0020_github_ingestion_reliability.sql`
+- Create: `backend/migrations/0027_github_ingestion_reliability.sql`
 - Modify: `backend/src/domain/repo.rs`
 - Modify: `backend/src/services/ingestion/github.rs`
 - Modify: `backend/src/services/repos/rows.rs`
@@ -425,9 +425,9 @@ git commit -m "Polish public beta pages and route loading"
 - Modify: `docs/architecture-backend-current.md`
 - Test: `backend/src/services/ingestion/github.rs`
 
-- [ ] **Step 1: Add DB columns for ingestion freshness metadata**
+- [x] **Step 1: Add DB columns for ingestion freshness metadata**
 
-Create `backend/migrations/0020_github_ingestion_reliability.sql`:
+Create `backend/migrations/0027_github_ingestion_reliability.sql`:
 
 ```sql
 -- Persist GitHub conditional-request and maintainer-inactivity metadata.
@@ -452,7 +452,7 @@ Acceptance:
 - No existing column is repurposed ambiguously.
 - Nullable columns preserve current ingestion behavior for existing rows.
 
-- [ ] **Step 2: Add pure tests for ETag metadata and 304 behavior**
+- [x] **Step 2: Add pure tests for ETag metadata and 304 behavior**
 
 In `backend/src/services/ingestion/github.rs`, add pure helper tests before wiring live requests:
 
@@ -493,7 +493,7 @@ cargo test services::ingestion::github::tests::backoff
 
 Expected before implementation: compile failure for new helpers.
 
-- [ ] **Step 3: Thread existing DB metadata into ingestion**
+- [x] **Step 3: Thread existing DB metadata into ingestion**
 
 Add a small DB-loaded context for an existing GitHub artifact:
 
@@ -525,7 +525,7 @@ cd backend
 cargo test services::ingestion::github
 ```
 
-- [ ] **Step 4: Implement bounded backoff for rate-limit responses**
+- [x] **Step 4: Implement bounded backoff for rate-limit responses**
 
 Add a small retry wrapper around GitHub calls that can hit secondary limits:
 
@@ -550,7 +550,7 @@ cargo test services::ingestion::github::tests::backoff
 cargo clippy --all-targets -- -D warnings
 ```
 
-- [ ] **Step 5: Capture maintainer inactivity from GitHub events**
+- [x] **Step 5: Capture maintainer inactivity from GitHub events**
 
 Add an events fetcher:
 
@@ -595,7 +595,7 @@ Acceptance:
 - Owner activity computes `0` days for same-day activity.
 - No events returns `(None, None)`.
 
-- [ ] **Step 6: Persist new fields and expose them read-only**
+- [x] **Step 6: Persist new fields and expose them read-only**
 
 Update `upsert_github_artifact` to write:
 
@@ -626,7 +626,7 @@ cargo test services::repos services::ingestion::github
 cargo clippy --all-targets -- -D warnings
 ```
 
-- [ ] **Step 7: Update docs and remaining-work state**
+- [x] **Step 7: Update docs and remaining-work state**
 
 Update:
 
@@ -640,7 +640,7 @@ Required notes:
 - `owner_inactive_days` exists as a formula/notification input, but the "maintainer silent 90j" notification rule remains a separate task unless implemented here.
 - Quota monitoring is either done via logs/admin metrics or remains explicitly open.
 
-- [ ] **Step 8: Full backend verification and commit**
+- [x] **Step 8: Full backend verification and commit**
 
 Run:
 
@@ -655,7 +655,7 @@ Commit:
 
 ```powershell
 git status --short
-git add backend/migrations/0020_github_ingestion_reliability.sql backend/src/services/ingestion/github.rs backend/src/domain/repo.rs backend/src/services/repos docs/plans/remaining-work-2026-05-03.md docs/architecture-backend-current.md
+git add backend/migrations/0027_github_ingestion_reliability.sql backend/src/services/ingestion/github.rs backend/src/domain/repo.rs backend/src/services/repos docs/plans/remaining-work-2026-05-03.md docs/architecture-backend-current.md
 git commit -m "Persist GitHub ingestion freshness metadata"
 ```
 

@@ -162,6 +162,8 @@ pub(crate) struct ProfileRow {
     has_ci: Option<bool>,
     releases_count: Option<i32>,
     last_release_at: Option<DateTime<Utc>>,
+    owner_last_activity_at: Option<DateTime<Utc>>,
+    owner_inactive_days: Option<i32>,
     quality_formula_version: Option<String>,
     quality_freshness: Option<f64>,
     quality_adoption: Option<f64>,
@@ -251,6 +253,8 @@ impl ProfileRow {
                 has_ci: self.has_ci,
                 releases_count: self.releases_count,
                 last_release_at: self.last_release_at,
+                owner_last_activity_at: self.owner_last_activity_at,
+                owner_inactive_days: self.owner_inactive_days,
             },
             recent_signals: recent_signals
                 .into_iter()

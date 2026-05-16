@@ -151,6 +151,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 | 0023 | `notification_channels` (email destination + Discord webhook chiffré) | actif |
 | 0024 | `digest_time_local`, `timezone`, `notification_digest_deliveries` | actif |
 | 0025 | `use_case_*` notification kinds + flags persistés sur `use_case_watch_matches` | actif |
+| 0027 | `github_*_etag`, rate-limit timestamps, `owner_last_activity_at`, `owner_inactive_days` | actif |
 
 ## Flux principaux
 
@@ -218,7 +219,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 
 - pas de couverture intégration DB en CI (Postgres non provisionné)
 - rate-limit applicative globale `/mcp` livrée en local runtime ; la couverture CI reste limitée aux tests unitaires/purs
-- backoff + ETags sur ingestion GitHub à venir (R1 reste)
-- `owner_inactive_days` non calculé → règle "maintainer silencieux 90 j" R3 bloquée
+- ingestion GitHub : ETags releases/README/events + backoff borné livrés ; monitoring quota GitHub restant encore à formaliser
+- `owner_inactive_days` calculé ; règle "maintainer silencieux 90 j" R3 encore à brancher côté notifications
 - réputation v2 runtime livrée ; formula_v2 (compte neuf = poids 0) + Graphe Sybil OAuth GitHub à venir
 - doc reproduction tests + tests fonctionnels acceptée comme dette pré-ouverture externe

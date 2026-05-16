@@ -124,4 +124,6 @@ pub struct VitalityInputs {
     pub has_ci: Option<bool>,
     pub releases_count: Option<i32>,
     pub last_release_at: Option<DateTime<Utc>>,
+    pub owner_last_activity_at: Option<DateTime<Utc>>,
+    pub owner_inactive_days: Option<i32>,
 }

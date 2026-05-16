@@ -54,6 +54,8 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
           e.has_ci                    AS has_ci,
           e.releases_count            AS releases_count,
           e.last_release_at           AS last_release_at,
+          e.owner_last_activity_at     AS owner_last_activity_at,
+          e.owner_inactive_days        AS owner_inactive_days,
           ascore.formula_version      AS quality_formula_version,
           ascore.freshness::float8    AS quality_freshness,
           ascore.adoption::float8     AS quality_adoption,

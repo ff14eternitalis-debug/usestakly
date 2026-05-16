@@ -3,10 +3,14 @@ use std::time::Duration as StdDuration;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use chrono::{DateTime, Duration, Utc};
-use http::{HeaderMap, HeaderValue, StatusCode, header::IF_NONE_MATCH};
+use http::{
+    HeaderMap, HeaderValue, StatusCode,
+    header::{ETAG, IF_NONE_MATCH},
+};
+use http_body_util::BodyExt;
 use octocrab::Octocrab;
 use serde::Deserialize;
-use sqlx::PgPool;
+use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
 use crate::{
@@ -21,6 +25,8 @@ const COMMITS_PER_PAGE: u8 = 100;
 const COMMITS_MAX_PAGES: u32 = 5;
 const README_CLASSIFICATION_MAX_BYTES: usize = 80_000;
 const GITHUB_SECONDARY_RATE_LIMIT_MARKER: &str = "secondary rate limit";
+const SECONDARY_RATE_LIMIT_DEFAULT_BACKOFF_SECS: u64 = 2;
+const MAX_INLINE_BACKOFF_SECS: u64 = 2;
 
 pub struct GitHubRepoMetadata {
     pub github_id: i64,
@@ -39,6 +45,7 @@ pub struct GitHubRepoMetadata {
     pub subscribers_count: i32,
     pub last_commit_at: Option<DateTime<Utc>>,
     pub structural: StructuralSignals,
+    pub ingestion: GitHubIngestionMetadata,
 }
 
 /// Passive structural signals captured at ingestion time.
@@ -53,6 +60,39 @@ pub struct StructuralSignals {
     pub releases_count: Option<i32>,
     pub last_release_at: Option<DateTime<Utc>>,
     pub captured_at: Option<DateTime<Utc>>,
+    pub owner_last_activity_at: Option<DateTime<Utc>>,
+    pub owner_inactive_days: Option<i32>,
+    pub releases_etag: Option<String>,
+    pub events_etag: Option<String>,
+}
+
+#[cfg(test)]
+impl StructuralSignals {
+    fn merge_releases_not_modified(self) -> Self {
+        self
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct GitHubIngestionMetadata {
+    pub releases_etag: Option<String>,
+    pub readme_etag: Option<String>,
+    pub events_etag: Option<String>,
+    pub rate_limit_reset_at: Option<DateTime<Utc>>,
+    pub last_rate_limit_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Default, FromRow)]
+struct ExistingGitHubIngestionState {
+    #[allow(dead_code)]
+    repo_etag: Option<String>,
+    releases_etag: Option<String>,
+    readme_etag: Option<String>,
+    events_etag: Option<String>,
+    releases_count: Option<i32>,
+    last_release_at: Option<DateTime<Utc>>,
+    owner_last_activity_at: Option<DateTime<Utc>>,
+    owner_inactive_days: Option<i32>,
 }
 
 pub fn build_client(token: &str) -> Result<Octocrab, ApiError> {
@@ -66,6 +106,21 @@ pub async fn fetch_repo(
     client: &Octocrab,
     owner: &str,
     name: &str,
+) -> Result<GitHubRepoMetadata, ApiError> {
+    fetch_repo_with_state(
+        client,
+        owner,
+        name,
+        &ExistingGitHubIngestionState::default(),
+    )
+    .await
+}
+
+async fn fetch_repo_with_state(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    existing: &ExistingGitHubIngestionState,
 ) -> Result<GitHubRepoMetadata, ApiError> {
     let repo = client.repos(owner, name).get().await.map_err(|e| match e {
         octocrab::Error::GitHub { source, .. } if source.status_code.as_u16() == 404 => {
@@ -103,7 +158,12 @@ pub async fn fetch_repo(
         .map(|u| u.to_string())
         .unwrap_or_else(|| format!("https://github.com/{resolved_owner}/{}", repo.name));
 
-    let structural = fetch_structural_signals(client, &resolved_owner, &repo.name).await;
+    let structural = fetch_structural_signals(client, &resolved_owner, &repo.name, existing).await;
+    let ingestion = GitHubIngestionMetadata {
+        releases_etag: structural.releases_etag.clone(),
+        events_etag: structural.events_etag.clone(),
+        ..Default::default()
+    };
 
     Ok(GitHubRepoMetadata {
         github_id: *repo.id as i64,
@@ -122,6 +182,7 @@ pub async fn fetch_repo(
         subscribers_count: repo.subscribers_count.unwrap_or(0) as i32,
         last_commit_at: repo.pushed_at,
         structural,
+        ingestion,
     })
 }
 
@@ -154,6 +215,42 @@ enum GitHubRateLimitKind {
 #[derive(Debug, Deserialize)]
 struct GitHubReleaseSummary {
     published_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubRepoEvent {
+    #[serde(rename = "type")]
+    event_type: String,
+    actor: GitHubEventActor,
+    created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubEventActor {
+    login: String,
+}
+
+struct GitHubJsonResponse<T> {
+    data: Option<T>,
+    etag: Option<String>,
+    not_modified: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+struct OwnerActivitySummary {
+    owner_last_activity_at: Option<DateTime<Utc>>,
+    owner_inactive_days: Option<i32>,
+}
+
+struct OwnerActivityFetch {
+    summary: OwnerActivitySummary,
+    etag: Option<String>,
+}
+
+struct ReleaseSummaryFetch {
+    releases_count: Option<i32>,
+    last_release_at: Option<DateTime<Utc>>,
+    etag: Option<String>,
 }
 
 fn classify_rate_limit(
@@ -231,6 +328,32 @@ fn github_rate_limit_message(kind: &GitHubRateLimitKind) -> String {
     }
 }
 
+fn retry_delay(limit: &Option<GitHubRateLimitKind>) -> Option<StdDuration> {
+    match limit {
+        Some(GitHubRateLimitKind::Primary {
+            retry_after: Some(retry_after),
+            ..
+        }) => Some(*retry_after),
+        Some(GitHubRateLimitKind::Secondary) => Some(StdDuration::from_secs(
+            SECONDARY_RATE_LIMIT_DEFAULT_BACKOFF_SECS,
+        )),
+        _ => None,
+    }
+}
+
+fn github_api_failure_with_headers(
+    context: &str,
+    status: StatusCode,
+    headers: &HeaderMap,
+    message: &str,
+) -> ApiError {
+    if let Some(kind) = classify_rate_limit(status, headers, message) {
+        return ApiError::forbidden(format!("{context}: {}", github_rate_limit_message(&kind)));
+    }
+
+    github_api_failure(context, status, message)
+}
+
 fn github_api_failure(context: &str, status: StatusCode, message: &str) -> ApiError {
     let headers = HeaderMap::new();
     if let Some(kind) = classify_rate_limit(status, &headers, message) {
@@ -248,6 +371,75 @@ fn github_api_failure(context: &str, status: StatusCode, message: &str) -> ApiEr
             "{context}: GitHub returned {} ({message})",
             status.as_u16()
         )),
+    }
+}
+
+async fn github_get_json_with_etag<T>(
+    client: &Octocrab,
+    path: &str,
+    etag: Option<&str>,
+    context: &str,
+) -> Result<GitHubJsonResponse<T>, ApiError>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    let mut attempts = 0;
+    loop {
+        attempts += 1;
+        let response = client
+            ._get_with_headers(path, conditional_request_headers(etag))
+            .await
+            .map_err(|err| ApiError::internal(format!("{context} failed: {err}")))?;
+        let status = response.status();
+        let headers = response.headers().clone();
+        let response_etag = header_str(&headers, ETAG.as_str()).map(str::to_string);
+
+        if status == StatusCode::NOT_MODIFIED {
+            return Ok(GitHubJsonResponse {
+                data: None,
+                etag: response_etag.or_else(|| etag.map(str::to_string)),
+                not_modified: true,
+            });
+        }
+
+        let body = response
+            .into_body()
+            .collect()
+            .await
+            .map_err(|err| ApiError::internal(format!("{context} body read failed: {err}")))?
+            .to_bytes();
+        let body_text = String::from_utf8_lossy(&body);
+        let rate_limit = classify_rate_limit(status, &headers, &body_text);
+        if rate_limit.is_some() {
+            if attempts == 1
+                && let Some(delay) = retry_delay(&rate_limit)
+                && delay.as_secs() <= MAX_INLINE_BACKOFF_SECS
+            {
+                tokio::time::sleep(delay).await;
+                continue;
+            }
+            return Err(github_api_failure_with_headers(
+                context, status, &headers, &body_text,
+            ));
+        }
+        if !status.is_success() {
+            if status == StatusCode::NOT_FOUND {
+                return Err(ApiError::not_found(format!(
+                    "{context}: GitHub returned 404"
+                )));
+            }
+            return Err(github_api_failure_with_headers(
+                context, status, &headers, &body_text,
+            ));
+        }
+
+        let data = serde_json::from_slice::<T>(&body)
+            .map_err(|err| ApiError::internal(format!("{context} JSON decode failed: {err}")))?;
+        return Ok(GitHubJsonResponse {
+            data: Some(data),
+            etag: response_etag,
+            not_modified: false,
+        });
     }
 }
 
@@ -297,7 +489,12 @@ fn commit_summary_from(commit: &octocrab::models::repos::RepoCommit) -> CommitSu
     }
 }
 
-async fn fetch_structural_signals(client: &Octocrab, owner: &str, name: &str) -> StructuralSignals {
+async fn fetch_structural_signals(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    existing: &ExistingGitHubIngestionState,
+) -> StructuralSignals {
     let now = Utc::now();
     let cutoff_90d = now - Duration::days(COMMITS_LOOKBACK_DAYS);
     let cutoff_30d = now - Duration::days(COMMITS_30D_WINDOW);
@@ -331,16 +528,56 @@ async fn fetch_structural_signals(client: &Octocrab, owner: &str, name: &str) ->
         }
     };
 
-    let (releases_count, last_release_at) = match fetch_releases_summary(client, owner, name).await
+    let (releases_count, last_release_at, releases_etag) = match fetch_releases_summary_with_etag(
+        client,
+        owner,
+        name,
+        existing.releases_etag.as_deref(),
+        existing.releases_count,
+        existing.last_release_at,
+    )
+    .await
     {
-        Ok((count, last)) => (Some(count), last),
+        Ok(summary) => (
+            summary.releases_count,
+            summary.last_release_at,
+            summary.etag,
+        ),
         Err(err) => {
             tracing::warn!(
                 target: "ingestion::github::structural",
                 "releases fetch failed for {owner}/{name}: {}",
                 err.message
             );
-            (None, None)
+            (None, None, existing.releases_etag.clone())
+        }
+    };
+
+    let owner_activity = match fetch_owner_activity_summary(
+        client,
+        owner,
+        name,
+        existing.events_etag.as_deref(),
+        now,
+        existing.owner_last_activity_at,
+        existing.owner_inactive_days,
+    )
+    .await
+    {
+        Ok(activity) => activity,
+        Err(err) => {
+            tracing::warn!(
+                target: "ingestion::github::structural",
+                "events fetch failed for {owner}/{name}: {}",
+                err.message
+            );
+            OwnerActivityFetch {
+                summary: OwnerActivitySummary {
+                    owner_last_activity_at: existing.owner_last_activity_at,
+                    owner_inactive_days: existing.owner_inactive_days,
+                },
+                etag: existing.events_etag.clone(),
+            }
         }
     };
 
@@ -351,6 +588,10 @@ async fn fetch_structural_signals(client: &Octocrab, owner: &str, name: &str) ->
         releases_count,
         last_release_at,
         captured_at: Some(now),
+        owner_last_activity_at: owner_activity.summary.owner_last_activity_at,
+        owner_inactive_days: owner_activity.summary.owner_inactive_days,
+        releases_etag,
+        events_etag: owner_activity.etag,
     }
 }
 
@@ -404,83 +645,145 @@ async fn fetch_has_ci(client: &Octocrab, owner: &str, name: &str) -> Result<bool
     }
 }
 
-async fn fetch_releases_summary(
-    client: &Octocrab,
-    owner: &str,
-    name: &str,
-) -> Result<(i32, Option<DateTime<Utc>>), ApiError> {
-    fetch_releases_summary_with_etag(client, owner, name, None).await
-}
-
 async fn fetch_releases_summary_with_etag(
     client: &Octocrab,
     owner: &str,
     name: &str,
     etag: Option<&str>,
-) -> Result<(i32, Option<DateTime<Utc>>), ApiError> {
+    existing_count: Option<i32>,
+    existing_last_release_at: Option<DateTime<Utc>>,
+) -> Result<ReleaseSummaryFetch, ApiError> {
     let path = format!("/repos/{owner}/{name}/releases?per_page=100");
-    let releases: Vec<GitHubReleaseSummary> = client
-        .get_with_headers(path, None::<&()>, conditional_request_headers(etag))
-        .await
-        .map_err(|err| match err {
-            octocrab::Error::GitHub { source, .. } => {
-                github_api_failure("GitHub releases fetch", source.status_code, &source.message)
-            }
-            other => ApiError::internal(format!("GitHub releases fetch failed: {other}")),
-        })?;
-    Ok(summarize_releases(&releases))
+    let response: GitHubJsonResponse<Vec<GitHubReleaseSummary>> =
+        github_get_json_with_etag(client, &path, etag, "GitHub releases fetch").await?;
+    if response.not_modified {
+        return Ok(ReleaseSummaryFetch {
+            releases_count: existing_count,
+            last_release_at: existing_last_release_at,
+            etag: response.etag,
+        });
+    }
+    let releases = response.data.unwrap_or_default();
+    let (count, last_release_at) = summarize_releases(&releases);
+    Ok(ReleaseSummaryFetch {
+        releases_count: Some(count),
+        last_release_at,
+        etag: response.etag,
+    })
 }
 
-async fn fetch_readme_for_classification(
+struct ReadmeFetch {
+    content: Option<String>,
+    etag: Option<String>,
+}
+
+async fn fetch_readme_text_with_etag(
     client: &Octocrab,
     owner: &str,
     name: &str,
-) -> Option<String> {
-    match fetch_readme_text(client, owner, name).await {
-        Ok(readme) => readme,
-        Err(err) => {
-            tracing::warn!(
-                target: "ingestion::github::readme",
-                "README fetch failed for {owner}/{name}: {err:?}"
-            );
-            None
+    etag: Option<&str>,
+) -> Result<ReadmeFetch, ApiError> {
+    let path = format!("/repos/{owner}/{name}/readme");
+    let response: GitHubJsonResponse<GitHubReadmeResponse> =
+        match github_get_json_with_etag(client, &path, etag, "GitHub README fetch").await {
+            Ok(response) => response,
+            Err(err) if err.status == StatusCode::NOT_FOUND => {
+                return Ok(ReadmeFetch {
+                    content: None,
+                    etag: None,
+                });
+            }
+            Err(err) => return Err(err),
+        };
+
+    if response.not_modified {
+        return Ok(ReadmeFetch {
+            content: None,
+            etag: response.etag,
+        });
+    }
+
+    let Some(response_data) = response.data else {
+        return Ok(ReadmeFetch {
+            content: None,
+            etag: response.etag,
+        });
+    };
+    let Some(content) = response_data.content else {
+        return Ok(ReadmeFetch {
+            content: None,
+            etag: response.etag,
+        });
+    };
+    let encoding = response_data.encoding.as_deref().unwrap_or("base64");
+    decode_readme_content(&content, encoding).map(|content| ReadmeFetch {
+        content: Some(content),
+        etag: response.etag,
+    })
+}
+
+async fn fetch_owner_activity_summary(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    etag: Option<&str>,
+    now: DateTime<Utc>,
+    existing_last_activity_at: Option<DateTime<Utc>>,
+    existing_inactive_days: Option<i32>,
+) -> Result<OwnerActivityFetch, ApiError> {
+    let path = format!("/repos/{owner}/{name}/events?per_page=100");
+    let response: GitHubJsonResponse<Vec<GitHubRepoEvent>> =
+        github_get_json_with_etag(client, &path, etag, "GitHub events fetch").await?;
+    let summary = if response.not_modified {
+        OwnerActivitySummary {
+            owner_last_activity_at: existing_last_activity_at,
+            owner_inactive_days: existing_inactive_days,
         }
+    } else {
+        owner_activity_summary(&response.data.unwrap_or_default(), owner, now)
+    };
+    Ok(OwnerActivityFetch {
+        summary,
+        etag: response.etag,
+    })
+}
+
+fn owner_activity_summary(
+    events: &[GitHubRepoEvent],
+    owner: &str,
+    now: DateTime<Utc>,
+) -> OwnerActivitySummary {
+    let owner_lower = owner.to_ascii_lowercase();
+    let last = events
+        .iter()
+        .filter(|event| is_maintainer_activity(event, &owner_lower))
+        .map(|event| event.created_at)
+        .max();
+    let owner_inactive_days = last.map(|last| {
+        now.signed_duration_since(last)
+            .num_days()
+            .max(0)
+            .try_into()
+            .unwrap_or(i32::MAX)
+    });
+    OwnerActivitySummary {
+        owner_last_activity_at: last,
+        owner_inactive_days,
     }
 }
 
-async fn fetch_readme_text(
-    client: &Octocrab,
-    owner: &str,
-    name: &str,
-) -> Result<Option<String>, ApiError> {
-    let path = format!("/repos/{owner}/{name}/readme");
-    let response: GitHubReadmeResponse = match client.get(path, None::<&()>).await {
-        Ok(response) => response,
-        Err(octocrab::Error::GitHub { source, .. }) if source.status_code.as_u16() == 404 => {
-            return Ok(None);
-        }
-        Err(octocrab::Error::GitHub { source, .. })
-            if source.status_code == StatusCode::FORBIDDEN
-                || source.status_code == StatusCode::TOO_MANY_REQUESTS =>
-        {
-            return Err(github_api_failure(
-                "GitHub README fetch",
-                source.status_code,
-                &source.message,
-            ));
-        }
-        Err(other) => {
-            return Err(ApiError::internal(format!(
-                "GitHub README fetch failed: {other}"
-            )));
-        }
-    };
-
-    let Some(content) = response.content else {
-        return Ok(None);
-    };
-    let encoding = response.encoding.as_deref().unwrap_or("base64");
-    decode_readme_content(&content, encoding).map(Some)
+fn is_maintainer_activity(event: &GitHubRepoEvent, owner_lower: &str) -> bool {
+    let actor = event.actor.login.to_ascii_lowercase();
+    if actor.ends_with("[bot]") {
+        return false;
+    }
+    if actor == owner_lower {
+        return true;
+    }
+    matches!(
+        event.event_type.as_str(),
+        "PushEvent" | "ReleaseEvent" | "PullRequestEvent" | "IssuesEvent"
+    )
 }
 
 fn decode_readme_content(content: &str, encoding: &str) -> Result<String, ApiError> {
@@ -524,7 +827,10 @@ pub async fn upsert_github_artifact(
           stars_count, forks_count, open_issues_count, subscribers_count,
           last_commit_at, priors_fetched_at,
           distinct_contributors_90d, commits_30d, has_ci,
-          releases_count, last_release_at, structural_signals_at
+          releases_count, last_release_at, structural_signals_at,
+          github_releases_etag, github_readme_etag, github_events_etag,
+          github_rate_limit_reset_at, github_last_rate_limit_at,
+          owner_last_activity_at, owner_inactive_days
         )
         VALUES (
           CAST($1 AS external_source), $2, $3,
@@ -534,7 +840,10 @@ pub async fn upsert_github_artifact(
           $14, $15, $16, $17,
           $18, NOW(),
           $19, $20, $21,
-          $22, $23, $24
+          $22, $23, $24,
+          $25, $26, $27,
+          $28, $29,
+          $30, $31
         )
         ON CONFLICT (source, canonical_slug) DO UPDATE SET
           package_name = EXCLUDED.package_name,
@@ -559,7 +868,14 @@ pub async fn upsert_github_artifact(
           has_ci                   = COALESCE(EXCLUDED.has_ci,                   external_artifacts.has_ci),
           releases_count           = COALESCE(EXCLUDED.releases_count,           external_artifacts.releases_count),
           last_release_at          = COALESCE(EXCLUDED.last_release_at,          external_artifacts.last_release_at),
-          structural_signals_at    = COALESCE(EXCLUDED.structural_signals_at,    external_artifacts.structural_signals_at)
+          structural_signals_at    = COALESCE(EXCLUDED.structural_signals_at,    external_artifacts.structural_signals_at),
+          github_releases_etag     = COALESCE(EXCLUDED.github_releases_etag,     external_artifacts.github_releases_etag),
+          github_readme_etag       = COALESCE(EXCLUDED.github_readme_etag,       external_artifacts.github_readme_etag),
+          github_events_etag       = COALESCE(EXCLUDED.github_events_etag,       external_artifacts.github_events_etag),
+          github_rate_limit_reset_at = COALESCE(EXCLUDED.github_rate_limit_reset_at, external_artifacts.github_rate_limit_reset_at),
+          github_last_rate_limit_at  = COALESCE(EXCLUDED.github_last_rate_limit_at,  external_artifacts.github_last_rate_limit_at),
+          owner_last_activity_at   = COALESCE(EXCLUDED.owner_last_activity_at,   external_artifacts.owner_last_activity_at),
+          owner_inactive_days      = COALESCE(EXCLUDED.owner_inactive_days,      external_artifacts.owner_inactive_days)
         RETURNING id
         "#,
     )
@@ -587,10 +903,45 @@ pub async fn upsert_github_artifact(
     .bind(meta.structural.releases_count)
     .bind(meta.structural.last_release_at)
     .bind(meta.structural.captured_at)
+    .bind(&meta.ingestion.releases_etag)
+    .bind(&meta.ingestion.readme_etag)
+    .bind(&meta.ingestion.events_etag)
+    .bind(meta.ingestion.rate_limit_reset_at)
+    .bind(meta.ingestion.last_rate_limit_at)
+    .bind(meta.structural.owner_last_activity_at)
+    .bind(meta.structural.owner_inactive_days)
     .fetch_one(db)
     .await?;
 
     Ok(id)
+}
+
+async fn load_existing_ingestion_state(
+    db: &PgPool,
+    owner: &str,
+    name: &str,
+) -> Result<ExistingGitHubIngestionState, ApiError> {
+    let canonical_slug = format!("github:{owner}/{name}");
+    let state = sqlx::query_as::<_, ExistingGitHubIngestionState>(
+        r#"
+        SELECT
+          etag                    AS repo_etag,
+          github_releases_etag    AS releases_etag,
+          github_readme_etag      AS readme_etag,
+          github_events_etag      AS events_etag,
+          releases_count          AS releases_count,
+          last_release_at         AS last_release_at,
+          owner_last_activity_at  AS owner_last_activity_at,
+          owner_inactive_days     AS owner_inactive_days
+        FROM external_artifacts
+        WHERE source = 'github'
+          AND canonical_slug = $1
+        "#,
+    )
+    .bind(canonical_slug)
+    .fetch_optional(db)
+    .await?;
+    Ok(state.unwrap_or_default())
 }
 
 pub async fn ingest_repo(
@@ -607,9 +958,29 @@ pub async fn ingest_repo(
     ),
     ApiError,
 > {
-    let meta = fetch_repo(client, owner, name).await?;
+    let existing = load_existing_ingestion_state(db, owner, name).await?;
+    let mut meta = fetch_repo_with_state(client, owner, name, &existing).await?;
+    let readme = fetch_readme_text_with_etag(
+        client,
+        &meta.owner,
+        &meta.name,
+        existing.readme_etag.as_deref(),
+    )
+    .await
+    .map(|readme| {
+        meta.ingestion.readme_etag = readme.etag.or(existing.readme_etag.clone());
+        readme.content
+    })
+    .unwrap_or_else(|err| {
+        tracing::warn!(
+            target: "ingestion::github::readme",
+            "README fetch failed for {}/{}: {err:?}",
+            meta.owner,
+            meta.name
+        );
+        None
+    });
     let id = upsert_github_artifact(db, &meta).await?;
-    let readme = fetch_readme_for_classification(client, &meta.owner, &meta.name).await;
     let categories =
         repo_categories::upsert_repo_categories_with_readme(db, id, &meta, readme.as_deref())
             .await?;
@@ -868,6 +1239,66 @@ mod tests {
         assert!(super::conditional_request_headers(None).is_none());
     }
 
+    #[test]
+    fn etag_not_modified_preserves_existing_release_values() {
+        let existing = super::StructuralSignals {
+            releases_count: Some(4),
+            last_release_at: Some(parse_dt("2026-05-01T00:00:00Z")),
+            ..Default::default()
+        };
+
+        let refreshed = existing.clone().merge_releases_not_modified();
+
+        assert_eq!(refreshed.releases_count, existing.releases_count);
+        assert_eq!(refreshed.last_release_at, existing.last_release_at);
+    }
+
+    #[test]
+    fn backoff_delay_uses_retry_after_before_default_secondary_delay() {
+        let headers = github_rate_limit_headers("12", "1778791697", Some("7"));
+        let limit = super::classify_rate_limit(StatusCode::TOO_MANY_REQUESTS, &headers, "");
+
+        assert_eq!(super::retry_delay(&limit).map(|d| d.as_secs()), Some(7));
+    }
+
+    #[test]
+    fn owner_activity_ignores_bots_and_counts_same_day_activity() {
+        let now = parse_dt("2026-05-16T12:00:00Z");
+        let events = vec![
+            super::GitHubRepoEvent {
+                event_type: "PushEvent".to_string(),
+                actor: super::GitHubEventActor {
+                    login: "dependabot[bot]".to_string(),
+                },
+                created_at: parse_dt("2026-05-16T11:00:00Z"),
+            },
+            super::GitHubRepoEvent {
+                event_type: "IssuesEvent".to_string(),
+                actor: super::GitHubEventActor {
+                    login: "vitejs".to_string(),
+                },
+                created_at: parse_dt("2026-05-16T10:00:00Z"),
+            },
+        ];
+
+        let activity = super::owner_activity_summary(&events, "vitejs", now);
+
+        assert_eq!(
+            activity.owner_last_activity_at,
+            Some(parse_dt("2026-05-16T10:00:00Z"))
+        );
+        assert_eq!(activity.owner_inactive_days, Some(0));
+    }
+
+    #[test]
+    fn owner_activity_returns_none_for_empty_events() {
+        let activity =
+            super::owner_activity_summary(&[], "vitejs", parse_dt("2026-05-16T12:00:00Z"));
+
+        assert_eq!(activity.owner_last_activity_at, None);
+        assert_eq!(activity.owner_inactive_days, None);
+    }
+
     fn github_rate_limit_headers(
         remaining: &str,
         reset: &str,
@@ -883,5 +1314,9 @@ mod tests {
             headers.insert("retry-after", HeaderValue::from_str(retry_after).unwrap());
         }
         headers
+    }
+
+    fn parse_dt(value: &str) -> chrono::DateTime<Utc> {
+        value.parse().unwrap()
     }
 }
