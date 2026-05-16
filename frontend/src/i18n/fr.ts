@@ -387,7 +387,7 @@ export const fr: Dict = {
     githubMetadata: "Métadonnées GitHub",
     usageSignals: "Signaux d'usage",
     freshnessSource: "Source fraîcheur",
-    lastCommitSource: "Dernier push GitHub",
+    lastCommitSource: "Dernier commit (branche par défaut)",
     adoptionSource: "Source adoption",
     reliabilitySource: "Source fiabilité",
     neutralReliability: "neutre avant 5 échantillons build",

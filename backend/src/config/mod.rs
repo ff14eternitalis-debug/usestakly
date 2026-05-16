@@ -2,6 +2,8 @@ use anyhow::{Result, anyhow};
 use std::env;
 use uuid::Uuid;
 
+mod scheduler;
+
 #[derive(Clone)]
 pub struct AppConfig {
     pub host: String,
@@ -31,6 +33,9 @@ pub struct AppConfig {
     pub scheduler_enabled: bool,
     pub recompute_interval_secs: u64,
     pub digest_interval_secs: u64,
+    pub corpus_refresh_stale_secs: u64,
+    pub ingest_max_repos_per_cycle: usize,
+    pub scheduler_run_on_startup: bool,
     pub mcp_auth_failure_limit_per_minute: usize,
     pub mcp_read_limit_per_minute: usize,
     pub mcp_write_limit_per_hour: u32,
@@ -92,27 +97,8 @@ impl AppConfig {
             .unwrap_or_else(|_| "noreply@usestakly.com".to_string());
         let email_from_name =
             env::var("APP_EMAIL_FROM_NAME").unwrap_or_else(|_| "UseStakly".to_string());
-        let scheduler_enabled = env::var("APP_SCHEDULER_ENABLED")
-            .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "1" | "yes"))
-            .unwrap_or(false);
-        let recompute_interval_secs = env::var("APP_RECOMPUTE_INTERVAL_SECS")
-            .unwrap_or_else(|_| "86400".to_string())
-            .parse::<u64>()
-            .map_err(|_| anyhow!("APP_RECOMPUTE_INTERVAL_SECS must be a valid u64"))?;
-        if recompute_interval_secs < 60 {
-            return Err(anyhow!(
-                "APP_RECOMPUTE_INTERVAL_SECS must be >= 60 (got {recompute_interval_secs})"
-            ));
-        }
-        let digest_interval_secs = env::var("APP_DIGEST_INTERVAL_SECS")
-            .unwrap_or_else(|_| "1800".to_string())
-            .parse::<u64>()
-            .map_err(|_| anyhow!("APP_DIGEST_INTERVAL_SECS must be a valid u64"))?;
-        if digest_interval_secs < 60 {
-            return Err(anyhow!(
-                "APP_DIGEST_INTERVAL_SECS must be >= 60 (got {digest_interval_secs})"
-            ));
-        }
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let scheduler = scheduler::SchedulerConfig::from_env(&app_env)?;
         let mcp_auth_failure_limit_per_minute = env::var("APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE")
             .unwrap_or_else(|_| "30".to_string())
             .parse::<usize>()
@@ -206,9 +192,12 @@ impl AppConfig {
             email_smtp_password,
             email_from_address,
             email_from_name,
-            scheduler_enabled,
-            recompute_interval_secs,
-            digest_interval_secs,
+            scheduler_enabled: scheduler.enabled,
+            recompute_interval_secs: scheduler.recompute_interval_secs,
+            digest_interval_secs: scheduler.digest_interval_secs,
+            corpus_refresh_stale_secs: scheduler.corpus_refresh_stale_secs,
+            ingest_max_repos_per_cycle: scheduler.ingest_max_repos_per_cycle,
+            scheduler_run_on_startup: scheduler.run_on_startup,
             mcp_auth_failure_limit_per_minute,
             mcp_read_limit_per_minute,
             mcp_write_limit_per_hour,
@@ -311,8 +300,11 @@ mod tests {
             email_from_address: "noreply@usestakly.com".to_string(),
             email_from_name: "UseStakly".to_string(),
             scheduler_enabled: false,
-            recompute_interval_secs: 86_400,
+            recompute_interval_secs: 3_600,
             digest_interval_secs: 1_800,
+            corpus_refresh_stale_secs: 3_600,
+            ingest_max_repos_per_cycle: 40,
+            scheduler_run_on_startup: false,
             mcp_auth_failure_limit_per_minute: 30,
             mcp_read_limit_per_minute: 120,
             mcp_write_limit_per_hour: 60,
@@ -365,8 +357,11 @@ mod tests {
             email_from_address: "noreply@usestakly.com".to_string(),
             email_from_name: "UseStakly".to_string(),
             scheduler_enabled: false,
-            recompute_interval_secs: 86_400,
+            recompute_interval_secs: 3_600,
             digest_interval_secs: 1_800,
+            corpus_refresh_stale_secs: 3_600,
+            ingest_max_repos_per_cycle: 40,
+            scheduler_run_on_startup: false,
             mcp_auth_failure_limit_per_minute: 30,
             mcp_read_limit_per_minute: 120,
             mcp_write_limit_per_hour: 60,

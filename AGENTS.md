@@ -116,7 +116,7 @@ Aucun service Postgres provisionné — tests DB-bound mockés ou feature-gated.
 - Cookies session exigent `APP_SESSION_SECRET`. Sans lui, `auth_enabled()` = `false`, seul le dev user fonctionne.
 - CORS strict sur `FRONTEND_BASE_URL` avec `allow_credentials(true)` — changer l'URL casse l'auth.
 - `docker-compose.yml` ne démarre **que** Postgres.
-- **Scheduler opt-in** : `APP_SCHEDULER_ENABLED=true`, cadence `APP_RECOMPUTE_INTERVAL_SECS` (default 86400). Pas de run au boot. OFF en dev par défaut. À chaque cycle, refresh GitHub des repos watchés + repos du corpus dont `priors_fetched_at` est NULL ou vieux de plus de 24 h.
+- **Scheduler** : ON par défaut si `APP_ENV=production|staging`, sinon `APP_SCHEDULER_ENABLED=true`. Cycle `APP_RECOMPUTE_INTERVAL_SECS` (default prod 1800 s). Chaque cycle : tous les repos watchés + corpus stale (`APP_CORPUS_REFRESH_STALE_SECS`, default = cycle) jusqu'à `APP_INGEST_MAX_REPOS_PER_CYCLE`, puis recompute. Boot : `APP_SCHEDULER_RUN_ON_STARTUP` (default true en prod).
 - **MCP `/mcp`** monté via `rmcp::StreamableHttpService`. **Authorization Bearer requise dès `initialize`/`tools/list`** (middleware pré-transport, doc `docs/mcp-endpoint-security.md`). Tokens `usk_<64 hex>` SHA-256 dans `agent_tokens` (migration 0013).
 - **Rate-limit MCP** : writes via `agent_token_events` (0014) ; protocole/read et échecs auth via limites IP/token dans `app/mod.rs` + `APP_MCP_*` (voir `docs/ops-mcp-coolify-hardening.md`).
 - **Modération** : migrations 0015/0016 (review + events). Réputation v2 runtime et trust `[formula_v2].trust` livrés (`new_account_active_signal_weight = 0.0`). Sybil OAuth GitHub reste à venir.

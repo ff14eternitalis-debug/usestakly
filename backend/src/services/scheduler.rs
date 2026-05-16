@@ -16,10 +16,14 @@ use crate::{
 };
 
 pub fn spawn_recompute_loop(db: PgPool, config: AppConfig, interval: Duration) {
+    let run_on_startup = config.scheduler_run_on_startup;
     tokio::spawn(async move {
+        if run_on_startup {
+            tracing::info!("scheduler: startup ingestion cycle");
+            run_cycle(&db, &config).await;
+        }
+
         let mut ticker = tokio::time::interval(interval);
-        // interval() fires immediately on the first tick; consume it so the first real
-        // run happens after `interval`, not at boot (avoids recompute on every restart).
         ticker.tick().await;
         loop {
             ticker.tick().await;
@@ -41,7 +45,11 @@ pub fn spawn_digest_loop(db: PgPool, config: AppConfig, interval: Duration) {
 
 async fn run_cycle(db: &PgPool, config: &AppConfig) {
     let start = Instant::now();
-    tracing::info!("scheduler: cycle start");
+    tracing::info!(
+        stale_after_secs = config.corpus_refresh_stale_secs,
+        max_repos = config.ingest_max_repos_per_cycle,
+        "scheduler: cycle start"
+    );
 
     let refreshed = refresh_github_repos(db, config).await;
     let recompute_ok = match recompute_all_scores(db).await {
@@ -97,26 +105,34 @@ async fn refresh_github_repos(db: &PgPool, config: &AppConfig) -> usize {
         }
     };
 
-    let mut rows = list_watched_repo_targets(db).await.unwrap_or_else(|e| {
+    let watched = list_watched_repo_targets(db).await.unwrap_or_else(|e| {
         tracing::error!(error = ?e, "scheduler: failed to list watched repos");
         Vec::new()
     });
-    let stale = list_stale_corpus_repo_targets(db)
-        .await
-        .unwrap_or_else(|e| {
-            tracing::error!(error = ?e, "scheduler: failed to list stale corpus repos");
-            Vec::new()
-        });
-    rows.extend(stale);
+    let stale = list_stale_corpus_repo_targets(
+        db,
+        config.corpus_refresh_stale_secs,
+        config.ingest_max_repos_per_cycle,
+    )
+    .await
+    .unwrap_or_else(|e| {
+        tracing::error!(error = ?e, "scheduler: failed to list stale corpus repos");
+        Vec::new()
+    });
 
-    let rows = dedupe_refresh_targets(rows);
+    let rows = build_refresh_targets(
+        watched,
+        stale,
+        config.ingest_max_repos_per_cycle,
+    );
     let total = rows.len();
     if total == 0 {
         return 0;
     }
     tracing::info!(
         total,
-        stale_after_secs = corpus_refresh_stale_after().as_secs(),
+        stale_after_secs = config.corpus_refresh_stale_secs,
+        max_per_cycle = config.ingest_max_repos_per_cycle,
         "scheduler: refreshing github repos"
     );
 
@@ -135,6 +151,34 @@ async fn refresh_github_repos(db: &PgPool, config: &AppConfig) -> usize {
     refreshed
 }
 
+fn build_refresh_targets(
+    watched: Vec<(String, String)>,
+    stale_corpus: Vec<(String, String)>,
+    max_per_cycle: usize,
+) -> Vec<(String, String)> {
+    let mut targets = dedupe_refresh_targets(watched);
+    if targets.len() >= max_per_cycle {
+        return targets;
+    }
+
+    let mut seen = targets
+        .iter()
+        .map(|(owner, name)| (owner.to_ascii_lowercase(), name.to_ascii_lowercase()))
+        .collect::<HashSet<_>>();
+
+    for (owner, name) in stale_corpus {
+        if targets.len() >= max_per_cycle {
+            break;
+        }
+        let key = (owner.to_ascii_lowercase(), name.to_ascii_lowercase());
+        if seen.insert(key) {
+            targets.push((owner, name));
+        }
+    }
+
+    targets
+}
+
 async fn list_watched_repo_targets(db: &PgPool) -> Result<Vec<(String, String)>, sqlx::Error> {
     sqlx::query_as(
         r#"
@@ -151,8 +195,14 @@ async fn list_watched_repo_targets(db: &PgPool) -> Result<Vec<(String, String)>,
     .await
 }
 
-async fn list_stale_corpus_repo_targets(db: &PgPool) -> Result<Vec<(String, String)>, sqlx::Error> {
-    let stale_after_secs = i32::try_from(corpus_refresh_stale_after().as_secs()).unwrap_or(86_400);
+async fn list_stale_corpus_repo_targets(
+    db: &PgPool,
+    stale_after_secs: u64,
+    limit: usize,
+) -> Result<Vec<(String, String)>, sqlx::Error> {
+    let stale_after_secs =
+        i32::try_from(stale_after_secs).unwrap_or(i32::MAX);
+    let limit = i64::try_from(limit).unwrap_or(i64::MAX);
     sqlx::query_as(
         r#"
         SELECT e.github_owner, e.github_repo
@@ -165,15 +215,13 @@ async fn list_stale_corpus_repo_targets(db: &PgPool) -> Result<Vec<(String, Stri
             OR e.priors_fetched_at <= NOW() - make_interval(secs => $1)
           )
         ORDER BY e.priors_fetched_at ASC NULLS FIRST, e.created_at ASC
+        LIMIT $2
         "#,
     )
     .bind(stale_after_secs)
+    .bind(limit)
     .fetch_all(db)
     .await
-}
-
-fn corpus_refresh_stale_after() -> Duration {
-    Duration::from_secs(86_400)
 }
 
 fn dedupe_refresh_targets(rows: Vec<(String, String)>) -> Vec<(String, String)> {
@@ -193,16 +241,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn corpus_refresh_stale_after_is_24_hours() {
-        assert_eq!(corpus_refresh_stale_after().as_secs(), 86_400);
+    fn build_refresh_targets_prioritizes_watchlist() {
+        let targets = build_refresh_targets(
+            vec![
+                ("eslint".to_string(), "eslint".to_string()),
+                ("vitejs".to_string(), "vite".to_string()),
+            ],
+            vec![
+                ("facebook".to_string(), "react".to_string()),
+                ("expressjs".to_string(), "express".to_string()),
+            ],
+            3,
+        );
+
+        assert_eq!(
+            targets,
+            vec![
+                ("eslint".to_string(), "eslint".to_string()),
+                ("vitejs".to_string(), "vite".to_string()),
+                ("facebook".to_string(), "react".to_string()),
+            ]
+        );
     }
 
     #[test]
-    fn digest_scheduler_window_uses_interval_minutes() {
-        assert_eq!(
-            i64::try_from(Duration::from_secs(1_800).as_secs() / 60).unwrap(),
-            30
-        );
+    fn build_refresh_targets_keeps_all_watched_when_over_cap() {
+        let watched: Vec<_> = (0..5)
+            .map(|i| (format!("owner{i}"), format!("repo{i}")))
+            .collect();
+        let targets = build_refresh_targets(watched.clone(), vec![("x".into(), "y".into())], 3);
+        assert_eq!(targets, watched);
     }
 
     #[test]

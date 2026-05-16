@@ -165,6 +165,16 @@ async fn fetch_repo_with_state(
         ..Default::default()
     };
 
+    // `pushed_at` updates on any branch/tag push; users expect the default-branch HEAD date.
+    let last_commit_at = fetch_latest_default_branch_commit_at(
+        client,
+        &resolved_owner,
+        &repo.name,
+        repo.default_branch.as_deref(),
+    )
+    .await
+    .or(repo.pushed_at);
+
     Ok(GitHubRepoMetadata {
         github_id: *repo.id as i64,
         owner: resolved_owner,
@@ -180,7 +190,7 @@ async fn fetch_repo_with_state(
         forks_count: repo.forks_count.unwrap_or(0) as i32,
         open_issues_count: repo.open_issues_count.unwrap_or(0) as i32,
         subscribers_count: repo.subscribers_count.unwrap_or(0) as i32,
-        last_commit_at: repo.pushed_at,
+        last_commit_at,
         structural,
         ingestion,
     })
@@ -592,6 +602,33 @@ async fn fetch_structural_signals(
         owner_inactive_days: owner_activity.summary.owner_inactive_days,
         releases_etag,
         events_etag: owner_activity.etag,
+    }
+}
+
+async fn fetch_latest_default_branch_commit_at(
+    client: &Octocrab,
+    owner: &str,
+    name: &str,
+    default_branch: Option<&str>,
+) -> Option<DateTime<Utc>> {
+    let repo = client.repos(owner, name);
+    let mut request = repo.list_commits().per_page(1);
+    if let Some(branch) = default_branch.filter(|branch| !branch.is_empty()) {
+        request = request.sha(branch);
+    }
+
+    match request.send().await {
+        Ok(page) => page
+            .items
+            .first()
+            .map(|commit| commit_summary_from(commit).committed_at),
+        Err(err) => {
+            tracing::warn!(
+                target: "ingestion::github",
+                "latest default-branch commit fetch failed for {owner}/{name}: {err}"
+            );
+            None
+        }
     }
 }
 

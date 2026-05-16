@@ -384,7 +384,7 @@ export const en = {
     githubMetadata: "GitHub metadata",
     usageSignals: "Usage signals",
     freshnessSource: "Freshness source",
-    lastCommitSource: "Last GitHub push",
+    lastCommitSource: "Latest commit (default branch)",
     adoptionSource: "Adoption source",
     reliabilitySource: "Reliability source",
     neutralReliability: "neutral until 5 build samples",

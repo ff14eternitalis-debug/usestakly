@@ -31,6 +31,9 @@ async fn main() -> anyhow::Result<()> {
         services::scheduler::spawn_digest_loop(db.clone(), config.clone(), digest_interval);
         info!(
             interval_secs = config.recompute_interval_secs,
+            stale_after_secs = config.corpus_refresh_stale_secs,
+            max_repos_per_cycle = config.ingest_max_repos_per_cycle,
+            run_on_startup = config.scheduler_run_on_startup,
             "scheduler: recompute loop spawned"
         );
         info!(

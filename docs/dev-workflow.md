@@ -91,21 +91,27 @@ Notes :
 - lancer plusieurs batches si le corpus est large
 - le premier lancement télécharge le modèle local `fastembed`, donc il peut être plus lent
 
-## Refresh quotidien des données GitHub
+## Refresh automatique des données GitHub
 
-Le scheduler est opt-in. Quand il est actif, il tourne toutes les 24 h par défaut et rafraîchit :
+Le scheduler ingère et recalcule en boucle. En **production** (`APP_ENV=production`), il est **activé par défaut** avec un cycle toutes les **30 min** (surcharge via env).
 
-- les repos présents dans les watchlists ;
-- les repos GitHub du corpus dont `priors_fetched_at` est absent ou vieux de plus de 24 h.
+À chaque cycle :
 
-Dans `.env` :
+1. **Watchlist** — tous les repos suivis (non mutés), en priorité.
+2. **Corpus** — repos dont `priors_fetched_at` est absent ou plus vieux que `APP_CORPUS_REFRESH_STALE_SECS`, jusqu'à remplir `APP_INGEST_MAX_REPOS_PER_CYCLE` (les plus anciens d'abord).
+3. **Recompute** des scores et évaluation des veilles d'intention.
+
+Dans `.env` (dev local) :
 
 ```powershell
 APP_SCHEDULER_ENABLED=true
-APP_RECOMPUTE_INTERVAL_SECS=86400
+APP_RECOMPUTE_INTERVAL_SECS=3600
+APP_CORPUS_REFRESH_STALE_SECS=3600
+APP_INGEST_MAX_REPOS_PER_CYCLE=40
+GITHUB_TOKEN=ghp_...
 ```
 
-Il faut aussi un `GITHUB_TOKEN`, sinon le scheduler saute le refresh GitHub et se limite au recompute.
+`GITHUB_TOKEN` est obligatoire pour l'ingestion ; sans lui, seul le recompute tourne.
 
 ## Commandes courantes (à taper à la main)
 

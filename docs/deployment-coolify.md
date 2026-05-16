@@ -93,8 +93,12 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
+APP_ENV=production
 APP_SCHEDULER_ENABLED=true
-APP_RECOMPUTE_INTERVAL_SECS=86400
+APP_RECOMPUTE_INTERVAL_SECS=1800
+APP_CORPUS_REFRESH_STALE_SECS=1800
+APP_INGEST_MAX_REPOS_PER_CYCLE=100
+APP_SCHEDULER_RUN_ON_STARTUP=true
 APP_DIGEST_INTERVAL_SECS=1800
 RUST_LOG=info
 ```
@@ -107,7 +111,7 @@ L'app est auto-hébergée sur VPS via Coolify. L'auth est implémentée directem
 - session persistée dans un cookie JWT signé avec `APP_SESSION_SECRET`
 - destinations de notification sensibles (ex: Discord webhook) chiffrées avec `APP_NOTIFICATION_SECRET`, séparé du secret de session
 - alertes email via Brevo SMTP si `APP_EMAIL_SMTP_USERNAME` et `APP_EMAIL_SMTP_PASSWORD` sont configurés ; l'expéditeur vérifié est `UseStakly <noreply@usestakly.com>`
-- scheduler opt-in : refresh GitHub quotidien via `APP_RECOMPUTE_INTERVAL_SECS`, digests email/Discord vérifiés toutes les 30 min via `APP_DIGEST_INTERVAL_SECS`
+- scheduler : refresh GitHub toutes les 30 min (watchlist prioritaire + corpus stale), plafond `APP_INGEST_MAX_REPOS_PER_CYCLE`, digests via `APP_DIGEST_INTERVAL_SECS`
 - aucune dépendance à un SaaS d'auth (Supabase, Auth0, Clerk...) — pas de valeur ajoutée sur un VPS auto-hébergé
 
 ---
