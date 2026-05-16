@@ -11,10 +11,15 @@ use crate::{
         reference::{QualityContext, SearchFilter},
         repo::{
             RepoCategory, RepoProfile, RepoRadarSnapshot, RepoSearchResult, RepoSignal,
-            VitalityInputs,
+            ScoreSnapshot, VitalityInputs,
         },
     },
-    services::{quality::load_v2, semantic_search, trust::signal_events},
+    services::{
+        quality::load_v2,
+        repo_explain::{self, ExplainContext, ExplainRepoInput},
+        semantic_search,
+        trust::signal_events,
+    },
 };
 
 const DEFAULT_LIMIT: i64 = 50;
@@ -326,7 +331,17 @@ pub async fn search_github_repos(
     .fetch_all(db)
     .await?;
 
-    Ok(rows.into_iter().map(RepoRow::into_search_result).collect())
+    let explain_context = ExplainContext {
+        filter: filters.filter,
+        query: filters.query.clone(),
+        query_tokens: query_tokens.clone(),
+        topics_filter: topics.clone(),
+    };
+
+    Ok(rows
+        .into_iter()
+        .map(|row| row.into_search_result_with_explanation(&explain_context))
+        .collect())
 }
 
 pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProfile, ApiError> {
@@ -405,7 +420,19 @@ pub async fn get_repo_profile(db: &PgPool, artifact_id: Uuid) -> Result<RepoProf
 
     let signals = get_repo_signals(db, artifact_id).await?;
 
-    Ok(row.into_profile(signals))
+    let previous_overall: Option<f64> = sqlx::query_scalar(
+        r#"
+        SELECT overall::float8
+        FROM artifact_scores
+        WHERE external_artifact_id = $1
+          AND formula_version = 'v1.1'
+        "#,
+    )
+    .bind(artifact_id)
+    .fetch_optional(db)
+    .await?;
+
+    Ok(row.into_profile(signals, previous_overall))
 }
 
 pub async fn get_repo_signals(db: &PgPool, artifact_id: Uuid) -> Result<Vec<RepoSignal>, ApiError> {
@@ -513,7 +540,7 @@ impl RepoRow {
         })
     }
 
-    fn into_search_result(self) -> RepoSearchResult {
+    fn into_search_result_with_explanation(self, context: &ExplainContext) -> RepoSearchResult {
         let owner = self.owner.clone().unwrap_or_default();
         let name = self.name.clone().unwrap_or_default();
         let full_name = format!("{owner}/{name}");
@@ -523,6 +550,19 @@ impl RepoRow {
             .unwrap_or_else(|| format!("https://github.com/{full_name}"));
         let quality = self.quality();
         let radar = self.radar();
+        let categories = self.categories.0;
+        let topics = self.topics.clone();
+        let recommendation_explanation = Some(repo_explain::build_recommendation_explanation(
+            ExplainRepoInput {
+                topics: &topics,
+                categories: &categories,
+                archived: self.archived,
+                quality: quality.as_ref(),
+                radar: radar.as_ref(),
+                lexical_score: self.lexical_score,
+                context,
+            },
+        ));
         RepoSearchResult {
             artifact_id: self.artifact_id,
             owner,
@@ -532,15 +572,16 @@ impl RepoRow {
             description: self.description,
             language: self.language,
             license_spdx: self.license_spdx,
-            topics: self.topics,
+            topics,
             stars_count: self.stars_count,
             forks_count: self.forks_count,
             open_issues_count: self.open_issues_count,
             archived: self.archived,
             last_commit_at: self.last_commit_at,
             quality,
-            categories: self.categories.0,
+            categories,
             radar,
+            recommendation_explanation,
         }
     }
 }
@@ -590,7 +631,11 @@ struct ProfileRow {
 }
 
 impl ProfileRow {
-    fn into_profile(self, recent_signals: Vec<RepoSignal>) -> RepoProfile {
+    fn into_profile(
+        self,
+        recent_signals: Vec<RepoSignal>,
+        previous_overall: Option<f64>,
+    ) -> RepoProfile {
         let approved_flags = self.quality_flags.clone().unwrap_or_default();
         let repo = RepoRow {
             artifact_id: self.artifact_id,
@@ -627,7 +672,26 @@ impl ProfileRow {
             lexical_score: None,
             semantic_score: None,
         }
-        .into_search_result();
+        .into_search_result_with_explanation(&ExplainContext {
+            filter: SearchFilter::Explore,
+            ..Default::default()
+        });
+        let score_snapshot = repo.quality.as_ref().map(|quality| ScoreSnapshot {
+            formula_version: quality.formula_version.clone(),
+            overall: quality.overall,
+            freshness: quality.freshness,
+            adoption: quality.adoption,
+            reliability: quality.reliability,
+            abandonment: quality.abandonment,
+            vitality: quality.vitality,
+            computed_at: quality.computed_at,
+            previous_formula_version: if previous_overall.is_some() {
+                Some("v1.1".to_string())
+            } else {
+                None
+            },
+            previous_overall,
+        });
         RepoProfile {
             repo,
             subscribers_count: self.subscribers_count,
@@ -650,6 +714,7 @@ impl ProfileRow {
                             .any(|flag| flag == &normalize_public_signal(&signal.signal))
                 })
                 .collect(),
+            score_snapshot,
         }
     }
 }

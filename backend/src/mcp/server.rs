@@ -1564,6 +1564,7 @@ mod tests {
                 }),
                 categories: Vec::new(),
                 radar: None,
+                recommendation_explanation: None,
             },
             subscribers_count: 6_400,
             default_branch: Some("main".to_string()),
@@ -1576,6 +1577,7 @@ mod tests {
                 releases_count: Some(40),
                 last_release_at: Some(computed_at),
             },
+            score_snapshot: None,
             recent_signals: vec![RepoSignal {
                 id: signal_id,
                 signal: "build_success".to_string(),
@@ -1651,6 +1653,7 @@ mod tests {
             }),
             categories: Vec::new(),
             radar: None,
+            recommendation_explanation: None,
         }];
 
         let recommendations = build_recommendations(results, RiskTolerance::Medium);
@@ -1720,6 +1723,7 @@ mod tests {
                 trend_signal: 0.88,
                 explanation: json!({ "reasons": ["clear_category", "recent_activity"] }),
             }),
+            recommendation_explanation: None,
         }];
 
         let recommendations = build_recommendations(results, RiskTolerance::Medium);
@@ -1889,6 +1893,7 @@ mod tests {
                     evidence: json!({}),
                 }],
                 radar: None,
+                recommendation_explanation: None,
             },
             match_score: 0.9,
             recommendation_score: 0.81,
@@ -1947,6 +1952,7 @@ mod tests {
                 evidence: json!({}),
             }],
             radar: None,
+            recommendation_explanation: None,
         };
         let unrelated_repo = RepoSearchResult {
             artifact_id: Uuid::parse_str("55555555-5555-4555-8555-555555555555").unwrap(),
@@ -1976,6 +1982,7 @@ mod tests {
                 evidence: json!({}),
             }],
             radar: None,
+            recommendation_explanation: None,
         };
 
         assert!(repo_matches_intent(&testing_repo, &intent));

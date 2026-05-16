@@ -406,7 +406,47 @@ export const fr: Dict = {
     entriesPlural: "entrées",
     noSignals: "Aucun signal rapporté. L'observatoire écoute.",
     passive: "passif",
-    reported: "rapporté"
+    reported: "rapporté",
+    scoreSnapshotTitle: "Instantané du score",
+    scoreSnapshotCurrent: "Global actuel (v2)",
+    scoreSnapshotPrevious: "Formule précédente (v1.1)",
+    scoreSnapshotComputed: "calculé"
+  },
+  repoExplanation: {
+    title: "Pourquoi ce résultat",
+    included: "Inclus parce que",
+    caveats: "Réserves",
+    filterAutoHint:
+      "Le mode Fiable masque les dépôts sous le seuil qualité (score bas, abandon élevé ou flags sévères).",
+    codes: {
+      filter_auto_pass: "Passe le filtre qualité Fiable (auto)",
+      filter_strict_pass: "Passe le filtre qualité Strict",
+      filter_explore: "Affiché en mode Explorer (sans filtre qualité)",
+      quality_overall_strong: "Score global qualité élevé",
+      quality_overall_moderate: "Score global qualité modéré",
+      reliability_high: "Fiabilité élevée d'après les signaux d'usage",
+      abandonment_low: "Faible risque d'abandon",
+      freshness_high: "Activité récente soutenue",
+      lexical_match_strong: "Forte correspondance avec votre recherche",
+      lexical_match: "Correspond à votre recherche",
+      topic_match: "Topic aligné avec votre requête",
+      category_match: "Catégorie alignée avec votre requête",
+      topics_filter_applied: "Correspond à vos filtres topics",
+      radar_emerging: "Le radar classe ce dépôt comme émergent",
+      radar_established: "Le radar classe ce dépôt comme établi",
+      radar_watch_band: "Le radar suggère une vigilance accrue",
+      flag_security: "Flag sécurité public",
+      flag_broken: "Signalé comme cassé",
+      flag_deprecated: "Signalé comme déprécié",
+      flag_unmaintained: "Signalé comme non maintenu ou abandonné",
+      flag_public: "Flag communautaire enregistré",
+      archived_repo: "Dépôt archivé sur GitHub",
+      no_score_yet: "Pas encore scoré dans le registre"
+    },
+    filterSummary: {
+      auto_hides_low_quality:
+        "Le mode Fiable masque les dépôts sous le seuil qualité (score bas, abandon élevé ou flags sévères)."
+    }
   },
   watchlist: {
     eyebrow: "Veille",

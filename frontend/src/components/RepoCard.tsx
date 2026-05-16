@@ -11,6 +11,8 @@ import {
   scoreTone
 } from "../lib/format";
 import { radarSummary, radarTone } from "../lib/radar";
+import { RepoRecommendationExplanation } from "../features/repos/components/RepoRecommendationExplanation";
+import { labelsForExplanation } from "../lib/repo-explanation";
 import { Chip } from "./Chip";
 import { ScoreBar } from "./ScoreBar";
 
@@ -18,6 +20,7 @@ type Props = {
   repo: RepoSearchResult;
   index?: number;
   showRadarSummary?: boolean;
+  showRecommendationExplanation?: boolean;
 };
 
 function toneFromFlag(flag: string): "danger" | "warn" | "neutral" {
@@ -34,10 +37,16 @@ function scoreColor(tone: "ok" | "warn" | "danger" | "neutral"): string {
   return "var(--color-fg-muted)";
 }
 
-export function RepoCard({ repo, index, showRadarSummary = false }: Props) {
+export function RepoCard({
+  repo,
+  index,
+  showRadarSummary = false,
+  showRecommendationExplanation = false
+}: Props) {
   const t = useT();
   const q = repo.quality;
   const overallTone = scoreTone(q?.overall);
+  const explanation = labelsForExplanation(t.repoExplanation, repo.recommendationExplanation);
   return (
     <Link
       to="/repos/$id"
@@ -102,6 +111,16 @@ export function RepoCard({ repo, index, showRadarSummary = false }: Props) {
             <span className="font-medium text-fg">Radar.</span>{" "}
             {radarSummary(repo.radar, t.radar)}
           </p>
+        ) : null}
+
+        {showRecommendationExplanation ? (
+          <RepoRecommendationExplanation
+            title={t.repoExplanation.title}
+            includedLabel={t.repoExplanation.included}
+            caveatsLabel={t.repoExplanation.caveats}
+            includedBecause={explanation.included}
+            caveats={explanation.caveats}
+          />
         ) : null}
 
         <div className="grid gap-4 pt-2 md:grid-cols-[220px_1fr] md:gap-8">

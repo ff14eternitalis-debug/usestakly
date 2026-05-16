@@ -598,6 +598,7 @@ mod tests {
             }),
             categories: Vec::new(),
             radar: None,
+            recommendation_explanation: None,
         }
     }
 
@@ -675,6 +676,7 @@ mod tests {
             quality: None,
             categories: Vec::new(),
             radar: None,
+            recommendation_explanation: None,
         };
 
         assert!(!matches_term(&repo, "orm"));

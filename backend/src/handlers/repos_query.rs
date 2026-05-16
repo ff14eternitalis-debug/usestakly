@@ -9,9 +9,12 @@ use crate::{
     app::{AppState, error::ApiError},
     domain::{
         reference::SearchFilter,
-        repo::{RepoProfile, RepoSearchResult},
+        repo::{RepoProfile, RepoSearchResult, SearchFilterSummary},
     },
-    services::repos::{RepoSearchFilters, RepoSort, get_repo_profile, search_github_repos},
+    services::{
+        repo_explain,
+        repos::{RepoSearchFilters, RepoSort, get_repo_profile, search_github_repos},
+    },
 };
 
 #[derive(Debug, Deserialize)]
@@ -44,6 +47,8 @@ pub struct RepoSearchResponse {
     pub count: usize,
     pub has_more: bool,
     pub items: Vec<RepoSearchResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filter_summary: Option<SearchFilterSummary>,
 }
 
 pub async fn search_repos(
@@ -70,6 +75,11 @@ pub async fn search_repos(
     let mut items = search_github_repos(&state.db, &state.config, &filters).await?;
     let has_more = items.len() > requested_limit as usize;
     items.truncate(requested_limit as usize);
+    let filter_summary =
+        repo_explain::auto_filter_summary_code(filters.filter).map(|code| SearchFilterSummary {
+            message_code: Some(code.to_string()),
+        });
+
     Ok(Json(RepoSearchResponse {
         filter: filters.filter,
         sort: filters.sort.as_str().to_string(),
@@ -78,6 +88,7 @@ pub async fn search_repos(
         count: items.len(),
         has_more,
         items,
+        filter_summary,
     }))
 }
 

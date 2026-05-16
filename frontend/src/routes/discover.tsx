@@ -7,6 +7,7 @@ import { RepoCard } from "../components/RepoCard";
 import { UseCaseSearchPanel } from "../features/repos/components/UseCaseSearchPanel";
 import { useT } from "../i18n";
 import { ApiError, apiGet, apiPost } from "../lib/api-client";
+import { filterSummaryLabel } from "../lib/repo-explanation";
 import type { AddRepoResponse, RepoSearchResponse, RepoSort, SearchFilter } from "../lib/types";
 
 const PAGE_SIZE = 20;
@@ -608,6 +609,7 @@ export function DiscoverPage() {
 
       {discoverMode === "advanced" ? (
       <div className="flex items-center justify-between border-b border-line pb-3">
+        <div className="grid gap-2">
         <div className="flex items-center gap-2">
           <span className="dot text-accent" />
           <p className="mono text-[0.8rem] text-fg-dim">
@@ -617,6 +619,12 @@ export function DiscoverPage() {
                 ? `${rangeStart}-${rangeEnd} · ${count} ${count === 1 ? t.discover.entriesSingle : t.discover.entriesPlural} · filter=${results.data.filter}`
                 : "—"}
           </p>
+          </div>
+          {filterSummaryLabel(t.repoExplanation, results.data?.filterSummary) ? (
+            <p className="max-w-[70ch] text-[0.82rem] text-fg-muted">
+              {filterSummaryLabel(t.repoExplanation, results.data?.filterSummary)}
+            </p>
+          ) : null}
         </div>
         <p className="kicker hidden sm:inline">{t.discover.sortedBy}</p>
       </div>
@@ -662,7 +670,12 @@ export function DiscoverPage() {
           </div>
         ) : (
           (results.data?.items ?? []).map((repo, index) => (
-            <RepoCard key={repo.artifactId} repo={repo} index={offset + index} />
+            <RepoCard
+              key={repo.artifactId}
+              repo={repo}
+              index={offset + index}
+              showRecommendationExplanation
+            />
           ))
         )}
       </div>

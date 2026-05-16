@@ -5,6 +5,36 @@ use uuid::Uuid;
 
 use crate::domain::reference::QualityContext;
 
+/// Why this repo appears in the current search/profile context (not radar JSON).
+#[derive(Debug, Clone, Serialize, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct RecommendationExplanation {
+    pub included_because: Vec<String>,
+    pub caveats: Vec<String>,
+}
+
+/// Current score row for profile (no time series without a dedicated snapshots table).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScoreSnapshot {
+    pub formula_version: String,
+    pub overall: Option<f64>,
+    pub freshness: Option<f64>,
+    pub adoption: Option<f64>,
+    pub reliability: Option<f64>,
+    pub abandonment: Option<f64>,
+    pub vitality: Option<f64>,
+    pub computed_at: DateTime<Utc>,
+    pub previous_formula_version: Option<String>,
+    pub previous_overall: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchFilterSummary {
+    pub message_code: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RepoSearchResult {
@@ -25,6 +55,8 @@ pub struct RepoSearchResult {
     pub quality: Option<QualityContext>,
     pub categories: Vec<RepoCategory>,
     pub radar: Option<RepoRadarSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recommendation_explanation: Option<RecommendationExplanation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -79,6 +111,8 @@ pub struct RepoProfile {
     pub priors_fetched_at: Option<DateTime<Utc>>,
     pub vitality_inputs: VitalityInputs,
     pub recent_signals: Vec<RepoSignal>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub score_snapshot: Option<ScoreSnapshot>,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
