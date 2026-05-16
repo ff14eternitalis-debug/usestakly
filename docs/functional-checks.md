@@ -89,7 +89,7 @@ Format : chaque check est un test minimal **un seul outil ou une seule action**,
 
 ## K. Live / staging
 
-Réutilise les sections **A–J** ci-dessus en remplaçant `http://localhost:4000` par l'URL API cible (ex. `https://api.usestakly.com`) et le frontend par l'URL publique (ex. `https://usestakly.com`). Gate ordonné : [`docs/validation/live-release-checklist.md`](validation/live-release-checklist.md).
+Réutilise les sections **A–J** ci-dessus en remplaçant `http://localhost:4000` par l'URL API cible (ex. `https://api.usestakly.com`) et le frontend par l'URL publique (ex. `https://usestakly.com`). Gate ordonné : [`docs/validation/live-release-checklist.md`](validation/live-release-checklist.md). Dernier rapport : [`docs/validation/live-release-report-2026-05-16.md`](validation/live-release-report-2026-05-16.md).
 
 ### Variables d'environnement (cible deploy)
 

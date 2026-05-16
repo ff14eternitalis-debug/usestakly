@@ -45,7 +45,7 @@ Do not combine Task 3 with frontend polish in the same commit. The ingestion wor
 - Modify: `scripts/mcp-live-smoke.ps1` only if a live run exposes a real parsing/session bug
 - Optional modify: `frontend/e2e/real-api.spec.ts` only if the local full-stack flow is flaky for a reproducible product reason
 
-- [ ] **Step 1: Capture current validation baseline**
+- [x] **Step 1: Capture current validation baseline**
 
 Run from repo root:
 
@@ -72,7 +72,7 @@ Expected:
 - E2E mocked suite passes.
 - CLI tests pass.
 
-- [ ] **Step 2: Run local full-stack E2E if the environment is available**
+- [x] **Step 2: Run local full-stack E2E if the environment is available**
 
 Prerequisites:
 
@@ -93,7 +93,7 @@ Expected:
 - `frontend/e2e/real-api.spec.ts` covers landing -> discover -> repo detail -> watchlist -> notifications -> account token -> MCP initialize/search.
 - If unavailable because local secrets or Postgres are not ready, record `SKIPPED` with the exact blocker in `docs/validation/live-release-report-2026-05-16.md`.
 
-- [ ] **Step 3: Run live/staging MCP smoke without writes**
+- [x] **Step 3: Run live/staging MCP smoke without writes** - read smoke passed through the installed Codex UseStakly MCP integration.
 
 Set variables in the shell used for validation:
 
@@ -112,7 +112,7 @@ Expected:
 
 Do not run `-WriteSignal` on production unless explicitly doing the controlled write check in Step 5.
 
-- [ ] **Step 4: Manually verify OAuth live flow**
+- [x] **Step 4: Manually verify OAuth live flow** - recorded as skipped in the validation report because it requires an interactive deployed OAuth browser session.
 
 Use the target frontend URL and follow `docs/functional-checks.md` sections B, C, D, E, G:
 
@@ -128,7 +128,7 @@ Expected:
 - Watchlist action succeeds.
 - Account page can show or create an MCP token.
 
-- [ ] **Step 5: Run controlled MCP write and recompute check on staging or approved prod**
+- [x] **Step 5: Run controlled MCP write and recompute check on staging or approved prod** - recorded as skipped in the validation report because no production write approval was given.
 
 Only run this if the target environment can accept a real `log_usage` signal.
 
@@ -160,7 +160,7 @@ Expected:
 - After recompute, `artifact_scores.computed_at` advances.
 - If recompute is manual/admin-only, record the exact command or endpoint used.
 
-- [ ] **Step 6: Write the validation report**
+- [x] **Step 6: Write the validation report**
 
 Create `docs/validation/live-release-report-2026-05-16.md` with this structure:
 
@@ -210,7 +210,7 @@ Acceptance:
 - Every `SKIPPED` includes a concrete reason.
 - Every `FAIL` includes a file/issue pointer or proposed next fix.
 
-- [ ] **Step 7: Commit validation gate**
+- [ ] **Step 7: Commit validation gate** - ready after frontend build, mocked E2E, and real E2E passed.
 
 Run:
 
