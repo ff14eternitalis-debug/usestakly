@@ -1,334 +1,47 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
-use http::{Uri, request::Parts};
+use http::request::Parts;
 use rmcp::{
     ErrorData, ServerHandler,
     handler::server::{
         tool::Extension,
         wrapper::{Json, Parameters},
     },
-    schemars, tool, tool_handler, tool_router,
+    tool, tool_handler, tool_router,
     transport::streamable_http_server::{
         StreamableHttpServerConfig, session::local::LocalSessionManager,
         tower::StreamableHttpService,
     },
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::PgPool;
-use uuid::Uuid;
 
 use crate::{
     app::AppState,
-    domain::{
-        quality::{ArtifactKind, SignalKind},
-        reference::SearchFilter,
-    },
+    domain::quality::ArtifactKind,
     mcp::auth::{verify_agent, verify_bearer},
     services::{
-        ingestion::github::{build_client, ingest_repo},
         quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
-        recommendations::{UseCaseRecommendation, recommend_for_use_case},
+        recommendations::recommend_for_use_case,
         repos::{self as repos_service, RepoSearchFilters, RepoSort},
         trust::agent_token_events,
         use_case_watches, watchlist,
     },
 };
 
-// ---------- MCP tool I/O types ----------
-//
-// Kept separate from domain types so MCP stays a serialization boundary:
-// JsonSchema generation doesn't leak into business code.
+pub use crate::mcp::tools::{
+    LogUsageOutput, LogUsageParams, Provenance, RadarBrief, RecommendReposOutput,
+    RecommendReposParams, RecommendationFallback, RecommendationSections, RepoCandidate,
+    RepoContextOutput, RepoContextParams, RepoRecommendation, SearchReposOutput, SearchReposParams,
+    SignalSummary, VitalityInputsOutput, WatchRepoOutput, WatchRepoParams, WatchUseCaseMatchOutput,
+    WatchUseCaseOutput, WatchUseCaseParams,
+};
 
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct Provenance {
-    pub source: String,
-    pub formula_version: String,
-    pub scored_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct SearchReposParams {
-    /// Lexical query. Matched against owner, repo name, description, and topics.
-    #[serde(default)]
-    pub query: Option<String>,
-    /// Quality filter preset: `auto` (default) excludes unreliable/abandoned repos,
-    /// `strict` keeps only the most trusted, `explore` disables quality gates.
-    #[serde(default)]
-    pub filter: Option<String>,
-    #[serde(default)]
-    pub language: Option<String>,
-    #[serde(default)]
-    pub stars_min: Option<i32>,
-    /// Optional comma-like list of radar maturity bands to keep:
-    /// established, emerging, experimental, stale, noisy.
-    #[serde(default)]
-    pub maturity_bands: Vec<String>,
-    /// Sort mode: score (default), stars, recency, abandonment, or trend/radar.
-    #[serde(default)]
-    pub sort: Option<String>,
-    /// Max number of results (default 20, max 50).
-    #[serde(default)]
-    pub limit: Option<i64>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct RepoCandidate {
-    pub owner: String,
-    pub name: String,
-    pub full_name: String,
-    pub html_url: String,
-    pub description: Option<String>,
-    pub language: Option<String>,
-    pub license_spdx: Option<String>,
-    pub topics: Vec<String>,
-    pub stars_count: i32,
-    pub archived: bool,
-    pub last_commit_at: Option<DateTime<Utc>>,
-    pub quality_overall: Option<f64>,
-    pub quality_reliability: Option<f64>,
-    pub quality_abandonment: Option<f64>,
-    pub flags: Vec<String>,
-    pub radar: Option<RadarBrief>,
-}
-
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct RadarBrief {
-    pub maturity_band: String,
-    pub radar_relevance: f64,
-    pub trend_signal: f64,
-    pub summary: String,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct SearchReposOutput {
-    pub provenance: Provenance,
-    pub filter_used: String,
-    pub sort_used: String,
-    pub count: usize,
-    pub results: Vec<RepoCandidate>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct RecommendReposParams {
-    /// Natural-language need, package category, or dependency use case.
-    pub need: String,
-    /// Optional ecosystem hint, for example TypeScript, Python, Rust, Go, React.
-    #[serde(default)]
-    pub language: Option<String>,
-    /// Optional ecosystem hint. Prefer this over `language` for product asks such as
-    /// React, Node, Python, Rust, Go, Django, or frontend.
-    #[serde(default)]
-    pub ecosystem: Option<String>,
-    /// Risk tolerance: `low` favors strict, boring dependencies; `medium` is balanced;
-    /// `high` allows newer or less proven repos when relevance is strong.
-    #[serde(default)]
-    pub risk_tolerance: Option<String>,
-    /// Topics that must appear on the candidate repo when present in the corpus.
-    #[serde(default)]
-    pub must_have_topics: Vec<String>,
-    /// Quality filter preset: auto (default), strict, or explore.
-    #[serde(default)]
-    pub filter: Option<String>,
-    /// Max recommendations to return (default 5, max 10).
-    #[serde(default)]
-    pub limit: Option<i64>,
-}
-
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct RepoRecommendation {
-    pub rank: usize,
-    pub owner: String,
-    pub name: String,
-    pub full_name: String,
-    pub html_url: String,
-    pub description: Option<String>,
-    pub language: Option<String>,
-    pub topics: Vec<String>,
-    pub stars_count: i32,
-    pub quality_overall: Option<f64>,
-    pub quality_freshness: Option<f64>,
-    pub quality_adoption: Option<f64>,
-    pub quality_reliability: Option<f64>,
-    pub quality_abandonment: Option<f64>,
-    pub quality_vitality: Option<f64>,
-    pub flags: Vec<String>,
-    pub radar: Option<RadarBrief>,
-    pub reasons: Vec<String>,
-    pub caveats: Vec<String>,
-    pub next_actions: Vec<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct RecommendReposOutput {
-    pub provenance: Provenance,
-    pub query_used: String,
-    pub ecosystem_used: Option<String>,
-    pub risk_tolerance_used: String,
-    pub must_have_topics: Vec<String>,
-    pub filter_used: String,
-    pub count: usize,
-    pub recommendations: Vec<RepoRecommendation>,
-    pub stable_picks: Vec<RepoRecommendation>,
-    pub emerging_picks: Vec<RepoRecommendation>,
-    pub fallback_candidates: Vec<String>,
-    pub fallback: Option<RecommendationFallback>,
-}
-
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct RecommendationSections {
-    pub stable_picks: Vec<RepoRecommendation>,
-    pub emerging_picks: Vec<RepoRecommendation>,
-    pub fallback_candidates: Vec<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct RecommendationFallback {
-    pub message: String,
-    pub add_repo_candidates: Vec<String>,
-    pub next_actions: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct WatchUseCaseParams {
-    /// Natural-language need to monitor, such as `testing tools for TypeScript`.
-    pub need: String,
-    /// Optional label displayed in UseStakly watchlist.
-    #[serde(default)]
-    pub label: Option<String>,
-    /// Risk tolerance: low, medium, or high.
-    #[serde(default)]
-    pub risk_tolerance: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct WatchUseCaseOutput {
-    pub provenance: Provenance,
-    pub watch_id: String,
-    pub label: String,
-    pub query: String,
-    pub normalized_intent: String,
-    pub categories: Vec<String>,
-    pub topics: Vec<String>,
-    pub languages: Vec<String>,
-    pub risk_tolerance: String,
-    pub enabled: bool,
-    pub initial_matches: i64,
-    pub top_matches: Vec<WatchUseCaseMatchOutput>,
-    pub created_at: DateTime<Utc>,
-    pub next_actions: Vec<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct WatchUseCaseMatchOutput {
-    pub artifact_id: String,
-    pub full_name: String,
-    pub language: Option<String>,
-    pub match_score: f64,
-    pub quality_score: Option<f64>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct RepoContextParams {
-    pub owner: String,
-    pub name: String,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct RepoContextOutput {
-    pub provenance: Provenance,
-    pub owner: String,
-    pub name: String,
-    pub full_name: String,
-    pub html_url: String,
-    pub description: Option<String>,
-    pub language: Option<String>,
-    pub license_spdx: Option<String>,
-    pub topics: Vec<String>,
-    pub stars_count: i32,
-    pub forks_count: i32,
-    pub open_issues_count: i32,
-    pub subscribers_count: i32,
-    pub archived: bool,
-    pub last_commit_at: Option<DateTime<Utc>>,
-    pub default_branch: Option<String>,
-    pub quality_overall: Option<f64>,
-    pub quality_freshness: Option<f64>,
-    pub quality_adoption: Option<f64>,
-    pub quality_reliability: Option<f64>,
-    pub quality_abandonment: Option<f64>,
-    pub quality_vitality: Option<f64>,
-    pub vitality_inputs: VitalityInputsOutput,
-    pub quality_resolve_count: i32,
-    pub quality_build_success_count: i32,
-    pub quality_build_failure_count: i32,
-    pub quality_regret_count: i32,
-    pub flags: Vec<String>,
-    pub radar: Option<RadarBrief>,
-    pub recent_signals: Vec<SignalSummary>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct VitalityInputsOutput {
-    pub structural_signals_at: Option<DateTime<Utc>>,
-    pub distinct_contributors_90d: Option<i32>,
-    pub commits_30d: Option<i32>,
-    pub has_ci: Option<bool>,
-    pub releases_count: Option<i32>,
-    pub last_release_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct SignalSummary {
-    pub signal: String,
-    pub is_passive: bool,
-    pub evidence_url: Option<String>,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct LogUsageParams {
-    pub owner: String,
-    pub name: String,
-    /// Allowed outcomes: resolve, build_success, build_failure, regret, re_resolve
-    pub outcome: String,
-    #[serde(default)]
-    pub notes: Option<String>,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct LogUsageOutput {
-    pub provenance: Provenance,
-    pub owner: String,
-    pub name: String,
-    pub signal: String,
-    pub recorded_at: DateTime<Utc>,
-    pub quality_overall: Option<f64>,
-    pub quality_adoption: Option<f64>,
-    pub quality_reliability: Option<f64>,
-    pub quality_abandonment: Option<f64>,
-    pub quality_resolve_count: i32,
-    pub quality_build_success_count: i32,
-    pub quality_build_failure_count: i32,
-    pub quality_regret_count: i32,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct WatchRepoParams {
-    pub owner: String,
-    pub name: String,
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct WatchRepoOutput {
-    pub provenance: Provenance,
-    pub owner: String,
-    pub name: String,
-    pub artifact_id: String,
-    pub watching: bool,
-}
+use crate::mcp::tools::{
+    build_recommendations_from_use_case, build_use_case_service_query, ensure_github_artifact,
+    into_context_output, into_repo_candidate, into_watch_use_case_output, map_anyhow,
+    map_api_error, mcp_allowed_hosts, normalize_topics, parse_filter, parse_passive_outcome,
+    parse_risk_tolerance, recommendation_sections, repo_matches_topics, resolve_artifact_id,
+};
 
 // ---------- Server handler ----------
 
@@ -777,644 +490,6 @@ impl McpServer {
 )]
 impl ServerHandler for McpServer {}
 
-// ---------- Helpers ----------
-
-fn parse_filter(s: Option<&str>) -> SearchFilter {
-    match s.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
-        Some("strict") => SearchFilter::Strict,
-        Some("explore") => SearchFilter::Explore,
-        _ => SearchFilter::Auto,
-    }
-}
-
-fn map_api_error(e: crate::app::error::ApiError) -> ErrorData {
-    ErrorData::internal_error(format!("service error: {}", e.message), None)
-}
-
-fn map_anyhow(e: anyhow::Error) -> ErrorData {
-    ErrorData::internal_error(format!("scoring error: {e}"), None)
-}
-
-async fn resolve_artifact_id(
-    db: &PgPool,
-    owner: &str,
-    name: &str,
-) -> Result<Option<Uuid>, ErrorData> {
-    repos_service::find_github_artifact_id(db, owner, name)
-        .await
-        .map_err(map_api_error)
-}
-
-async fn ensure_github_artifact(
-    state: &AppState,
-    owner: &str,
-    name: &str,
-) -> Result<Uuid, ErrorData> {
-    if let Some(id) = resolve_artifact_id(&state.db, owner, name).await? {
-        return Ok(id);
-    }
-
-    let token = state.config.github_token.as_deref().ok_or_else(|| {
-        ErrorData::invalid_params(
-            format!("repo not ingested: {owner}/{name} and GITHUB_TOKEN is not configured"),
-            None,
-        )
-    })?;
-
-    let client = build_client(token).map_err(map_api_error)?;
-    let (id, _, _) = ingest_repo(&client, &state.db, &state.config, owner, name)
-        .await
-        .map_err(map_api_error)?;
-    Ok(id)
-}
-
-fn parse_passive_outcome(input: &str) -> Result<SignalKind, ErrorData> {
-    match input.trim().to_ascii_lowercase().as_str() {
-        "resolve" => Ok(SignalKind::Resolve),
-        "build_success" => Ok(SignalKind::BuildSuccess),
-        "build_failure" => Ok(SignalKind::BuildFailure),
-        "regret" => Ok(SignalKind::Regret),
-        "re_resolve" => Ok(SignalKind::ReResolve),
-        _ => Err(ErrorData::invalid_params(
-            "outcome must be one of: resolve, build_success, build_failure, regret, re_resolve",
-            None,
-        )),
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RiskTolerance {
-    Low,
-    Medium,
-    High,
-}
-
-impl RiskTolerance {
-    fn as_str(self) -> &'static str {
-        match self {
-            RiskTolerance::Low => "low",
-            RiskTolerance::Medium => "medium",
-            RiskTolerance::High => "high",
-        }
-    }
-}
-
-fn parse_risk_tolerance(input: Option<&str>) -> RiskTolerance {
-    match input.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
-        Some("low") | Some("safe") | Some("conservative") => RiskTolerance::Low,
-        Some("high") | Some("experimental") | Some("explore") => RiskTolerance::High,
-        _ => RiskTolerance::Medium,
-    }
-}
-
-fn normalize_topics(topics: &[String]) -> Vec<String> {
-    let mut normalized = Vec::new();
-    for topic in topics {
-        let topic = topic
-            .trim()
-            .trim_start_matches('#')
-            .to_ascii_lowercase()
-            .replace('_', "-");
-        if !topic.is_empty() && !normalized.contains(&topic) {
-            normalized.push(topic);
-        }
-    }
-    normalized
-}
-
-#[cfg(test)]
-fn build_recommendation_query(
-    need: &str,
-    ecosystem: Option<&str>,
-    topics: &[String],
-    intent: &crate::services::recommendations::UseCaseIntent,
-) -> String {
-    let mut parts = vec![need.trim().to_string()];
-    if let Some(ecosystem) = ecosystem.map(str::trim).filter(|s| !s.is_empty()) {
-        parts.push(ecosystem.to_string());
-    }
-    let inferred_topics;
-    let query_topics = if topics.is_empty() {
-        inferred_topics = recommendation_query_topics(intent);
-        &inferred_topics
-    } else {
-        topics
-    };
-    for topic in query_topics {
-        parts.push(topic.replace('-', " "));
-    }
-    parts.join(" ")
-}
-
-fn build_use_case_service_query(need: &str, ecosystem: Option<&str>, topics: &[String]) -> String {
-    let mut parts = vec![need.trim().to_string()];
-    if let Some(ecosystem) = ecosystem.map(str::trim).filter(|value| !value.is_empty()) {
-        parts.push(ecosystem.to_string());
-    }
-    parts.extend(topics.iter().cloned());
-    parts.join(" ")
-}
-
-#[cfg(test)]
-fn recommendation_query_topics(
-    intent: &crate::services::recommendations::UseCaseIntent,
-) -> Vec<String> {
-    if intent
-        .categories
-        .iter()
-        .any(|category| category == "testing")
-    {
-        return vec!["test".to_string(), "testing".to_string()];
-    }
-    if intent
-        .categories
-        .iter()
-        .any(|category| category == "ui-kit")
-    {
-        return vec!["components".to_string(), "ui".to_string()];
-    }
-    if intent.categories.iter().any(|category| category == "auth") {
-        return vec!["auth".to_string(), "oauth".to_string()];
-    }
-    if intent.categories.iter().any(|category| category == "orm") {
-        return vec!["orm".to_string(), "database".to_string()];
-    }
-    intent
-        .topics
-        .iter()
-        .filter(|topic| topic.len() >= 3)
-        .take(2)
-        .cloned()
-        .collect()
-}
-
-fn repo_matches_topics(repo: &crate::domain::repo::RepoSearchResult, required: &[String]) -> bool {
-    required.iter().all(|required_topic| {
-        repo.topics
-            .iter()
-            .any(|topic| topic.eq_ignore_ascii_case(required_topic))
-            || repo
-                .description
-                .as_deref()
-                .unwrap_or_default()
-                .to_ascii_lowercase()
-                .contains(required_topic)
-            || repo.name.to_ascii_lowercase().contains(required_topic)
-    })
-}
-
-#[cfg(test)]
-fn repo_matches_intent(
-    repo: &crate::domain::repo::RepoSearchResult,
-    intent: &crate::services::recommendations::UseCaseIntent,
-) -> bool {
-    if intent.categories.is_empty() {
-        return repo_matches_any_topic(repo, &intent.topics);
-    }
-    repo_matches_any_category(repo, &intent.categories)
-        || repo_matches_any_topic(repo, &recommendation_query_topics(intent))
-}
-
-#[cfg(test)]
-fn repo_matches_any_category(
-    repo: &crate::domain::repo::RepoSearchResult,
-    categories: &[String],
-) -> bool {
-    !categories.is_empty()
-        && repo.categories.iter().any(|category| {
-            categories
-                .iter()
-                .any(|expected| category.category.eq_ignore_ascii_case(expected))
-        })
-}
-
-#[cfg(test)]
-fn repo_matches_any_topic(repo: &crate::domain::repo::RepoSearchResult, topics: &[String]) -> bool {
-    topics.iter().any(|topic| {
-        repo.topics
-            .iter()
-            .any(|repo_topic| repo_topic.eq_ignore_ascii_case(topic))
-            || repo
-                .description
-                .as_deref()
-                .unwrap_or_default()
-                .to_ascii_lowercase()
-                .contains(topic)
-            || repo.name.to_ascii_lowercase().contains(topic)
-    })
-}
-
-fn into_repo_candidate(repo: crate::domain::repo::RepoSearchResult) -> RepoCandidate {
-    let radar = repo.radar.as_ref().map(radar_brief);
-    RepoCandidate {
-        owner: repo.owner,
-        name: repo.name,
-        full_name: repo.full_name,
-        html_url: repo.html_url,
-        description: repo.description,
-        language: repo.language,
-        license_spdx: repo.license_spdx,
-        topics: repo.topics,
-        stars_count: repo.stars_count,
-        archived: repo.archived,
-        last_commit_at: repo.last_commit_at,
-        quality_overall: repo.quality.as_ref().and_then(|q| q.overall),
-        quality_reliability: repo.quality.as_ref().and_then(|q| q.reliability),
-        quality_abandonment: repo.quality.as_ref().and_then(|q| q.abandonment),
-        flags: repo.quality.map(|q| q.flags).unwrap_or_default(),
-        radar,
-    }
-}
-
-fn radar_brief(radar: &crate::domain::repo::RepoRadarSnapshot) -> RadarBrief {
-    RadarBrief {
-        maturity_band: radar.maturity_band.clone(),
-        radar_relevance: radar.radar_relevance,
-        trend_signal: radar.trend_signal,
-        summary: radar_summary(radar),
-    }
-}
-
-fn radar_summary(radar: &crate::domain::repo::RepoRadarSnapshot) -> String {
-    let base = match radar.maturity_band.as_str() {
-        "established" => "Radar: established baseline with mature quality and activity signals.",
-        "emerging" => {
-            "Radar: emerging repo with active signals, but usage proof is still building."
-        }
-        "experimental" => {
-            "Radar: experimental candidate; evidence is still thin, inspect before adopting."
-        }
-        "stale" => "Radar: stale or flagged candidate; verify maintenance before use.",
-        "noisy" => "Radar: weak category signal; treat it as a lead, not a recommendation.",
-        _ => "Radar: maturity signal is available; inspect the repo context before use.",
-    };
-    if radar.trend_signal >= 0.85 {
-        format!("{base} Trend signal is strong.")
-    } else if radar.trend_signal >= 0.55 {
-        format!("{base} Trend signal is visible.")
-    } else {
-        base.to_string()
-    }
-}
-
-fn build_recommendations(
-    results: Vec<crate::domain::repo::RepoSearchResult>,
-    risk: RiskTolerance,
-) -> Vec<RepoRecommendation> {
-    results
-        .into_iter()
-        .enumerate()
-        .map(|(index, repo)| {
-            let q = repo.quality.as_ref();
-            let radar = repo.radar.as_ref().map(radar_brief);
-            RepoRecommendation {
-                rank: index + 1,
-                owner: repo.owner,
-                name: repo.name,
-                full_name: repo.full_name,
-                html_url: repo.html_url,
-                description: repo.description,
-                language: repo.language,
-                topics: repo.topics,
-                stars_count: repo.stars_count,
-                quality_overall: q.and_then(|q| q.overall),
-                quality_freshness: q.and_then(|q| q.freshness),
-                quality_adoption: q.and_then(|q| q.adoption),
-                quality_reliability: q.and_then(|q| q.reliability),
-                quality_abandonment: q.and_then(|q| q.abandonment),
-                quality_vitality: q.and_then(|q| q.vitality),
-                flags: q.map(|q| q.flags.clone()).unwrap_or_default(),
-                radar,
-                reasons: recommendation_reasons(q, repo.radar.as_ref(), risk),
-                caveats: recommendation_caveats(q, repo.radar.as_ref(), risk),
-                next_actions: recommendation_next_actions(q, repo.radar.as_ref()),
-            }
-        })
-        .collect()
-}
-
-fn build_recommendations_from_use_case(
-    recommendations: Vec<UseCaseRecommendation>,
-    risk: RiskTolerance,
-) -> Vec<RepoRecommendation> {
-    recommendations
-        .into_iter()
-        .enumerate()
-        .map(|(index, recommendation)| {
-            let mut output = build_recommendations(vec![recommendation.repo], risk)
-                .into_iter()
-                .next()
-                .expect("one input repo produces one MCP recommendation");
-            output.rank = index + 1;
-            output.reasons.insert(0, recommendation.reason);
-            output.reasons.push(format!(
-                "Use-case match score is {:.3}.",
-                recommendation.match_score
-            ));
-            output.reasons.push(format!(
-                "Recommendation score is {:.3}.",
-                recommendation.recommendation_score
-            ));
-            if !recommendation.matched_topics.is_empty() {
-                output.reasons.push(format!(
-                    "Matched intent topics: {}.",
-                    recommendation.matched_topics.join(", ")
-                ));
-            }
-            output
-        })
-        .collect()
-}
-
-fn recommendation_sections(
-    recommendations: Vec<RepoRecommendation>,
-    fallback_candidates: Vec<String>,
-) -> RecommendationSections {
-    let mut stable_picks = Vec::new();
-    let mut emerging_picks = Vec::new();
-
-    for recommendation in recommendations {
-        let band = recommendation
-            .radar
-            .as_ref()
-            .map(|radar| radar.maturity_band.as_str());
-        if matches!(band, Some("emerging" | "experimental")) {
-            emerging_picks.push(recommendation);
-        } else {
-            stable_picks.push(recommendation);
-        }
-    }
-
-    RecommendationSections {
-        stable_picks,
-        emerging_picks,
-        fallback_candidates,
-    }
-}
-
-fn recommendation_reasons(
-    quality: Option<&crate::domain::reference::QualityContext>,
-    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
-    risk: RiskTolerance,
-) -> Vec<String> {
-    let Some(q) = quality else {
-        return vec!["No score is available yet; inspect the repo before adopting.".to_string()];
-    };
-    let mut reasons = Vec::new();
-    if let Some(overall) = q.overall {
-        reasons.push(format!("Overall dependency score is {:.3}.", overall));
-    }
-    if q.freshness.unwrap_or(0.0) >= 0.8 {
-        reasons.push("Freshness is strong, indicating recent repository activity.".to_string());
-    }
-    if q.abandonment.unwrap_or(1.0) <= 0.2 {
-        reasons.push("Abandonment risk is currently low.".to_string());
-    }
-    if q.reliability.unwrap_or(0.5) > 0.5 {
-        reasons.push("Reliability is supported by positive usage outcomes.".to_string());
-    } else if q.build_success_count > 0 || q.build_failure_count > 0 {
-        reasons.push(format!(
-            "Reliability has {} build success and {} build failure signals.",
-            q.build_success_count, q.build_failure_count
-        ));
-    }
-    if reasons.is_empty() {
-        reasons.push(
-            "Included because it matched the query and passed the selected filter.".to_string(),
-        );
-    }
-    if let Some(radar) = radar {
-        reasons.push(radar_summary(radar));
-    }
-    match risk {
-        RiskTolerance::Low => reasons.push(
-            "Low risk tolerance favored stricter quality gates and maintenance signals."
-                .to_string(),
-        ),
-        RiskTolerance::High => reasons.push(
-            "High risk tolerance allowed relevance to weigh more than mature usage history."
-                .to_string(),
-        ),
-        RiskTolerance::Medium => {}
-    }
-    reasons
-}
-
-fn recommendation_caveats(
-    quality: Option<&crate::domain::reference::QualityContext>,
-    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
-    risk: RiskTolerance,
-) -> Vec<String> {
-    let Some(q) = quality else {
-        return vec!["Score provenance is missing until the repo is computed.".to_string()];
-    };
-    let mut caveats = Vec::new();
-    if q.reliability.unwrap_or(0.5) == 0.5 && q.build_success_count + q.build_failure_count < 5 {
-        caveats.push(
-            "Reliability is still neutral because there are fewer than 5 build samples."
-                .to_string(),
-        );
-    }
-    if q.adoption.unwrap_or(0.0) == 0.0 && q.resolve_count == 0 {
-        caveats.push(
-            "Adoption has no usage outcomes yet; treat popularity separately from proven usage."
-                .to_string(),
-        );
-    }
-    if !q.flags.is_empty() {
-        caveats.push(format!("Active flags to inspect: {}.", q.flags.join(", ")));
-    }
-    if q.abandonment.unwrap_or(0.0) > 0.4 {
-        caveats
-            .push("Abandonment risk is elevated; inspect maintenance before adoption.".to_string());
-    }
-    if let Some(radar) = radar
-        && matches!(
-            radar.maturity_band.as_str(),
-            "emerging" | "experimental" | "noisy"
-        )
-    {
-        caveats.push(format!(
-            "Radar marks this repo as {}; validate fit before production adoption.",
-            radar.maturity_band
-        ));
-    }
-    if risk == RiskTolerance::High {
-        caveats.push(
-            "Because risk_tolerance is high, validate API stability and maintenance manually."
-                .to_string(),
-        );
-    }
-    caveats
-}
-
-fn recommendation_next_actions(
-    quality: Option<&crate::domain::reference::QualityContext>,
-    radar: Option<&crate::domain::repo::RepoRadarSnapshot>,
-) -> Vec<String> {
-    let mut actions = vec!["Call get_repo_quality_context before final selection.".to_string()];
-    if quality
-        .map(|q| q.resolve_count + q.build_success_count + q.build_failure_count < 5)
-        .unwrap_or(true)
-    {
-        actions.push("Run a small install/build smoke test before recommending it.".to_string());
-    }
-    actions.push("After testing the dependency, call log_usage with the outcome.".to_string());
-    actions.push("Use watch_repo if this becomes a dependency to monitor.".to_string());
-    if radar
-        .map(|radar| matches!(radar.maturity_band.as_str(), "emerging" | "experimental"))
-        .unwrap_or(false)
-    {
-        actions.push(
-            "If choosing an emerging repo, use watch_repo to monitor quality drift.".to_string(),
-        );
-    }
-    actions
-}
-
-#[cfg(test)]
-fn build_recommendation_fallback(
-    query: &str,
-    ecosystem: Option<&str>,
-    topics: &[String],
-    risk: RiskTolerance,
-) -> RecommendationFallback {
-    let mut candidate_terms = vec![query.to_string()];
-    if let Some(ecosystem) = ecosystem {
-        candidate_terms.push(ecosystem.to_string());
-    }
-    candidate_terms.extend(topics.iter().cloned());
-    RecommendationFallback {
-        message: "No indexed repo matched the current constraints. Add candidate repos, then retry the recommendation.".to_string(),
-        add_repo_candidates: vec![
-            format!("Search GitHub for: {}", candidate_terms.join(" ")),
-            "Add promising repos with POST /api/repos/add or the UseStakly UI.".to_string(),
-            "Retry recommend_github_repos after ingestion and scoring completes.".to_string(),
-        ],
-        next_actions: vec![
-            "Relax must_have_topics if they are too narrow.".to_string(),
-            format!(
-                "Current risk_tolerance is {}; use high/explore only when relevance matters more than maturity.",
-                risk.as_str()
-            ),
-            "For each candidate, prefer maintained repos with recent commits and clear release activity.".to_string(),
-        ],
-    }
-}
-
-fn into_context_output(
-    profile: crate::domain::repo::RepoProfile,
-    formula_version: String,
-) -> RepoContextOutput {
-    let q = profile.repo.quality.clone();
-    let radar = profile.repo.radar.as_ref().map(radar_brief);
-    let scored_at = q.as_ref().map(|q| q.computed_at);
-    RepoContextOutput {
-        provenance: Provenance {
-            source: format!(
-                "usestakly://registry/github/{}/{}",
-                profile.repo.owner, profile.repo.name
-            ),
-            formula_version,
-            scored_at,
-        },
-        owner: profile.repo.owner,
-        name: profile.repo.name,
-        full_name: profile.repo.full_name,
-        html_url: profile.repo.html_url,
-        description: profile.repo.description,
-        language: profile.repo.language,
-        license_spdx: profile.repo.license_spdx,
-        topics: profile.repo.topics,
-        stars_count: profile.repo.stars_count,
-        forks_count: profile.repo.forks_count,
-        open_issues_count: profile.repo.open_issues_count,
-        subscribers_count: profile.subscribers_count,
-        archived: profile.repo.archived,
-        last_commit_at: profile.repo.last_commit_at,
-        default_branch: profile.default_branch,
-        quality_overall: q.as_ref().and_then(|q| q.overall),
-        quality_freshness: q.as_ref().and_then(|q| q.freshness),
-        quality_adoption: q.as_ref().and_then(|q| q.adoption),
-        quality_reliability: q.as_ref().and_then(|q| q.reliability),
-        quality_abandonment: q.as_ref().and_then(|q| q.abandonment),
-        quality_vitality: q.as_ref().and_then(|q| q.vitality),
-        vitality_inputs: VitalityInputsOutput {
-            structural_signals_at: profile.vitality_inputs.structural_signals_at,
-            distinct_contributors_90d: profile.vitality_inputs.distinct_contributors_90d,
-            commits_30d: profile.vitality_inputs.commits_30d,
-            has_ci: profile.vitality_inputs.has_ci,
-            releases_count: profile.vitality_inputs.releases_count,
-            last_release_at: profile.vitality_inputs.last_release_at,
-        },
-        quality_resolve_count: q.as_ref().map(|q| q.resolve_count).unwrap_or_default(),
-        quality_build_success_count: q
-            .as_ref()
-            .map(|q| q.build_success_count)
-            .unwrap_or_default(),
-        quality_build_failure_count: q
-            .as_ref()
-            .map(|q| q.build_failure_count)
-            .unwrap_or_default(),
-        quality_regret_count: q.as_ref().map(|q| q.regret_count).unwrap_or_default(),
-        flags: q.map(|q| q.flags).unwrap_or_default(),
-        radar,
-        recent_signals: profile
-            .recent_signals
-            .into_iter()
-            .map(|s| SignalSummary {
-                signal: s.signal,
-                is_passive: s.is_passive,
-                evidence_url: s.evidence_url,
-                created_at: s.created_at,
-            })
-            .collect(),
-    }
-}
-
-fn into_watch_use_case_output(
-    watch: use_case_watches::UseCaseWatch,
-    formula_version: String,
-    scored_at: Option<DateTime<Utc>>,
-) -> WatchUseCaseOutput {
-    WatchUseCaseOutput {
-        provenance: Provenance {
-            source: "usestakly://watch/use-case".to_string(),
-            formula_version,
-            scored_at,
-        },
-        watch_id: watch.id.to_string(),
-        label: watch.label,
-        query: watch.query_text,
-        normalized_intent: watch.normalized_intent,
-        categories: watch.categories,
-        topics: watch.topics,
-        languages: watch.languages,
-        risk_tolerance: watch.risk_tolerance,
-        enabled: watch.enabled,
-        initial_matches: watch.match_count,
-        top_matches: watch
-            .top_matches
-            .into_iter()
-            .map(|item| WatchUseCaseMatchOutput {
-                artifact_id: item.artifact_id.to_string(),
-                full_name: item.full_name,
-                language: item.language,
-                match_score: item.match_score,
-                quality_score: item.quality_score,
-            })
-            .collect(),
-        created_at: watch.created_at,
-        next_actions: vec![
-            "Use the UseStakly watchlist to review this need over time.".to_string(),
-            "When a recommended repo becomes a dependency, call watch_repo too.".to_string(),
-            "After testing a repo, call log_usage so future recommendations improve.".to_string(),
-        ],
-    }
-}
-
-// ---------- Axum integration ----------
-
 /// Build the tower service mounted by `app::build_app` at `/mcp`.
 pub fn build_service(state: AppState) -> StreamableHttpService<McpServer, LocalSessionManager> {
     let config =
@@ -1426,50 +501,26 @@ pub fn build_service(state: AppState) -> StreamableHttpService<McpServer, LocalS
     )
 }
 
-fn mcp_allowed_hosts(config: &crate::config::AppConfig) -> Vec<String> {
-    let mut hosts = vec![
-        "localhost".to_string(),
-        "127.0.0.1".to_string(),
-        "::1".to_string(),
-    ];
-
-    for value in [
-        config.app_base_url.as_str(),
-        config.frontend_base_url.as_str(),
-    ] {
-        if let Ok(uri) = value.parse::<Uri>()
-            && let Some(authority) = uri.authority()
-        {
-            push_unique(&mut hosts, authority.as_str().to_string());
-            push_unique(&mut hosts, authority.host().to_string());
-        }
-    }
-
-    push_unique(&mut hosts, config.host.clone());
-    hosts
-}
-
-fn push_unique(values: &mut Vec<String>, value: String) {
-    let value = value.trim().trim_matches(['[', ']']).to_string();
-    if value.is_empty() || values.iter().any(|existing| existing == &value) {
-        return;
-    }
-    values.push(value);
-}
-
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};
     use uuid::Uuid;
 
-    use super::*;
     use crate::config::AppConfig;
     use crate::domain::{
+        quality::SignalKind,
         reference::{QualityContext, SearchFilter},
         repo::{
             RepoCategory, RepoProfile, RepoRadarSnapshot, RepoSearchResult, RepoSignal,
             VitalityInputs,
         },
+    };
+    use crate::mcp::tools::{RadarBrief, RepoRecommendation};
+    use crate::mcp::tools::{
+        RiskTolerance, build_recommendation_fallback, build_recommendation_query,
+        build_recommendations, build_recommendations_from_use_case, into_context_output,
+        into_watch_use_case_output, mcp_allowed_hosts, normalize_topics, parse_filter,
+        parse_passive_outcome, recommendation_sections, repo_matches_intent,
     };
     use crate::services::recommendations::parse_intent;
 
@@ -1721,7 +772,7 @@ mod tests {
                 maturity_band: "emerging".to_string(),
                 radar_relevance: 0.72,
                 trend_signal: 0.88,
-                explanation: json!({ "reasons": ["clear_category", "recent_activity"] }),
+                explanation: serde_json::json!({ "reasons": ["clear_category", "recent_activity"] }),
             }),
             recommendation_explanation: None,
         }];
@@ -1890,7 +941,7 @@ mod tests {
                     category: "testing".to_string(),
                     confidence: 0.95,
                     source: "github_metadata+readme".to_string(),
-                    evidence: json!({}),
+                    evidence: serde_json::json!({}),
                 }],
                 radar: None,
                 recommendation_explanation: None,
@@ -1949,7 +1000,7 @@ mod tests {
                 category: "testing".to_string(),
                 confidence: 0.98,
                 source: "github_metadata+readme".to_string(),
-                evidence: json!({}),
+                evidence: serde_json::json!({}),
             }],
             radar: None,
             recommendation_explanation: None,
@@ -1979,7 +1030,7 @@ mod tests {
                 category: "video-tool".to_string(),
                 confidence: 0.98,
                 source: "github_metadata+readme".to_string(),
-                evidence: json!({}),
+                evidence: serde_json::json!({}),
             }],
             radar: None,
             recommendation_explanation: None,
