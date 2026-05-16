@@ -244,7 +244,7 @@ Only include `scripts/mcp-live-smoke.ps1` or `frontend/e2e/real-api.spec.ts` if 
 - Modify: `frontend/src/i18n/fr.ts`
 - Test: `frontend/e2e/mvp.spec.ts`
 
-- [ ] **Step 1: Add a public smoke E2E path**
+- [x] **Step 1: Add a public smoke E2E path**
 
 Extend `frontend/e2e/mvp.spec.ts` with a smoke that navigates:
 
@@ -297,7 +297,7 @@ npm run test:e2e
 
 Expected before polish: the test may pass already. Keep it as a regression guard.
 
-- [ ] **Step 2: Calm dense public copy and hierarchy**
+- [x] **Step 2: Calm dense public copy and hierarchy** - verified existing `/how-to-read` and `/mcp-guide` copy against current score/radar/MCP guidance; no copy churn needed.
 
 Review these pages in desktop and mobile:
 
@@ -322,7 +322,7 @@ cd frontend
 npm run build
 ```
 
-- [ ] **Step 3: Improve recommendation/exclusion display without API changes**
+- [x] **Step 3: Improve recommendation/exclusion display without API changes**
 
 Use existing fields:
 
@@ -346,7 +346,7 @@ npm run build
 npm run test:e2e
 ```
 
-- [ ] **Step 4: Address the Vite chunk warning with route-level lazy loading**
+- [x] **Step 4: Address the Vite chunk warning with route-level lazy loading**
 
 If the bundle warning still appears, convert heavy route imports in `frontend/src/app/router.tsx` to lazy-loaded route components.
 
@@ -374,7 +374,7 @@ npm run build
 npm run test:e2e
 ```
 
-- [ ] **Step 5: Browser verification on desktop and mobile**
+- [x] **Step 5: Browser verification on desktop and mobile**
 
 Start the dev server:
 
@@ -393,7 +393,7 @@ Verify:
 
 If using automated browser tooling, capture screenshots for at least `/discover` and `/repos/$id`.
 
-- [ ] **Step 6: Commit public UX polish**
+- [ ] **Step 6: Commit public UX polish** - ready after `npm run build`, `npm run test:e2e`, and desktop/mobile Playwright smoke passed.
 
 Run:
 

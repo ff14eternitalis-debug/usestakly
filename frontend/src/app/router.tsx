@@ -5,25 +5,53 @@ import {
   createRouter,
   redirect
 } from "@tanstack/react-router";
+import { Suspense, lazy } from "react";
 
 import { AppHeader } from "../features/layout/AppHeader";
 import { SiteFooter } from "../features/layout/SiteFooter";
 import { DocumentMeta } from "../seo/DocumentMeta";
 import { SeoOverrideProvider } from "../seo/seo-context";
-import { AccountPage } from "../routes/account";
-import { DiscoverPage } from "../routes/discover";
-import { HowToReadPage } from "../routes/how-to-read";
-import { LandingPage } from "../routes/index";
-import { LegalPage } from "../routes/legal";
-import { LoginPage } from "../routes/login";
-import { McpGuidePage } from "../routes/mcp-guide";
-import { NotificationsPage } from "../routes/notifications";
-import { PrivacyPage } from "../routes/privacy";
-import { RepoDetailPage } from "../routes/repo-detail";
-import { StatusPage } from "../routes/status";
-import { WatchlistPage } from "../routes/watchlist";
 import { currentReturnTo } from "../lib/return-to";
 import { useAuthStore } from "../state/auth-store";
+
+const AccountPage = lazy(() =>
+  import("../routes/account").then((module) => ({ default: module.AccountPage }))
+);
+const DiscoverPage = lazy(() =>
+  import("../routes/discover").then((module) => ({ default: module.DiscoverPage }))
+);
+const HowToReadPage = lazy(() =>
+  import("../routes/how-to-read").then((module) => ({ default: module.HowToReadPage }))
+);
+const LandingPage = lazy(() =>
+  import("../routes/index").then((module) => ({ default: module.LandingPage }))
+);
+const LegalPage = lazy(() =>
+  import("../routes/legal").then((module) => ({ default: module.LegalPage }))
+);
+const LoginPage = lazy(() =>
+  import("../routes/login").then((module) => ({ default: module.LoginPage }))
+);
+const McpGuidePage = lazy(() =>
+  import("../routes/mcp-guide").then((module) => ({ default: module.McpGuidePage }))
+);
+const NotificationsPage = lazy(() =>
+  import("../routes/notifications").then((module) => ({
+    default: module.NotificationsPage
+  }))
+);
+const PrivacyPage = lazy(() =>
+  import("../routes/privacy").then((module) => ({ default: module.PrivacyPage }))
+);
+const RepoDetailPage = lazy(() =>
+  import("../routes/repo-detail").then((module) => ({ default: module.RepoDetailPage }))
+);
+const StatusPage = lazy(() =>
+  import("../routes/status").then((module) => ({ default: module.StatusPage }))
+);
+const WatchlistPage = lazy(() =>
+  import("../routes/watchlist").then((module) => ({ default: module.WatchlistPage }))
+);
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -32,7 +60,15 @@ const rootRoute = createRootRoute({
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <main className="flex-1">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="shell py-10 text-[0.9rem] text-fg-muted">
+                Loading...
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
         <SiteFooter />
       </div>
