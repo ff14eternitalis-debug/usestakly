@@ -81,9 +81,9 @@ pub async fn refresh_repo(
 fn refresh_on_cooldown(artifact_id: Uuid, cooldown_secs: u64) -> bool {
     let map = REFRESH_COOLDOWN.get_or_init(|| Mutex::new(HashMap::new()));
     let guard = map.lock().expect("refresh cooldown mutex");
-    guard
-        .get(&artifact_id)
-        .is_some_and(|last| Utc::now().signed_duration_since(*last) < chrono::Duration::seconds(cooldown_secs as i64))
+    guard.get(&artifact_id).is_some_and(|last| {
+        Utc::now().signed_duration_since(*last) < chrono::Duration::seconds(cooldown_secs as i64)
+    })
 }
 
 fn mark_refresh(artifact_id: Uuid) {

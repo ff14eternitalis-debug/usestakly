@@ -36,8 +36,11 @@ pub fn derive_proof_tier(states: &[DimensionState]) -> ProofTier {
         return ProofTier::CommunityBacked;
     }
     let adoption_awaiting = adoption.is_some_and(|s| s.display_state == "awaiting_community");
-    let usage_limited = states.iter().any(|s| s.key == "adoption" && s.display_state == "growing")
-        || (reliability.is_some_and(|s| s.display_state == "neutral_default") && !adoption_awaiting);
+    let usage_limited = states
+        .iter()
+        .any(|s| s.key == "adoption" && s.display_state == "growing")
+        || (reliability.is_some_and(|s| s.display_state == "neutral_default")
+            && !adoption_awaiting);
     if usage_limited {
         return ProofTier::UsageLimited;
     }
@@ -114,7 +117,8 @@ fn adoption_state(input: &DimensionStateInput<'_>) -> DimensionState {
             source: "usage_signals".to_string(),
             confidence: "high".to_string(),
             as_of,
-            summary: "No weighted UseStakly resolve signals yet; adoption stays at zero.".to_string(),
+            summary: "No weighted UseStakly resolve signals yet; adoption stays at zero."
+                .to_string(),
         };
     }
     let display_state = if resolve_count >= 10 {
@@ -189,7 +193,8 @@ fn vitality_state(input: &DimensionStateInput<'_>) -> DimensionState {
             source: "github_metadata".to_string(),
             confidence: "low".to_string(),
             as_of: input.now,
-            summary: "Structural GitHub signals have not been captured for this repo yet.".to_string(),
+            summary: "Structural GitHub signals have not been captured for this repo yet."
+                .to_string(),
         };
     }
     let mut missing = Vec::new();

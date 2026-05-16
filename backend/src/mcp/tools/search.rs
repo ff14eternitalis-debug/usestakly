@@ -103,11 +103,7 @@ pub(crate) fn radar_summary(radar: &crate::domain::repo::RepoRadarSnapshot) -> S
         .explanation
         .get("reasons")
         .and_then(|v| v.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|v| v.as_str())
-                .collect::<Vec<_>>()
-        })
+        .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
         .unwrap_or_default();
     let corpus_backed = reasons.contains(&"corpus_backed");
     let base = match radar.maturity_band.as_str() {

@@ -240,9 +240,10 @@ impl McpServer {
                 ErrorData::invalid_params(format!("repo not ingested: {owner}/{name}"), None)
             })?;
 
-        let profile = repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
-            .await
-            .map_err(map_api_error)?;
+        let profile =
+            repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
+                .await
+                .map_err(map_api_error)?;
 
         let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
         Ok(Json(into_context_output(profile, formula_version)))
@@ -333,9 +334,10 @@ impl McpServer {
             .map_err(map_anyhow)?;
 
         let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let profile = repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
-            .await
-            .map_err(map_api_error)?;
+        let profile =
+            repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
+                .await
+                .map_err(map_api_error)?;
         let q = profile.repo.quality.as_ref();
         Ok(Json(LogUsageOutput {
             provenance: Provenance {

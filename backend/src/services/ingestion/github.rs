@@ -292,7 +292,9 @@ fn header_str<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     headers.get(name).and_then(|value| value.to_str().ok())
 }
 
-pub(crate) fn summarize_releases(releases: &[GitHubReleaseSummary]) -> (i32, Option<DateTime<Utc>>) {
+pub(crate) fn summarize_releases(
+    releases: &[GitHubReleaseSummary],
+) -> (i32, Option<DateTime<Utc>>) {
     let count = releases.len() as i32;
     let last = releases
         .iter()

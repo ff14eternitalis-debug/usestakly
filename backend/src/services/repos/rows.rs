@@ -13,9 +13,7 @@ use crate::domain::{
 };
 use crate::services::{
     quality::{
-        dimension_state::{
-            build_dimension_states_from_quality, derive_proof_tier, proof_tier_str,
-        },
+        dimension_state::{build_dimension_states_from_quality, derive_proof_tier, proof_tier_str},
         ingestion_status::build_ingestion_status,
     },
     repo_explain::{self, ExplainContext, ExplainRepoInput},

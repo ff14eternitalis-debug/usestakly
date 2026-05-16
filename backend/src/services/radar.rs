@@ -75,8 +75,13 @@ pub fn compute_radar_snapshot(input: &RepoRadarInput) -> RepoRadarSnapshot {
             reasons.push("clear_category");
             reasons.push("recent_activity");
             "emerging"
-        } else if corpus_backed_established(input, freshness, abandonment, contributors_90d, commits_30d)
-        {
+        } else if corpus_backed_established(
+            input,
+            freshness,
+            abandonment,
+            contributors_90d,
+            commits_30d,
+        ) {
             reasons.push("corpus_backed");
             reasons.push("community_proof_pending");
             "established"

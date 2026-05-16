@@ -27,9 +27,8 @@ pub fn build_ingestion_status(
         }
     }
 
-    let structural_stale = structural_signals_at.is_none_or(|at| {
-        (now - at).num_seconds() > structural_stale_secs as i64
-    });
+    let structural_stale = structural_signals_at
+        .is_none_or(|at| (now - at).num_seconds() > structural_stale_secs as i64);
     let structural_complete = structural_signals_at.is_some() && partial_fields.is_empty();
 
     IngestionStatus {
