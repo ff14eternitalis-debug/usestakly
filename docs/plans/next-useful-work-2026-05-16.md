@@ -503,7 +503,7 @@ git commit -m "Explain repo recommendations and score snapshot on profile"
 - Modify: `frontend/scripts/run-real-e2e.mjs` (cross-link only, unless a flag is missing)
 - Modify: `docs/dev-workflow.md`
 
-- [ ] **Step 1: Extend functional checks + thin live wrapper**
+- [x] **Step 1: Extend functional checks + thin live wrapper**
 
 In `docs/functional-checks.md`, add a short **Live / staging** section:
 
@@ -517,7 +517,7 @@ Create `docs/validation/live-release-checklist.md` as a **one-page deploy gate**
 - Ordered go/no-go (health → status public → MCP smoke script → manual OAuth if needed).
 - Rollback: frontend-only vs backend vs DB migration.
 
-- [ ] **Step 2: Add MCP smoke script**
+- [x] **Step 2: Add MCP smoke script**
 
 Create `scripts/mcp-live-smoke.ps1`.
 
@@ -540,7 +540,7 @@ Acceptance:
 - Optionally calls `log_usage` only when `-WriteSignal` is passed, to avoid accidental production writes.
 - Maps to functional-checks **H2, H4, H5** (and H7 only with `-WriteSignal`).
 
-- [ ] **Step 3: Document local and live usage**
+- [x] **Step 3: Document local and live usage**
 
 Update `docs/dev-workflow.md` with:
 
