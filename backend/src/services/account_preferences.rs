@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use crate::{
-    app::error::ApiError,
-    services::{email_templates::EmailLocale, notification_digest::digest_time_for_preset},
-};
+use crate::{app::error::ApiError, services::notification_digest::digest_time_for_preset};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -108,10 +105,10 @@ pub fn validate_timezone(value: &str) -> Result<String, ApiError> {
 }
 
 pub fn validate_email_locale(value: &str) -> Result<String, ApiError> {
-    match EmailLocale::parse_lossy(value) {
-        EmailLocale::En if value.eq_ignore_ascii_case("en") => Ok("en".to_string()),
-        EmailLocale::Fr => Ok("fr".to_string()),
-        _ => Err(ApiError::bad_request("invalid email locale")),
+    if value.eq_ignore_ascii_case("en") {
+        Ok("en".to_string())
+    } else {
+        Err(ApiError::bad_request("invalid email locale"))
     }
 }
 
@@ -141,7 +138,8 @@ mod tests {
     #[test]
     fn validates_supported_email_locale() {
         assert_eq!(validate_email_locale("en").unwrap(), "en");
-        assert_eq!(validate_email_locale("fr").unwrap(), "fr");
+        assert_eq!(validate_email_locale("EN").unwrap(), "en");
+        assert!(validate_email_locale("fr").is_err());
         assert!(validate_email_locale("de").is_err());
     }
 

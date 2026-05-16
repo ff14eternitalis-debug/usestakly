@@ -120,11 +120,7 @@ async fn refresh_github_repos(db: &PgPool, config: &AppConfig) -> usize {
         Vec::new()
     });
 
-    let rows = build_refresh_targets(
-        watched,
-        stale,
-        config.ingest_max_repos_per_cycle,
-    );
+    let rows = build_refresh_targets(watched, stale, config.ingest_max_repos_per_cycle);
     let total = rows.len();
     if total == 0 {
         return 0;
@@ -200,8 +196,7 @@ async fn list_stale_corpus_repo_targets(
     stale_after_secs: u64,
     limit: usize,
 ) -> Result<Vec<(String, String)>, sqlx::Error> {
-    let stale_after_secs =
-        i32::try_from(stale_after_secs).unwrap_or(i32::MAX);
+    let stale_after_secs = i32::try_from(stale_after_secs).unwrap_or(i32::MAX);
     let limit = i64::try_from(limit).unwrap_or(i64::MAX);
     sqlx::query_as(
         r#"

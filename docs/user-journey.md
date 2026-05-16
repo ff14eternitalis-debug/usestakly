@@ -81,7 +81,7 @@ UI : panel `AdminMcpObservabilityPanel` dans `/account` derrière le gate.
 - **Provenance partout** : score, formule, timestamp visibles côté UI et MCP.
 - **Honnêteté du beta** : page `/status` publique, page `/privacy` qui dit ce qu'on collecte, score affiché comme "indicateur transparent" pas "certification".
 - **Garde auth claire** : routes privées redirigent vers `/login` avec `returnTo`, pas de mur silencieux.
-- **i18n EN/FR** dès le frontend.
+- **UI EN-only** (`en.ts`) ; traduction navigateur pour les autres langues.
 
 ## Frictions encore non couvertes (post-audit phase 2)
 

@@ -18,68 +18,20 @@ pub struct EmailSection {
 }
 
 const LOGO_URL: &str = "https://usestakly.com/usestackly-logo-white-lime.png";
+const FOOTER: &str = "UseStakly public beta · OSS quality radar for developers and agents.";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EmailLocale {
-    En,
-    Fr,
-}
-
-impl EmailLocale {
-    pub fn parse_lossy(value: &str) -> Self {
-        if value.eq_ignore_ascii_case("fr") {
-            Self::Fr
-        } else {
-            Self::En
-        }
-    }
-
-    pub fn from_accept_language(value: Option<&str>) -> Self {
-        let Some(value) = value else {
-            return Self::En;
-        };
-        if value
-            .split(',')
-            .any(|part| part.trim_start().to_ascii_lowercase().starts_with("fr"))
-        {
-            Self::Fr
-        } else {
-            Self::En
-        }
-    }
-
-    fn code(self) -> &'static str {
-        match self {
-            Self::En => "en",
-            Self::Fr => "fr",
-        }
-    }
-}
-
-pub fn render_test_email(locale: EmailLocale) -> EmailTemplate {
-    let subject = match locale {
-        EmailLocale::En => "UseStakly notification channel connected",
-        EmailLocale::Fr => "Canal de notification UseStakly connecté",
-    };
-    let body = match locale {
-        EmailLocale::En => "UseStakly can now send critical watch alerts to this email address.",
-        EmailLocale::Fr => {
-            "UseStakly peut désormais envoyer les alertes de veille critiques à cette adresse email."
-        }
-    };
-    let title = match locale {
-        EmailLocale::En => "Notification channel connected",
-        EmailLocale::Fr => "Canal de notification connecté",
-    };
-    let eyebrow = match locale {
-        EmailLocale::En => "Channel ready",
-        EmailLocale::Fr => "Canal prêt",
-    };
-    branded_email(locale, subject, title, eyebrow, body, &[], None)
+pub fn render_test_email() -> EmailTemplate {
+    branded_email(
+        "UseStakly notification channel connected",
+        "Notification channel connected",
+        "Channel ready",
+        "UseStakly can now send critical watch alerts to this email address.",
+        &[],
+        None,
+    )
 }
 
 pub fn render_watch_alert_email(
-    locale: EmailLocale,
     subject: &str,
     title: &str,
     intro: &str,
@@ -89,11 +41,7 @@ pub fn render_watch_alert_email(
 ) -> EmailTemplate {
     let mut text = format!("{intro}\n\n{description}");
     if let Some(url) = repo_url {
-        let label = match locale {
-            EmailLocale::En => "Repository",
-            EmailLocale::Fr => "Dépôt",
-        };
-        text.push_str(&format!("\n\n{label}: {url}"));
+        text.push_str(&format!("\n\nRepository: {url}"));
     }
     for field in fields {
         if !field.value.is_empty() {
@@ -101,19 +49,11 @@ pub fn render_watch_alert_email(
         }
     }
 
-    let eyebrow = match locale {
-        EmailLocale::En => "Watch alert",
-        EmailLocale::Fr => "Alerte de veille",
-    };
-    branded_email(locale, subject, title, eyebrow, &text, fields, repo_url)
+    branded_email(subject, title, "Watch alert", &text, fields, repo_url)
 }
 
-pub fn render_digest_email(locale: EmailLocale, sections: &[EmailSection]) -> EmailTemplate {
-    let mut text = match locale {
-        EmailLocale::En => "UseStakly daily watch digest.",
-        EmailLocale::Fr => "Résumé quotidien de veille UseStakly.",
-    }
-    .to_string();
+pub fn render_digest_email(sections: &[EmailSection]) -> EmailTemplate {
+    let mut text = "UseStakly daily watch digest.".to_string();
     for section in sections.iter().filter(|section| !section.items.is_empty()) {
         text.push_str(&format!(
             "\n\n{}\n{}",
@@ -144,19 +84,9 @@ pub fn render_digest_email(locale: EmailLocale, sections: &[EmailSection]) -> Em
         .collect::<Vec<_>>();
 
     branded_email(
-        locale,
-        match locale {
-            EmailLocale::En => "UseStakly daily watch digest",
-            EmailLocale::Fr => "Résumé quotidien de veille UseStakly",
-        },
-        match locale {
-            EmailLocale::En => "Daily watch digest",
-            EmailLocale::Fr => "Résumé quotidien de veille",
-        },
-        match locale {
-            EmailLocale::En => "Watch summary",
-            EmailLocale::Fr => "Résumé de veille",
-        },
+        "UseStakly daily watch digest",
+        "Daily watch digest",
+        "Watch summary",
         &text,
         &fields,
         None,
@@ -164,7 +94,6 @@ pub fn render_digest_email(locale: EmailLocale, sections: &[EmailSection]) -> Em
 }
 
 fn branded_email(
-    locale: EmailLocale,
     subject: &str,
     title: &str,
     eyebrow: &str,
@@ -191,7 +120,7 @@ fn branded_email(
 
     let action = action_url.map_or_else(String::new, |url| {
         format!(
-            r#"<div style="margin-top:22px;">
+            r#"<div translate="no" class="notranslate" style="margin-top:22px;">
   <a href="{}" style="display:inline-block;border:1px solid #b6ff3c;border-radius:6px;padding:11px 15px;font:600 14px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#0a1304;background:#b6ff3c;text-decoration:none;">Open repository</a>
 </div>"#,
             escape_attr(url)
@@ -200,7 +129,7 @@ fn branded_email(
 
     let html = format!(
         r#"<!doctype html>
-<html lang="{}">
+<html lang="en">
   <body style="margin:0;padding:0;background:#08090b;color:#f5f6f7;">
     <div style="display:none;max-height:0;overflow:hidden;color:#08090b;" translate="no" class="notranslate">{}</div>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" translate="no" class="notranslate" style="background:#08090b;margin:0;padding:32px 16px;">
@@ -220,7 +149,7 @@ fn branded_email(
               </td>
             </tr>
             <tr>
-              <td style="border:1px solid #1d1f25;border-radius:8px;background:#111216;padding:28px;">
+              <td translate="no" class="notranslate" style="border:1px solid #1d1f25;border-radius:8px;background:#111216;padding:28px;">
                 <div style="font:600 11px/1.4 ui-monospace,SFMono-Regular,Cascadia Code,Menlo,monospace;letter-spacing:0.18em;text-transform:uppercase;color:#b6ff3c;">{}</div>
                 <h1 style="margin:10px 0 16px 0;font:700 28px/1.12 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#f5f6f7;">{}</h1>
                 <div style="border:1px solid #1d1f25;border-radius:8px;background:#0c0d10;padding:18px;font:400 16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a7a9b0;white-space:pre-line;">{}</div>
@@ -239,7 +168,6 @@ fn branded_email(
     </table>
   </body>
 </html>"#,
-        locale.code(),
         escape_html(text.lines().next().unwrap_or(subject)),
         LOGO_URL,
         escape_html(eyebrow),
@@ -247,12 +175,7 @@ fn branded_email(
         escape_html(text),
         action,
         html_fields,
-        escape_html(match locale {
-            EmailLocale::En =>
-                "UseStakly public beta · OSS quality radar for developers and agents.",
-            EmailLocale::Fr =>
-                "Beta publique UseStakly · Radar de qualité OSS pour développeurs et agents.",
-        })
+        escape_html(FOOTER)
     );
 
     EmailTemplate {
@@ -280,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_channel_email_has_branded_html_and_plain_fallback() {
-        let email = render_test_email(EmailLocale::En);
+        let email = render_test_email();
 
         assert_eq!(email.subject, "UseStakly notification channel connected");
         assert!(
@@ -306,20 +229,8 @@ mod tests {
     }
 
     #[test]
-    fn test_channel_email_can_render_in_french() {
-        let email = render_test_email(EmailLocale::Fr);
-
-        assert_eq!(email.subject, "Canal de notification UseStakly connecté");
-        assert!(email.text.contains("alertes de veille critiques"));
-        assert!(email.html.contains("<html lang=\"fr\">"));
-        assert!(email.html.contains("Canal de notification connecté"));
-        assert!(email.html.contains("Beta publique UseStakly"));
-    }
-
-    #[test]
     fn watch_alert_email_keeps_repo_link_fields_and_escapes_html() {
         let email = render_watch_alert_email(
-            EmailLocale::En,
             "[UseStakly] owner/repo: score drop",
             "owner/<repo>: score drop",
             "UseStakly alert: owner/<repo> quality score dropped.",
@@ -345,19 +256,16 @@ mod tests {
 
     #[test]
     fn digest_email_groups_sections_in_text_and_html() {
-        let email = render_digest_email(
-            EmailLocale::En,
-            &[
-                EmailSection {
-                    title: "Repos to watch".to_string(),
-                    items: vec!["owner/a".to_string(), "owner/b".to_string()],
-                },
-                EmailSection {
-                    title: "New flags".to_string(),
-                    items: vec!["owner/c".to_string()],
-                },
-            ],
-        );
+        let email = render_digest_email(&[
+            EmailSection {
+                title: "Repos to watch".to_string(),
+                items: vec!["owner/a".to_string(), "owner/b".to_string()],
+            },
+            EmailSection {
+                title: "New flags".to_string(),
+                items: vec!["owner/c".to_string()],
+            },
+        ]);
 
         assert_eq!(email.subject, "UseStakly daily watch digest");
         assert!(email.text.contains("Repos to watch\nowner/a\nowner/b"));

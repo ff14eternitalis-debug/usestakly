@@ -214,7 +214,7 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 - [x] **Nouveau** : page profil repo (`routes/repo-detail.tsx`)
 - [x] **Nouveau** : dashboard watchlist (`routes/watchlist.tsx`)
 - [x] **Nouveau** : centre de notifications in-app (`routes/notifications.tsx`)
-- [x] Composant i18n EN/FR livré (`LocaleSwitch`, `locale-store`)
+- [x] UI EN-only (`en.ts`, `useT()` ; retrait `LocaleSwitch` / `fr.ts` — 2026-05)
 - [x] Page compte v1 utile — tokens MCP, réputation user, file de modération admin légère
 - [x] Page compte : canaux de notification configurables (email + Discord webhook, avec test webhook).
 - [ ] **Reste à faire** : page compte plus complète — historique contributions, règles d'alerte perso, settings plus riches

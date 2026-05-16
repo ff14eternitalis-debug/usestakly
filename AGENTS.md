@@ -72,7 +72,7 @@ Séparation : `handler` (I/O) → `service` (logique) → `query` (DB). À respe
 - Routes actives : `/`, `/discover`, `/repos/$id`, `/watchlist`, `/notifications`, `/account`, `/login`, `/status`, `/privacy`, `/how-to-read`, `/mcp-guide`.
 - Garde auth : `/watchlist`, `/notifications`, `/account` redirigent vers `/login` avec `returnTo` signé.
 - Features : `src/features/{auth,layout,repos,account}/`. `repo-detail` et `account` éclatés en sous-composants (sprint refacto 3).
-- État : Zustand (`auth-store`, `locale-store`). i18n EN/FR.
+- État : Zustand (`auth-store`). UI EN-only via `frontend/src/i18n/en.ts` et `useT()`.
 - Réseau : `src/lib/api-client.ts` + `src/lib/api/{account,admin,repos,watchlist}.ts` (`credentials: "include"`, base `VITE_API_BASE_URL`).
 - React Query câblé dans `frontend/src/app/providers.tsx`.
 

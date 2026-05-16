@@ -50,7 +50,6 @@ export function applySeoToDocument(
     "UseStakly — open-source observatory for GitHub quality scores"
   );
   upsertMeta("property", "og:locale", "en_US");
-  upsertMeta("property", "og:locale:alternate", "fr_FR");
 
   upsertMeta("name", "twitter:card", "summary_large_image");
   upsertMeta("name", "twitter:title", payload.title);

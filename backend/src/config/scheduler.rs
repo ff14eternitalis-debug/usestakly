@@ -28,20 +28,13 @@ impl SchedulerConfig {
             "APP_RECOMPUTE_INTERVAL_SECS",
             if production_like { 1_800 } else { 3_600 },
         )?;
-        ensure_min_secs(
-            "APP_RECOMPUTE_INTERVAL_SECS",
-            recompute_interval_secs,
-            60,
-        )?;
+        ensure_min_secs("APP_RECOMPUTE_INTERVAL_SECS", recompute_interval_secs, 60)?;
 
-        let digest_interval_secs =
-            parse_u64_env("APP_DIGEST_INTERVAL_SECS", 1_800)?;
+        let digest_interval_secs = parse_u64_env("APP_DIGEST_INTERVAL_SECS", 1_800)?;
         ensure_min_secs("APP_DIGEST_INTERVAL_SECS", digest_interval_secs, 60)?;
 
-        let corpus_refresh_stale_secs = parse_u64_env(
-            "APP_CORPUS_REFRESH_STALE_SECS",
-            recompute_interval_secs,
-        )?;
+        let corpus_refresh_stale_secs =
+            parse_u64_env("APP_CORPUS_REFRESH_STALE_SECS", recompute_interval_secs)?;
         ensure_min_secs(
             "APP_CORPUS_REFRESH_STALE_SECS",
             corpus_refresh_stale_secs,

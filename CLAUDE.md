@@ -75,7 +75,7 @@ Séparation à respecter pour tout nouveau code : `handler` (I/O) → `service` 
 - Routes actives : `/` (landing), `/discover`, `/repos/$id`, `/watchlist`, `/notifications`, `/account`, `/login`, `/status`, `/privacy`, `/how-to-read`, `/mcp-guide`.
 - Garde auth : `/watchlist`, `/notifications`, `/account` redirigent vers `/login` avec `returnTo` signé.
 - Organisation par *features* (`src/features/{auth,layout,repos,account}/`). `repo-detail` et `account` sont éclatés en sous-composants (sprint refacto 3).
-- État global : Zustand (`src/state/{auth-store,locale-store}.ts`). i18n EN/FR.
+- État global : Zustand (`src/state/auth-store.ts`). UI EN-only via `src/i18n/en.ts` et `useT()`.
 - Réseau : `src/lib/api-client.ts` + clients métier `src/lib/api/{account,admin,repos,watchlist}.ts` (`credentials: "include"`, base `VITE_API_BASE_URL`).
 - `@tanstack/react-query` câblé dans `frontend/src/app/providers.tsx`.
 

@@ -18,7 +18,6 @@ import {
 import { useT } from "../i18n";
 import type { AgentTokenCreated, DigestTimePreset, McpMetricsWindow } from "../lib/types";
 import { useAuthStore } from "../state/auth-store";
-import { useLocaleStore } from "../state/locale-store";
 import { AccountIdentityCard } from "../features/account/components/AccountIdentityCard";
 import { AdminMcpObservabilityPanel } from "../features/account/components/AdminMcpObservabilityPanel";
 import { AdminModerationPanel } from "../features/account/components/AdminModerationPanel";
@@ -34,7 +33,6 @@ export function AccountPage() {
   const t = useT();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
-  const locale = useLocaleStore((s) => s.locale);
   const [label, setLabel] = useState("");
   const [created, setCreated] = useState<AgentTokenCreated | null>(null);
   const [copied, setCopied] = useState(false);
@@ -109,8 +107,7 @@ export function AccountPage() {
         email: notificationEmail.trim(),
         label: "Email",
         criticalAlertsEnabled: emailCritical,
-        dailyDigestEnabled: emailDigest,
-        emailLocale: locale
+        dailyDigestEnabled: emailDigest
       }),
     onSuccess: async () => {
       setChannelMessage(t.account.channelSaved);
@@ -125,8 +122,7 @@ export function AccountPage() {
         webhookUrl: notificationWebhookUrl.trim(),
         label: "Discord",
         criticalAlertsEnabled: webhookCritical,
-        dailyDigestEnabled: webhookDigest,
-        emailLocale: locale
+        dailyDigestEnabled: webhookDigest
       }),
     onSuccess: async () => {
       setNotificationWebhookUrl("");
@@ -144,7 +140,7 @@ export function AccountPage() {
   });
 
   const testChannel = useMutation({
-    mutationFn: (id: string) => testNotificationChannel(id, locale),
+    mutationFn: (id: string) => testNotificationChannel(id),
     onSuccess: async () => {
       setChannelMessage(t.account.channelTestSent);
       await queryClient.invalidateQueries({ queryKey: ["notification-channels"] });
@@ -157,8 +153,7 @@ export function AccountPage() {
     }) =>
       updateNotificationPreferences({
         digestTimePreset: next?.digestTimePreset ?? digestTimePreset,
-        timezone: detectTimezone(),
-        emailLocale: locale
+        timezone: detectTimezone()
       }),
     onSuccess: async (preferences) => {
       setDigestTimePreset(preferences.digestTimePreset);

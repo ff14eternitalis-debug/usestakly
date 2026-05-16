@@ -2,7 +2,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import { LocaleSwitch } from "../../components/LocaleSwitch";
 import { Wordmark } from "../../components/Wordmark";
 import { useT } from "../../i18n";
 import { apiGet } from "../../lib/api-client";
@@ -105,9 +104,6 @@ export function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-4 sm:gap-5">
-          <div className="border-r border-line pr-4 sm:pr-5">
-            <LocaleSwitch />
-          </div>
           {isAuthed ? (
             <div ref={profileMenuRef} className="relative">
               <button

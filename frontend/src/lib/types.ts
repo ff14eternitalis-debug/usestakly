@@ -244,7 +244,7 @@ export type NotificationPreferences = {
   digestTimePreset: DigestTimePreset;
   digestTimeLocal: string;
   timezone: string;
-  emailLocale: "en" | "fr";
+  emailLocale: "en";
 };
 
 export type UserReputationSummary = {

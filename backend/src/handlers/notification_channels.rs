@@ -1,15 +1,14 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::{
     app::{AppState, error::ApiError},
     auth::resolve_current_user,
-    services::email_templates::EmailLocale,
     services::notification_channels::{
         self, NotificationChannelSummary, UpsertNotificationChannel,
     },
@@ -19,12 +18,6 @@ use crate::{
 #[serde(rename_all = "camelCase")]
 pub struct TestNotificationChannelResponse {
     pub ok: bool,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TestNotificationChannelQuery {
-    pub locale: Option<String>,
 }
 
 pub async fn list_notification_channels(
@@ -64,32 +57,12 @@ pub async fn test_notification_channel(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(channel_id): Path<Uuid>,
-    Query(query): Query<TestNotificationChannelQuery>,
 ) -> Result<Json<TestNotificationChannelResponse>, ApiError> {
     let user = resolve_current_user(&state.db, &state.config, &headers).await?;
     let secret = state
         .config
         .notification_secret()
         .ok_or_else(|| ApiError::internal("APP_NOTIFICATION_SECRET is required"))?;
-    let locale = query
-        .locale
-        .as_deref()
-        .map(EmailLocale::parse_lossy)
-        .unwrap_or_else(|| {
-            EmailLocale::from_accept_language(
-                headers
-                    .get(axum::http::header::ACCEPT_LANGUAGE)
-                    .and_then(|value| value.to_str().ok()),
-            )
-        });
-    notification_channels::send_test(
-        &state.db,
-        user.id,
-        secret,
-        &state.config,
-        channel_id,
-        locale,
-    )
-    .await?;
+    notification_channels::send_test(&state.db, user.id, secret, &state.config, channel_id).await?;
     Ok(Json(TestNotificationChannelResponse { ok: true }))
 }
