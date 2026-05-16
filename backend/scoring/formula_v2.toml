@@ -80,3 +80,14 @@ re_resolve = 1.5
 build_success = 1.2
 build_failure = 1.2
 regret = 2.0
+
+# --- Trust ---
+# Active signal trust controls moderation/review behavior outside the numeric
+# score. Fresh accounts can still submit once they pass the API guard, but they
+# should not auto-steer severe public flags.
+
+[trust]
+new_account_active_signal_weight = 0.0
+min_real_usage_for_active_weight = 2
+owner_dispute_min_reputation = 0.35
+severe_signal_low_trust_review = true

@@ -181,7 +181,7 @@ git commit -m "Harden GitHub ingestion metadata refresh"
 - Docs: `docs/trust-model-v1.md`
 - Docs: `docs/plans/remaining-work-2026-05-03.md`
 
-- [ ] **Step 1: Add tests for new-account reporter weight**
+- [x] **Step 1: Add tests for new-account reporter weight**
 
 Add tests proving:
 
@@ -198,7 +198,7 @@ cargo test services::quality::weighting::tests::new_account
 
 Expected before implementation: failing test.
 
-- [ ] **Step 2: Add formula v2 trust thresholds**
+- [x] **Step 2: Add formula v2 trust thresholds**
 
 Add explicit config keys to `backend/scoring/formula_v2.toml`.
 
@@ -223,7 +223,7 @@ cargo test services::quality::formula
 
 Expected: formula v1 and v2 load.
 
-- [ ] **Step 3: Apply reporter weighting in active signal review**
+- [x] **Step 3: Apply reporter weighting in active signal review**
 
 In `backend/src/services/trust/signal_reviews.rs`, make severe active signals from low-trust reporters go to review instead of auto-accept paths.
 
@@ -242,7 +242,7 @@ cargo test services::trust::signal_reviews
 
 Expected: tests pass.
 
-- [ ] **Step 4: Apply owner dispute weighting**
+- [x] **Step 4: Apply owner dispute weighting**
 
 Enhance owner dispute review context so owner trust influences queue priority and decision support, without auto-rejecting valid owners.
 
@@ -261,7 +261,7 @@ cargo test services::trust
 
 Expected: tests pass.
 
-- [ ] **Step 5: Update trust docs and commit**
+- [x] **Step 5: Update trust docs and commit**
 
 Update `docs/trust-model-v1.md` with:
 

@@ -82,7 +82,8 @@ Reste côté MCP : valider un smoke réel avec token prod après déploiement, p
 
 ### 3.2 Phase R4 — Trust formula v2
 
-- [ ] Pondération réputation owner/reporter formula_v2 : compte neuf = poids 0, historique d'usage prod surpondéré. Le fichier `formula_v2.toml` existe et la pipeline charge `load_v2()` par défaut, mais le facteur "compte neuf = poids 0" reste à implémenter dans `weighting.rs`.
+- [x] Pondération réputation owner/reporter formula_v2 : compte neuf = poids 0 pour review active sévère, seuil owner dispute explicite, et notes d'audit enrichies. Livré 2026-05-16 via `[trust]` dans `formula_v2.toml`, `UserReputation::active_signal_review_weight`, `requires_strict_active_review_with_trust`, et notes `active-weight` / `owner-confidence`.
+- [ ] Pondération plus riche par historique d'usage prod : surpondérer explicitement les reporters/owners avec signaux d'usage longs et sains dans les décisions de review admin.
 - [ ] Graphe Sybil-resistant via OAuth GitHub (followers, contributions, âge compte).
 
 ### 3.3 Phase R6 — Polish frontend

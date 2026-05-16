@@ -4,7 +4,10 @@ use chrono::{DateTime, Utc};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use crate::{app::error::ApiError, domain::account::UserReputationSummary};
+use crate::{
+    app::error::ApiError, domain::account::UserReputationSummary,
+    services::quality::formula::TrustWeights,
+};
 
 const PASSIVE_SATURATION: f64 = 25.0;
 const USAGE_SATURATION: f64 = 30.0;
@@ -72,8 +75,19 @@ impl UserReputation {
         }
     }
 
+    pub fn active_signal_review_weight(&self, trust: &TrustWeights) -> f64 {
+        if self.usage_signal_count() < trust.min_real_usage_for_active_weight {
+            return trust.new_account_active_signal_weight;
+        }
+        self.review_weight()
+    }
+
     pub fn requires_strict_active_review(&self) -> bool {
         self.tier == ReputationTier::Unproven || self.review_weight() < 0.6
+    }
+
+    pub fn requires_strict_active_review_with_trust(&self, trust: &TrustWeights) -> bool {
+        trust.severe_signal_low_trust_review && self.active_signal_review_weight(trust) < 0.6
     }
 
     pub fn to_summary(&self, min_reputation: f64) -> UserReputationSummary {
@@ -286,6 +300,7 @@ fn compute_reputation_score(metrics: &ReputationMetrics) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::services::quality::formula::load_v2;
 
     fn sample_metrics(
         age_factor: f64,
@@ -335,5 +350,44 @@ mod tests {
         };
 
         assert!(!rep.active_signal_eligible(0.45));
+    }
+
+    #[test]
+    fn active_signal_weight_is_zero_for_new_account_under_v2_trust() {
+        let trust = load_v2().expect("formula v2 loads").trust;
+        let rep = UserReputation {
+            user_id: Uuid::new_v4(),
+            score: 0.9,
+            tier: ReputationTier::Trusted,
+            account_age_days: 30,
+            passive_signal_count: 8,
+            resolve_count: 1,
+            re_resolve_count: 0,
+            build_success_count: 0,
+            build_failure_count: 0,
+            regret_count: 0,
+        };
+
+        assert_eq!(rep.active_signal_review_weight(&trust), 0.0);
+    }
+
+    #[test]
+    fn active_signal_weight_uses_review_weight_after_real_usage() {
+        let trust = load_v2().expect("formula v2 loads").trust;
+        let rep = UserReputation {
+            user_id: Uuid::new_v4(),
+            score: 0.9,
+            tier: ReputationTier::Trusted,
+            account_age_days: 30,
+            passive_signal_count: 8,
+            resolve_count: 1,
+            re_resolve_count: 0,
+            build_success_count: 1,
+            build_failure_count: 0,
+            regret_count: 0,
+        };
+
+        assert_eq!(rep.active_signal_review_weight(&trust), rep.review_weight());
+        assert!(rep.active_signal_review_weight(&trust) > 0.0);
     }
 }

@@ -9,6 +9,8 @@ pub struct Formula {
     pub meta: FormulaMeta,
     pub dimensions: Dimensions,
     pub weighting: Weighting,
+    #[serde(default = "default_trust_weights")]
+    pub trust: TrustWeights,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -82,6 +84,23 @@ pub struct OutcomeWeights {
     pub regret: f64,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct TrustWeights {
+    pub new_account_active_signal_weight: f64,
+    pub min_real_usage_for_active_weight: i64,
+    pub owner_dispute_min_reputation: f64,
+    pub severe_signal_low_trust_review: bool,
+}
+
+fn default_trust_weights() -> TrustWeights {
+    TrustWeights {
+        new_account_active_signal_weight: 0.30,
+        min_real_usage_for_active_weight: 0,
+        owner_dispute_min_reputation: 0.0,
+        severe_signal_low_trust_review: true,
+    }
+}
+
 pub fn load_v1() -> Result<Formula> {
     toml::from_str(FORMULA_V1_TOML).context("parsing scoring/formula_v1.toml")
 }
@@ -115,6 +134,7 @@ mod tests {
         assert!(f.weighting.dedup_k > 0.0);
         assert!(f.weighting.outcome.regret > f.weighting.outcome.resolve);
         assert!(f.weighting.outcome.re_resolve > f.weighting.outcome.resolve);
+        assert_eq!(f.trust.new_account_active_signal_weight, 0.30);
     }
 
     #[test]
@@ -142,5 +162,9 @@ mod tests {
             "vitality sub-weights sum to 1, got {}",
             sub_total
         );
+        assert_eq!(f.trust.new_account_active_signal_weight, 0.0);
+        assert_eq!(f.trust.min_real_usage_for_active_weight, 2);
+        assert_eq!(f.trust.owner_dispute_min_reputation, 0.35);
+        assert!(f.trust.severe_signal_low_trust_review);
     }
 }
