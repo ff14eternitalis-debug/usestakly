@@ -78,7 +78,7 @@ function Assert-McpOk {
         throw "${Label}: HTTP $($Response.StatusCode) $snippet"
     }
     $payload = Parse-McpPayload $Response.Content
-    if ($payload.error) {
+    if ($payload.PSObject.Properties.Name -contains "error") {
         $msg = if ($payload.error.message) { $payload.error.message } else { ($payload.error | ConvertTo-Json -Depth 5) }
         throw "${Label}: $msg"
     }
