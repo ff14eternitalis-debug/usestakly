@@ -227,7 +227,7 @@ Le frontend actuel est centré snippets. À démolir en grande partie, à rebât
 
 ### Phase R7 — Validation e2e
 
-- [ ] Smoke public final : landing → Lire UseStakly → Explorer → repo detail → Guide MCP → Privacy → Legal → Status, avec vérification responsive et console propre.
+- [x] Smoke public final : validé manuellement en prod le 2026-05-17 sur desktop + mobile, sans erreur console visible ni blocage layout signalé.
 - [x] Flow local sans mocks API : landing → discover → repo detail → watchlist → notification → account token → MCP initialize/search via `frontend/e2e/real-api.spec.ts` et `npm run test:e2e:real`.
 - [x] Flow user live OAuth : login OAuth → search → repo detail → watchlist → notifications → account token → MCP test validé en prod.
 - [ ] Flow agent complet : MCP search → get_repo_quality_context → log_usage → vérifier que le signal alimente `quality_signals` puis `artifact_scores`.

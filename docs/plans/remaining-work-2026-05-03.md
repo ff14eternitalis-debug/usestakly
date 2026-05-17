@@ -20,7 +20,7 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 - [ ] **Backup offsite S3** — plan `docs/plans/public-launch-hardening-2026-05-17.md` Task 1 ; local Coolify OK, copie hors VPS + restore test non faits.
 - [x] **Hardening `POST /api/repos/{id}/refresh`** — livré 2026-05-17. Session obligatoire, table `repo_refresh_events` (migration 0029), limites DB user/repo, cooldown mémoire secondaire, UI auto-refresh seulement si connecté. Déployer + définir `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` en prod.
 - [x] **Visibilité quota GitHub (logs L1)** — livré 2026-05-17. Logs structurés `x-ratelimit-*` + warnings quota bas / rate-limit ; runbook dans `docs/ops-mcp-coolify-hardening.md`. Endpoint admin quota et statut public dégradé : encore ouverts.
-- [ ] **Smoke UX public mobile/desktop** — Task 4 du plan launch ; validation manuelle prod.
+- [x] **Smoke UX public mobile/desktop** — validé manuellement en prod le 2026-05-17 (desktop + mobile, pas d'erreur console visible ni blocage layout signalé).
 - [ ] **Email produit réel (watch/digest)** — Task 5 ; test canal OK, livraison inbox produit à prouver.
 - [x] **Rate-limit applicative globale `/mcp`** — livré 2026-05-06. Limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent le quota par token existant via `agent_token_events`.
 - [x] **Alerte externe** — livré 2026-05-07 avec Uptime Kuma : `UseStakly Website`, `UseStakly API Health`, `UseStakly Public Status`, `UseStakly MCP` authentifié avec token monitoring dédié.
@@ -126,7 +126,7 @@ Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positif
 
 ### 4.1 Phase R7 — E2E
 
-- [ ] Smoke public final avant annonce : page d'accueil → `/how-to-read` → `/discover` → recherche par besoin → repo detail → `/mcp-guide` → `/privacy` → `/legal` → `/status`, avec vérification responsive mobile/desktop et absence d'erreur console visible.
+- [x] Smoke public final avant annonce : validé manuellement en prod le 2026-05-17 sur desktop + mobile, sans erreur console visible ni blocage layout signalé.
 - [x] Flow local sans mocks API : `npm run test:e2e:real` lance Postgres Docker, backend local, seed SQL, puis couvre landing → discover → repo detail → watchlist → notification → account token → MCP initialize/search.
 - [ ] Flow user E2E complet sur stack live : login OAuth réel → search "date picker react" → ouvre profil repo → clique Watch → simule un changement de score → reçoit notif.
 - [ ] Flow agent MCP complet : `search_github_repos` → `get_repo_quality_context` → `log_usage` → vérifier que le signal alimente bien `quality_signals` puis `artifact_scores`.

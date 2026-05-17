@@ -21,7 +21,7 @@ UseStakly can stay public in limited beta today. A wider public announcement sho
 | Offsite backup | Blocking | Local Coolify backup does not protect against full VPS/disk loss. |
 | `/api/repos/{id}/refresh` hardening | Done (code) | Session + DB limits + memory cooldown; deploy + env on Coolify still required. |
 | GitHub quota visibility | In progress | Structured logs shipped (L1); admin endpoint + public degraded state still open. |
-| Public UX/mobile smoke | Blocking | Wider launch needs user-facing pages verified on mobile/desktop. |
+| Public UX/mobile smoke | Done | Manually validated on production desktop/mobile; no visible console or blocking layout issue reported. |
 | Real outbound email notification | Blocking | Channel test is not enough; one real watch/digest delivery must be proven. |
 | Live post-deploy gate | Done | Health/status/OAuth/discover/repo/MCP/watchlist already validated. |
 
@@ -149,12 +149,14 @@ This task does **not** replace R7 / deeper validation in `docs/plans/remaining-w
 - `/legal`
 - `/status`
 
-- [ ] Run a desktop smoke on the production frontend.
-- [ ] Run a mobile viewport smoke on the production frontend.
-- [ ] Check browser console for errors.
-- [ ] Verify no horizontal overflow, overlapping text, broken buttons, or missing legal/contact links.
-- [ ] Reduce density only where it blocks comprehension; avoid redesigning the whole app in this launch pass.
-- [ ] Capture before/after screenshots for any visual fixes.
+- [x] Run a desktop smoke on the production frontend.
+- [x] Run a mobile viewport smoke on the production frontend.
+- [x] Check browser console for errors.
+- [x] Verify no horizontal overflow, overlapping text, broken buttons, or missing legal/contact links.
+- [x] Reduce density only where it blocks comprehension; avoid redesigning the whole app in this launch pass.
+- [x] Capture before/after screenshots for any visual fixes.
+
+**Validation:** manually checked on production desktop and mobile on 2026-05-17. No visible console errors or blocking layout issues were reported.
 
 **Acceptance criteria:**
 - The listed public pages are usable on desktop and mobile.
