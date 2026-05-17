@@ -3,7 +3,7 @@
 ![Rust](https://img.shields.io/badge/Rust-2024-orange?logo=rust)
 ![Axum](https://img.shields.io/badge/Axum-0.8-111111)
 ![SQLx](https://img.shields.io/badge/SQLx-0.8-336791)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![pgvector](https://img.shields.io/badge/pgvector-enabled-4169E1)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111111)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
@@ -14,7 +14,7 @@
 ![Coolify](https://img.shields.io/badge/Coolify-deployed-0B0D0E)
 ![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-blue.svg)
 
-> Public beta observatory for GitHub OSS repositories: quality-scored discovery, watchlists, notifications, and MCP tools for coding agents.
+> Public beta observatory for GitHub OSS repositories: quality-scored discovery, watchlists, in-app notifications, and MCP tools for coding agents.
 
 UseStakly helps developers and coding agents choose open-source GitHub repositories with a transparent score instead of relying on stars alone.
 
@@ -22,14 +22,12 @@ UseStakly helps developers and coding agents choose open-source GitHub repositor
 
 ## Product Scope
 
-UseStakly is no longer a snippets library. The active product is focused on **public GitHub OSS repositories**:
+UseStakly focuses on **public GitHub OSS repositories**:
 
 - **Quality-scored discovery** for public GitHub repos
-- **Watchlist and notifications** for dependency drift
+- **Watchlist and in-app notifications** for dependency drift
 - **MCP tools** for coding agents
 - **Moderated quality signals** such as `deprecated`, `broken`, and `security_issue`
-
-The old snippets product is out of runtime scope. Legacy SQL tables may remain for migration compatibility and technical history, but they are not product surfaces.
 
 ## Current Public Beta
 
@@ -38,13 +36,15 @@ Already shipped:
 - GitHub and Discord OAuth login
 - GitHub repo ingestion via `/api/repos/add`
 - repo discovery and repo detail pages
-- score dimensions: freshness, adoption, reliability, abandonment
-- score provenance on repo detail and MCP responses
+- score dimensions: freshness, adoption, reliability, abandonment, and vitality
+- score provenance plus `dimensionStates` / `proofTier` on repo detail and MCP context
 - watchlist and in-app notifications
+- notification channels and daily digest plumbing; one real outbound product email is still a launch-hardening proof item
 - account page for MCP token creation and revocation
 - public beta pages: landing, status, privacy/data, reading guide, MCP guide
 - public status endpoint: `/api/status/public`
-- local semantic search with `fastembed` and `pgvector`
+- optional local semantic search with `fastembed` and `pgvector` behind the `semantic-search` feature
+- Awesome-list corpus import tooling and the first bounded production import
 - MCP Streamable HTTP endpoint at `/mcp`
 - npm installer for agents:
 
@@ -68,7 +68,8 @@ UseStakly scores are transparent indicators, not official certifications.
 - GitHub metadata is real and fetched from GitHub.
 - Freshness and abandonment are currently the strongest dimensions.
 - Adoption and reliability improve as users and MCP agents report real outcomes through `log_usage`.
-- Every score carries formula provenance, currently `v1.1`.
+- Every score carries formula provenance, currently `v2.0`.
+- Repo profile display separates GitHub corpus evidence from UseStakly community proof with dimension states and proof tiers.
 
 Use the score to guide technical review, not to replace it.
 
@@ -79,7 +80,7 @@ Backend:
 - Rust 2024
 - Axum 0.8
 - SQLx 0.8
-- PostgreSQL 16 + pgvector
+- PostgreSQL 17 + pgvector
 - `rmcp` Streamable HTTP server
 - OAuth handled server-side with a `usestakly_session` cookie
 
@@ -138,6 +139,8 @@ If `APP_SESSION_SECRET` and OAuth client secrets are missing, OAuth is disabled 
 | Frontend build | `cd frontend && npm run build` |
 | CLI tests | `cd cli && npm test` |
 | Public corpus seed | `./scripts/seed-public-corpus.ps1` |
+| Awesome corpus collect | `node scripts/collect-awesome-corpus.mjs --max 500` |
+| Awesome corpus import | `./scripts/import-awesome-corpus.ps1 -DryRun` |
 
 ## Important Environment Variables
 
@@ -147,6 +150,8 @@ If `APP_SESSION_SECRET` and OAuth client secrets are missing, OAuth is disabled 
 - `APP_SESSION_SECRET`: required for OAuth sessions
 - `GITHUB_TOKEN`: required for GitHub ingestion and owner checks
 - `ADMIN_API_TOKEN`: required for admin endpoints
+- `APP_NOTIFICATION_SECRET`: encrypts notification channel destinations
+- `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR`: per-user repo refresh guard
 - `APP_MCP_WRITE_LIMIT_PER_HOUR`: MCP write quota per token
 - `APP_MCP_LOG_USAGE_COOLDOWN_SECS`: cooldown for repeated `log_usage`
 - `APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS`: negative signal cooling window
@@ -159,6 +164,7 @@ Already implemented:
 - MCP tokens use `usk_<64 hex>` and are hashed server-side
 - tokens can be revoked from the account page
 - MCP writes are quota-limited per token
+- repo profile refresh requires a session and is DB rate-limited per user/repo
 - duplicate and repeated negative `log_usage` events are cooled down
 - public flags require reputation and consensus
 - `security_issue` flows through stricter review
@@ -169,8 +175,9 @@ Already implemented:
 
 Known operations gaps before a wider launch:
 
-- configure offsite/S3 database backups (local Coolify backups are in place)
-- continue release validation (`docs/validation/live-release-checklist.md`, `scripts/mcp-live-smoke.ps1`)
+- prove one real outbound product email notification or digest (channel test alone is not enough)
+- configure offsite/S3 database backups when budget allows (local Coolify backups and restore test are in place)
+- run the live release checklist again after future deployments that change runtime behavior (`docs/validation/live-release-checklist.md`, `scripts/mcp-live-smoke.ps1`)
 
 See [docs/ops-mcp-coolify-hardening.md](./docs/ops-mcp-coolify-hardening.md).
 
