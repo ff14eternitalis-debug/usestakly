@@ -41,8 +41,9 @@ Read in this order:
 If docs disagree with code, verify code first:
 
 - backend routes: `backend/src/app/mod.rs`
-- MCP tool handlers: `backend/src/mcp/server.rs` (`#[tool_router]`, `build_service`)
-- MCP DTOs/mappers: `backend/src/mcp/tools/*`
+- MCP tool registration: `backend/src/mcp/server.rs` (`#[tool_router]`, `build_service`)
+- MCP handler implementations: `backend/src/mcp/tools/*_handler.rs`
+- MCP DTOs/mappers/helpers: `backend/src/mcp/tools/*` (excluding `*_handler.rs`)
 - config/env: `backend/src/config/mod.rs` and `.env.example`
 - scoring formula: `backend/scoring/formula_v2.toml`
 - migrations: `backend/migrations/`
@@ -73,7 +74,7 @@ Known non-fields: `ingestionStatus` does not currently include `lastIngestError`
 
 Manual corpus add: `POST /api/repos/add` ingests one GitHub repo when new (`alreadyIndexed: false`) and **does not call GitHub** when the repo already exists (`alreadyIndexed: true`, case-insensitive owner/repo lookup). Bulk Awesome import: `docs/corpus/awesome-import.md`.
 
-GitHub quota ops: structured logs in `ingestion/github.rs`; operator view `GET /api/admin/github/quota` (`x-admin-token`); public `GET /api/status/public` exposes `ingestion.status` + generic message only (no raw remaining/limit). Runbook: `docs/ops-mcp-coolify-hardening.md` (GitHub API quota section).
+GitHub quota ops: structured logs in `ingestion/github/client.rs` (via `ingestion/github_quota.rs`); operator view `GET /api/admin/github/quota` (`x-admin-token`); public `GET /api/status/public` exposes `ingestion.status` + generic message only (no raw remaining/limit). Runbook: `docs/ops-mcp-coolify-hardening.md` (GitHub API quota section).
 
 ## Legacy Boundary
 

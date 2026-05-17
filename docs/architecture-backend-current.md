@@ -67,11 +67,11 @@ Responsabilité : I/O HTTP seulement.
 
 Responsabilité : logique métier.
 
-- `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
+- `ingestion/github/*` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license); modules `client`, `repo`, `structural`, `persist`, `parse`
 - `ingestion/github_quota.rs` — snapshots quota (headers + hits), agrégation DB, sonde live `GET /rate_limit`, statut public dégradé
 - `ingestion/structural_extras.rs` — signaux structurels GitHub : CI racine/workflows, releases paginées, fallback tags si aucune release
 - `repos/*` — agrégation profils repo, réponses discovery, score provenance, explications publiques
-- `watchlist.rs`, `notifications.rs`, `notification_channels.rs`, `notification_digest.rs`
+- `watchlist.rs`, `notifications.rs`, `notification_channels/*`, `notification_digest.rs`
 - `scheduler.rs` — boucle `tokio::spawn` active par défaut en prod/staging : refresh watchlist + corpus GitHub stale, plafond `APP_INGEST_MAX_REPOS_PER_CYCLE`, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation

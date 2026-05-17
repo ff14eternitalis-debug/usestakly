@@ -119,7 +119,8 @@ Reste côté MCP : valider un smoke réel avec token prod après déploiement, p
 
 Le rapport `herald_usestakly_20260506_1905.md` contient beaucoup de faux positifs ou de règles de style notées trop sévèrement. Les signaux suivants sont néanmoins réels et doivent rester dans la dette de finition. Ils ne bloquent pas le monitoring externe ni la public beta prudente, mais ils structurent un chantier de maintenabilité.
 
-- [ ] **Refactor maintenabilité des gros fichiers/fonctions** : prioriser `frontend/src/routes/discover.tsx`, `frontend/src/features/repos/components/UseCaseSearchPanel.tsx`, `backend/src/mcp/server.rs`, `backend/src/services/repos.rs`. Objectif : extraire sous-composants/services sans changer le comportement.
+- [x] **Refactor maintenabilité backend (2026-05-16)** : `notification_channels/*`, `ingestion/github/*`, MCP handlers dans `mcp/tools/*_handler.rs` (voir `docs/plans/refactor-maintainability-pass-2026-05-17.md`). `services/repos.rs` déjà splitté en `repos/*`.
+- [ ] **Refactor maintenabilité frontend** : opportuniste — `frontend/src/routes/index.tsx` (landing), `UseCaseSearchPanel.tsx` si le polish UI continue.
 - [ ] **Boucles DB potentiellement N+1** : auditer puis batcher si nécessaire `services/use_case_watches.rs`, `services/notifications.rs`, `services/repo_categories.rs`. Priorité moyenne : chemins surtout write/backfill, pas hot path public critique.
 - [ ] **Tests ciblés sur zones complexes** : compléter autour des flows MCP metrics/admin, recommandations/use-case watches, ingestion GitHub parsing, et composants frontend complexes.
 - [x] **Docs pré-pivot** : retirées des docs actives pour éviter le bruit dans les audits automatiques et les décisions agents.

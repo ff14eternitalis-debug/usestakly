@@ -233,7 +233,7 @@ Acceptance criteria:
 
 ### Structured logs (L1)
 
-Backend ingestion logs structured quota fields on GitHub HTTP responses (`services/ingestion/github.rs`):
+Backend ingestion logs structured quota fields on GitHub HTTP responses (`services/ingestion/github/client.rs` + `github_quota.rs`):
 
 - `debug` on each response with headers when present: `github_rate_limit_remaining`, `github_rate_limit_limit`, `github_rate_limit_reset`, `github_rate_limit_used`
 - `warn` when `github_rate_limit_remaining <= 100` (`GitHub API rate limit low`)
