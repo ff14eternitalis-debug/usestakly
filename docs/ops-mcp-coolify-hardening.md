@@ -49,7 +49,7 @@ Current production configuration:
 - frequency: `0 2 * * *`
 - databases: `usestakly`
 - local retention: 7 days / 7 backups
-- S3/offsite backup: not configured yet
+- S3/offsite backup: not configured — **deferred (budget, 2026-05-17)**; see `docs/plans/public-launch-hardening-2026-05-17.md` Task 1
 - manual trigger on 2026-05-06: succeeded
 - local restore test on 2026-05-07: succeeded from `pg-dump-usestakly-1778119206.dmp`
 
@@ -104,7 +104,7 @@ Acceptance criteria:
 
 Remaining risk:
 
-- Offsite/S3 backup storage is still not configured. Local Coolify retention protects against application-level mistakes, but not against full VPS or disk loss.
+- Offsite/S3 backup storage is still not configured (deferred until budget allows). Local Coolify retention protects against application-level mistakes, but not against full VPS or disk loss. Acceptable for limited public beta; re-open before wider launch.
 
 ## Priority 2: Application Rate Limiting on `/mcp`
 

@@ -14,22 +14,30 @@
 
 ## Launch Decision
 
-UseStakly can stay public in limited beta today. A wider public announcement should wait for the items below.
+UseStakly can stay public in limited beta today. A **wider** public announcement should wait for the remaining **blocking** items below (not deferred ops).
 
 | Area | Launch status | Why |
 |---|---|---|
-| Offsite backup | Blocking | Local Coolify backup does not protect against full VPS/disk loss. |
+| Offsite backup | Deferred (budget) | Local Coolify backup + restore test are in place. S3/offsite copy is postponed until budget allows; full VPS/disk loss risk remains accepted for limited beta. |
 | `/api/repos/{id}/refresh` hardening | Done (code) | Session + DB limits + memory cooldown; deploy + env on Coolify still required. |
 | GitHub quota visibility | In progress | Structured logs shipped (L1); admin endpoint + public degraded state still open. |
-| Public UX/mobile smoke | Done | Manually validated on production desktop/mobile; no visible console or blocking layout issue reported. |
+| Public UX/mobile smoke | Done | Validated manually on production desktop and mobile (2026-05-17); no visible console errors or blocking layout issues reported. |
 | Real outbound email notification | Blocking | Channel test is not enough; one real watch/digest delivery must be proven. |
 | Live post-deploy gate | Done | Health/status/OAuth/discover/repo/MCP/watchlist already validated. |
 
-Non-blocking for beta launch: Sybil GitHub graph, custom alert rules, richer account page, full score history/timeline UI, large refactors, broader search calibration.
+Non-blocking for limited beta launch: offsite S3 (deferred budget), Sybil GitHub graph, custom alert rules, richer account page, full score history/timeline UI, large refactors, broader search calibration, GitHub quota admin endpoint (Task 3 L2).
 
 ---
 
 ## Task 1 — Offsite Backup / S3
+
+**Status (2026-05-17):** **Deferred — budget.** Not required to keep the current limited public beta running. Re-open before a wider launch or when a low-cost target exists (S3-compatible provider, free tier, or documented manual copy of Coolify dumps off the VPS).
+
+**Mitigation in place today:**
+- Scheduled local Coolify backup on `usestakly-postgres` (daily, 7-day retention).
+- Local restore test validated 2026-05-07 (see `docs/ops-mcp-coolify-hardening.md`).
+
+**Residual risk while deferred:** loss of the entire VPS or disk still means loss of production data unless a copy exists elsewhere.
 
 **Goal:** Protect production data against VPS or disk loss, not only app-level mistakes.
 
@@ -38,7 +46,7 @@ Non-blocking for beta launch: Sybil GitHub graph, custom alert rules, richer acc
 - `docs/security-secrets-playbook.md` if new storage credentials are introduced
 - `docs/plans/remaining-work-2026-05-03.md`
 
-- [ ] Pick the offsite target: S3-compatible storage, provider backup, or another managed backup location.
+- [ ] ~~Pick the offsite target~~ — deferred; pick when budget allows: S3-compatible storage, provider backup, or another managed backup location.
 - [ ] Configure Coolify backup storage for `usestakly-postgres`.
 - [ ] Trigger one manual backup to the offsite target.
 - [ ] Verify the backup artifact exists outside the VPS.

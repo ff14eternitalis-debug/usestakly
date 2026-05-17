@@ -8,6 +8,8 @@
 
 **Key constraint:** cap accepted repos at **500** for the first import. Every step must support dry-run output before ingestion.
 
+**Execution gate:** do not run a production import until Task 4 duplicate short-circuit is implemented and verified. The current `alreadyIndexed` flag alone is not enough if the handler still calls GitHub for already-known repos.
+
 ---
 
 ## Product Position
@@ -26,6 +28,7 @@ The root `sindresorhus/awesome` README mostly links to curated Awesome lists. Th
 - Existing ingestion is idempotent at DB level: `ingest_repo` upserts `external_artifacts` with `ON CONFLICT (source, canonical_slug) DO UPDATE`.
 - `POST /api/repos/add` already returns `alreadyIndexed` by checking `find_github_artifact_id` before ingestion.
 - Existing seed script: `scripts/seed-public-corpus.ps1` posts a static repo list to `/api/repos/add`.
+- Existing DB seed binary: `backend/src/bin/seed_github.rs` ingests directly from `backend/seeds/top_repos.toml`; the API path is preferred for this import because it returns `alreadyIndexed`, uses the public add flow, and recomputes the single artifact through `recompute_external_artifact`.
 - `GITHUB_TOKEN` is required for ingestion.
 - After ingestion, code calls `recompute_external_artifact` for the single artifact.
 
@@ -62,15 +65,34 @@ Risk to close in this plan: ensure user-facing add flow does not create duplicat
 
 **Files to touch:**
 - Create: `docs/corpus/awesome-import.md`
-- Later script: `scripts/collect-awesome-corpus.ps1` or `scripts/collect-awesome-corpus.mjs`
+- Later script: `scripts/collect-awesome-corpus.mjs`
+- Create: `docs/corpus/awesome-lists-allowlist.json`
 
 - [ ] Define source depth:
   - root: `sindresorhus/awesome`
-  - depth 1: selected Awesome-list READMEs linked from the root
+  - depth 1: selected Awesome-list READMEs linked from the root allowlist
   - no depth 2 recursion in the first import
+- [ ] Create an allowlist of roughly 15-25 Awesome-list repos before crawling depth 1. Suggested categories:
+  - frontend / UI
+  - testing
+  - Node.js / TypeScript
+  - Python
+  - Rust
+  - Go
+  - databases / ORM
+  - auth / security
+  - observability
+  - build/dev tooling
+  - machine learning/data tooling
+- [ ] Document why each allowlisted Awesome list is included.
 - [ ] Define default cap:
   - `maxAcceptedRepos = 500`
   - stop after ranking/filtering, not after raw extraction
+- [ ] Define ranking before cap:
+  - first dedupe all candidates
+  - score candidates by source category relevance and direct repo-link confidence
+  - apply round-robin or per-source quotas so one large list cannot fill all 500 slots
+  - then take the first 500
 - [ ] Define normalized repo key:
   - lowercase `owner/repo`
   - strip `https://github.com/`
@@ -88,6 +110,8 @@ Risk to close in this plan: ensure user-facing add flow does not create duplicat
 **Acceptance criteria:**
 - A developer can tell what "up to 500 repos" means before the importer runs.
 - The import is bounded and reviewable.
+- The exact depth-1 Awesome lists are versioned and reproducible.
+- The first 500 repos are chosen after ranking, not by arbitrary README extraction order.
 
 ---
 
@@ -104,6 +128,7 @@ Risk to close in this plan: ensure user-facing add flow does not create duplicat
 ```powershell
 node scripts/collect-awesome-corpus.mjs `
   --root sindresorhus/awesome `
+  --allowlist docs/corpus/awesome-lists-allowlist.json `
   --max 500 `
   --out docs/corpus/awesome-candidates.json `
   --summary docs/corpus/awesome-candidates-summary.md
@@ -117,12 +142,13 @@ node scripts/collect-awesome-corpus.mjs `
   - repo name starts with `awesome`
   - or README line/list text includes `awesome`
   - or source is the root `sindresorhus/awesome`
-- [ ] Fetch selected depth 1 README files.
+- [ ] Fetch only depth 1 README files listed in `docs/corpus/awesome-lists-allowlist.json`.
 - [ ] Extract direct `github.com/owner/repo` links from those READMEs.
 - [ ] Normalize and deduplicate candidate repos.
 - [ ] Keep source provenance for every candidate.
 - [ ] Emit JSON and markdown summary.
 - [ ] Never call `/api/repos/add` in this script.
+- [ ] Rate-limit raw README fetches and cache fetched README content locally during one run to avoid repeated GitHub calls while tuning filters.
 
 **Acceptance criteria:**
 - Running the collector produces a candidate file and summary only.
@@ -137,7 +163,7 @@ node scripts/collect-awesome-corpus.mjs `
 **Filtering rules:**
 
 - [ ] Reject non-GitHub links.
-- [ ] Reject GitHub URLs that are not repository roots:
+- [ ] Reject GitHub URLs that are not repository roots and cannot be safely normalized:
   - `/issues`
   - `/pull`
   - `/pulls`
@@ -146,9 +172,10 @@ node scripts/collect-awesome-corpus.mjs `
   - `/wiki`
   - `/discussions`
   - `/sponsors`
-  - `/blob`
-  - `/tree`
   - `/commit`
+- [ ] Normalize valid repo subpaths to the repository root instead of dropping them:
+  - `github.com/owner/repo/tree/...` -> `owner/repo`
+  - `github.com/owner/repo/blob/...` -> `owner/repo`
 - [ ] Reject obvious non-repo GitHub hosts or pseudo paths.
 - [ ] Reject root Awesome lists from the final target set by default:
   - keep them as `sourceList`
@@ -163,7 +190,10 @@ node scripts/collect-awesome-corpus.mjs `
   - observability
   - build/dev tooling
   - data/ML tooling
-- [ ] Allow language/topic diversity, but avoid filling all 500 slots from one large list.
+- [ ] Apply source/category balancing before taking the final 500:
+  - per-source cap for very large lists
+  - round-robin across source lists or categories
+  - stable deterministic ordering for reproducible dry-runs
 
 **Acceptance criteria:**
 - The first 500 candidates are varied and useful for UseStakly discovery.
@@ -173,7 +203,7 @@ node scripts/collect-awesome-corpus.mjs `
 
 ## Task 4 — Existing Corpus Dedup Check
 
-**Goal:** Avoid ingesting repos already present in UseStakly and prove user add is idempotent.
+**Goal:** Avoid ingesting repos already present in UseStakly, avoid unnecessary GitHub calls, and prove user add is idempotent.
 
 **Backend facts to verify:**
 - `find_github_artifact_id` checks existing `external_artifacts` by exact `github_owner` + `github_repo`.
@@ -188,16 +218,23 @@ node scripts/collect-awesome-corpus.mjs `
 
 - [ ] Confirm owner/repo comparison is case-insensitive or normalize before lookup.
 - [ ] If not case-insensitive, update `find_github_artifact_id` or caller normalization so `FFmpeg/FFmpeg` and `ffmpeg/ffmpeg` resolve to the same existing artifact.
+- [ ] Short-circuit `POST /api/repos/add` when the repo already exists:
+  - do **not** call `ingest_repo` for already-indexed repos by default
+  - return the existing profile/add response with `alreadyIndexed: true`
+  - keep an explicit future refresh path separate from add, instead of refreshing on every duplicate add
 - [ ] Add a test for duplicate add behavior:
   - existing repo in DB
   - user/API adds same repo with different casing or GitHub URL format
   - response has `alreadyIndexed: true`
   - no duplicate `external_artifacts` row
-- [ ] Confirm frontend add flow communicates "already indexed" instead of implying a fresh import.
+  - no GitHub ingestion call is made for the duplicate path, or the logic is structured so this can be proven by a unit/service test
+- [ ] Confirm frontend add flow communicates "already indexed" instead of implying a fresh import or refreshed metadata.
+- [ ] If current UI copy says "Refreshed metadata" for `alreadyIndexed`, update it to a neutral existing-corpus message before shipping the short-circuit.
 
 **Acceptance criteria:**
 - A user cannot create duplicate UseStakly repos for the same GitHub repo.
 - Different casing and URL forms are handled.
+- Re-adding an existing repo does not spend GitHub quota.
 
 ---
 
@@ -242,11 +279,14 @@ Then, after review:
 - [ ] Add delay between requests to reduce GitHub pressure.
 - [ ] Stop or pause on repeated GitHub rate-limit failures.
 - [ ] Emit final summary JSON/MD.
+- [ ] Prefer staging/local first. Production import should run only after Task 4 short-circuit is deployed.
+- [ ] If a future admin-gated import endpoint exists, prefer it over the public add endpoint for production.
 
 **Acceptance criteria:**
 - Import can be reviewed before execution.
 - Import can resume safely because `/api/repos/add` is idempotent.
 - Existing repos are counted separately from newly ingested repos.
+- Duplicate candidates do not trigger GitHub API calls after Task 4 lands.
 
 ---
 
@@ -262,7 +302,9 @@ Then, after review:
 - [ ] Run import in staging/local first if possible.
 - [ ] Run production import during a quiet window.
 - [ ] Monitor backend logs for GitHub rate-limit warnings.
-- [ ] Let scheduler/recompute update scores and radar.
+- [ ] Keep the first import at or below 500 repos and consider smaller batches (for example 50-100) if quota warnings appear.
+- [ ] Let scheduler/recompute update scores and radar; wait at least 1-2 scheduler cycles after import, or run an admin recompute if intentionally doing a controlled release operation.
+- [ ] Watch `APP_INGEST_MAX_REPOS_PER_CYCLE` and scheduler logs after import; 500 new artifacts may take multiple cycles to fully refresh depending on prod limits.
 - [ ] Spot-check `/discover` and repo profiles.
 - [ ] Record:
   - date
@@ -272,10 +314,12 @@ Then, after review:
   - number already indexed
   - number failed
   - rate-limit events
+  - scheduler/recompute follow-up status
 
 **Acceptance criteria:**
 - The import result is reproducible.
 - There is an audit trail of why these repos entered the corpus.
+- The import does not mask GitHub quota pressure or leave operators guessing whether the first scoring/radar pass completed.
 
 ---
 
@@ -296,8 +340,8 @@ Then, after review:
   ```
 - [ ] Script dry-run:
   ```powershell
-  node scripts/collect-awesome-corpus.mjs --root sindresorhus/awesome --max 500 --out docs/corpus/awesome-candidates.json --summary docs/corpus/awesome-candidates-summary.md
-  ```
+  node scripts/collect-awesome-corpus.mjs --root sindresorhus/awesome --allowlist docs/corpus/awesome-lists-allowlist.json --max 500 --out docs/corpus/awesome-candidates.json --summary docs/corpus/awesome-candidates-summary.md
+```
 - [ ] Import dry-run:
   ```powershell
   .\scripts\import-awesome-corpus.ps1 -Input docs/corpus/awesome-candidates-approved.json -Limit 500 -DryRun
@@ -305,6 +349,7 @@ Then, after review:
 - [ ] Duplicate test:
   - import one existing repo twice with different casing/URL format
   - confirm second response reports `alreadyIndexed: true`
+  - verify the second add emits no GitHub request
 
 **Acceptance criteria:**
 - Tests pass.
@@ -336,4 +381,3 @@ Then, after review:
 **Acceptance criteria:**
 - Future agents know how to repeat or extend the import without flooding the corpus.
 - No doc implies users can create duplicate repos.
-
