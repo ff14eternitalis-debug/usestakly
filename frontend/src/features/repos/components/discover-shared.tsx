@@ -1,6 +1,7 @@
 import type { SearchFilter } from "../../../lib/types";
 
 export const PAGE_SIZE = 20;
+export const RADAR_PAGE_SIZE = 10;
 
 export const LANGUAGE_OPTIONS = ["", "TypeScript", "JavaScript", "Python", "Rust", "Go"];
 export const TOPIC_OPTIONS = [

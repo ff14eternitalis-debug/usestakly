@@ -1,13 +1,14 @@
 param(
   [string]$Api = "http://127.0.0.1:4000",
-  [string]$Input = "docs/corpus/awesome-candidates-approved.json",
+  [Alias("Input")]
+  [string]$InputPath = "docs/corpus/awesome-candidates-approved.json",
   [int]$Limit = 500,
   [int]$DelayMs = 750,
   [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
-$raw = Get-Content -Raw -Path $Input | ConvertFrom-Json
+$raw = Get-Content -Raw -Path $InputPath | ConvertFrom-Json
 $candidates = @($raw.candidates)
 if ($candidates.Count -eq 0) {
   $candidates = @($raw)
@@ -74,7 +75,7 @@ $summaryPath = "docs/corpus/awesome-import-results.json"
 $out = @{
   at = (Get-Date).ToUniversalTime().ToString("o")
   api = $Api
-  input = $Input
+  input = $InputPath
   limit = $Limit
   stats = $stats
   results = $results

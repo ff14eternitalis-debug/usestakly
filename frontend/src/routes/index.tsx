@@ -22,18 +22,8 @@ function Hero() {
     <section className="shell relative pt-16 pb-20 md:pt-24 md:pb-28">
       <div className="grid gap-12 md:grid-cols-[1.3fr_1fr] md:items-center md:gap-16">
         <div className="grid gap-8 rise-in">
-          <div className="inline-flex items-center gap-2.5 self-start">
-            <span className="dot dot-pulse text-accent" />
-            <span className="mono text-[0.74rem] uppercase tracking-[0.18em] text-fg-dim">
-              {t.landing.eyebrow}
-            </span>
-          </div>
-
           <h1 className="display-xl">
-            {t.landing.h1Part1}
-            {" "}
-            <br />
-            <span className="accent">{t.landing.h1Part2}</span>
+            <span className="accent">{t.landing.h1}</span>
           </h1>
 
           <p className="max-w-[56ch] text-[1.08rem] md:text-[1.15rem] leading-[1.55] text-fg-dim">
@@ -73,7 +63,7 @@ function Hero() {
 
           <div className="mt-6 grid grid-cols-3 gap-5 border-t border-line pt-6 rise-in rise-in-d2">
             <Kpi k="4" label={t.landing.kpi1} />
-            <Kpi k="v1" label={t.landing.kpi2} />
+            <Kpi k="v2" label={t.landing.kpi2} />
             <Kpi k="0%" label={t.landing.kpi3} />
           </div>
         </div>
@@ -168,7 +158,7 @@ function HeroPanel() {
 
       <div className="border-t border-line px-5 py-3 flex justify-between text-[0.74rem]">
         <span className="mono text-fg-muted">
-          {quality?.formulaVersion ?? "formula_v1"}
+          {quality?.formulaVersion ?? "v2.0"}
         </span>
       </div>
     </aside>

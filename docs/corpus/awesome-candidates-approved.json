@@ -1,0 +1,4520 @@
+{
+  "generatedAt": "2026-05-17T17:44:52.064Z",
+  "root": "sindresorhus/awesome",
+  "allowlist": "docs/corpus/awesome-lists-allowlist.json",
+  "max": 500,
+  "stats": {
+    "rawLinks": 26993,
+    "rejected": {
+      "non_github": 5739,
+      "invalid_path": 318,
+      "non_repo_path": 944
+    },
+    "duplicates": 10243,
+    "awesomeListSkipped": 229,
+    "uniqueCandidates": 9520,
+    "finalCount": 500
+  },
+  "candidates": [
+    {
+      "owner": "adembudak",
+      "repo": "vim-doctor",
+      "url": "https://github.com/adembudak/vim-doctor",
+      "key": "adembudak/vim-doctor",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xcafed00d",
+      "repo": "joystick",
+      "url": "https://github.com/0xcafed00d/joystick",
+      "key": "0xcafed00d/joystick",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0529bill",
+      "repo": "react-client-validation",
+      "url": "https://github.com/0529bill/react-client-validation",
+      "key": "0529bill/react-client-validation",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0no-co",
+      "repo": "gql.tada",
+      "url": "https://github.com/0no-co/gql.tada",
+      "key": "0no-co/gql.tada",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "2ndquadrant",
+      "repo": "bdr",
+      "url": "https://github.com/2ndQuadrant/bdr",
+      "key": "2ndquadrant/bdr",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adazzle",
+      "repo": "react-data-grid",
+      "url": "https://github.com/adazzle/react-data-grid",
+      "key": "adazzle/react-data-grid",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "24pullrequests",
+      "repo": "contribulator",
+      "url": "https://github.com/24pullrequests/contribulator",
+      "key": "24pullrequests/contribulator",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "23c",
+      "repo": "react-native-transparent-bar",
+      "url": "https://github.com/23c/react-native-transparent-bar",
+      "key": "23c/react-native-transparent-bar",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0x4d31",
+      "repo": "sqhunter",
+      "url": "https://github.com/0x4d31/sqhunter",
+      "key": "0x4d31/sqhunter",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aerospike",
+      "repo": "aerospike-server",
+      "url": "https://github.com/aerospike/aerospike-server",
+      "key": "aerospike/aerospike-server",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "06chaynes",
+      "repo": "http-cache",
+      "url": "https://github.com/06chaynes/http-cache",
+      "key": "06chaynes/http-cache",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "51j0",
+      "repo": "android-storage-extractor",
+      "url": "https://github.com/51j0/Android-Storage-Extractor",
+      "key": "51j0/android-storage-extractor",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "5anthosh",
+      "repo": "fcal",
+      "url": "https://github.com/5anthosh/fcal",
+      "key": "5anthosh/fcal",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a827681306",
+      "repo": "devtoolkit",
+      "url": "https://github.com/a827681306/devtoolkit",
+      "key": "a827681306/devtoolkit",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "567-labs",
+      "repo": "instructor",
+      "url": "https://github.com/567-labs/instructor",
+      "key": "567-labs/instructor",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "52-entertainment",
+      "repo": "vite-plugin-oxlint",
+      "url": "https://github.com/52-entertainment/vite-plugin-oxlint",
+      "key": "52-entertainment/vite-plugin-oxlint",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "14nrv",
+      "repo": "buefy-shop",
+      "url": "https://github.com/14nrv/buefy-shop",
+      "key": "14nrv/buefy-shop",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abraham",
+      "repo": "twitteroauth",
+      "url": "https://github.com/abraham/twitteroauth",
+      "key": "abraham/twitteroauth",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airblade",
+      "repo": "vim-gitgutter",
+      "url": "https://github.com/airblade/vim-gitgutter",
+      "key": "airblade/vim-gitgutter",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xerr0r",
+      "repo": "blocky",
+      "url": "https://github.com/0xERR0R/blocky",
+      "key": "0xerr0r/blocky",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1amageek",
+      "repo": "mapkit",
+      "url": "https://github.com/1amageek/mapkit",
+      "key": "1amageek/mapkit",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "19majkel94",
+      "repo": "type-graphql",
+      "url": "https://github.com/19majkel94/type-graphql",
+      "key": "19majkel94/type-graphql",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "2ndquadrant",
+      "repo": "pglogical",
+      "url": "https://github.com/2ndQuadrant/pglogical",
+      "key": "2ndquadrant/pglogical",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aelassas",
+      "repo": "bookcars",
+      "url": "https://github.com/aelassas/bookcars",
+      "key": "aelassas/bookcars",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ackama",
+      "repo": "rails-template",
+      "url": "https://github.com/ackama/rails-template",
+      "key": "ackama/rails-template",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "24ark",
+      "repo": "react-native-step-indicator",
+      "url": "https://github.com/24ark/react-native-step-indicator",
+      "key": "24ark/react-native-step-indicator",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "504ensicslabs",
+      "repo": "lime",
+      "url": "https://github.com/504ensicsLabs/LiME",
+      "key": "504ensicslabs/lime",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antirez",
+      "repo": "redis",
+      "url": "https://github.com/antirez/redis",
+      "key": "antirez/redis",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0x59616e",
+      "repo": "steinsos",
+      "url": "https://github.com/0x59616e/SteinsOS",
+      "key": "0x59616e/steinsos",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "99designs",
+      "repo": "aws-vault",
+      "url": "https://github.com/99designs/aws-vault",
+      "key": "99designs/aws-vault",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronpowell",
+      "repo": "db.js",
+      "url": "https://github.com/aaronpowell/db.js",
+      "key": "aaronpowell/db.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alandsleman",
+      "repo": "storagebox",
+      "url": "https://github.com/AlandSleman/StorageBox",
+      "key": "alandsleman/storagebox",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abhitronix",
+      "repo": "vidgear",
+      "url": "https://github.com/abhiTronix/vidgear",
+      "key": "abhitronix/vidgear",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "60late",
+      "repo": "vite-plugin-minipic",
+      "url": "https://github.com/60late/vite-plugin-minipic",
+      "key": "60late/vite-plugin-minipic",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronlamz",
+      "repo": "navpress",
+      "url": "https://github.com/aaronlamz/navpress",
+      "key": "aaronlamz/navpress",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acclimatecontainer",
+      "repo": "acclimate-container",
+      "url": "https://github.com/AcclimateContainer/acclimate-container",
+      "key": "acclimatecontainer/acclimate-container",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akrawchyk",
+      "repo": "dotfiles",
+      "url": "https://github.com/akrawchyk/dotfiles",
+      "key": "akrawchyk/dotfiles",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1set",
+      "repo": "cronrange",
+      "url": "https://github.com/1set/cronrange",
+      "key": "1set/cronrange",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "99ff00",
+      "repo": "react-charty",
+      "url": "https://github.com/99ff00/react-charty",
+      "key": "99ff00/react-charty",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "2fd",
+      "repo": "graphdoc",
+      "url": "https://github.com/2fd/graphdoc",
+      "key": "2fd/graphdoc",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "2ndquadrant",
+      "repo": "repmgr",
+      "url": "https://github.com/2ndQuadrant/repmgr",
+      "key": "2ndquadrant/repmgr",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aidenybai",
+      "repo": "react-scan",
+      "url": "https://github.com/aidenybai/react-scan",
+      "key": "aidenybai/react-scan",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "activeadmin",
+      "repo": "activeadmin",
+      "url": "https://github.com/activeadmin/activeadmin",
+      "key": "activeadmin/activeadmin",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "650industries",
+      "repo": "react-native-link",
+      "url": "https://github.com/650Industries/react-native-link",
+      "key": "650industries/react-native-link",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ahmedkhlief",
+      "repo": "apt-hunter",
+      "url": "https://github.com/ahmedkhlief/APT-Hunter",
+      "key": "ahmedkhlief/apt-hunter",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "cassandra",
+      "url": "https://github.com/apache/cassandra",
+      "key": "apache/cassandra",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0x676e67",
+      "repo": "vproxy",
+      "url": "https://github.com/0x676e67/vproxy",
+      "key": "0x676e67/vproxy",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aboul3la",
+      "repo": "sublist3r",
+      "url": "https://github.com/aboul3la/Sublist3r",
+      "key": "aboul3la/sublist3r",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acconut",
+      "repo": "polyplayer",
+      "url": "https://github.com/Acconut/polyplayer",
+      "key": "acconut/polyplayer",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alandsleman",
+      "repo": "t3-twitter-clone",
+      "url": "https://github.com/AlandSleman/t3-twitter-clone",
+      "key": "alandsleman/t3-twitter-clone",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adbar",
+      "repo": "trafilatura",
+      "url": "https://github.com/adbar/trafilatura",
+      "key": "adbar/trafilatura",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "7th-cyborg",
+      "repo": "vite-plugin-zip-pack",
+      "url": "https://github.com/7th-Cyborg/vite-plugin-zip-pack",
+      "key": "7th-cyborg/vite-plugin-zip-pack",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronlamz",
+      "repo": "vue-next-i18n",
+      "url": "https://github.com/Aaronlamz/vue-next-i18n",
+      "key": "aaronlamz/vue-next-i18n",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ackintosh",
+      "repo": "ganesha",
+      "url": "https://github.com/ackintosh/ganesha",
+      "key": "ackintosh/ganesha",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akz92",
+      "repo": "vim-ionic2",
+      "url": "https://github.com/akz92/vim-ionic2",
+      "key": "akz92/vim-ionic2",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1set",
+      "repo": "gut",
+      "url": "https://github.com/1set/gut",
+      "key": "1set/gut",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a-tokyo",
+      "repo": "react-apple-signin-auth",
+      "url": "https://github.com/A-Tokyo/react-apple-signin-auth",
+      "key": "a-tokyo/react-apple-signin-auth",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ably-labs",
+      "repo": "graphql-ably-pubsub",
+      "url": "https://github.com/ably-labs/graphql-ably-pubsub",
+      "key": "ably-labs/graphql-ably-pubsub",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "achiku",
+      "repo": "planter",
+      "url": "https://github.com/achiku/planter",
+      "key": "achiku/planter",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "visx",
+      "url": "https://github.com/airbnb/visx",
+      "key": "airbnb/visx",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "activerecord-hackery",
+      "repo": "ransack",
+      "url": "https://github.com/activerecord-hackery/ransack",
+      "key": "activerecord-hackery/ransack",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "7kfpun",
+      "repo": "audiencenetworkreactnative",
+      "url": "https://github.com/7kfpun/AudienceNetworkReactNative",
+      "key": "7kfpun/audiencenetworkreactnative",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aim4r",
+      "repo": "voldiff",
+      "url": "https://github.com/aim4r/VolDiff",
+      "key": "aim4r/voldiff",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "couchdb",
+      "url": "https://github.com/apache/couchdb",
+      "key": "apache/couchdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0x676e67",
+      "repo": "wreq",
+      "url": "https://github.com/0x676e67/wreq",
+      "key": "0x676e67/wreq",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amocrenco",
+      "repo": "owasp-testing-checklist-v4-markdown",
+      "url": "https://github.com/amocrenco/owasp-testing-checklist-v4-markdown",
+      "key": "amocrenco/owasp-testing-checklist-v4-markdown",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adamschwartz",
+      "repo": "log",
+      "url": "https://github.com/adamschwartz/log",
+      "key": "adamschwartz/log",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alepacheco",
+      "repo": "landing-template",
+      "url": "https://github.com/alepacheco/landing-template",
+      "key": "alepacheco/landing-template",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ag2ai",
+      "repo": "ag2",
+      "url": "https://github.com/ag2ai/ag2",
+      "key": "ag2ai/ag2",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "8hobbies",
+      "repo": "vite-plugin-year",
+      "url": "https://github.com/8hobbies/vite-plugin-year",
+      "key": "8hobbies/vite-plugin-year",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ably-labs",
+      "repo": "realtime-quiz-framework",
+      "url": "https://github.com/ably-labs/realtime-quiz-framework",
+      "key": "ably-labs/realtime-quiz-framework",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adsr",
+      "repo": "phpspy",
+      "url": "https://github.com/adsr/phpspy",
+      "key": "adsr/phpspy",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "altercation",
+      "repo": "vim-colors-solarized",
+      "url": "https://github.com/altercation/vim-colors-solarized",
+      "key": "altercation/vim-colors-solarized",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1set",
+      "repo": "starlet",
+      "url": "https://github.com/1set/starlet",
+      "key": "1set/starlet",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adcentury",
+      "repo": "react-mobile-picker",
+      "url": "https://github.com/adcentury/react-mobile-picker",
+      "key": "adcentury/react-mobile-picker",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "absinthe-graphql",
+      "repo": "absinthe",
+      "url": "https://github.com/absinthe-graphql/absinthe",
+      "key": "absinthe-graphql/absinthe",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aiven",
+      "repo": "pghoard",
+      "url": "https://github.com/aiven/pghoard",
+      "key": "aiven/pghoard",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alan2207",
+      "repo": "bulletproof-react",
+      "url": "https://github.com/alan2207/bulletproof-react",
+      "key": "alan2207/bulletproof-react",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adzap",
+      "repo": "active_enum",
+      "url": "https://github.com/adzap/active_enum",
+      "key": "adzap/active_enum",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "7kfpun",
+      "repo": "financemacosreactnative",
+      "url": "https://github.com/7kfpun/FinanceMacOSReactNative",
+      "key": "7kfpun/financemacosreactnative",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "streamalert",
+      "url": "https://github.com/airbnb/streamalert",
+      "key": "airbnb/streamalert",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "basho",
+      "repo": "riak",
+      "url": "https://github.com/basho/riak",
+      "key": "basho/riak",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xdea",
+      "repo": "augur",
+      "url": "https://github.com/0xdea/augur",
+      "key": "0xdea/augur",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aol",
+      "repo": "moloch",
+      "url": "https://github.com/aol/moloch",
+      "key": "aol/moloch",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adamwdraper",
+      "repo": "numeral-js",
+      "url": "https://github.com/adamwdraper/Numeral-js",
+      "key": "adamwdraper/numeral-js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ananddayalan",
+      "repo": "nextjs-in-firebase-with-bootstrap",
+      "url": "https://github.com/ananddayalan/nextjs-in-firebase-with-bootstrap",
+      "key": "ananddayalan/nextjs-in-firebase-with-bootstrap",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ag2ai",
+      "repo": "faststream",
+      "url": "https://github.com/ag2ai/faststream",
+      "key": "ag2ai/faststream",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "985563349",
+      "repo": "react-vite-template",
+      "url": "https://github.com/985563349/react-vite-template",
+      "key": "985563349/react-vite-template",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acccccccb",
+      "repo": "vue-img-cutter",
+      "url": "https://github.com/acccccccb/vue-img-cutter",
+      "key": "acccccccb/vue-img-cutter",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ambionics",
+      "repo": "phpggc",
+      "url": "https://github.com/ambionics/phpggc",
+      "key": "ambionics/phpggc",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "blacksuan19",
+      "repo": "init.nvim",
+      "url": "https://github.com/Blacksuan19/init.nvim",
+      "key": "blacksuan19/init.nvim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1set",
+      "repo": "todotxt",
+      "url": "https://github.com/1set/todotxt",
+      "key": "1set/todotxt",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adeled",
+      "repo": "react-paginate",
+      "url": "https://github.com/AdeleD/react-paginate",
+      "key": "adeled/react-paginate",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acarl005",
+      "repo": "join-monster",
+      "url": "https://github.com/acarl005/join-monster",
+      "key": "acarl005/join-monster",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aiven",
+      "repo": "pglookout",
+      "url": "https://github.com/aiven/pglookout",
+      "key": "aiven/pglookout",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alibaba",
+      "repo": "formily",
+      "url": "https://github.com/alibaba/formily",
+      "key": "alibaba/formily",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agileventures",
+      "repo": "websiteone",
+      "url": "https://github.com/AgileVentures/WebsiteOne",
+      "key": "agileventures/websiteone",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "7kfpun",
+      "repo": "financereactnative",
+      "url": "https://github.com/7kfpun/FinanceReactNative",
+      "key": "7kfpun/financereactnative",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ajmartel",
+      "repo": "irtriage",
+      "url": "https://github.com/AJMartel/IRTriage",
+      "key": "ajmartel/irtriage",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "boltdb",
+      "repo": "bolt",
+      "url": "https://github.com/boltdb/bolt",
+      "key": "boltdb/bolt",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xdea",
+      "repo": "haruspex",
+      "url": "https://github.com/0xdea/haruspex",
+      "key": "0xdea/haruspex",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "incubator-metron",
+      "url": "https://github.com/apache/incubator-metron",
+      "key": "apache/incubator-metron",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "addyosmani",
+      "repo": "9f10c555e32a8d06ddb0",
+      "url": "https://github.com/addyosmani/9f10c555e32a8d06ddb0",
+      "key": "addyosmani/9f10c555e32a8d06ddb0",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "artemzhyto",
+      "repo": "modal-layout-component",
+      "url": "https://github.com/ArtemZhyto/Modal-layout-component",
+      "key": "artemzhyto/modal-layout-component",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agronholm",
+      "repo": "anyio",
+      "url": "https://github.com/agronholm/anyio",
+      "key": "agronholm/anyio",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a3mitskevich",
+      "repo": "vite-font-extractor-plugin",
+      "url": "https://github.com/a3mitskevich/vite-font-extractor-plugin",
+      "key": "a3mitskevich/vite-font-extractor-plugin",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acidjazz",
+      "repo": "laranuxt",
+      "url": "https://github.com/acidjazz/laranuxt",
+      "key": "acidjazz/laranuxt",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amphp",
+      "repo": "amp",
+      "url": "https://github.com/amphp/amp",
+      "key": "amphp/amp",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bling",
+      "repo": "vim-airline",
+      "url": "https://github.com/bling/vim-airline",
+      "key": "bling/vim-airline",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "2ykwang",
+      "repo": "mac-cleanup-go",
+      "url": "https://github.com/2ykwang/mac-cleanup-go",
+      "key": "2ykwang/mac-cleanup-go",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "advanced-cropper",
+      "repo": "react-advanced-cropper",
+      "url": "https://github.com/advanced-cropper/react-advanced-cropper",
+      "key": "advanced-cropper/react-advanced-cropper",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aerogear",
+      "repo": "graphback",
+      "url": "https://github.com/aerogear/graphback",
+      "key": "aerogear/graphback",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexis-benoist",
+      "repo": "eralchemy",
+      "url": "https://github.com/Alexis-benoist/eralchemy",
+      "key": "alexis-benoist/eralchemy",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anatoliygatt",
+      "repo": "heart-switch",
+      "url": "https://github.com/anatoliygatt/heart-switch",
+      "key": "anatoliygatt/heart-switch",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ai",
+      "repo": "autoprefixer-rails",
+      "url": "https://github.com/ai/autoprefixer-rails",
+      "key": "ai/autoprefixer-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "7kfpun",
+      "repo": "photosreactnative",
+      "url": "https://github.com/7kfpun/PhotosReactNative",
+      "key": "7kfpun/photosreactnative",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "almco",
+      "repo": "panorama",
+      "url": "https://github.com/AlmCo/Panorama",
+      "key": "almco/panorama",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "cstore_fdw",
+      "url": "https://github.com/citusdata/cstore_fdw",
+      "key": "citusdata/cstore_fdw",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xdea",
+      "repo": "jiggy",
+      "url": "https://github.com/0xdea/jiggy",
+      "key": "0xdea/jiggy",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "incubator-spot",
+      "url": "https://github.com/apache/incubator-spot",
+      "key": "apache/incubator-spot",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "addyosmani",
+      "repo": "basket.js",
+      "url": "https://github.com/addyosmani/basket.js",
+      "key": "addyosmani/basket.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "arunoda",
+      "repo": "nextgram",
+      "url": "https://github.com/arunoda/nextgram",
+      "key": "arunoda/nextgram",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agronholm",
+      "repo": "apscheduler",
+      "url": "https://github.com/agronholm/apscheduler",
+      "key": "agronholm/apscheduler",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "activeguild",
+      "repo": "vite-plugin-sass-dts",
+      "url": "https://github.com/activeguild/vite-plugin-sass-dts",
+      "key": "activeguild/vite-plugin-sass-dts",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adi518",
+      "repo": "vue-stepper-component",
+      "url": "https://github.com/adi518/vue-stepper-component",
+      "key": "adi518/vue-stepper-component",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apigen",
+      "repo": "apigen",
+      "url": "https://github.com/apigen/apigen",
+      "key": "apigen/apigen",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "blueshirts",
+      "repo": "darcula",
+      "url": "https://github.com/blueshirts/darcula",
+      "key": "blueshirts/darcula",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "32leaves",
+      "repo": "bel",
+      "url": "https://github.com/32leaves/bel",
+      "key": "32leaves/bel",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "advanced-cropper",
+      "repo": "react-mobile-cropper",
+      "url": "https://github.com/advanced-cropper/react-mobile-cropper",
+      "key": "advanced-cropper/react-mobile-cropper",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alan345",
+      "repo": "naperg",
+      "url": "https://github.com/alan345/naperg",
+      "key": "alan345/naperg",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "dexter",
+      "url": "https://github.com/ankane/dexter",
+      "key": "ankane/dexter",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ant-design",
+      "repo": "ant-design",
+      "url": "https://github.com/ant-design/ant-design",
+      "key": "ant-design/ant-design",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alassek",
+      "repo": "activerecord-pg_enum",
+      "url": "https://github.com/alassek/activerecord-pg_enum",
+      "key": "alassek/activerecord-pg_enum",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "99xt",
+      "repo": "first-born",
+      "url": "https://github.com/99xt/first-born",
+      "key": "99xt/first-born",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alphasoc",
+      "repo": "flightsim",
+      "url": "https://github.com/alphasoc/flightsim",
+      "key": "alphasoc/flightsim",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "deephacks",
+      "repo": "lmdbjni",
+      "url": "https://github.com/deephacks/lmdbjni",
+      "key": "deephacks/lmdbjni",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xdea",
+      "repo": "oneiromancer",
+      "url": "https://github.com/0xdea/oneiromancer",
+      "key": "0xdea/oneiromancer",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apps",
+      "repo": "guardrails",
+      "url": "https://github.com/apps/guardrails",
+      "key": "apps/guardrails",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "addyosmani",
+      "repo": "es6-tools",
+      "url": "https://github.com/addyosmani/es6-tools",
+      "key": "addyosmani/es6-tools",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auth0-blog",
+      "repo": "nextjs-got",
+      "url": "https://github.com/auth0-blog/nextjs-got",
+      "key": "auth0-blog/nextjs-got",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ahupp",
+      "repo": "python-magic",
+      "url": "https://github.com/ahupp/python-magic",
+      "key": "ahupp/python-magic",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aibayanyu20",
+      "repo": "vite-plugins",
+      "url": "https://github.com/aibayanyu20/vite-plugins",
+      "key": "aibayanyu20/vite-plugins",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adrianjanocko",
+      "repo": "toastflow",
+      "url": "https://github.com/adrianjanocko/toastflow",
+      "key": "adrianjanocko/toastflow",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apix",
+      "repo": "cache",
+      "url": "https://github.com/apix/cache",
+      "key": "apix/cache",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "blueyed",
+      "repo": "vim-diminactive",
+      "url": "https://github.com/blueyed/vim-diminactive",
+      "key": "blueyed/vim-diminactive",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "3d0c",
+      "repo": "gmf",
+      "url": "https://github.com/3d0c/gmf",
+      "key": "3d0c/gmf",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aeagle",
+      "repo": "react-spaces",
+      "url": "https://github.com/aeagle/react-spaces",
+      "key": "aeagle/react-spaces",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexstrat",
+      "repo": "supertest-graphql",
+      "url": "https://github.com/alexstrat/supertest-graphql",
+      "key": "alexstrat/supertest-graphql",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "pghero",
+      "url": "https://github.com/ankane/pghero",
+      "key": "ankane/pghero",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-client",
+      "url": "https://github.com/apollographql/apollo-client",
+      "key": "apollographql/apollo-client",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "algolia",
+      "repo": "algoliasearch-rails",
+      "url": "https://github.com/algolia/algoliasearch-rails",
+      "key": "algolia/algoliasearch-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aakashns",
+      "repo": "react-native-dialogs",
+      "url": "https://github.com/aakashns/react-native-dialogs",
+      "key": "aakashns/react-native-dialogs",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alpine-sec",
+      "repo": "spectr3",
+      "url": "https://github.com/alpine-sec/SPECTR3",
+      "key": "alpine-sec/spectr3",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "elasticsearch",
+      "repo": "elasticsearch",
+      "url": "https://github.com/elasticsearch/elasticsearch",
+      "key": "elasticsearch/elasticsearch",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xdea",
+      "repo": "rhabdomancer",
+      "url": "https://github.com/0xdea/rhabdomancer",
+      "key": "0xdea/rhabdomancer",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aquasecurity",
+      "repo": "trivy",
+      "url": "https://github.com/aquasecurity/trivy",
+      "key": "aquasecurity/trivy",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adonisjs",
+      "repo": "core",
+      "url": "https://github.com/adonisjs/core",
+      "key": "adonisjs/core",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bearstudio",
+      "repo": "start-ui-web",
+      "url": "https://github.com/BearStudio/start-ui-web",
+      "key": "bearstudio/start-ui-web",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aio-libs",
+      "repo": "aiohttp",
+      "url": "https://github.com/aio-libs/aiohttp",
+      "key": "aio-libs/aiohttp",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "albancrepel",
+      "repo": "compiiile",
+      "url": "https://github.com/AlbanCrepel/compiiile",
+      "key": "albancrepel/compiiile",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ag-grid",
+      "repo": "ag-grid",
+      "url": "https://github.com/ag-grid/ag-grid",
+      "key": "ag-grid/ag-grid",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "appserver-io",
+      "repo": "appserver",
+      "url": "https://github.com/appserver-io/appserver",
+      "key": "appserver-io/appserver",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "burntsushi",
+      "repo": "ripgrep",
+      "url": "https://github.com/BurntSushi/ripgrep",
+      "key": "burntsushi/ripgrep",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "42atomys",
+      "repo": "webhooked",
+      "url": "https://github.com/42Atomys/webhooked",
+      "key": "42atomys/webhooked",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ahmetcanaydemir",
+      "repo": "react-advanced-news-ticker",
+      "url": "https://github.com/ahmetcanaydemir/react-advanced-news-ticker",
+      "key": "ahmetcanaydemir/react-advanced-news-ticker",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "altair-graphql",
+      "repo": "altair",
+      "url": "https://github.com/altair-graphql/altair",
+      "key": "altair-graphql/altair",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "pgsync",
+      "url": "https://github.com/ankane/pgsync",
+      "key": "ankane/pgsync",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ariakit",
+      "repo": "ariakit",
+      "url": "https://github.com/ariakit/ariakit",
+      "key": "ariakit/ariakit",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alphagov",
+      "repo": "whitehall",
+      "url": "https://github.com/alphagov/whitehall",
+      "key": "alphagov/whitehall",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronksaunders",
+      "repo": "react-native-reverse-geo",
+      "url": "https://github.com/aaronksaunders/react-native-reverse-geo",
+      "key": "aaronksaunders/react-native-reverse-geo",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aws-samples",
+      "repo": "aws-incident-response-runbooks",
+      "url": "https://github.com/aws-samples/aws-incident-response-runbooks",
+      "key": "aws-samples/aws-incident-response-runbooks",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "facebook",
+      "repo": "mysql-5.6",
+      "url": "https://github.com/facebook/mysql-5.6",
+      "key": "facebook/mysql-5.6",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xlane",
+      "repo": "pe-sign",
+      "url": "https://github.com/0xlane/pe-sign",
+      "key": "0xlane/pe-sign",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ashishb",
+      "repo": "android-security-awesome",
+      "url": "https://github.com/ashishb/android-security-awesome",
+      "key": "ashishb/android-security-awesome",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adrienjoly",
+      "repo": "playemjs",
+      "url": "https://github.com/adrienjoly/playemjs",
+      "key": "adrienjoly/playemjs",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bharathvaj-ganesan",
+      "repo": "chargebee-saas-stack",
+      "url": "https://github.com/bharathvaj-ganesan/chargebee-saas-stack",
+      "key": "bharathvaj-ganesan/chargebee-saas-stack",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ajenti",
+      "repo": "ajenti",
+      "url": "https://github.com/ajenti/ajenti",
+      "key": "ajenti/ajenti",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aleclarson",
+      "repo": "vite-tsconfig-paths",
+      "url": "https://github.com/aleclarson/vite-tsconfig-paths",
+      "key": "aleclarson/vite-tsconfig-paths",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aimeos",
+      "repo": "aimeos",
+      "url": "https://github.com/aimeos/aimeos",
+      "key": "aimeos/aimeos",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "arcanedev",
+      "repo": "nocaptcha",
+      "url": "https://github.com/ARCANEDEV/noCAPTCHA",
+      "key": "arcanedev/nocaptcha",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "carlhuda",
+      "repo": "janus",
+      "url": "https://github.com/carlhuda/janus",
+      "key": "carlhuda/janus",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "99designs",
+      "repo": "gqlgen",
+      "url": "https://github.com/99designs/gqlgen",
+      "key": "99designs/gqlgen",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "enzyme",
+      "url": "https://github.com/airbnb/enzyme",
+      "key": "airbnb/enzyme",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amplication",
+      "repo": "amplication",
+      "url": "https://github.com/amplication/amplication",
+      "key": "amplication/amplication",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "age",
+      "url": "https://github.com/apache/age",
+      "key": "apache/age",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aymericzip",
+      "repo": "intlayer",
+      "url": "https://github.com/aymericzip/intlayer",
+      "key": "aymericzip/intlayer",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amatsuda",
+      "repo": "active_decorator",
+      "url": "https://github.com/amatsuda/active_decorator",
+      "key": "amatsuda/active_decorator",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "acostalima",
+      "repo": "react-native-test-runner",
+      "url": "https://github.com/acostalima/react-native-test-runner",
+      "key": "acostalima/react-native-test-runner",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bad-antics",
+      "repo": "nullsec-linux",
+      "url": "https://github.com/bad-antics/nullsec-linux",
+      "key": "bad-antics/nullsec-linux",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "facebook",
+      "repo": "rocksdb",
+      "url": "https://github.com/facebook/rocksdb",
+      "key": "facebook/rocksdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xmassi",
+      "repo": "webclaw",
+      "url": "https://github.com/0xMassi/webclaw",
+      "key": "0xmassi/webclaw",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "baalmor",
+      "repo": "cve-ape",
+      "url": "https://github.com/baalmor/cve-ape",
+      "key": "baalmor/cve-ape",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aehlke",
+      "repo": "tag-it",
+      "url": "https://github.com/aehlke/tag-it",
+      "key": "aehlke/tag-it",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "blazity",
+      "repo": "next-enterprise",
+      "url": "https://github.com/Blazity/next-enterprise",
+      "key": "blazity/next-enterprise",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akfamily",
+      "repo": "akshare",
+      "url": "https://github.com/akfamily/akshare",
+      "key": "akfamily/akshare",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alex8088",
+      "repo": "electron-vite",
+      "url": "https://github.com/alex8088/electron-vite",
+      "key": "alex8088/electron-vite",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airpowerteam",
+      "repo": "airpower4t",
+      "url": "https://github.com/AirPowerTeam/AirPower4T",
+      "key": "airpowerteam/airpower4t",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "arnaud-lb",
+      "repo": "mthaml",
+      "url": "https://github.com/arnaud-lb/MtHaml",
+      "key": "arnaud-lb/mthaml",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "chriskempson",
+      "repo": "base16-vim",
+      "url": "https://github.com/chriskempson/base16-vim",
+      "key": "chriskempson/base16-vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a-h",
+      "repo": "templ",
+      "url": "https://github.com/a-h/templ",
+      "key": "a-h/templ",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "hypernova",
+      "url": "https://github.com/airbnb/hypernova",
+      "key": "airbnb/hypernova",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andreas",
+      "repo": "ocaml-graphql-server",
+      "url": "https://github.com/andreas/ocaml-graphql-server",
+      "key": "andreas/ocaml-graphql-server",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "cloudberry",
+      "url": "https://github.com/apache/cloudberry",
+      "key": "apache/cloudberry",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bvaughn",
+      "repo": "react-error-boundary",
+      "url": "https://github.com/bvaughn/react-error-boundary",
+      "key": "bvaughn/react-error-boundary",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "ahoy_email",
+      "url": "https://github.com/ankane/ahoy_email",
+      "key": "ankane/ahoy_email",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adamjmcgrath",
+      "repo": "react-native-simple-auth",
+      "url": "https://github.com/adamjmcgrath/react-native-simple-auth",
+      "key": "adamjmcgrath/react-native-simple-auth",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bad-antics",
+      "repo": "nullsec-logreaper",
+      "url": "https://github.com/bad-antics/nullsec-logreaper",
+      "key": "bad-antics/nullsec-logreaper",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ideawu",
+      "repo": "ssdb",
+      "url": "https://github.com/ideawu/ssdb",
+      "key": "ideawu/ssdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "0xplaygrounds",
+      "repo": "rig",
+      "url": "https://github.com/0xplaygrounds/rig",
+      "key": "0xplaygrounds/rig",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "baidu",
+      "repo": "openrasp",
+      "url": "https://github.com/baidu/openrasp",
+      "key": "baidu/openrasp",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aidenybai",
+      "repo": "lucia",
+      "url": "https://github.com/aidenybai/lucia",
+      "key": "aidenybai/lucia",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "brandontle",
+      "repo": "next-postgres-with-typescript",
+      "url": "https://github.com/brandontle/next-postgres-with-typescript",
+      "key": "brandontle/next-postgres-with-typescript",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alecthomas",
+      "repo": "voluptuous",
+      "url": "https://github.com/alecthomas/voluptuous",
+      "key": "alecthomas/voluptuous",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexlafroscia",
+      "repo": "vite-plugin-handlebars",
+      "url": "https://github.com/alexlafroscia/vite-plugin-handlebars",
+      "key": "alexlafroscia/vite-plugin-handlebars",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ais-one",
+      "repo": "cookbook",
+      "url": "https://github.com/ais-one/cookbook",
+      "key": "ais-one/cookbook",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "athari",
+      "repo": "yalinqo",
+      "url": "https://github.com/Athari/YaLinqo",
+      "key": "athari/yalinqo",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "coderifous",
+      "repo": "textobj-word-column.vim",
+      "url": "https://github.com/coderifous/textobj-word-column.vim",
+      "key": "coderifous/textobj-word-column.vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a2800276",
+      "repo": "porter",
+      "url": "https://github.com/a2800276/porter",
+      "key": "a2800276/porter",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akiran",
+      "repo": "react-slick",
+      "url": "https://github.com/akiran/react-slick",
+      "key": "akiran/react-slick",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anvilco",
+      "repo": "graphql-introspection-tools",
+      "url": "https://github.com/anvilco/graphql-introspection-tools",
+      "key": "anvilco/graphql-introspection-tools",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "arcapos",
+      "repo": "luapgsql",
+      "url": "https://github.com/arcapos/luapgsql",
+      "key": "arcapos/luapgsql",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "captbaritone",
+      "repo": "webamp",
+      "url": "https://github.com/captbaritone/webamp",
+      "key": "captbaritone/webamp",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "groupdate",
+      "url": "https://github.com/ankane/groupdate",
+      "key": "ankane/groupdate",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adampash",
+      "repo": "react-native-hot-redux-starter",
+      "url": "https://github.com/adampash/react-native-hot-redux-starter",
+      "key": "adampash/react-native-hot-redux-starter",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "biggiesmallsag",
+      "repo": "nighthawkresponse",
+      "url": "https://github.com/biggiesmallsAG/nightHawkResponse",
+      "key": "biggiesmallsag/nighthawkresponse",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "jaksprats",
+      "repo": "alchemy-database",
+      "url": "https://github.com/JakSprats/Alchemy-Database",
+      "key": "jaksprats/alchemy-database",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "197g",
+      "repo": "oxide-auth",
+      "url": "https://github.com/197g/oxide-auth",
+      "key": "197g/oxide-auth",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bearer",
+      "repo": "bearer",
+      "url": "https://github.com/Bearer/bearer",
+      "key": "bearer/bearer",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aidenybai",
+      "repo": "million",
+      "url": "https://github.com/aidenybai/million",
+      "key": "aidenybai/million",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "buttercms",
+      "repo": "react-cms-blog-with-next-js",
+      "url": "https://github.com/ButterCMS/react-cms-blog-with-next-js",
+      "key": "buttercms/react-cms-blog-with-next-js",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alir3z4",
+      "repo": "html2text",
+      "url": "https://github.com/Alir3z4/html2text",
+      "key": "alir3z4/html2text",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "altmshfkgudtjr",
+      "repo": "varsarr",
+      "url": "https://github.com/altmshfkgudtjr/varsarr",
+      "key": "altmshfkgudtjr/varsarr",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akaunting",
+      "repo": "akaunting",
+      "url": "https://github.com/akaunting/akaunting",
+      "key": "akaunting/akaunting",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "atlasphp",
+      "repo": "atlas.orm",
+      "url": "https://github.com/atlasphp/Atlas.Orm",
+      "key": "atlasphp/atlas.orm",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ctrlpvim",
+      "repo": "ctrlp.vim",
+      "url": "https://github.com/ctrlpvim/ctrlp.vim",
+      "key": "ctrlpvim/ctrlp.vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a8m",
+      "repo": "go-lang-cheat-sheet",
+      "url": "https://github.com/a8m/go-lang-cheat-sheet",
+      "key": "a8m/go-lang-cheat-sheet",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexgilleran",
+      "repo": "jsx-control-statements",
+      "url": "https://github.com/AlexGilleran/jsx-control-statements",
+      "key": "alexgilleran/jsx-control-statements",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anvilco",
+      "repo": "spectaql",
+      "url": "https://github.com/anvilco/spectaql",
+      "key": "anvilco/spectaql",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "beh74",
+      "repo": "pgassistant-community",
+      "url": "https://github.com/beh74/pgassistant-community",
+      "key": "beh74/pgassistant-community",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "carlosnz",
+      "repo": "json-edit-react",
+      "url": "https://github.com/CarlosNZ/json-edit-react",
+      "key": "carlosnz/json-edit-react",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "lockbox",
+      "url": "https://github.com/ankane/lockbox",
+      "key": "ankane/lockbox",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adamterlson",
+      "repo": "cairn",
+      "url": "https://github.com/adamterlson/cairn",
+      "key": "adamterlson/cairn",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "byt3smith",
+      "repo": "cirtkit",
+      "url": "https://github.com/byt3smith/CIRTKit",
+      "key": "byt3smith/cirtkit",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "jankotek",
+      "repo": "mapdb",
+      "url": "https://github.com/jankotek/MapDB",
+      "key": "jankotek/mapdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "1c3t3a",
+      "repo": "rust-socketio",
+      "url": "https://github.com/1c3t3a/rust-socketio",
+      "key": "1c3t3a/rust-socketio",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "brexhq",
+      "repo": "substation",
+      "url": "https://github.com/brexhq/substation",
+      "key": "brexhq/substation",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "polyglot.js",
+      "url": "https://github.com/airbnb/polyglot.js",
+      "key": "airbnb/polyglot.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "codecoolture",
+      "repo": "next-joi",
+      "url": "https://github.com/codecoolture/next-joi",
+      "key": "codecoolture/next-joi",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amoffat",
+      "repo": "sh",
+      "url": "https://github.com/amoffat/sh",
+      "key": "amoffat/sh",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "altrusl",
+      "repo": "vite-plugin-html-injection",
+      "url": "https://github.com/altrusl/vite-plugin-html-injection",
+      "key": "altrusl/vite-plugin-html-injection",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akoidan",
+      "repo": "pychat",
+      "url": "https://github.com/akoidan/pychat",
+      "key": "akoidan/pychat",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.auth",
+      "url": "https://github.com/auraphp/Aura.Auth",
+      "key": "auraphp/aura.auth",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dahu",
+      "repo": "learnvim",
+      "url": "https://github.com/dahu/LearnVim",
+      "key": "dahu/learnvim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a8m",
+      "repo": "rql",
+      "url": "https://github.com/a8m/rql",
+      "key": "a8m/rql",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexkuz",
+      "repo": "react-input-enhancements",
+      "url": "https://github.com/alexkuz/react-input-enhancements",
+      "key": "alexkuz/react-input-enhancements",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apis-guru",
+      "repo": "graphql-apis",
+      "url": "https://github.com/APIs-guru/graphql-apis",
+      "key": "apis-guru/graphql-apis",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bemihq",
+      "repo": "bemi",
+      "url": "https://github.com/BemiHQ/bemi",
+      "key": "bemihq/bemi",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "chakra-ui",
+      "repo": "chakra-ui",
+      "url": "https://github.com/chakra-ui/chakra-ui",
+      "key": "chakra-ui/chakra-ui",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "mailkick",
+      "url": "https://github.com/ankane/mailkick",
+      "key": "ankane/mailkick",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adarsh0d",
+      "repo": "postcardapp",
+      "url": "https://github.com/adarsh0d/postcardApp",
+      "key": "adarsh0d/postcardapp",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "certsocietegenerale",
+      "repo": "fir",
+      "url": "https://github.com/certsocietegenerale/FIR",
+      "key": "certsocietegenerale/fir",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "memcached",
+      "repo": "memcached",
+      "url": "https://github.com/memcached/memcached",
+      "key": "memcached/memcached",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "3hren",
+      "repo": "msgpack-rust",
+      "url": "https://github.com/3Hren/msgpack-rust",
+      "key": "3hren/msgpack-rust",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bridgecrewio",
+      "repo": "checkov",
+      "url": "https://github.com/bridgecrewio/checkov",
+      "key": "bridgecrewio/checkov",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ajaxorg",
+      "repo": "ace",
+      "url": "https://github.com/ajaxorg/ace",
+      "key": "ajaxorg/ace",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "codelit",
+      "repo": "courselit",
+      "url": "https://github.com/codelit/courselit",
+      "key": "codelit/courselit",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "analysis-tools-dev",
+      "repo": "static-analysis",
+      "url": "https://github.com/analysis-tools-dev/static-analysis",
+      "key": "analysis-tools-dev/static-analysis",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amoutonbrady",
+      "repo": "vite-plugin-solid",
+      "url": "https://github.com/amoutonbrady/vite-plugin-solid",
+      "key": "amoutonbrady/vite-plugin-solid",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akryum",
+      "repo": "vue-apollo",
+      "url": "https://github.com/Akryum/vue-apollo",
+      "key": "akryum/vue-apollo",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.cli",
+      "url": "https://github.com/auraphp/Aura.Cli",
+      "key": "auraphp/aura.cli",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "devjoe",
+      "repo": "vim-codequery",
+      "url": "https://github.com/devjoe/vim-codequery",
+      "key": "devjoe/vim-codequery",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aafeher",
+      "repo": "go-sitemap-parser",
+      "url": "https://github.com/aafeher/go-sitemap-parser",
+      "key": "aafeher/go-sitemap-parser",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexkuz",
+      "repo": "redux-devtools-inspector",
+      "url": "https://github.com/alexkuz/redux-devtools-inspector",
+      "key": "alexkuz/redux-devtools-inspector",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apis-guru",
+      "repo": "graphql-faker",
+      "url": "https://github.com/APIs-guru/graphql-faker",
+      "key": "apis-guru/graphql-faker",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "brianc",
+      "repo": "node-postgres",
+      "url": "https://github.com/brianc/node-postgres",
+      "key": "brianc/node-postgres",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cypress-io",
+      "repo": "cypress",
+      "url": "https://github.com/cypress-io/cypress",
+      "key": "cypress-io/cypress",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "rollup",
+      "url": "https://github.com/ankane/rollup",
+      "key": "ankane/rollup",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adonpro",
+      "repo": "react-native-build-cli",
+      "url": "https://github.com/adonpro/react-native-build-cli",
+      "key": "adonpro/react-native-build-cli",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "certsocietegenerale",
+      "repo": "irm",
+      "url": "https://github.com/certsocietegenerale/IRM",
+      "key": "certsocietegenerale/irm",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "mongodb",
+      "repo": "mongo",
+      "url": "https://github.com/mongodb/mongo",
+      "key": "mongodb/mongo",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "4worlds4w-svg",
+      "repo": "inkwell",
+      "url": "https://github.com/4worlds4w-svg/inkwell",
+      "key": "4worlds4w-svg/inkwell",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bunkerity",
+      "repo": "bunkerweb",
+      "url": "https://github.com/bunkerity/bunkerweb",
+      "key": "bunkerity/bunkerweb",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alanrsoares",
+      "repo": "prelude-js",
+      "url": "https://github.com/alanrsoares/prelude-js",
+      "key": "alanrsoares/prelude-js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "codementorio",
+      "repo": "nextjs-redux-starter",
+      "url": "https://github.com/CodementorIO/nextjs-redux-starter",
+      "key": "codementorio/nextjs-redux-starter",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andialbrecht",
+      "repo": "sqlparse",
+      "url": "https://github.com/andialbrecht/sqlparse",
+      "key": "andialbrecht/sqlparse",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amrbashir",
+      "repo": "vite-plugin-tauri",
+      "url": "https://github.com/amrbashir/vite-plugin-tauri",
+      "key": "amrbashir/vite-plugin-tauri",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akryum",
+      "repo": "vue-tooltip",
+      "url": "https://github.com/Akryum/vue-tooltip",
+      "key": "akryum/vue-tooltip",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.di",
+      "url": "https://github.com/auraphp/Aura.Di",
+      "key": "auraphp/aura.di",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dofy",
+      "repo": "learn-vim",
+      "url": "https://github.com/dofy/learn-vim",
+      "key": "dofy/learn-vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aalpar",
+      "repo": "deheap",
+      "url": "https://github.com/aalpar/deheap",
+      "key": "aalpar/deheap",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexnault",
+      "repo": "react-headings",
+      "url": "https://github.com/alexnault/react-headings",
+      "key": "alexnault/react-headings",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apis-guru",
+      "repo": "graphql-voyager",
+      "url": "https://github.com/APIs-guru/graphql-voyager",
+      "key": "apis-guru/graphql-voyager",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "btouchard",
+      "repo": "pg_barcode",
+      "url": "https://github.com/btouchard/pg_barcode",
+      "key": "btouchard/pg_barcode",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "davidhdev",
+      "repo": "react-bits",
+      "url": "https://github.com/DavidHDev/react-bits",
+      "key": "davidhdev/react-bits",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "searchkick",
+      "url": "https://github.com/ankane/searchkick",
+      "key": "ankane/searchkick",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "adonrain",
+      "repo": "react-native-ichart",
+      "url": "https://github.com/AdonRain/react-native-ichart",
+      "key": "adonrain/react-native-ichart",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "circl",
+      "repo": "traceroute-circl",
+      "url": "https://github.com/CIRCL/traceroute-circl",
+      "key": "circl/traceroute-circl",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "mpalmer",
+      "repo": "redis",
+      "url": "https://github.com/mpalmer/redis",
+      "key": "mpalmer/redis",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "64bit",
+      "repo": "async-openai",
+      "url": "https://github.com/64bit/async-openai",
+      "key": "64bit/async-openai",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cert-polska",
+      "repo": "artemis",
+      "url": "https://github.com/CERT-Polska/Artemis",
+      "key": "cert-polska/artemis",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alex-d",
+      "repo": "trumbowyg",
+      "url": "https://github.com/Alex-D/Trumbowyg",
+      "key": "alex-d/trumbowyg",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "copilotkit",
+      "repo": "copilotkit",
+      "url": "https://github.com/CopilotKit/CopilotKit",
+      "key": "copilotkit/copilotkit",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ansible",
+      "repo": "ansible",
+      "url": "https://github.com/ansible/ansible",
+      "key": "ansible/ansible",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anncwb",
+      "repo": "vite-plugin-html",
+      "url": "https://github.com/anncwb/vite-plugin-html",
+      "key": "anncwb/vite-plugin-html",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "akryum",
+      "repo": "vue-virtual-scroller",
+      "url": "https://github.com/Akryum/vue-virtual-scroller",
+      "key": "akryum/vue-virtual-scroller",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.filter",
+      "url": "https://github.com/auraphp/Aura.Filter",
+      "key": "auraphp/aura.filter",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dyng",
+      "repo": "ctrlsf.vim",
+      "url": "https://github.com/dyng/ctrlsf.vim",
+      "key": "dyng/ctrlsf.vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronjan",
+      "repo": "hunch",
+      "url": "https://github.com/AaronJan/Hunch",
+      "key": "aaronjan/hunch",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexsergey",
+      "repo": "issr",
+      "url": "https://github.com/AlexSergey/issr",
+      "key": "alexsergey/issr",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollo-elements",
+      "repo": "apollo-elements",
+      "url": "https://github.com/apollo-elements/apollo-elements",
+      "key": "apollo-elements/apollo-elements",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "bucardo",
+      "repo": "check_postgres",
+      "url": "https://github.com/bucardo/check_postgres",
+      "key": "bucardo/check_postgres",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "diegomura",
+      "repo": "react-pdf",
+      "url": "https://github.com/diegomura/react-pdf",
+      "key": "diegomura/react-pdf",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ankane",
+      "repo": "trove",
+      "url": "https://github.com/ankane/trove",
+      "key": "ankane/trove",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "afollestad",
+      "repo": "material-dialogs",
+      "url": "https://github.com/afollestad/material-dialogs",
+      "key": "afollestad/material-dialogs",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "counteractive",
+      "repo": "incident-response-plan-template",
+      "url": "https://github.com/counteractive/incident-response-plan-template",
+      "key": "counteractive/incident-response-plan-template",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "neo4j",
+      "repo": "neo4j",
+      "url": "https://github.com/neo4j/neo4j",
+      "key": "neo4j/neo4j",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "a8m",
+      "repo": "pb",
+      "url": "https://github.com/a8m/pb",
+      "key": "a8m/pb",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "certtools",
+      "repo": "intelmq",
+      "url": "https://github.com/certtools/intelmq",
+      "key": "certtools/intelmq",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alex-seville",
+      "repo": "blanket",
+      "url": "https://github.com/alex-seville/blanket",
+      "key": "alex-seville/blanket",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "csprance",
+      "repo": "next-smrt",
+      "url": "https://github.com/csprance/next-smrt",
+      "key": "csprance/next-smrt",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "answerdotai",
+      "repo": "fasthtml",
+      "url": "https://github.com/AnswerDotAI/fasthtml",
+      "key": "answerdotai/fasthtml",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anncwb",
+      "repo": "vue-vben-admin",
+      "url": "https://github.com/anncwb/vue-vben-admin",
+      "key": "anncwb/vue-vben-admin",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alekswebnet",
+      "repo": "vue-quilly",
+      "url": "https://github.com/alekswebnet/vue-quilly",
+      "key": "alekswebnet/vue-quilly",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.intl",
+      "url": "https://github.com/auraphp/Aura.Intl",
+      "key": "auraphp/aura.intl",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "easymotion",
+      "repo": "vim-easymotion",
+      "url": "https://github.com/easymotion/vim-easymotion",
+      "key": "easymotion/vim-easymotion",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aarzilli",
+      "repo": "golua",
+      "url": "https://github.com/aarzilli/golua",
+      "key": "aarzilli/golua",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexsergey",
+      "repo": "rockpack",
+      "url": "https://github.com/AlexSergey/rockpack",
+      "key": "alexsergey/rockpack",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-android",
+      "url": "https://github.com/apollographql/apollo-android",
+      "key": "apollographql/apollo-android",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cavaliercoder",
+      "repo": "libzbxpgsql",
+      "url": "https://github.com/cavaliercoder/libzbxpgsql",
+      "key": "cavaliercoder/libzbxpgsql",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "downshift-js",
+      "repo": "downshift",
+      "url": "https://github.com/downshift-js/downshift",
+      "key": "downshift-js/downshift",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anycable",
+      "repo": "anycable-rails",
+      "url": "https://github.com/anycable/anycable-rails",
+      "key": "anycable/anycable-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agentcooper",
+      "repo": "react-native-hypertext",
+      "url": "https://github.com/agentcooper/react-native-hypertext",
+      "key": "agentcooper/react-native-hypertext",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "countercept",
+      "repo": "chainsaw",
+      "url": "https://github.com/countercept/chainsaw",
+      "key": "countercept/chainsaw",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "niwibe",
+      "repo": "clojure.jdbc",
+      "url": "https://github.com/niwibe/clojure.jdbc",
+      "key": "niwibe/clojure.jdbc",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaif-goose",
+      "repo": "goose",
+      "url": "https://github.com/aaif-goose/goose",
+      "key": "aaif-goose/goose",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "checkmarx",
+      "repo": "kics",
+      "url": "https://github.com/Checkmarx/kics",
+      "key": "checkmarx/kics",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexandrshy",
+      "repo": "keukenhof",
+      "url": "https://github.com/Alexandrshy/keukenhof",
+      "key": "alexandrshy/keukenhof",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "danielbayerlein",
+      "repo": "dashboard",
+      "url": "https://github.com/danielbayerlein/dashboard",
+      "key": "danielbayerlein/dashboard",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "airflow",
+      "url": "https://github.com/apache/airflow",
+      "key": "apache/airflow",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antdv-pro",
+      "repo": "antdv-pro",
+      "url": "https://github.com/antdv-pro/antdv-pro",
+      "key": "antdv-pro/antdv-pro",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexandermykulych",
+      "repo": "coya",
+      "url": "https://github.com/AlexanderMykulych/coya",
+      "key": "alexandermykulych/coya",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.router",
+      "url": "https://github.com/auraphp/Aura.Router",
+      "key": "auraphp/aura.router",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "editorconfig",
+      "repo": "editorconfig-vim",
+      "url": "https://github.com/editorconfig/editorconfig-vim",
+      "key": "editorconfig/editorconfig-vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abadojack",
+      "repo": "whatlanggo",
+      "url": "https://github.com/abadojack/whatlanggo",
+      "key": "abadojack/whatlanggo",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alibaba",
+      "repo": "chatui",
+      "url": "https://github.com/alibaba/ChatUI",
+      "key": "alibaba/chatui",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-client-devtools",
+      "url": "https://github.com/apollographql/apollo-client-devtools",
+      "key": "apollographql/apollo-client-devtools",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cbbrowne",
+      "repo": "pgcmp",
+      "url": "https://github.com/cbbrowne/pgcmp",
+      "key": "cbbrowne/pgcmp",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "elastic",
+      "repo": "kibana",
+      "url": "https://github.com/elastic/kibana",
+      "key": "elastic/kibana",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apigy",
+      "repo": "selfstarter",
+      "url": "https://github.com/apigy/selfstarter",
+      "key": "apigy/selfstarter",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agoraio",
+      "repo": "agora-react-native-rtm",
+      "url": "https://github.com/agoraio/agora-react-native-rtm",
+      "key": "agoraio/agora-react-native-rtm",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "crowdstrike",
+      "repo": "falcon-orchestrator",
+      "url": "https://github.com/CrowdStrike/falcon-orchestrator",
+      "key": "crowdstrike/falcon-orchestrator",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "orientechnologies",
+      "repo": "orientdb",
+      "url": "https://github.com/orientechnologies/orientdb",
+      "key": "orientechnologies/orientdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aannoo",
+      "repo": "hcom",
+      "url": "https://github.com/aannoo/hcom",
+      "key": "aannoo/hcom",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cider-security-research",
+      "repo": "cicd-goat",
+      "url": "https://github.com/cider-security-research/cicd-goat",
+      "key": "cider-security-research/cicd-goat",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexei",
+      "repo": "sprintf.js",
+      "url": "https://github.com/alexei/sprintf.js",
+      "key": "alexei/sprintf.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "danielcondemarin",
+      "repo": "serverless-nextjs-plugin",
+      "url": "https://github.com/danielcondemarin/serverless-nextjs-plugin",
+      "key": "danielcondemarin/serverless-nextjs-plugin",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "cassandra-python-driver",
+      "url": "https://github.com/apache/cassandra-python-driver",
+      "key": "apache/cassandra-python-driver",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "icones",
+      "url": "https://github.com/antfu/icones",
+      "key": "antfu/icones",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alexusmai",
+      "repo": "laravel-file-manager",
+      "url": "https://github.com/alexusmai/laravel-file-manager",
+      "key": "alexusmai/laravel-file-manager",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.sql",
+      "url": "https://github.com/auraphp/Aura.Sql",
+      "key": "auraphp/aura.sql",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "farmergreg",
+      "repo": "vim-lastplace",
+      "url": "https://github.com/farmergreg/vim-lastplace",
+      "key": "farmergreg/vim-lastplace",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abahmed",
+      "repo": "kwatch",
+      "url": "https://github.com/abahmed/kwatch",
+      "key": "abahmed/kwatch",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alibaba",
+      "repo": "react-intl-universal",
+      "url": "https://github.com/alibaba/react-intl-universal",
+      "key": "alibaba/react-intl-universal",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-ios",
+      "url": "https://github.com/apollographql/apollo-ios",
+      "key": "apollographql/apollo-ios",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "citus",
+      "url": "https://github.com/citusdata/citus",
+      "key": "citusdata/citus",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "emotion-js",
+      "repo": "emotion",
+      "url": "https://github.com/emotion-js/emotion",
+      "key": "emotion-js/emotion",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apipie",
+      "repo": "apipie-rails",
+      "url": "https://github.com/apipie/apipie-rails",
+      "key": "apipie/apipie-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agrcrobles",
+      "repo": "react-native-live-translator",
+      "url": "https://github.com/agrcrobles/react-native-live-translator",
+      "key": "agrcrobles/react-native-live-translator",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cuckoosandbox",
+      "repo": "cuckoo",
+      "url": "https://github.com/cuckoosandbox/cuckoo",
+      "key": "cuckoosandbox/cuckoo",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "pmylund",
+      "repo": "go-cache",
+      "url": "https://github.com/pmylund/go-cache",
+      "key": "pmylund/go-cache",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aaronriekenberg",
+      "repo": "rust-parallel",
+      "url": "https://github.com/aaronriekenberg/rust-parallel",
+      "key": "aaronriekenberg/rust-parallel",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "clicksecurity",
+      "repo": "data_hacking",
+      "url": "https://github.com/ClickSecurity/data_hacking",
+      "key": "clicksecurity/data_hacking",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alpinejs",
+      "repo": "alpine",
+      "url": "https://github.com/alpinejs/alpine",
+      "key": "alpinejs/alpine",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dawsbot",
+      "repo": "mailto",
+      "url": "https://github.com/dawsbot/mailto",
+      "key": "dawsbot/mailto",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apache",
+      "repo": "spark",
+      "url": "https://github.com/apache/spark",
+      "key": "apache/spark",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "unplugin-auto-import",
+      "url": "https://github.com/antfu/unplugin-auto-import",
+      "key": "antfu/unplugin-auto-import",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alfred-skyblue",
+      "repo": "vue-draggable-plus",
+      "url": "https://github.com/Alfred-Skyblue/vue-draggable-plus",
+      "key": "alfred-skyblue/vue-draggable-plus",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "auraphp",
+      "repo": "aura.sqlquery",
+      "url": "https://github.com/auraphp/Aura.SqlQuery",
+      "key": "auraphp/aura.sqlquery",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "folke",
+      "repo": "lazy.nvim",
+      "url": "https://github.com/folke/lazy.nvim",
+      "key": "folke/lazy.nvim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abdullahselek",
+      "repo": "go-here",
+      "url": "https://github.com/abdullahselek/go-here",
+      "key": "abdullahselek/go-here",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alirezaazizi145",
+      "repo": "react-infinite-gallery",
+      "url": "https://github.com/AlirezaAzizi145/react-infinite-gallery",
+      "key": "alirezaazizi145/react-infinite-gallery",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-server",
+      "url": "https://github.com/apollographql/apollo-server",
+      "key": "apollographql/apollo-server",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "pg_auto_failover",
+      "url": "https://github.com/citusdata/pg_auto_failover",
+      "key": "citusdata/pg_auto_failover",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "facebook",
+      "repo": "react",
+      "url": "https://github.com/facebook/react",
+      "key": "facebook/react",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "argerim",
+      "repo": "select2-rails",
+      "url": "https://github.com/argerim/select2-rails",
+      "key": "argerim/select2-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agrcrobles",
+      "repo": "react-native-web-boilerplate",
+      "url": "https://github.com/agrcrobles/react-native-web-boilerplate",
+      "key": "agrcrobles/react-native-web-boilerplate",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cyb3rfox",
+      "repo": "aurora-incident-response",
+      "url": "https://github.com/cyb3rfox/Aurora-Incident-Response",
+      "key": "cyb3rfox/aurora-incident-response",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "postgres",
+      "repo": "postgres",
+      "url": "https://github.com/postgres/postgres",
+      "key": "postgres/postgres",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abdesamedbendjeddou",
+      "repo": "rusty-cs",
+      "url": "https://github.com/AbdesamedBendjeddou/Rusty-CS",
+      "key": "abdesamedbendjeddou/rusty-cs",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cloudflare",
+      "repo": "redoctober",
+      "url": "https://github.com/cloudflare/redoctober",
+      "key": "cloudflare/redoctober",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alvarotrigo",
+      "repo": "fullpage.js",
+      "url": "https://github.com/alvarotrigo/fullPage.js",
+      "key": "alvarotrigo/fullpage.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "deptno",
+      "repo": "next.js-typescript-starter-kit",
+      "url": "https://github.com/deptno/next.js-typescript-starter-kit",
+      "key": "deptno/next.js-typescript-starter-kit",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apiflask",
+      "repo": "apiflask",
+      "url": "https://github.com/apiflask/apiflask",
+      "key": "apiflask/apiflask",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "unplugin-icons",
+      "url": "https://github.com/antfu/unplugin-icons",
+      "key": "antfu/unplugin-icons",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "almoullim",
+      "repo": "vue-tabevents",
+      "url": "https://github.com/Almoullim/vue-tabevents",
+      "key": "almoullim/vue-tabevents",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aws",
+      "repo": "aws-sdk-php",
+      "url": "https://github.com/aws/aws-sdk-php",
+      "key": "aws/aws-sdk-php",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "gmarik",
+      "repo": "vundle.vim",
+      "url": "https://github.com/gmarik/Vundle.vim",
+      "key": "gmarik/vundle.vim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abecodes",
+      "repo": "dft",
+      "url": "https://github.com/abecodes/dft",
+      "key": "abecodes/dft",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "almogtavor",
+      "repo": "date-range-picker",
+      "url": "https://github.com/almogtavor/date-range-picker",
+      "key": "almogtavor/date-range-picker",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "apollo-tracing",
+      "url": "https://github.com/apollographql/apollo-tracing",
+      "key": "apollographql/apollo-tracing",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "pg_cron",
+      "url": "https://github.com/citusdata/pg_cron",
+      "key": "citusdata/pg_cron",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "facebook",
+      "repo": "relay",
+      "url": "https://github.com/facebook/relay",
+      "key": "facebook/relay",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "askaway",
+      "repo": "askaway",
+      "url": "https://github.com/askaway/askaway",
+      "key": "askaway/askaway",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "agrcrobles",
+      "repo": "react-native-web-workspace",
+      "url": "https://github.com/agrcrobles/react-native-web-workspace",
+      "key": "agrcrobles/react-native-web-workspace",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cyb3rward0g",
+      "repo": "helk",
+      "url": "https://github.com/Cyb3rWard0g/HELK",
+      "key": "cyb3rward0g/helk",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ravendb",
+      "repo": "ravendb",
+      "url": "https://github.com/ravendb/ravendb",
+      "key": "ravendb/ravendb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abonander",
+      "repo": "img_hash",
+      "url": "https://github.com/abonander/img_hash",
+      "key": "abonander/img_hash",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cloudsecurelab",
+      "repo": "security-acronyms",
+      "url": "https://github.com/cloudsecurelab/security-acronyms",
+      "key": "cloudsecurelab/security-acronyms",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ampproject",
+      "repo": "worker-dom",
+      "url": "https://github.com/ampproject/worker-dom",
+      "key": "ampproject/worker-dom",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "deptno",
+      "repo": "typescript-monorepo-next-example",
+      "url": "https://github.com/deptno/typescript-monorepo-next-example",
+      "key": "deptno/typescript-monorepo-next-example",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "astral-sh",
+      "repo": "ruff",
+      "url": "https://github.com/astral-sh/ruff",
+      "key": "astral-sh/ruff",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "unplugin-vue-components",
+      "url": "https://github.com/antfu/unplugin-vue-components",
+      "key": "antfu/unplugin-vue-components",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alvarotrigo",
+      "repo": "vue-fullpage.js",
+      "url": "https://github.com/alvarotrigo/vue-fullpage.js",
+      "key": "alvarotrigo/vue-fullpage.js",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "azuyalabs",
+      "repo": "yasumi",
+      "url": "https://github.com/azuyalabs/yasumi",
+      "key": "azuyalabs/yasumi",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "godlygeek",
+      "repo": "tabular",
+      "url": "https://github.com/godlygeek/tabular",
+      "key": "godlygeek/tabular",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abemedia",
+      "repo": "go-don",
+      "url": "https://github.com/abemedia/go-don",
+      "key": "abemedia/go-don",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amarofashion",
+      "repo": "react-credit-cards",
+      "url": "https://github.com/amarofashion/react-credit-cards",
+      "key": "amarofashion/react-credit-cards",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "eslint-plugin-graphql",
+      "url": "https://github.com/apollographql/eslint-plugin-graphql",
+      "key": "apollographql/eslint-plugin-graphql",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "pg_paxos",
+      "url": "https://github.com/citusdata/pg_paxos",
+      "key": "citusdata/pg_paxos",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "faridsafi",
+      "repo": "react-native-gifted-chat",
+      "url": "https://github.com/FaridSafi/react-native-gifted-chat",
+      "key": "faridsafi/react-native-gifted-chat",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "astrocket",
+      "repo": "rails-template",
+      "url": "https://github.com/astrocket/rails-template",
+      "key": "astrocket/rails-template",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ainurb",
+      "repo": "react-native-segment-control",
+      "url": "https://github.com/ainurb/react-native-segment-control",
+      "key": "ainurb/react-native-segment-control",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "davehull",
+      "repo": "kansa",
+      "url": "https://github.com/davehull/Kansa",
+      "key": "davehull/kansa",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "rethinkdb",
+      "repo": "rethinkdb",
+      "url": "https://github.com/rethinkdb/rethinkdb",
+      "key": "rethinkdb/rethinkdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "achanda",
+      "repo": "ipnetwork",
+      "url": "https://github.com/achanda/ipnetwork",
+      "key": "achanda/ipnetwork",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "codeyourweb",
+      "repo": "fastfinder",
+      "url": "https://github.com/codeyourweb/fastfinder",
+      "key": "codeyourweb/fastfinder",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amsul",
+      "repo": "pickadate.js",
+      "url": "https://github.com/amsul/pickadate.js",
+      "key": "amsul/pickadate.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "devxialabs",
+      "repo": "kaiforge-lite",
+      "url": "https://github.com/DevxiaLabs/kaiforge-lite",
+      "key": "devxialabs/kaiforge-lite",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "astral-sh",
+      "repo": "ty",
+      "url": "https://github.com/astral-sh/ty",
+      "key": "astral-sh/ty",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "unplugin-vue2-script-setup",
+      "url": "https://github.com/antfu/unplugin-vue2-script-setup",
+      "key": "antfu/unplugin-vue2-script-setup",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "alziqziq",
+      "repo": "vue-paginate-al",
+      "url": "https://github.com/alziqziq/vue-paginate-al",
+      "key": "alziqziq/vue-paginate-al",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "barbushin",
+      "repo": "php-console",
+      "url": "https://github.com/barbushin/php-console",
+      "key": "barbushin/php-console",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "hobbestigrou",
+      "repo": "vimtips-fortune",
+      "url": "https://github.com/hobbestigrou/vimtips-fortune",
+      "key": "hobbestigrou/vimtips-fortune",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abhimanyu003",
+      "repo": "sttr",
+      "url": "https://github.com/abhimanyu003/sttr",
+      "key": "abhimanyu003/sttr",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anandgupta193",
+      "repo": "react-enterprise-starter-kit",
+      "url": "https://github.com/anandgupta193/react-enterprise-starter-kit",
+      "key": "anandgupta193/react-enterprise-starter-kit",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "federation-jvm",
+      "url": "https://github.com/apollographql/federation-jvm",
+      "key": "apollographql/federation-jvm",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "citusdata",
+      "repo": "pg_shard",
+      "url": "https://github.com/citusdata/pg_shard",
+      "key": "citusdata/pg_shard",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "floating-ui",
+      "repo": "floating-ui",
+      "url": "https://github.com/floating-ui/floating-ui",
+      "key": "floating-ui/floating-ui",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "autolab",
+      "repo": "autolab",
+      "url": "https://github.com/autolab/Autolab",
+      "key": "autolab/autolab",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airamrguez",
+      "repo": "react-native-measure-text",
+      "url": "https://github.com/airamrguez/react-native-measure-text",
+      "key": "airamrguez/react-native-measure-text",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "defpoint",
+      "repo": "threat_note",
+      "url": "https://github.com/defpoint/threat_note",
+      "key": "defpoint/threat_note",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "robashton",
+      "repo": "cravendb",
+      "url": "https://github.com/robashton/cravendb",
+      "key": "robashton/cravendb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "achetagames",
+      "repo": "epic-asset-manager",
+      "url": "https://github.com/AchetaGames/Epic-Asset-Manager",
+      "key": "achetagames/epic-asset-manager",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "conradirwin",
+      "repo": "dotgpg",
+      "url": "https://github.com/ConradIrwin/dotgpg",
+      "key": "conradirwin/dotgpg",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "analyticalgraphicsinc",
+      "repo": "cesium",
+      "url": "https://github.com/AnalyticalGraphicsInc/cesium",
+      "key": "analyticalgraphicsinc/cesium",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dotcypress",
+      "repo": "password",
+      "url": "https://github.com/dotcypress/password",
+      "key": "dotcypress/password",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "astral-sh",
+      "repo": "uv",
+      "url": "https://github.com/astral-sh/uv",
+      "key": "astral-sh/uv",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "vite-plugin-inspect",
+      "url": "https://github.com/antfu/vite-plugin-inspect",
+      "key": "antfu/vite-plugin-inspect",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "aminerman",
+      "repo": "vue-kinesis",
+      "url": "https://github.com/Aminerman/vue-kinesis",
+      "key": "aminerman/vue-kinesis",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "beberlei",
+      "repo": "assert",
+      "url": "https://github.com/beberlei/assert",
+      "key": "beberlei/assert",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "honza",
+      "repo": "vim-snippets",
+      "url": "https://github.com/honza/vim-snippets",
+      "key": "honza/vim-snippets",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abice",
+      "repo": "go-enum",
+      "url": "https://github.com/abice/go-enum",
+      "key": "abice/go-enum",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "anatoliygatt",
+      "repo": "numeric-stepper",
+      "url": "https://github.com/anatoliygatt/numeric-stepper",
+      "key": "anatoliygatt/numeric-stepper",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "frontpage-ios-app",
+      "url": "https://github.com/apollographql/frontpage-ios-app",
+      "key": "apollographql/frontpage-ios-app",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "cloudnative-pg",
+      "repo": "cloudnative-pg",
+      "url": "https://github.com/cloudnative-pg/cloudnative-pg",
+      "key": "cloudnative-pg/cloudnative-pg",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "formatjs",
+      "repo": "formatjs",
+      "url": "https://github.com/formatjs/formatjs",
+      "key": "formatjs/formatjs",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "automaticmode",
+      "repo": "active_workflow",
+      "url": "https://github.com/automaticmode/active_workflow",
+      "key": "automaticmode/active_workflow",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "lottie-react-native",
+      "url": "https://github.com/airbnb/lottie-react-native",
+      "key": "airbnb/lottie-react-native",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "deralexxx",
+      "repo": "security-apis",
+      "url": "https://github.com/deralexxx/security-apis",
+      "key": "deralexxx/security-apis",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "rxin",
+      "repo": "db-readings",
+      "url": "https://github.com/rxin/db-readings",
+      "key": "rxin/db-readings",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ackee-blockchain",
+      "repo": "trident",
+      "url": "https://github.com/Ackee-Blockchain/trident",
+      "key": "ackee-blockchain/trident",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "corelight",
+      "repo": "zeek2es",
+      "url": "https://github.com/corelight/zeek2es",
+      "key": "corelight/zeek2es",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andersdjohnson",
+      "repo": "magnificent.js",
+      "url": "https://github.com/AndersDJohnson/magnificent.js",
+      "key": "andersdjohnson/magnificent.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "elmasse",
+      "repo": "nextein",
+      "url": "https://github.com/elmasse/nextein",
+      "key": "elmasse/nextein",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "astropy",
+      "repo": "astropy",
+      "url": "https://github.com/astropy/astropy",
+      "key": "astropy/astropy",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "vite-plugin-md",
+      "url": "https://github.com/antfu/vite-plugin-md",
+      "key": "antfu/vite-plugin-md",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "amirkian007",
+      "repo": "vue-awesome-sidebar",
+      "url": "https://github.com/amirkian007/vue-awesome-sidebar",
+      "key": "amirkian007/vue-awesome-sidebar",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "beberlei",
+      "repo": "metrics",
+      "url": "https://github.com/beberlei/metrics",
+      "key": "beberlei/metrics",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "jmcomets",
+      "repo": "vim-pony",
+      "url": "https://github.com/jmcomets/vim-pony",
+      "key": "jmcomets/vim-pony",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abiosoft",
+      "repo": "colima",
+      "url": "https://github.com/abiosoft/colima",
+      "key": "abiosoft/colima",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andreizanik",
+      "repo": "react-mouse-select",
+      "url": "https://github.com/andreizanik/react-mouse-select",
+      "key": "andreizanik/react-mouse-select",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "graphql-tag",
+      "url": "https://github.com/apollographql/graphql-tag",
+      "key": "apollographql/graphql-tag",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "clusterlabs",
+      "repo": "paf",
+      "url": "https://github.com/ClusterLabs/PAF",
+      "key": "clusterlabs/paf",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "formidablelabs",
+      "repo": "victory",
+      "url": "https://github.com/FormidableLabs/victory",
+      "key": "formidablelabs/victory",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "avo-hq",
+      "repo": "avo",
+      "url": "https://github.com/avo-hq/avo",
+      "key": "avo-hq/avo",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "native-navigation",
+      "url": "https://github.com/airbnb/native-navigation",
+      "key": "airbnb/native-navigation",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dfir-iris",
+      "repo": "iris-web",
+      "url": "https://github.com/dfir-iris/iris-web",
+      "key": "dfir-iris/iris-web",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "sameeragarwal",
+      "repo": "blinkdb",
+      "url": "https://github.com/sameeragarwal/blinkdb",
+      "key": "sameeragarwal/blinkdb",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "actix",
+      "repo": "actix",
+      "url": "https://github.com/actix/actix",
+      "key": "actix/actix",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "crowdsecurity",
+      "repo": "crowdsec",
+      "url": "https://github.com/crowdsecurity/crowdsec",
+      "key": "crowdsecurity/crowdsec",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andreruffert",
+      "repo": "rangeslider.js",
+      "url": "https://github.com/andreruffert/rangeslider.js",
+      "key": "andreruffert/rangeslider.js",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "ematipico",
+      "repo": "terraform-nextjs-plugin",
+      "url": "https://github.com/ematipico/terraform-nextjs-plugin",
+      "key": "ematipico/terraform-nextjs-plugin",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "asweigart",
+      "repo": "pyautogui",
+      "url": "https://github.com/asweigart/pyautogui",
+      "key": "asweigart/pyautogui",
+      "sourceList": "vinta/awesome-python",
+      "sourceCategory": "python",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "antfu",
+      "repo": "vite-plugin-pwa",
+      "url": "https://github.com/antfu/vite-plugin-pwa",
+      "key": "antfu/vite-plugin-pwa",
+      "sourceList": "vitejs/awesome-vite",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andrewcourtice",
+      "repo": "harlem",
+      "url": "https://github.com/andrewcourtice/harlem",
+      "key": "andrewcourtice/harlem",
+      "sourceList": "vuejs/awesome-vue",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "beberlei",
+      "repo": "php-rfc-watch",
+      "url": "https://github.com/beberlei/php-rfc-watch",
+      "key": "beberlei/php-rfc-watch",
+      "sourceList": "ziadoz/awesome-php",
+      "sourceCategory": "php",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "jmoon018",
+      "repo": "pacvim",
+      "url": "https://github.com/jmoon018/PacVim",
+      "key": "jmoon018/pacvim",
+      "sourceList": "akrawchyk/awesome-vim",
+      "sourceCategory": "devtools",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "abrahambotros",
+      "repo": "lore",
+      "url": "https://github.com/abrahambotros/lore",
+      "key": "abrahambotros/lore",
+      "sourceList": "avelino/awesome-go",
+      "sourceCategory": "go",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andrelmlins",
+      "repo": "create-react-dependency",
+      "url": "https://github.com/andrelmlins/create-react-dependency",
+      "key": "andrelmlins/create-react-dependency",
+      "sourceList": "brillout/awesome-react-components",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "apollographql",
+      "repo": "graphql-tools",
+      "url": "https://github.com/apollographql/graphql-tools",
+      "key": "apollographql/graphql-tools",
+      "sourceList": "chentsulin/awesome-graphql",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "commandprompt",
+      "repo": "pgmanage",
+      "url": "https://github.com/commandprompt/pgmanage",
+      "key": "commandprompt/pgmanage",
+      "sourceList": "dhamaniasad/awesome-postgres",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "formkit",
+      "repo": "auto-animate",
+      "url": "https://github.com/formkit/auto-animate",
+      "key": "formkit/auto-animate",
+      "sourceList": "enaqx/awesome-react",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "balanced",
+      "repo": "rentmybikes-rails",
+      "url": "https://github.com/balanced/rentmybikes-rails",
+      "key": "balanced/rentmybikes-rails",
+      "sourceList": "gramantin/awesome-rails",
+      "sourceCategory": "backend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "airbnb",
+      "repo": "rheostat",
+      "url": "https://github.com/airbnb/rheostat",
+      "key": "airbnb/rheostat",
+      "sourceList": "jondot/awesome-react-native",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "dfir-orc",
+      "repo": "dfir-orc",
+      "url": "https://github.com/DFIR-ORC/dfir-orc",
+      "key": "dfir-orc/dfir-orc",
+      "sourceList": "meirwah/awesome-incident-response",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "skydb",
+      "repo": "sky",
+      "url": "https://github.com/skydb/sky",
+      "key": "skydb/sky",
+      "sourceList": "numetriclabz/awesome-db",
+      "sourceCategory": "database",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "actix",
+      "repo": "actix-web",
+      "url": "https://github.com/actix/actix-web",
+      "key": "actix/actix-web",
+      "sourceList": "rust-unofficial/awesome-rust",
+      "sourceCategory": "rust",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "csirtgadgets",
+      "repo": "massive-octo-spice",
+      "url": "https://github.com/csirtgadgets/massive-octo-spice",
+      "key": "csirtgadgets/massive-octo-spice",
+      "sourceList": "sbilly/awesome-security",
+      "sourceCategory": "security",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "andrewplummer",
+      "repo": "sugar",
+      "url": "https://github.com/andrewplummer/Sugar",
+      "key": "andrewplummer/sugar",
+      "sourceList": "sorrycc/awesome-javascript",
+      "sourceCategory": "javascript",
+      "reason": "direct_repo_link"
+    },
+    {
+      "owner": "estrada9166",
+      "repo": "cookie-handler-next.js",
+      "url": "https://github.com/estrada9166/cookie-handler-next.js",
+      "key": "estrada9166/cookie-handler-next.js",
+      "sourceList": "unicodeveloper/awesome-nextjs",
+      "sourceCategory": "frontend",
+      "reason": "direct_repo_link"
+    }
+  ]
+}

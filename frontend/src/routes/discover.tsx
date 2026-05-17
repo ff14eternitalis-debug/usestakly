@@ -8,7 +8,7 @@ import {
   DiscoverResults
 } from "../features/repos/components/DiscoverResults";
 import { UseCaseSearchPanel } from "../features/repos/components/UseCaseSearchPanel";
-import { PAGE_SIZE } from "../features/repos/components/discover-shared";
+import { PAGE_SIZE, RADAR_PAGE_SIZE } from "../features/repos/components/discover-shared";
 import { useT } from "../i18n";
 import { ApiError, apiGet, apiPost } from "../lib/api-client";
 import type { AddRepoResponse, RepoSearchResponse, RepoSort, SearchFilter } from "../lib/types";
@@ -74,8 +74,8 @@ export function DiscoverPage() {
     params.set("filter", "explore");
     params.set("maturity_bands", "emerging,experimental");
     params.set("sort", "trend");
-    params.set("limit", String(PAGE_SIZE));
-    params.set("offset", String(radarPage * PAGE_SIZE));
+    params.set("limit", String(RADAR_PAGE_SIZE));
+    params.set("offset", String(radarPage * RADAR_PAGE_SIZE));
     return params.toString();
   }, [radarPage]);
 
@@ -111,7 +111,7 @@ export function DiscoverPage() {
   const hasPrevious = page > 0;
   const hasNext = results.data?.hasMore ?? false;
   const radarCount = radarResults.data?.items.length ?? 0;
-  const radarOffset = radarResults.data?.offset ?? radarPage * PAGE_SIZE;
+  const radarOffset = radarResults.data?.offset ?? radarPage * RADAR_PAGE_SIZE;
   const hasPreviousRadar = radarPage > 0;
   const hasNextRadar = radarResults.data?.hasMore ?? false;
   const activeFilter = FILTERS.find((f) => f.value === filter);

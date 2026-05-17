@@ -64,17 +64,17 @@ export const en = {
     publicFormula: "Public formula",
     localEmbeddings: "Local embeddings",
     copyright: "© {year} UseStakly",
-    tagFormula: "formula_v1 · transparent by design"
+    publicBeta: "Public beta",
+    formulaVersionLabel: "formula_v2",
+    transparentByDesign: "transparent by design"
   },
   landing: {
-    eyebrow: "Public beta · formula_v1",
-    h1Part1: "UseStakly —",
-    h1Part2: "Choose GitHub OSS with a transparent quality score.",
+    h1: "Choose GitHub OSS with a transparent quality score.",
     introBefore:
       "UseStakly is the open-source observatory for public GitHub repositories: ",
     introStrong: "transparent quality scores",
     introAfter:
-      ", provenance, and progressive usage signals from MCP agents—so you compare repos beyond stars alone.",
+      ", provenance, and progressive usage signals from MCP agents, so you compare repos beyond stars alone.",
     openObservatory: "Explore repositories",
     readGuide: "Read UseStakly",
     signInForWatchlist: "Sign in for watchlist",
@@ -112,7 +112,7 @@ export const en = {
     pillar: "Pillar",
     pillar1Title: "Discovery, scored by usage.",
     pillar1Body:
-      "Each repo is measured against a transparent formula combining commit cadence, adoption, build reliability, and abandonment signals. Three modes — auto, strict, explore — same scoring, different thresholds.",
+      "Each repo is measured against a transparent formula combining commit cadence, adoption, build reliability, and abandonment signals. Three modes (auto, strict, explore): same scoring, different thresholds.",
     pillar1Artifact: "filter modes",
     pillar1Cta: "Try discover",
     pillar2Title: "Watchlist, real alerts.",
@@ -120,14 +120,14 @@ export const en = {
       "Pin the repos you depend on. We diff scores between recomputes and raise in-app notifications when abandonment rises, a severe flag lands, or overall quality drops. No pull-request RSS, no silence.",
     pillar2Artifact: "triggers",
     pillar2Cta: "Open watchlist",
-    formulaEyebrow: "formula_v1.toml",
+    formulaEyebrow: "formula_v2.toml",
     formulaH2: "The score is a statement, not a black box.",
     formulaBody:
       "Each dimension is a named equation with a known half-life or threshold. Every score carries the formula version that produced it, so v2 never rewrites yesterday's verdict.",
     previewEyebrow: "From the register",
     previewH2: "Live snapshots from the observatory.",
     previewSeeAll: "See all entries",
-    tickerTuning: "─── tuning ─── tuning ─── tuning ───",
+    tickerTuning: "tuning · tuning · tuning",
     closingEyebrow: "Keep a short list",
     closingH2Part1: "Pin the repos you depend on.",
     closingH2Part2: "We'll keep watch.",

@@ -69,8 +69,11 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-[color:var(--color-bg)]/80 backdrop-blur-xl backdrop-saturate-150">
       <div className="shell flex h-[62px] items-center justify-between gap-6">
-        <Link to="/" className="group inline-flex items-center gap-2">
+        <Link to="/" className="group inline-flex items-center gap-3">
           <Wordmark scale="md" />
+          <span className="text-[0.98rem] font-semibold tracking-0 text-fg transition-colors group-hover:text-accent">
+            UseStakly
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-7">

@@ -27,7 +27,7 @@ node scripts/collect-awesome-corpus.mjs `
 ```powershell
 .\scripts\import-awesome-corpus.ps1 `
   -Api "http://127.0.0.1:4000" `
-  -Input "docs/corpus/awesome-candidates-approved.json" `
+  -InputPath "docs/corpus/awesome-candidates-approved.json" `
   -Limit 500 `
   -DryRun
 ```
@@ -37,7 +37,7 @@ node scripts/collect-awesome-corpus.mjs `
 ```powershell
 .\scripts\import-awesome-corpus.ps1 `
   -Api "https://mcp.usestakly.com" `
-  -Input "docs/corpus/awesome-candidates-approved.json" `
+  -InputPath "docs/corpus/awesome-candidates-approved.json" `
   -Limit 500 `
   -DelayMs 750
 ```
@@ -61,4 +61,22 @@ node scripts/collect-awesome-corpus.mjs `
 
 ## Audit trail
 
-Record in this file or a PR comment: date, environment, counts (`added` / `alreadyIndexed` / `failed`), rate-limit events, scheduler follow-up.
+### Production import — 2026-05-17
+
+| Field | Value |
+|-------|--------|
+| API | `https://mcp.usestakly.com` |
+| Input | `docs/corpus/awesome-candidates-approved.json` (500 candidates, copied from collector output) |
+| Limit / delay | 500 / 750 ms |
+| **added** | **490** |
+| **alreadyIndexed** | **4** (`ant-design/ant-design`, `ag-grid/ag-grid`, `chakra-ui/chakra-ui`, `facebook/react`) |
+| **failed** | **6** (GitHub/API 404 — repo absent or renamed) |
+| Rate-limit stops | None (no 403/429 burst; import completed full queue) |
+| Duration | ~34 min wall time |
+| Results file | `docs/corpus/awesome-import-results.json` (gitignored) |
+
+**Failed slugs (retry only if repos exist on GitHub):** `adembudak/vim-doctor`, `0x4d31/sqhunter`, `addyosmani/9f10c555e32a8d06ddb0`, `apps/guardrails`, `crowdstrike/falcon-orchestrator`, `skydb/sky`.
+
+**Follow-up:** wait 1–2 scheduler cycles (or trigger admin recompute) so scores/radar refresh on new artifacts; spot-check `/discover` corpus size.
+
+**Collector note (same day):** `node scripts/collect-awesome-corpus.mjs` → 9092 unique links, cap 500 after round-robin; see `awesome-candidates-summary.md`.
