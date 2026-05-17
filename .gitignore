@@ -5,6 +5,9 @@ dist/
 !.env.example
 target/
 .fastembed_cache/
+.cache/
+docs/corpus/awesome-candidates.json
+docs/corpus/awesome-import-results.json
 .DS_Store
 .idea/
 .vscode/

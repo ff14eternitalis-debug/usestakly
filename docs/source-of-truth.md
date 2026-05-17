@@ -70,6 +70,8 @@ Background refresh: `POST /api/repos/{id}/refresh` requires an authenticated ses
 
 Known non-fields: `ingestionStatus` does not currently include `lastIngestError`.
 
+Manual corpus add: `POST /api/repos/add` ingests one GitHub repo when new (`alreadyIndexed: false`) and **does not call GitHub** when the repo already exists (`alreadyIndexed: true`, case-insensitive owner/repo lookup). Bulk Awesome import: `docs/corpus/awesome-import.md`.
+
 ## Legacy Boundary
 
 The snippets product is abandoned.

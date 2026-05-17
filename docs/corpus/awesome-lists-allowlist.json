@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "description": "Depth-1 Awesome list READMEs to crawl for the first bounded corpus import (max 500 target repos).",
+  "lists": [
+    {
+      "owner": "sorrycc",
+      "repo": "awesome-javascript",
+      "category": "javascript",
+      "reason": "Broad JavaScript tooling and libraries."
+    },
+    {
+      "owner": "enaqx",
+      "repo": "awesome-react",
+      "category": "frontend",
+      "reason": "React UI and ecosystem."
+    },
+    {
+      "owner": "vuejs",
+      "repo": "awesome-vue",
+      "category": "frontend",
+      "reason": "Vue ecosystem."
+    },
+    {
+      "owner": "brillout",
+      "repo": "awesome-react-components",
+      "category": "frontend",
+      "reason": "React component libraries."
+    },
+    {
+      "owner": "vitejs",
+      "repo": "awesome-vite",
+      "category": "frontend",
+      "reason": "Vite plugins and tooling."
+    },
+    {
+      "owner": "vinta",
+      "repo": "awesome-python",
+      "category": "python",
+      "reason": "Python frameworks and libraries."
+    },
+    {
+      "owner": "rust-unofficial",
+      "repo": "awesome-rust",
+      "category": "rust",
+      "reason": "Rust crates and projects."
+    },
+    {
+      "owner": "avelino",
+      "repo": "awesome-go",
+      "category": "go",
+      "reason": "Go libraries and tools."
+    },
+    {
+      "owner": "ziadoz",
+      "repo": "awesome-php",
+      "category": "php",
+      "reason": "PHP ecosystem."
+    },
+    {
+      "owner": "gramantin",
+      "repo": "awesome-rails",
+      "category": "backend",
+      "reason": "Ruby on Rails ecosystem."
+    },
+    {
+      "owner": "chentsulin",
+      "repo": "awesome-graphql",
+      "category": "backend",
+      "reason": "GraphQL servers and clients."
+    },
+    {
+      "owner": "meirwah",
+      "repo": "awesome-incident-response",
+      "category": "security",
+      "reason": "Security and incident tooling."
+    },
+    {
+      "owner": "sbilly",
+      "repo": "awesome-security",
+      "category": "security",
+      "reason": "Security tools and resources."
+    },
+    {
+      "owner": "numetriclabz",
+      "repo": "awesome-db",
+      "category": "database",
+      "reason": "Databases and storage engines."
+    },
+    {
+      "owner": "dhamaniasad",
+      "repo": "awesome-postgres",
+      "category": "database",
+      "reason": "PostgreSQL tooling."
+    },
+    {
+      "owner": "rootsongjc",
+      "repo": "awesome-kubernetes",
+      "category": "observability",
+      "reason": "Kubernetes ecosystem (large list; per-source cap applies)."
+    },
+    {
+      "owner": "binhnguyennus",
+      "repo": "awesome-scalability",
+      "category": "observability",
+      "reason": "Scalability and distributed systems."
+    },
+    {
+      "owner": "akrawchyk",
+      "repo": "awesome-vim",
+      "category": "devtools",
+      "reason": "Editor tooling (smaller, balances huge lists)."
+    },
+    {
+      "owner": "jondot",
+      "repo": "awesome-react-native",
+      "category": "frontend",
+      "reason": "React Native ecosystem."
+    },
+    {
+      "owner": "unicodeveloper",
+      "repo": "awesome-nextjs",
+      "category": "frontend",
+      "reason": "Next.js ecosystem."
+    },
+    {
+      "owner": "anderspitman",
+      "repo": "awesome-cli",
+      "category": "devtools",
+      "reason": "CLI utilities developers actually run."
+    }
+  ]
+}

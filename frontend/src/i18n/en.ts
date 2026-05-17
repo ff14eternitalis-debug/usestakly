@@ -307,7 +307,7 @@ export const en = {
     addRepoPending: "Adding…",
     addRepoHelp: "Paste a GitHub URL or owner/repo to add it to the observatory now.",
     addRepoSuccess: "Repo added to the registry:",
-    addRepoExists: "Repo already indexed. Refreshed its metadata and score:",
+    addRepoExists: "Repo already in the corpus:",
     addRepoOpen: "Open profile",
     measuring: "measuring…",
     entriesSingle: "entry",

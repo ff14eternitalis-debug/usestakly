@@ -8,7 +8,7 @@
 
 **Key constraint:** cap accepted repos at **500** for the first import. Every step must support dry-run output before ingestion.
 
-**Execution gate:** do not run a production import until Task 4 duplicate short-circuit is implemented and verified. The current `alreadyIndexed` flag alone is not enough if the handler still calls GitHub for already-known repos.
+**Execution gate:** do not run a production import until Task 4 duplicate short-circuit is **deployed** and verified. Code landed 2026-05-17 (`add_lookup` + short-circuit in `repos_ingestion.rs`); deploy before bulk import.
 
 ---
 
@@ -68,11 +68,11 @@ Risk to close in this plan: ensure user-facing add flow does not create duplicat
 - Later script: `scripts/collect-awesome-corpus.mjs`
 - Create: `docs/corpus/awesome-lists-allowlist.json`
 
-- [ ] Define source depth:
+- [x] Define source depth:
   - root: `sindresorhus/awesome`
   - depth 1: selected Awesome-list READMEs linked from the root allowlist
   - no depth 2 recursion in the first import
-- [ ] Create an allowlist of roughly 15-25 Awesome-list repos before crawling depth 1. Suggested categories:
+- [x] Create an allowlist of roughly 15-25 Awesome-list repos before crawling depth 1. Suggested categories:
   - frontend / UI
   - testing
   - Node.js / TypeScript
@@ -84,21 +84,21 @@ Risk to close in this plan: ensure user-facing add flow does not create duplicat
   - observability
   - build/dev tooling
   - machine learning/data tooling
-- [ ] Document why each allowlisted Awesome list is included.
-- [ ] Define default cap:
+- [x] Document why each allowlisted Awesome list is included (`docs/corpus/awesome-lists-allowlist.json`).
+- [x] Define default cap:
   - `maxAcceptedRepos = 500`
   - stop after ranking/filtering, not after raw extraction
-- [ ] Define ranking before cap:
+- [x] Define ranking before cap:
   - first dedupe all candidates
   - score candidates by source category relevance and direct repo-link confidence
   - apply round-robin or per-source quotas so one large list cannot fill all 500 slots
   - then take the first 500
-- [ ] Define normalized repo key:
+- [x] Define normalized repo key:
   - lowercase `owner/repo`
   - strip `https://github.com/`
   - strip `.git`
   - ignore fragments, query strings, issues, pulls, releases, wiki, discussions, actions, sponsors
-- [ ] Define source metadata to keep in dry-run:
+- [x] Define source metadata to keep in dry-run:
   - `owner`
   - `repo`
   - `url`
@@ -136,19 +136,19 @@ node scripts/collect-awesome-corpus.mjs `
 
 **Collector behavior:**
 
-- [ ] Fetch root README from GitHub raw content.
-- [ ] Extract GitHub repo links.
-- [ ] Detect likely Awesome-list repos:
+- [x] Fetch root README from GitHub raw content (allowlist lists only; root optional).
+- [x] Extract GitHub repo links.
+- [x] Detect likely Awesome-list repos:
   - repo name starts with `awesome`
   - or README line/list text includes `awesome`
   - or source is the root `sindresorhus/awesome`
-- [ ] Fetch only depth 1 README files listed in `docs/corpus/awesome-lists-allowlist.json`.
-- [ ] Extract direct `github.com/owner/repo` links from those READMEs.
-- [ ] Normalize and deduplicate candidate repos.
-- [ ] Keep source provenance for every candidate.
-- [ ] Emit JSON and markdown summary.
-- [ ] Never call `/api/repos/add` in this script.
-- [ ] Rate-limit raw README fetches and cache fetched README content locally during one run to avoid repeated GitHub calls while tuning filters.
+- [x] Fetch only depth 1 README files listed in `docs/corpus/awesome-lists-allowlist.json`.
+- [x] Extract direct `github.com/owner/repo` links from those READMEs.
+- [x] Normalize and deduplicate candidate repos.
+- [x] Keep source provenance for every candidate.
+- [x] Emit JSON and markdown summary.
+- [x] Never call `/api/repos/add` in this script.
+- [x] Rate-limit raw README fetches and cache fetched README content locally during one run to avoid repeated GitHub calls while tuning filters.
 
 **Acceptance criteria:**
 - Running the collector produces a candidate file and summary only.
@@ -162,8 +162,8 @@ node scripts/collect-awesome-corpus.mjs `
 
 **Filtering rules:**
 
-- [ ] Reject non-GitHub links.
-- [ ] Reject GitHub URLs that are not repository roots and cannot be safely normalized:
+- [x] Reject non-GitHub links.
+- [x] Reject GitHub URLs that are not repository roots and cannot be safely normalized:
   - `/issues`
   - `/pull`
   - `/pulls`
@@ -173,15 +173,15 @@ node scripts/collect-awesome-corpus.mjs `
   - `/discussions`
   - `/sponsors`
   - `/commit`
-- [ ] Normalize valid repo subpaths to the repository root instead of dropping them:
+- [x] Normalize valid repo subpaths to the repository root instead of dropping them:
   - `github.com/owner/repo/tree/...` -> `owner/repo`
   - `github.com/owner/repo/blob/...` -> `owner/repo`
-- [ ] Reject obvious non-repo GitHub hosts or pseudo paths.
-- [ ] Reject root Awesome lists from the final target set by default:
+- [x] Reject obvious non-repo GitHub hosts or pseudo paths.
+- [x] Reject root Awesome lists from the final target set by default:
   - keep them as `sourceList`
   - do not ingest them as product candidates unless explicitly allowlisted
-- [ ] Reject archived repos only after ingestion metadata is known, not during README parse. The dry-run can mark them as "unknown archival state".
-- [ ] Prefer repos with likely developer-tool categories:
+- [x] Reject archived repos only after ingestion metadata is known, not during README parse. The dry-run can mark them as "unknown archival state".
+- [x] Prefer repos with likely developer-tool categories:
   - frontend/ui
   - testing
   - database/orm
@@ -190,7 +190,7 @@ node scripts/collect-awesome-corpus.mjs `
   - observability
   - build/dev tooling
   - data/ML tooling
-- [ ] Apply source/category balancing before taking the final 500:
+- [x] Apply source/category balancing before taking the final 500:
   - per-source cap for very large lists
   - round-robin across source lists or categories
   - stable deterministic ordering for reproducible dry-runs
@@ -216,20 +216,20 @@ node scripts/collect-awesome-corpus.mjs `
 - `backend/src/services/ingestion/github.rs`
 - tests near existing ingestion/handler tests, if available
 
-- [ ] Confirm owner/repo comparison is case-insensitive or normalize before lookup.
-- [ ] If not case-insensitive, update `find_github_artifact_id` or caller normalization so `FFmpeg/FFmpeg` and `ffmpeg/ffmpeg` resolve to the same existing artifact.
-- [ ] Short-circuit `POST /api/repos/add` when the repo already exists:
+- [x] Confirm owner/repo comparison is case-insensitive or normalize before lookup (`LOWER` in SQL).
+- [x] If not case-insensitive, update `find_github_artifact_id` or caller normalization so `FFmpeg/FFmpeg` and `ffmpeg/ffmpeg` resolve to the same existing artifact.
+- [x] Short-circuit `POST /api/repos/add` when the repo already exists:
   - do **not** call `ingest_repo` for already-indexed repos by default
   - return the existing profile/add response with `alreadyIndexed: true`
   - keep an explicit future refresh path separate from add, instead of refreshing on every duplicate add
-- [ ] Add a test for duplicate add behavior:
+- [x] Add a test for duplicate add behavior:
   - existing repo in DB
   - user/API adds same repo with different casing or GitHub URL format
   - response has `alreadyIndexed: true`
   - no duplicate `external_artifacts` row
   - no GitHub ingestion call is made for the duplicate path, or the logic is structured so this can be proven by a unit/service test
-- [ ] Confirm frontend add flow communicates "already indexed" instead of implying a fresh import or refreshed metadata.
-- [ ] If current UI copy says "Refreshed metadata" for `alreadyIndexed`, update it to a neutral existing-corpus message before shipping the short-circuit.
+- [x] Confirm frontend add flow communicates "already indexed" instead of implying a fresh import or refreshed metadata.
+- [x] If current UI copy says "Refreshed metadata" for `alreadyIndexed`, update it to a neutral existing-corpus message before shipping the short-circuit.
 
 **Acceptance criteria:**
 - A user cannot create duplicate UseStakly repos for the same GitHub repo.
@@ -267,19 +267,19 @@ Then, after review:
 
 **Script behavior:**
 
-- [ ] Read approved candidate JSON.
-- [ ] Deduplicate again before sending.
-- [ ] Respect `-Limit`.
-- [ ] Support `-DryRun`.
-- [ ] POST each repo to `/api/repos/add`.
-- [ ] Log result per repo:
+- [x] Read approved candidate JSON.
+- [x] Deduplicate again before sending.
+- [x] Respect `-Limit`.
+- [x] Support `-DryRun`.
+- [x] POST each repo to `/api/repos/add`.
+- [x] Log result per repo:
   - `added`
   - `alreadyIndexed`
   - `failed`
-- [ ] Add delay between requests to reduce GitHub pressure.
-- [ ] Stop or pause on repeated GitHub rate-limit failures.
-- [ ] Emit final summary JSON/MD.
-- [ ] Prefer staging/local first. Production import should run only after Task 4 short-circuit is deployed.
+- [x] Add delay between requests to reduce GitHub pressure.
+- [x] Stop or pause on repeated GitHub rate-limit failures.
+- [x] Emit final summary JSON/MD.
+- [x] Prefer staging/local first. Production import should run only after Task 4 short-circuit is deployed.
 - [ ] If a future admin-gated import endpoint exists, prefer it over the public add endpoint for production.
 
 **Acceptance criteria:**

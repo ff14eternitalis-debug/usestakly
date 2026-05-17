@@ -3,7 +3,7 @@
 > **Snapshot** : passe complète sur `TODO.md` v5.5 + `docs/plans/*` + état réel du code.
 > Les faux positifs détectés (items marqués TODO mais déjà livrés) ont été corrigés directement dans les docs concernées (`TODO.md`, `docs/plans/source-of-truth-oss-radar-plan.md`, `docs/plans/use-case-recommendation-watch-plan.md`, `docs/plans/anti-slop-vitality-v2.md`).
 >
-> Last reconciled with code: 2026-05-17.
+> Last reconciled with code: 2026-05-17 (Awesome import tooling + add_repo short-circuit).
 > Cette doc liste **uniquement** ce qui reste vraiment ouvert, organisé par priorité d'exécution.
 > À mettre à jour à chaque vague de finition. Source de vérité opérationnelle = `docs/source-of-truth.md` + ce backlog priorisé. `TODO.md` reste une roadmap historique longue.
 
@@ -22,6 +22,7 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 - [x] **Visibilité quota GitHub (logs L1)** — livré 2026-05-17. Logs structurés `x-ratelimit-*` + warnings quota bas / rate-limit ; runbook dans `docs/ops-mcp-coolify-hardening.md`. Endpoint admin quota et statut public dégradé : encore ouverts.
 - [x] **Smoke UX public mobile/desktop** — validé manuellement en prod le 2026-05-17 (desktop + mobile, pas d'erreur console visible ni blocage layout signalé).
 - [ ] **Email produit réel (watch/digest)** — Task 5 ; test canal OK, livraison inbox produit à prouver.
+- [x] **Awesome corpus import (tooling)** — collector, allowlist, import script, Task 4 short-circuit livrés 2026-05-17. Voir `docs/corpus/awesome-import.md`. **Import prod** : après deploy short-circuit, revue `awesome-candidates-approved.json`, puis batches.
 - [x] **Rate-limit applicative globale `/mcp`** — livré 2026-05-06. Limite par IP pour non-auth/invalides (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`) et limite par token valide pour le transport/reads (`APP_MCP_READ_LIMIT_PER_MINUTE`). Les writes gardent le quota par token existant via `agent_token_events`.
 - [x] **Alerte externe** — livré 2026-05-07 avec Uptime Kuma : `UseStakly Website`, `UseStakly API Health`, `UseStakly Public Status`, `UseStakly MCP` authentifié avec token monitoring dédié.
 

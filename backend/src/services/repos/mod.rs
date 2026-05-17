@@ -1,3 +1,4 @@
+mod add_lookup;
 mod normalize;
 mod profile;
 mod refresh_limits;
@@ -9,13 +10,13 @@ pub use refresh_limits::{
     check_refresh_limits, record_refresh_event,
 };
 
+pub use add_lookup::{
+    IndexedRepoAddRow, find_github_artifact_id, formula_version_for_add, load_indexed_repo_for_add,
+    should_short_circuit_github_ingest,
+};
 pub use profile::{get_repo_profile, get_repo_signals};
 pub use search::search_github_repos;
 
-use sqlx::PgPool;
-use uuid::Uuid;
-
-use crate::app::error::ApiError;
 use crate::domain::reference::SearchFilter;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -51,29 +52,6 @@ impl RepoSort {
             Self::Trend => "trend",
         }
     }
-}
-
-pub async fn find_github_artifact_id(
-    db: &PgPool,
-    owner: &str,
-    name: &str,
-) -> Result<Option<Uuid>, ApiError> {
-    let row: Option<(Uuid,)> = sqlx::query_as(
-        r#"
-        SELECT id
-        FROM external_artifacts
-        WHERE source = 'github'
-          AND github_owner = $1
-          AND github_repo = $2
-        LIMIT 1
-        "#,
-    )
-    .bind(owner)
-    .bind(name)
-    .fetch_optional(db)
-    .await?;
-
-    Ok(row.map(|(id,)| id))
 }
 
 #[derive(Debug, Clone, Default)]
