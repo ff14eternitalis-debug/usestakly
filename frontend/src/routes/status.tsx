@@ -49,6 +49,11 @@ export function StatusPage() {
           }
         />
         <StatusCheck
+          label={t.status.githubIngestion}
+          state={status.isLoading ? "checking" : checkState(status.data?.ingestion.status)}
+          detail={status.data?.ingestion.message}
+        />
+        <StatusCheck
           label={t.status.mcp}
           state={status.isLoading ? "checking" : checkState(status.data?.mcp.status)}
           detail={status.data ? `${status.data.mcp.tools.length} ${t.status.tools}` : undefined}
@@ -56,7 +61,7 @@ export function StatusPage() {
       </section>
 
       <section className="grid gap-4 border-t border-line pt-8 sm:grid-cols-2">
-        <StatusFact label={t.status.formula} value={status.data?.formula.version ?? "v1"} />
+        <StatusFact label={t.status.formula} value={status.data?.formula.version ?? "v2.0"} />
         <StatusFact label={t.status.publicStatus} value={status.data?.status ?? "checking"} />
       </section>
 
@@ -73,9 +78,9 @@ export function StatusPage() {
   );
 }
 
-function checkState(status?: "ok" | "down" | "degraded") {
+function checkState(status?: "ok" | "down" | "degraded" | "disabled") {
   if (status === "ok") return "online";
-  if (status === "degraded") return "degraded";
+  if (status === "degraded" || status === "disabled") return "degraded";
   return "offline";
 }
 

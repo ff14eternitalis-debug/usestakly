@@ -20,7 +20,7 @@ UseStakly can stay public in limited beta today. A **wider** public announcement
 |---|---|---|
 | Offsite backup | Deferred (budget) | Local Coolify backup + restore test are in place. S3/offsite copy is postponed until budget allows; full VPS/disk loss risk remains accepted for limited beta. |
 | `/api/repos/{id}/refresh` hardening | Done (code) | Session + DB limits + memory cooldown; deploy + env on Coolify still required. |
-| GitHub quota visibility | In progress | Structured logs shipped (L1); admin endpoint + public degraded state still open. |
+| GitHub quota visibility | Done (code) | L1 logs + `GET /api/admin/github/quota` + public `ingestion` status (deploy to verify). |
 | Public UX/mobile smoke | Done | Validated manually on production desktop and mobile (2026-05-17); no visible console errors or blocking layout issues reported. |
 | Real outbound email notification | Blocking | Channel test is not enough; one real watch/digest delivery must be proven. |
 | Live post-deploy gate | Done | Health/status/OAuth/discover/repo/MCP/watchlist already validated. |
@@ -129,10 +129,10 @@ Non-blocking for limited beta launch: offsite S3 (deferred budget), Sybil GitHub
 - [x] Log GitHub rate-limit headers on ingestion responses where available.
 - [x] Add warning logs for low remaining quota and secondary rate-limit events.
 - [x] Launch level: structured logs first (`x-ratelimit-remaining`, `x-ratelimit-reset`, secondary limit, `retry-after`) with warnings when low.
-- [ ] Next level: expose admin-only visibility via a new or existing `/api/admin/*` endpoint, for example `/api/admin/github/quota`.
-- [ ] Public status should only expose a generic degraded state such as "GitHub ingestion degraded" when there is a real ingestion problem; do not expose raw quota values publicly.
-- [ ] Add a simple operational runbook: what to do if quota is low or secondary-limited.
-- [ ] Verify scheduler behavior with current `APP_INGEST_MAX_REPOS_PER_CYCLE` and refresh defaults.
+- [x] Admin endpoint `GET /api/admin/github/quota` (`services/ingestion/github_quota.rs`).
+- [x] Public status `ingestion` block on `/api/status/public` (generic message only).
+- [x] Operational runbook in `docs/ops-mcp-coolify-hardening.md` (GitHub API quota section).
+- [x] Scheduler defaults documented in same runbook (`APP_INGEST_MAX_REPOS_PER_CYCLE`, stale secs).
 
 **Acceptance criteria:**
 - An operator can answer: “Are we close to GitHub quota exhaustion?”
@@ -182,6 +182,8 @@ This task does **not** replace R7 / deeper validation in `docs/plans/remaining-w
 - Account channel test is validated.
 - Need one real watchlist alert or digest emitted by product logic.
 
+**Runbook:** `docs/ops-email-notification-runbook.md` (paths A/B, checklist, troubleshooting).
+
 **Files/docs likely touched if issues appear:**
 - `backend/src/services/notifications.rs`
 - `backend/src/services/notification_channels.rs`
@@ -214,13 +216,13 @@ This task does **not** replace R7 / deeper validation in `docs/plans/remaining-w
 - `docs/source-of-truth.md`
 - `TODO.md` only if it still contradicts the source of truth
 
-- [ ] Mark completed blockers as done.
-- [ ] Keep live post-deploy gate marked done, not reopened.
-- [ ] If any task caused a backend/frontend deploy, reference the latest validation run from `docs/validation/live-release-checklist.md` without moving the gate back into the blocker list.
-- [ ] Keep the `docs/source-of-truth.md` "Corpus vs community proof" section aligned with the final refresh behavior and avoid promising fields that do not exist, such as `lastIngestError`.
-- [ ] Move non-blocking items into roadmap/polish if they are still open.
-- [ ] Run `.\scripts\audit-doc-source-truth.ps1`.
-- [ ] Run `git diff --check`.
+- [x] Mark completed blockers as done (quota L2, refresh hardening, UX smoke; email + offsite still open).
+- [x] Keep live post-deploy gate marked done, not reopened.
+- [ ] After deploy of quota/status changes: run `docs/validation/live-release-checklist.md` once (release verification, not a new blocker category).
+- [x] `docs/source-of-truth.md` aligned (refresh, quota ops, email runbook link).
+- [x] Non-blocking items remain in roadmap (`remaining-work` P3+).
+- [x] Run `.\scripts\audit-doc-source-truth.ps1`.
+- [x] Run `git diff --check`.
 
 **Acceptance criteria:**
 - A new agent can tell whether the project is ready for wider public beta from `source-of-truth` + `remaining-work`.

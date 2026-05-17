@@ -214,6 +214,7 @@ export const en = {
     apiHealth: "API health",
     database: "Database",
     registryRead: "Registry read",
+    githubIngestion: "GitHub ingestion",
     mcp: "MCP tools",
     formula: "Formula",
     publicStatus: "Public status",

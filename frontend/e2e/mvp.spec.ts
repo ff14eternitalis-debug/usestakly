@@ -243,6 +243,7 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
           api: { status: "ok" },
           database: { status: "ok" },
           registry: { status: "ok", repoCount: 42 },
+          ingestion: { status: "ok" },
           mcp: {
             status: "ok",
             tools: [
@@ -254,7 +255,7 @@ async function mockUseStaklyApi(page: Page, options: { authenticated: boolean })
               "watch_use_case"
             ]
           },
-          formula: { version: "v2.0" }
+          formula: { status: "ok", version: "v2.0" }
         })
       );
       return;

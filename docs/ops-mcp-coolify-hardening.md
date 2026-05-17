@@ -231,19 +231,38 @@ Acceptance criteria:
 
 ## GitHub API quota runbook (launch hardening)
 
+### Structured logs (L1)
+
 Backend ingestion logs structured quota fields on GitHub HTTP responses (`services/ingestion/github.rs`):
 
 - `debug` on each response with headers when present: `github_rate_limit_remaining`, `github_rate_limit_limit`, `github_rate_limit_reset`, `github_rate_limit_used`
 - `warn` when `github_rate_limit_remaining <= 100` (`GitHub API rate limit low`)
 - `warn` on primary/secondary rate-limit hits (`github_rate_limit_kind`)
 
-**Operator checks (Coolify logs or log drain):**
+In-process snapshots are stored in `services/ingestion/github_quota.rs` (last headers + last hit).
 
-1. Search `GitHub API rate limit low` or `github_rate_limit_remaining` trending down before a deploy or corpus refresh.
-2. On `secondary` warnings: pause manual `POST /api/repos/*/refresh`, reduce `APP_INGEST_MAX_REPOS_PER_CYCLE`, wait for `retry-after` / reset window.
-3. On sustained primary limits: confirm `GITHUB_TOKEN` is set, scheduler is not over-scoped, and profile refresh is not abused (DB limits: `repo_refresh_events`, env `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` / `APP_REPO_REFRESH_COOLDOWN_SECS`).
+### Admin visibility (L2)
 
-**Still open (Task 3 next level):** admin-only `/api/admin/github/quota` and optional public status flag `GitHub ingestion degraded` without exposing raw quota.
+```http
+GET /api/admin/github/quota
+x-admin-token: <ADMIN_API_TOKEN>
+```
+
+Returns: `ingestionStatus`, `degradedReasons`, `lastHeaderSnapshot`, `lastHit`, DB aggregates, scheduler config, optional `liveProbe` from GitHub `GET /rate_limit` when `GITHUB_TOKEN` is set.
+
+### Public status (no raw quota)
+
+`GET /api/status/public` includes `ingestion: { status, message? }` with a generic message such as `GitHub ingestion degraded` only when needed.
+
+### Operator playbook
+
+1. Before a large import: call admin quota or search logs for `GitHub API rate limit low`.
+2. If public `ingestion.status` is `degraded`, pause scheduler-heavy work, Awesome import batches, and admin ingest storms.
+3. Primary limit: wait for `liveProbe.resetAt` or `x-ratelimit-reset`.
+4. Secondary limit: back off 2-15 minutes; avoid tight refresh loops.
+5. Prefer ETag/`304` on structural fetches.
+6. Tune `APP_INGEST_MAX_REPOS_PER_CYCLE` and `APP_CORPUS_REFRESH_STALE_SECS` if overnight cycles burn quota.
+7. Profile refresh abuse: DB table `repo_refresh_events`, env `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` / `APP_REPO_REFRESH_COOLDOWN_SECS`.
 
 ## Notes
 

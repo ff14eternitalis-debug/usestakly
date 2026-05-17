@@ -329,6 +329,8 @@ fn log_github_rate_limit_snapshot(context: &str, status: StatusCode, headers: &H
         github_rate_limit_used = fields.5,
         "GitHub API rate limit snapshot"
     );
+
+    super::github_quota::record_headers_snapshot(context, headers);
 }
 
 fn log_github_rate_limit_hit(
@@ -339,23 +341,29 @@ fn log_github_rate_limit_hit(
 ) {
     log_github_rate_limit_snapshot(context, status, headers);
     match kind {
-        GitHubRateLimitKind::Secondary => tracing::warn!(
-            github_context = context,
-            http_status = status.as_u16(),
-            github_rate_limit_kind = "secondary",
-            "GitHub API secondary rate limit"
-        ),
+        GitHubRateLimitKind::Secondary => {
+            super::github_quota::record_limit_hit("secondary");
+            tracing::warn!(
+                github_context = context,
+                http_status = status.as_u16(),
+                github_rate_limit_kind = "secondary",
+                "GitHub API secondary rate limit"
+            );
+        }
         GitHubRateLimitKind::Primary {
             reset_at,
             retry_after,
-        } => tracing::warn!(
-            github_context = context,
-            http_status = status.as_u16(),
-            github_rate_limit_kind = "primary",
-            github_rate_limit_reset_at = ?reset_at,
-            github_retry_after_secs = retry_after.map(|d| d.as_secs()),
-            "GitHub API primary rate limit"
-        ),
+        } => {
+            super::github_quota::record_limit_hit("primary");
+            tracing::warn!(
+                github_context = context,
+                http_status = status.as_u16(),
+                github_rate_limit_kind = "primary",
+                github_rate_limit_reset_at = ?reset_at,
+                github_retry_after_secs = retry_after.map(|d| d.as_secs()),
+                "GitHub API primary rate limit"
+            );
+        }
     }
 }
 

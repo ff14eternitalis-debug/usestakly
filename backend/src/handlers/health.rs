@@ -2,7 +2,13 @@ use axum::{Json, extract::State};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::{app::AppState, services::quality::load_v2};
+use crate::{
+    app::AppState,
+    services::{
+        ingestion::github_quota::{self, PublicIngestionStatus},
+        quality::load_v2,
+    },
+};
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -20,9 +26,18 @@ pub struct PublicStatusResponse {
     api: CheckStatus,
     database: CheckStatus,
     registry: RegistryStatus,
+    ingestion: IngestionStatus,
     mcp: McpStatus,
     formula: FormulaStatus,
     checked_at: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IngestionStatus {
+    status: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    message: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -83,7 +98,14 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
         .unwrap_or_else(|_| "unavailable".to_string());
     let registry_ok = db_ok && repo_count > 0;
     let formula_ok = formula_version != "unavailable";
-    let overall_ok = db_ok && registry_ok && formula_ok;
+    let (ingestion_public, ingestion_message) = github_quota::public_ingestion_status(
+        &state.db,
+        &state.config,
+    )
+    .await
+    .unwrap_or((PublicIngestionStatus::Degraded, Some("GitHub ingestion degraded".into())));
+    let ingestion_ok = ingestion_public == PublicIngestionStatus::Ok;
+    let overall_ok = db_ok && registry_ok && formula_ok && ingestion_ok;
 
     Json(PublicStatusResponse {
         status: if overall_ok { "ok" } else { "degraded" },
@@ -94,6 +116,10 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
         registry: RegistryStatus {
             status: if registry_ok { "ok" } else { "degraded" },
             repo_count,
+        },
+        ingestion: IngestionStatus {
+            status: ingestion_public.as_str(),
+            message: ingestion_message,
         },
         mcp: McpStatus {
             status: "ok",

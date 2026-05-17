@@ -30,6 +30,7 @@ Read in this order:
 
 - `docs/validation/live-release-checklist.md` — ordered go/no-go after deploy
 - `scripts/mcp-live-smoke.ps1` — remote MCP smoke (no Cursor MCP required)
+- `docs/ops-email-notification-runbook.md` — prove real watchlist/digest email (launch Task 5)
 
 ## Completed plans (historical only)
 
@@ -71,6 +72,8 @@ Background refresh: `POST /api/repos/{id}/refresh` requires an authenticated ses
 Known non-fields: `ingestionStatus` does not currently include `lastIngestError`.
 
 Manual corpus add: `POST /api/repos/add` ingests one GitHub repo when new (`alreadyIndexed: false`) and **does not call GitHub** when the repo already exists (`alreadyIndexed: true`, case-insensitive owner/repo lookup). Bulk Awesome import: `docs/corpus/awesome-import.md`.
+
+GitHub quota ops: structured logs in `ingestion/github.rs`; operator view `GET /api/admin/github/quota` (`x-admin-token`); public `GET /api/status/public` exposes `ingestion.status` + generic message only (no raw remaining/limit). Runbook: `docs/ops-mcp-coolify-hardening.md` (GitHub API quota section).
 
 ## Legacy Boundary
 

@@ -429,6 +429,10 @@ export type PublicStatus = {
   api: { status: "ok" | "down" | "degraded" };
   database: { status: "ok" | "down" | "degraded" };
   registry: { status: "ok" | "down" | "degraded"; repoCount: number };
+  ingestion: {
+    status: "ok" | "down" | "degraded" | "disabled";
+    message?: string;
+  };
   mcp: { status: "ok" | "down" | "degraded"; tools: string[] };
   formula: { status: "ok" | "down" | "degraded"; version: string };
   checkedAt: string;

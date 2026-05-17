@@ -49,10 +49,10 @@ Quand `APP_SESSION_SECRET` ou les couples OAuth sont absents, retombe sur un dev
 
 Responsabilité : I/O HTTP seulement.
 
-- `health` — `/health` + `/api/status/public` (status enrichi public beta)
+- `health` — `/health` + `/api/status/public` (status enrichi public beta, incl. `ingestion` générique sans quota brut)
 - `auth` — callbacks OAuth GitHub / Discord avec `return_to` signé
 - `me`, `account` — profil user, settings
-- `admin` — endpoints admin gated par `ADMIN_API_TOKEN` (recompute, MCP metrics, scoring explain, embeddings backfill, signal review queue…)
+- `admin` — endpoints admin gated par `ADMIN_API_TOKEN` (recompute, MCP metrics, `GET /api/admin/github/quota`, scoring explain, embeddings backfill, signal review queue…)
 - `agent_tokens` — CRUD tokens MCP (`POST/GET /api/agent-tokens`, `DELETE /api/agent-tokens/{id}`)
 - `search` — recherche discovery publique
 - `repos` — re-export des handlers spécialisés repo
@@ -68,6 +68,7 @@ Responsabilité : I/O HTTP seulement.
 Responsabilité : logique métier.
 
 - `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
+- `ingestion/github_quota.rs` — snapshots quota (headers + hits), agrégation DB, sonde live `GET /rate_limit`, statut public dégradé
 - `ingestion/structural_extras.rs` — signaux structurels GitHub : CI racine/workflows, releases paginées, fallback tags si aucune release
 - `repos/*` — agrégation profils repo, réponses discovery, score provenance, explications publiques
 - `watchlist.rs`, `notifications.rs`, `notification_channels.rs`, `notification_digest.rs`

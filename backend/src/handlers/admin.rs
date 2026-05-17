@@ -11,7 +11,10 @@ use uuid::Uuid;
 use crate::{
     app::{AppState, error::ApiError},
     services::{
-        ingestion::github::{build_client, ingest_repo},
+        ingestion::{
+            github::{build_client, ingest_repo},
+            github_quota::{self, GitHubQuotaReport},
+        },
         quality::{
             ScoringExplain, ScoringReport, explain_external_scoring,
             recompute_all_scores_with_config,
@@ -233,6 +236,17 @@ pub async fn review_repo_signal(
 #[derive(Deserialize)]
 pub struct McpMetricsQuery {
     pub window: Option<String>,
+}
+
+pub async fn github_quota_report(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<GitHubQuotaReport>, ApiError> {
+    require_admin_token(&state, &headers)?;
+    let report = github_quota::build_report(&state.db, &state.config)
+        .await
+        .map_err(|e| ApiError::internal(format!("github quota report failed: {e}")))?;
+    Ok(Json(report))
 }
 
 pub async fn mcp_metrics_report(
