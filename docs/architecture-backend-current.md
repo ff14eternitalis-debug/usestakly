@@ -36,7 +36,8 @@ Lecture d'env (`.env` chargé via `dotenvy`). Couvre DB, dev user, OAuth GitHub/
 Variables liées à la vérité structurelle des profils :
 
 - `APP_STRUCTURAL_STALE_SECS` — âge maximal des signaux structurels GitHub avant refresh UI (défaut `172800`, soit 48 h)
-- `APP_REPO_REFRESH_COOLDOWN_SECS` — cooldown mémoire entre deux `POST /api/repos/{id}/refresh` pour le même repo (défaut `900`, soit 15 min)
+- `APP_REPO_REFRESH_COOLDOWN_SECS` — fenêtre repo pour le garde-fou DB + cooldown mémoire best-effort sur `POST /api/repos/{id}/refresh` (défaut `900`, soit 15 min)
+- `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` — plafond DB des refresh **complétés** par utilisateur authentifié et heure (défaut `10`)
 
 ### `auth/`
 
@@ -57,7 +58,7 @@ Responsabilité : I/O HTTP seulement.
 - `repos` — re-export des handlers spécialisés repo
 - `repos_query` — profil repo détaillé + filtres avancés discover
 - `repos_ingestion` — `POST /api/repos/add`, ingestion GitHub + recompute du seul artifact ajouté (`recompute_external_artifact`)
-- `repos_refresh` — `POST /api/repos/{repo_id}/refresh`, refresh structurel GitHub + recompute du seul artifact + refresh radar ; requiert `GITHUB_TOKEN`, cooldown mémoire par repo
+- `repos_refresh` — `POST /api/repos/{repo_id}/refresh` (session requise), refresh structurel GitHub + recompute du seul artifact + refresh radar ; requiert `GITHUB_TOKEN` ; limites DB `repo_refresh_events` (user/heure + repo/fenêtre) + cooldown mémoire secondaire ; réponse cache si throttled
 - `repo_signals` — création de signaux et dispute owner
 - `repo_viewer` — état viewer-spécifique d'un repo
 - `watchlist`, `notifications`, `notification_channels`
@@ -185,11 +186,13 @@ Types métier actifs : `account`, `agent_token`, `quality`, `quality_display`, `
 
 ### Refresh structurel GitHub
 
-1. `POST /api/repos/{repo_id}/refresh` vérifie `GITHUB_TOKEN`, retrouve `github_owner/github_repo`, puis applique un cooldown mémoire par repo (`APP_REPO_REFRESH_COOLDOWN_SECS`, défaut 900)
-2. `ingest_repo` relit les métadonnées GitHub, dont `structural_extras` : workflows CI non vides ou fichiers CI racine, releases paginées jusqu'à 500, fallback tags si aucune release
-3. `recompute_external_artifact` recalcule uniquement l'artifact concerné et rafraîchit son snapshot radar
-4. le frontend repo-detail déclenche ce POST une seule fois si `structuralStale` ou `!structuralComplete`
-5. `ingestionStatus` ne contient pas encore `lastIngestError`
+1. `POST /api/repos/{repo_id}/refresh` exige une session (`resolve_current_user`), `GITHUB_TOKEN`, et un artifact GitHub existant
+2. garde-fous : cooldown mémoire best-effort, puis compteurs Postgres sur `repo_refresh_events` (`10/h/user` via `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR`, `1/fenêtre/repo` via `APP_REPO_REFRESH_COOLDOWN_SECS`) ; en cas de throttle, enregistrement `status=throttled` et réponse profil cache (`refreshed: false`)
+3. `ingest_repo` relit les métadonnées GitHub, dont `structural_extras` : workflows CI non vides ou fichiers CI racine, releases paginées jusqu'à 500, fallback tags si aucune release
+4. `recompute_external_artifact` recalcule uniquement l'artifact concerné et rafraîchit son snapshot radar
+5. le frontend repo-detail déclenche ce POST **une seule fois et seulement si l'utilisateur est authentifié**, quand `structuralStale` ou `!structuralComplete` ; les visiteurs anonymes voient le profil cache sans appel refresh
+6. `ingestionStatus` ne contient pas encore `lastIngestError`
+7. ingestion GitHub logue `x-ratelimit-*` en `debug` et `warn` si quota bas ou rate-limit hit (voir ops hardening)
 
 ### Recompute qualité
 

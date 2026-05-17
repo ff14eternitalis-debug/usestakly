@@ -66,7 +66,7 @@ Where to read this truth:
 
 Radar may mark large active OSS as `corpus_backed` / established before community proof exists; strict MCP filters and recommendations still keep their existing proof/community gates where configured.
 
-Background refresh: `POST /api/repos/{id}/refresh` re-ingests GitHub metadata and recomputes **one** artifact (`recompute_external_artifact`). Cooldown: `APP_REPO_REFRESH_COOLDOWN_SECS` (default 900). Stale structural signals: `APP_STRUCTURAL_STALE_SECS` (default 172800 = 48h).
+Background refresh: `POST /api/repos/{id}/refresh` requires an authenticated session, re-ingests GitHub metadata, and recomputes **one** artifact (`recompute_external_artifact`). Limits: DB-backed `repo_refresh_events` (`APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` default 10 completed/hour/user, `APP_REPO_REFRESH_COOLDOWN_SECS` default 900 per repo window) plus a best-effort in-memory cooldown. Throttled calls return the cached profile (`refreshed: false`). Repo profile reads stay public. UI auto-refresh on repo detail runs only when signed in. Stale structural signals: `APP_STRUCTURAL_STALE_SECS` (default 172800 = 48h).
 
 Known non-fields: `ingestionStatus` does not currently include `lastIngestError`.
 

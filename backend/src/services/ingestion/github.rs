@@ -292,6 +292,73 @@ fn header_str<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     headers.get(name).and_then(|value| value.to_str().ok())
 }
 
+/// Structured quota snapshot for operators (see public-launch-hardening Task 3).
+fn log_github_rate_limit_snapshot(context: &str, status: StatusCode, headers: &HeaderMap) {
+    let remaining = header_str(headers, "x-ratelimit-remaining");
+    let limit = header_str(headers, "x-ratelimit-limit");
+    let reset = header_str(headers, "x-ratelimit-reset");
+    let used = header_str(headers, "x-ratelimit-used");
+    if remaining.is_none() && limit.is_none() {
+        return;
+    }
+
+    let remaining_i64 = remaining.and_then(|value| value.parse::<i64>().ok());
+    let fields = (context, status.as_u16(), remaining, limit, reset, used);
+
+    if let Some(rem) = remaining_i64
+        && rem <= 100
+    {
+        tracing::warn!(
+            github_context = fields.0,
+            http_status = fields.1,
+            github_rate_limit_remaining = rem,
+            github_rate_limit_limit = fields.3,
+            github_rate_limit_reset = fields.4,
+            github_rate_limit_used = fields.5,
+            "GitHub API rate limit low"
+        );
+        return;
+    }
+
+    tracing::debug!(
+        github_context = fields.0,
+        http_status = fields.1,
+        github_rate_limit_remaining = fields.2,
+        github_rate_limit_limit = fields.3,
+        github_rate_limit_reset = fields.4,
+        github_rate_limit_used = fields.5,
+        "GitHub API rate limit snapshot"
+    );
+}
+
+fn log_github_rate_limit_hit(
+    context: &str,
+    status: StatusCode,
+    headers: &HeaderMap,
+    kind: &GitHubRateLimitKind,
+) {
+    log_github_rate_limit_snapshot(context, status, headers);
+    match kind {
+        GitHubRateLimitKind::Secondary => tracing::warn!(
+            github_context = context,
+            http_status = status.as_u16(),
+            github_rate_limit_kind = "secondary",
+            "GitHub API secondary rate limit"
+        ),
+        GitHubRateLimitKind::Primary {
+            reset_at,
+            retry_after,
+        } => tracing::warn!(
+            github_context = context,
+            http_status = status.as_u16(),
+            github_rate_limit_kind = "primary",
+            github_rate_limit_reset_at = ?reset_at,
+            github_retry_after_secs = retry_after.map(|d| d.as_secs()),
+            "GitHub API primary rate limit"
+        ),
+    }
+}
+
 pub(crate) fn summarize_releases(
     releases: &[GitHubReleaseSummary],
 ) -> (i32, Option<DateTime<Utc>>) {
@@ -418,7 +485,8 @@ where
             .to_bytes();
         let body_text = String::from_utf8_lossy(&body);
         let rate_limit = classify_rate_limit(status, &headers, &body_text);
-        if rate_limit.is_some() {
+        if let Some(ref kind) = rate_limit {
+            log_github_rate_limit_hit(context, status, &headers, kind);
             if attempts == 1
                 && let Some(delay) = retry_delay(&rate_limit)
                 && delay.as_secs() <= MAX_INLINE_BACKOFF_SECS
@@ -443,6 +511,7 @@ where
 
         let data = serde_json::from_slice::<T>(&body)
             .map_err(|err| ApiError::internal(format!("{context} JSON decode failed: {err}")))?;
+        log_github_rate_limit_snapshot(context, status, &headers);
         return Ok(GitHubJsonResponse {
             data: Some(data),
             etag: response_etag,

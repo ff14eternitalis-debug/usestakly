@@ -1,7 +1,13 @@
 mod normalize;
 mod profile;
+mod refresh_limits;
 mod rows;
 mod search;
+
+pub use refresh_limits::{
+    RefreshLimitConfig, RefreshLimitsOutcome, STATUS_COMPLETED, STATUS_THROTTLED,
+    check_refresh_limits, record_refresh_event,
+};
 
 pub use profile::{get_repo_profile, get_repo_signals};
 pub use search::search_github_repos;

@@ -19,8 +19,8 @@ UseStakly can stay public in limited beta today. A wider public announcement sho
 | Area | Launch status | Why |
 |---|---|---|
 | Offsite backup | Blocking | Local Coolify backup does not protect against full VPS/disk loss. |
-| `/api/repos/{id}/refresh` hardening | Blocking | Public refresh can consume GitHub quota and backend work. |
-| GitHub quota visibility | Blocking | Scheduler + refresh need operational visibility before broader traffic. |
+| `/api/repos/{id}/refresh` hardening | Done (code) | Session + DB limits + memory cooldown; deploy + env on Coolify still required. |
+| GitHub quota visibility | In progress | Structured logs shipped (L1); admin endpoint + public degraded state still open. |
 | Public UX/mobile smoke | Blocking | Wider launch needs user-facing pages verified on mobile/desktop. |
 | Real outbound email notification | Blocking | Channel test is not enough; one real watch/digest delivery must be proven. |
 | Live post-deploy gate | Done | Health/status/OAuth/discover/repo/MCP/watchlist already validated. |
@@ -86,12 +86,12 @@ Non-blocking for beta launch: Sybil GitHub graph, custom alert rules, richer acc
 - `docs/architecture-backend-current.md`
 - `docs/source-of-truth.md`
 
-- [ ] Implement the launch policy: anonymous read stays public; auto-refresh is session-gated; endpoint has DB-backed user/repo rate limiting; IP limit is optional/phase 2; per-repo memory cooldown remains as a secondary guard.
-- [ ] Add a DB-backed refresh attempt table and indexed window queries for user/repo limits.
-- [ ] Add backend guard/rate-limit.
-- [ ] Add tests for allowed refresh, throttled refresh, and missing `GITHUB_TOKEN`.
-- [ ] Update repo-detail behavior so anonymous visitors do not trigger background refresh, but still see the cached profile and refresh/incomplete state without noisy UI failure.
-- [ ] Document the final behavior and env vars.
+- [x] Implement the launch policy: anonymous read stays public; auto-refresh is session-gated; endpoint has DB-backed user/repo rate limiting; IP limit is optional/phase 2; per-repo memory cooldown remains as a secondary guard.
+- [x] Add a DB-backed refresh attempt table and indexed window queries for user/repo limits (`0029_repo_refresh_events.sql`).
+- [x] Add backend guard/rate-limit (`services/repos/refresh_limits.rs`, `handlers/repos_refresh.rs`).
+- [x] Add tests for allowed refresh, throttled refresh, and missing `GITHUB_TOKEN` (unit tests on limit thresholds; handler returns 403 without `GITHUB_TOKEN`).
+- [x] Update repo-detail behavior so anonymous visitors do not trigger background refresh, but still see the cached profile and refresh/incomplete state without noisy UI failure.
+- [x] Document the final behavior and env vars (`.env.example`, `architecture-backend-current.md`, `source-of-truth.md`).
 
 **Acceptance criteria:**
 - Repeated refresh attempts cannot repeatedly call GitHub for the same repo/user/IP window.
@@ -118,9 +118,9 @@ Non-blocking for beta launch: Sybil GitHub graph, custom alert rules, richer acc
 - `docs/ops-mcp-coolify-hardening.md`
 - `docs/architecture-backend-current.md`
 
-- [ ] Log GitHub rate-limit headers on ingestion responses where available.
-- [ ] Add warning logs for low remaining quota and secondary rate-limit events.
-- [ ] Launch level: structured logs first (`x-ratelimit-remaining`, `x-ratelimit-reset`, secondary limit, `retry-after`) with warnings when low.
+- [x] Log GitHub rate-limit headers on ingestion responses where available.
+- [x] Add warning logs for low remaining quota and secondary rate-limit events.
+- [x] Launch level: structured logs first (`x-ratelimit-remaining`, `x-ratelimit-reset`, secondary limit, `retry-after`) with warnings when low.
 - [ ] Next level: expose admin-only visibility via a new or existing `/api/admin/*` endpoint, for example `/api/admin/github/quota`.
 - [ ] Public status should only expose a generic degraded state such as "GitHub ingestion degraded" when there is a real ingestion problem; do not expose raw quota values publicly.
 - [ ] Add a simple operational runbook: what to do if quota is low or secondary-limited.

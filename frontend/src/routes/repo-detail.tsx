@@ -49,6 +49,7 @@ export function RepoDetailPage() {
   }, [id, setOverride]);
 
   useEffect(() => {
+    if (!isAuthed) return;
     const data = profile.data;
     if (!data || data.artifactId !== id || refreshAttempted.current) return;
     const needsRefresh =
@@ -61,7 +62,7 @@ export function RepoDetailPage() {
       .then(() => queryClient.invalidateQueries({ queryKey: ["repo", id] }))
       .catch(() => undefined)
       .finally(() => setStructuralRefreshing(false));
-  }, [profile.data, id, queryClient]);
+  }, [profile.data, id, queryClient, isAuthed]);
 
   useEffect(() => {
     refreshAttempted.current = false;

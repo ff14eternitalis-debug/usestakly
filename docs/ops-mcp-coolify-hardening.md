@@ -229,6 +229,22 @@ Acceptance criteria:
 4. Add external uptime alerting. Done.
 5. Document and test restore and incident steps.
 
+## GitHub API quota runbook (launch hardening)
+
+Backend ingestion logs structured quota fields on GitHub HTTP responses (`services/ingestion/github.rs`):
+
+- `debug` on each response with headers when present: `github_rate_limit_remaining`, `github_rate_limit_limit`, `github_rate_limit_reset`, `github_rate_limit_used`
+- `warn` when `github_rate_limit_remaining <= 100` (`GitHub API rate limit low`)
+- `warn` on primary/secondary rate-limit hits (`github_rate_limit_kind`)
+
+**Operator checks (Coolify logs or log drain):**
+
+1. Search `GitHub API rate limit low` or `github_rate_limit_remaining` trending down before a deploy or corpus refresh.
+2. On `secondary` warnings: pause manual `POST /api/repos/*/refresh`, reduce `APP_INGEST_MAX_REPOS_PER_CYCLE`, wait for `retry-after` / reset window.
+3. On sustained primary limits: confirm `GITHUB_TOKEN` is set, scheduler is not over-scoped, and profile refresh is not abused (DB limits: `repo_refresh_events`, env `APP_REPO_REFRESH_USER_LIMIT_PER_HOUR` / `APP_REPO_REFRESH_COOLDOWN_SECS`).
+
+**Still open (Task 3 next level):** admin-only `/api/admin/github/quota` and optional public status flag `GitHub ingestion degraded` without exposing raw quota.
+
 ## Notes
 
 MCP making requests to the VPS is expected: MCP is an HTTP API surface. The important controls are token authentication, rate limiting, private database networking, host validation, backup strategy, and external monitoring.

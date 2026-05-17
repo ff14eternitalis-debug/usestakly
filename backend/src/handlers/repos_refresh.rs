@@ -3,18 +3,22 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
-use axum::{Json, extract::State};
+use axum::{Json, extract::State, http::HeaderMap};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use uuid::Uuid;
 
 use crate::{
     app::{AppState, error::ApiError},
+    auth::resolve_current_user,
     domain::quality_display::IngestionStatus,
     services::{
         ingestion::github::{build_client, ingest_repo},
         quality::recompute_external_artifact,
-        repos::get_repo_profile,
+        repos::{
+            RefreshLimitConfig, RefreshLimitsOutcome, STATUS_COMPLETED, STATUS_THROTTLED,
+            check_refresh_limits, get_repo_profile, record_refresh_event,
+        },
     },
 };
 
@@ -31,8 +35,11 @@ static REFRESH_COOLDOWN: OnceLock<Mutex<HashMap<Uuid, DateTime<Utc>>>> = OnceLoc
 
 pub async fn refresh_repo(
     State(state): State<AppState>,
+    headers: HeaderMap,
     axum::extract::Path(repo_id): axum::extract::Path<Uuid>,
 ) -> Result<Json<RefreshRepoResponse>, ApiError> {
+    let user = resolve_current_user(&state.db, &state.config, &headers).await?;
+
     let token = state
         .config
         .github_token
@@ -52,14 +59,28 @@ pub async fn refresh_repo(
 
     let (owner, name) = owner_name.ok_or_else(|| ApiError::not_found("Repo not found"))?;
 
-    if refresh_on_cooldown(repo_id, state.config.repo_refresh_cooldown_secs) {
-        let profile = get_repo_profile(&state.db, &state.config, repo_id).await?;
-        return Ok(Json(RefreshRepoResponse {
-            refreshed: false,
-            artifact_id: repo_id,
-            structural_signals_at: profile.vitality_inputs.structural_signals_at,
-            ingestion_status: profile.ingestion_status,
-        }));
+    if refresh_on_cooldown_memory(repo_id, state.config.repo_refresh_cooldown_secs) {
+        return cached_refresh_response(&state, repo_id, false).await;
+    }
+
+    let limits = RefreshLimitConfig {
+        user_per_hour: state.config.repo_refresh_user_limit_per_hour,
+        repo_cooldown_secs: state.config.repo_refresh_cooldown_secs,
+    };
+
+    match check_refresh_limits(&state.db, user.id, repo_id, &limits).await? {
+        RefreshLimitsOutcome::Allowed => {}
+        RefreshLimitsOutcome::Throttled(reason) => {
+            record_refresh_event(
+                &state.db,
+                user.id,
+                repo_id,
+                STATUS_THROTTLED,
+                Some(reason.as_str()),
+            )
+            .await?;
+            return cached_refresh_response(&state, repo_id, false).await;
+        }
     }
 
     let client = build_client(token)?;
@@ -67,18 +88,28 @@ pub async fn refresh_repo(
     recompute_external_artifact(&state.db, Some(&state.config), repo_id)
         .await
         .map_err(|e| ApiError::internal(e.to_string()))?;
-    mark_refresh(repo_id);
 
+    record_refresh_event(&state.db, user.id, repo_id, STATUS_COMPLETED, None).await?;
+    mark_refresh_memory(repo_id);
+
+    cached_refresh_response(&state, repo_id, true).await
+}
+
+async fn cached_refresh_response(
+    state: &AppState,
+    repo_id: Uuid,
+    refreshed: bool,
+) -> Result<Json<RefreshRepoResponse>, ApiError> {
     let profile = get_repo_profile(&state.db, &state.config, repo_id).await?;
     Ok(Json(RefreshRepoResponse {
-        refreshed: true,
+        refreshed,
         artifact_id: repo_id,
         structural_signals_at: profile.vitality_inputs.structural_signals_at,
         ingestion_status: profile.ingestion_status,
     }))
 }
 
-fn refresh_on_cooldown(artifact_id: Uuid, cooldown_secs: u64) -> bool {
+fn refresh_on_cooldown_memory(artifact_id: Uuid, cooldown_secs: u64) -> bool {
     let map = REFRESH_COOLDOWN.get_or_init(|| Mutex::new(HashMap::new()));
     let guard = map.lock().expect("refresh cooldown mutex");
     guard.get(&artifact_id).is_some_and(|last| {
@@ -86,7 +117,7 @@ fn refresh_on_cooldown(artifact_id: Uuid, cooldown_secs: u64) -> bool {
     })
 }
 
-fn mark_refresh(artifact_id: Uuid) {
+fn mark_refresh_memory(artifact_id: Uuid) {
     let map = REFRESH_COOLDOWN.get_or_init(|| Mutex::new(HashMap::new()));
     let mut guard = map.lock().expect("refresh cooldown mutex");
     guard.insert(artifact_id, Utc::now());

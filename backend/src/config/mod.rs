@@ -47,6 +47,7 @@ pub struct AppConfig {
     pub semantic_search_enabled: bool,
     pub structural_stale_secs: u64,
     pub repo_refresh_cooldown_secs: u64,
+    pub repo_refresh_user_limit_per_hour: u32,
 }
 
 impl AppConfig {
@@ -176,6 +177,10 @@ impl AppConfig {
             .unwrap_or_else(|_| "900".to_string())
             .parse::<u64>()
             .map_err(|_| anyhow!("APP_REPO_REFRESH_COOLDOWN_SECS must be a valid u64"))?;
+        let repo_refresh_user_limit_per_hour = env::var("APP_REPO_REFRESH_USER_LIMIT_PER_HOUR")
+            .unwrap_or_else(|_| "10".to_string())
+            .parse::<u32>()
+            .map_err(|_| anyhow!("APP_REPO_REFRESH_USER_LIMIT_PER_HOUR must be a valid u32"))?;
 
         Ok(Self {
             host,
@@ -219,6 +224,7 @@ impl AppConfig {
             semantic_search_enabled,
             structural_stale_secs,
             repo_refresh_cooldown_secs,
+            repo_refresh_user_limit_per_hour,
         })
     }
 
@@ -328,6 +334,7 @@ mod tests {
             semantic_search_enabled: false,
             structural_stale_secs: 172_800,
             repo_refresh_cooldown_secs: 900,
+            repo_refresh_user_limit_per_hour: 10,
         };
 
         assert_eq!(config.notification_secret(), Some("notification-secret"));
@@ -387,6 +394,7 @@ mod tests {
             semantic_search_enabled: false,
             structural_stale_secs: 172_800,
             repo_refresh_cooldown_secs: 900,
+            repo_refresh_user_limit_per_hour: 10,
         };
 
         assert!(!config.email_enabled());

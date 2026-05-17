@@ -1123,6 +1123,7 @@ mod tests {
             semantic_search_enabled: false,
             structural_stale_secs: 172_800,
             repo_refresh_cooldown_secs: 900,
+            repo_refresh_user_limit_per_hour: 10,
         }
     }
 }
