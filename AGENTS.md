@@ -57,9 +57,9 @@ docker compose up -d              # Postgres + pgvector
 - `app/` — `Router` + `AppState`, CORS strict, `TraceLayer`, **middleware MCP qui rejette tout `/mcp` sans Bearer dès `initialize`/`tools/list`**.
 - `config/` — env (DB, OAuth, session, GitHub PAT, admin, scheduler, MCP guards, signaux actifs, semantic search).
 - `auth/` — OAuth GitHub + Discord, session JWT cookie `usestakly_session`, `state` OAuth signé avec `return_to` sanitizé. Fallback dev user via `DEV_USER_*`. **Pas de Supabase Auth.**
-- `handlers/` — `health` (+ `/api/status/public`), `auth`, `me`, `account`, `admin`, `agent_tokens`, `search`, `repos` (split `repos_query`/`repos_ingestion`/`repo_signals`/`repo_viewer`), `watchlist`, `notifications`.
-- `services/` — `ingestion/github`, `repos`, `watchlist`, `notifications`, `scheduler`, `semantic_search` (feature-gated), `agent_tokens`, sous-domaines `quality/` (`formula`, `compute`, `flags`, `weighting`, `pipeline`, `capture`) et `trust/` (`reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events`, `mcp_metrics`).
-- `domain/` — `account`, `agent_token`, `quality`, `repo`, `reference`, `watchlist`.
+- `handlers/` — `health` (+ `/api/status/public`), `auth`, `me`, `account`, `admin`, `agent_tokens`, `search`, `repos` (split `repos_query`/`repos_ingestion`/`repos_refresh`/`repo_signals`/`repo_viewer`), `watchlist`, `notifications`.
+- `services/` — `ingestion/github` + `ingestion/structural_extras`, `repos`, `watchlist`, `notifications`, `scheduler`, `semantic_search` (feature-gated), `agent_tokens`, sous-domaines `quality/` (`formula`, `compute`, `dimension_state`, `ingestion_status`, `flags`, `weighting`, `pipeline`, `capture`) et `trust/` (`reputation`, `repo_owners`, `signal_reviews`, `signal_events`, `agent_token_events`, `mcp_metrics`).
+- `domain/` — `account`, `agent_token`, `quality`, `quality_display`, `repo`, `reference`, `watchlist`.
 - `db/` — pool, migrations, `ensure_optional_extensions` (pgvector optionnel).
 - `mcp/` — Streamable HTTP : handlers dans `server.rs` (`#[tool_router]`), DTOs/mappers dans `tools/*`. 6 tools : `search_github_repos`, `recommend_github_repos`, `get_repo_quality_context`, `log_usage`, `watch_repo`, `watch_use_case`.
 
@@ -117,6 +117,7 @@ Aucun service Postgres provisionné — tests DB-bound mockés ou feature-gated.
 - CORS strict sur `FRONTEND_BASE_URL` avec `allow_credentials(true)` — changer l'URL casse l'auth.
 - `docker-compose.yml` ne démarre **que** Postgres.
 - **Scheduler** : ON par défaut si `APP_ENV=production|staging`, sinon `APP_SCHEDULER_ENABLED=true`. Cycle `APP_RECOMPUTE_INTERVAL_SECS` (default prod 1800 s). Chaque cycle : tous les repos watchés + corpus stale (`APP_CORPUS_REFRESH_STALE_SECS`, default = cycle) jusqu'à `APP_INGEST_MAX_REPOS_PER_CYCLE`, puis recompute. Boot : `APP_SCHEDULER_RUN_ON_STARTUP` (default true en prod).
+- **Vérité profil repo** : `GET /api/repos/{id}` expose `dimensionStates`, `proofTier`, `ingestionStatus`. `POST /api/repos/{id}/refresh` requiert `GITHUB_TOKEN`, refresh GitHub structurel + `recompute_external_artifact`, cooldown mémoire `APP_REPO_REFRESH_COOLDOWN_SECS` (default 900). `ingestionStatus` n'a pas `lastIngestError`.
 - **MCP `/mcp`** monté via `rmcp::StreamableHttpService`. **Authorization Bearer requise dès `initialize`/`tools/list`** (middleware pré-transport, doc `docs/mcp-endpoint-security.md`). Tokens `usk_<64 hex>` SHA-256 dans `agent_tokens` (migration 0013).
 - **Rate-limit MCP** : writes via `agent_token_events` (0014) ; protocole/read et échecs auth via limites IP/token dans `app/mod.rs` + `APP_MCP_*` (voir `docs/ops-mcp-coolify-hardening.md`).
 - **Modération** : migrations 0015/0016 (review + events). Réputation v2 runtime et trust `[formula_v2].trust` livrés (`new_account_active_signal_weight = 0.0`). Sybil OAuth GitHub reste à venir.

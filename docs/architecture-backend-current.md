@@ -1,7 +1,7 @@
 # Architecture backend actuelle
 
-> Version : 1.3
-> Dernière mise à jour : 2026-05-08
+> Version : 1.4
+> Dernière mise à jour : 2026-05-17
 > Portée : backend vivant de **UseStakly** (public beta exposable)
 
 ## Vue d'ensemble
@@ -33,6 +33,11 @@ Assemble le `Router` et `AppState { config, db }`. Configure :
 
 Lecture d'env (`.env` chargé via `dotenvy`). Couvre DB, dev user, OAuth GitHub/Discord, session JWT, GitHub PAT pour ingestion, admin token, scheduler, garde-fous MCP, signaux actifs, semantic search.
 
+Variables liées à la vérité structurelle des profils :
+
+- `APP_STRUCTURAL_STALE_SECS` — âge maximal des signaux structurels GitHub avant refresh UI (défaut `172800`, soit 48 h)
+- `APP_REPO_REFRESH_COOLDOWN_SECS` — cooldown mémoire entre deux `POST /api/repos/{id}/refresh` pour le même repo (défaut `900`, soit 15 min)
+
 ### `auth/`
 
 OAuth direct **GitHub + Discord**. Session JWT signée stockée dans le cookie `usestakly_session`. Le `state` OAuth est signé et porte un `return_to` sanitizé contre les open redirects (livré 2026-04-24).
@@ -51,7 +56,8 @@ Responsabilité : I/O HTTP seulement.
 - `search` — recherche discovery publique
 - `repos` — re-export des handlers spécialisés repo
 - `repos_query` — profil repo détaillé + filtres avancés discover
-- `repos_ingestion` — `POST /api/repos/add`
+- `repos_ingestion` — `POST /api/repos/add`, ingestion GitHub + recompute du seul artifact ajouté (`recompute_external_artifact`)
+- `repos_refresh` — `POST /api/repos/{repo_id}/refresh`, refresh structurel GitHub + recompute du seul artifact + refresh radar ; requiert `GITHUB_TOKEN`, cooldown mémoire par repo
 - `repo_signals` — création de signaux et dispute owner
 - `repo_viewer` — état viewer-spécifique d'un repo
 - `watchlist`, `notifications`, `notification_channels`
@@ -61,9 +67,10 @@ Responsabilité : I/O HTTP seulement.
 Responsabilité : logique métier.
 
 - `ingestion/github.rs` — client GitHub REST direct (reqwest), normalisation repo, ingestion priors (stars, forks, last_commit_at, archived, language, license)
-- `repos.rs` — agrégation profils repo, réponses discovery, score provenance
+- `ingestion/structural_extras.rs` — signaux structurels GitHub : CI racine/workflows, releases paginées, fallback tags si aucune release
+- `repos/*` — agrégation profils repo, réponses discovery, score provenance, explications publiques
 - `watchlist.rs`, `notifications.rs`, `notification_channels.rs`, `notification_digest.rs`
-- `scheduler.rs` — boucle opt-in `tokio::spawn` refresh quotidien des priors GitHub stale (> 24 h) + repos watchés, puis recompute + emit notifs
+- `scheduler.rs` — boucle `tokio::spawn` active par défaut en prod/staging : refresh watchlist + corpus GitHub stale, plafond `APP_INGEST_MAX_REPOS_PER_CYCLE`, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation
 - `quality/`
@@ -73,14 +80,18 @@ Responsabilité : logique métier.
 
 Le scoring est éclaté pour rester testable sans DB autant que possible.
 
-- `formula.rs` — chargement TOML `scoring/formula_v1.toml` + types
+- `formula.rs` — chargement TOML `scoring/formula_v1.toml` / `formula_v2.toml` + types
 - `compute.rs` — calcul pur du score à partir des dimensions agrégées
+- `dimension_state.rs` — couche display par dimension (`freshness`, `adoption`, `reliability`, `abandonment`, `vitality`) + dérivation `proof_tier`
+- `ingestion_status.rs` — statut de fraîcheur structurelle (`priorsFetchedAt`, `structuralSignalsAt`, `structuralStale`, `structuralComplete`, `partialFields`)
 - `flags.rs` — consensus, normalisation et résolution des flags publics
 - `weighting.rs` — agrégation pondérée des signaux passifs (formula v1.1) : `outcome_weight × reporter_weight × dedup_weight` ; expose `aggregate_weighted_counts` et `explain_signals`
 - `pipeline.rs` — chargement DB, `recompute_externals_with_config`, upsert `artifact_scores`, émission notifs
 - `capture.rs` — enregistrement de signaux qualité
 
-`compute.rs`, `flags.rs`, `weighting.rs` couverts par tests purs (sans DB).
+`compute.rs`, `dimension_state.rs`, `flags.rs`, `weighting.rs` couverts par tests purs (sans DB).
+
+La couche display ne remplace pas le scoring : `quality.overall` reste la formule v2, tandis que `dimensionStates` et `proofTier` expliquent si une dimension vient du corpus GitHub observable ou de la communauté UseStakly.
 
 ### `services/trust/`
 
@@ -129,7 +140,7 @@ Pool SQLx, runner de migrations (`sqlx::migrate!` au boot), `ensure_optional_ext
 
 ### `domain/`
 
-Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`, `watchlist`.
+Types métier actifs : `account`, `agent_token`, `quality`, `quality_display`, `repo`, `reference`, `watchlist`.
 
 ### `bin/`
 
@@ -152,6 +163,7 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 | 0024 | `digest_time_local`, `timezone`, `notification_digest_deliveries` | actif |
 | 0025 | `use_case_*` notification kinds + flags persistés sur `use_case_watch_matches` | actif |
 | 0027 | `github_*_etag`, rate-limit timestamps, `owner_last_activity_at`, `owner_inactive_days` | actif |
+| 0028 | `email_locale` verrouillé sur `en` | actif |
 
 ## Flux principaux
 
@@ -163,6 +175,22 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 4. blend lexical / sémantique (si feature ON) / score qualité
 5. réponse avec score provenance (`formula_version`, `scored_at`, `source: usestakly://...`)
 
+### Profil repo et vérité par dimension
+
+1. `GET /api/repos/{id}` charge le repo, le score courant, les signaux récents, la watchlist viewer et les inputs de vitalité GitHub
+2. `dimension_state::build_dimension_states_from_quality` produit cinq états : `freshness`, `adoption`, `reliability`, `abandonment`, `vitality`
+3. `derive_proof_tier` expose `corpus_only`, `usage_limited` ou `community_backed` pour l'UI et MCP
+4. `ingestion_status::build_ingestion_status` expose `priorsFetchedAt`, `structuralSignalsAt`, `structuralStale`, `structuralComplete`, `partialFields`
+5. `dimensionStates` existe sur le profil REST et `get_repo_quality_context`, pas sur les cartes discovery/search
+
+### Refresh structurel GitHub
+
+1. `POST /api/repos/{repo_id}/refresh` vérifie `GITHUB_TOKEN`, retrouve `github_owner/github_repo`, puis applique un cooldown mémoire par repo (`APP_REPO_REFRESH_COOLDOWN_SECS`, défaut 900)
+2. `ingest_repo` relit les métadonnées GitHub, dont `structural_extras` : workflows CI non vides ou fichiers CI racine, releases paginées jusqu'à 500, fallback tags si aucune release
+3. `recompute_external_artifact` recalcule uniquement l'artifact concerné et rafraîchit son snapshot radar
+4. le frontend repo-detail déclenche ce POST une seule fois si `structuralStale` ou `!structuralComplete`
+5. `ingestionStatus` ne contient pas encore `lastIngestError`
+
 ### Recompute qualité
 
 1. ingestion ou refresh d'un repo (`ingest_repo`)
@@ -173,6 +201,10 @@ Types métier actifs : `account`, `agent_token`, `quality`, `repo`, `reference`,
 6. upsert `artifact_scores` avec snapshot précédent
 7. diff seuils → émission de notifications watchers in-app + livraison Discord webhook si configurée
 8. réévaluation des `use_case_watches` actives par le scheduler : nouveau candidat, meilleur candidat changé, quality drop, nouveau flag, avec cooldown 24 h par watch
+
+### Radar maturity
+
+Le radar combine score qualité, activité GitHub, catégories et flags. Une branche `corpus_backed` peut classer un gros OSS actif en `established` ou `emerging` même si la preuve communautaire UseStakly est encore en attente ; l'explication inclut alors `corpus_backed` et `community_proof_pending`. Les filtres MCP stricts et les recommandations gardent leurs règles existantes côté preuve communautaire.
 
 ### Digest quotidien
 

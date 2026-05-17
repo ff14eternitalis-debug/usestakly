@@ -1,6 +1,6 @@
 # UseStakly Source Of Truth
 
-> Last reconciled: 2026-05-16
+> Last reconciled: 2026-05-17
 > Scope: current runtime and documentation routing for agents.
 
 ## Current Product
@@ -55,9 +55,20 @@ Two truths coexist on every repo profile:
 - **GitHub corpus (observable)** — freshness, vitality, CI, releases, contributor cadence. Ingested into `external_artifacts` and surfaced via `dimension_states` with `source: github_metadata` and `ingestion_status`.
 - **UseStakly community (decisional)** — adoption and reliability from passive MCP `log_usage` and weighted signals. Surfaced via `dimension_states` with `source: usage_signals` or `neutral_default` until `min_sample` builds in `formula_v2.toml`.
 
-`proof_tier` (`corpus_only` | `usage_limited` | `community_backed`) is a **label for agents and UI**, not a replacement for the scoring formula. Radar may mark large active OSS as `corpus_backed` / established before community proof exists; strict MCP filters still require usage where configured.
+`quality.overall` remains the formula v2 score. The display layer adds five explicit dimension states (`freshness`, `adoption`, `reliability`, `abandonment`, `vitality`) and `proof_tier` (`corpus_only` | `usage_limited` | `community_backed`) as a **label for agents and UI**, not a replacement score.
+
+Where to read this truth:
+
+- REST profile: `GET /api/repos/{id}` returns `dimensionStates`, `proofTier`, `ingestionStatus`, plus compatibility fields `quality` and `vitalityInputs`.
+- MCP context: `get_repo_quality_context` returns `proof_tier`, `dimension_states`, `ingestion_status`, and normal provenance.
+- UI profile: repo detail renders `RepoMetricsPanel`, `DimensionScoreRow`, and `StructuralRefreshBanner` from `dimensionStates` + `proofTier`.
+- Discovery/search cards still expose the classic score bars only. `GET /api/repos/search`, `/api/search`, and MCP `search_github_repos` do **not** expose `dimensionStates`.
+
+Radar may mark large active OSS as `corpus_backed` / established before community proof exists; strict MCP filters and recommendations still keep their existing proof/community gates where configured.
 
 Background refresh: `POST /api/repos/{id}/refresh` re-ingests GitHub metadata and recomputes **one** artifact (`recompute_external_artifact`). Cooldown: `APP_REPO_REFRESH_COOLDOWN_SECS` (default 900). Stale structural signals: `APP_STRUCTURAL_STALE_SECS` (default 172800 = 48h).
+
+Known non-fields: `ingestionStatus` does not currently include `lastIngestError`.
 
 ## Legacy Boundary
 

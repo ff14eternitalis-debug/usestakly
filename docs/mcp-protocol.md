@@ -1,7 +1,7 @@
 # UseStakly — Protocole MCP
 
-> Version : 2.3 — 2026-05-06 (MCP radar + watch use-case)
-> Implémentation : `backend/src/mcp/` (R5a + R5b livrés, `recommend_github_repos` aligné sur le service web de recommandation, `watch_use_case` ajouté, MCP auth durcie au niveau HTTP entrypoint).
+> Version : 2.4 — 2026-05-17 (repo context display truth layer)
+> Implémentation : `backend/src/mcp/` (handlers dans `server.rs`, DTOs/mappers dans `tools/*`, `get_repo_quality_context` enrichi avec `proof_tier`, `dimension_states`, `ingestion_status`).
 > Transport : Streamable HTTP via `rmcp` 1.5.
 > L'ancienne v1 orientée snippets est retirée du produit vivant.
 
@@ -26,7 +26,10 @@ Le but est de remplacer une sélection basée sur les stars par une sélection b
 - adoption
 - reliability
 - abandonment
+- vitality
 - flags actifs
+
+`quality_overall` reste le score formula v2. La couche display expose aussi la vérité par dimension : corpus GitHub observable (`freshness`, `vitality`, CI/releases/cadence) versus communauté UseStakly décisionnelle (`adoption`, `reliability` via `log_usage` et signaux pondérés).
 
 ---
 
@@ -82,6 +85,8 @@ Retour :
 
 - candidats classés par `overall`, puis stars, puis récence
 - provenance `usestakly://registry/github`
+- résumé radar si disponible, y compris mention `corpus_backed` quand l'explication radar contient cette raison
+- limite connue : les résultats search n'exposent pas `dimension_states` / `proof_tier` / `ingestion_status`; appeler `get_repo_quality_context` pour le profil complet
 
 ### `recommend_github_repos`
 
@@ -125,12 +130,18 @@ Entrée :
 Retour :
 
 - dimensions de score
+- `proof_tier` : `corpus_only`, `usage_limited` ou `community_backed` (label UI/MCP, pas un nouveau score)
+- `dimension_states` : tableau JSON des cinq dimensions avec `key`, `value`, `displayState`, `source`, `confidence`, `asOf`, `summary`
+- `ingestion_status` : JSON avec `priorsFetchedAt`, `structuralSignalsAt`, `structuralStale`, `structuralComplete`, `partialFields`
+- `vitality_inputs` : signaux structurels GitHub bruts utilisés par la dimension vitality
 - counts d'usage (`quality_resolve_count`, `quality_build_success_count`, `quality_build_failure_count`, `quality_regret_count`)
 - flags
 - signaux récents
 - provenance `usestakly://registry/github/<owner>/<name>`
 
 Si le repo n'est pas ingéré, le tool renvoie une erreur.
+
+`ingestion_status` ne contient pas `lastIngestError` aujourd'hui. Les agents ne doivent pas l'inventer.
 
 ### `log_usage`
 
@@ -179,7 +190,7 @@ Retour utile après écriture :
   "quality_regret_count": 0,
   "provenance": {
     "source": "usestakly://registry/github/vitejs/vite",
-    "formula_version": "v1",
+    "formula_version": "v2.0",
     "scored_at": "2026-04-25T14:30:00Z"
   }
 }
@@ -246,7 +257,7 @@ Chaque tool retourne une provenance structurée :
 Convention recommandée côté agent :
 
 ```ts
-// Evalué via UseStakly: github.com/JedWatson/react-datepicker, formula_v1
+// Evalué via UseStakly: github.com/JedWatson/react-datepicker, formula_v2
 ```
 
 ---
@@ -278,16 +289,14 @@ Déjà en place :
 - `last_used_at` bumpé automatiquement
 - `log_usage` limité à des outcomes passifs autorisés
 
-Reste à faire :
-
-- réputation utilisateur explicite / pondération des signaux
-- consensus multi-users avant d'exposer des signaux plus toxiques
-
 Hardening déjà en place :
 
 - quota write par token (`APP_MCP_WRITE_LIMIT_PER_HOUR`)
+- limite read/transport par token valide (`APP_MCP_READ_LIMIT_PER_MINUTE`)
+- limite auth failures par IP (`APP_MCP_AUTH_FAILURE_LIMIT_PER_MINUTE`)
 - anti-doublon sur `log_usage` pour un même repo/outcome/token (`APP_MCP_LOG_USAGE_COOLDOWN_SECS`)
 - fenêtre de refroidissement sur outcomes négatifs répétés (`APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS`)
+- réputation v2 et consensus multi-users avant exposition des signaux publics toxiques
 - page compte `/account` pour créer, lister et révoquer les tokens MCP
 
 ---
