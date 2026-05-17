@@ -84,6 +84,15 @@ function checkState(status?: "ok" | "down" | "degraded" | "disabled") {
   return "offline";
 }
 
+function statusToneClass(
+  state: "checking" | "online" | "degraded" | "offline"
+): string {
+  if (state === "online") return "text-accent";
+  if (state === "checking") return "text-fg-muted";
+  if (state === "degraded") return "text-[var(--color-warn)]";
+  return "text-[var(--color-danger)]";
+}
+
 function StatusCheck({
   label,
   state,
@@ -102,22 +111,15 @@ function StatusCheck({
         : state === "degraded"
           ? t.status.degraded
           : t.status.offline;
-  const color =
-    state === "online"
-      ? "var(--color-accent)"
-      : state === "checking"
-        ? "var(--color-fg-muted)"
-        : state === "degraded"
-          ? "var(--color-warn)"
-          : "var(--color-danger)";
+  const toneClass = statusToneClass(state);
 
   return (
     <div className="rounded-[8px] border border-line bg-surface/45 p-5">
       <div className="flex items-center justify-between gap-4">
         <p className="text-[0.98rem] font-semibold text-fg">{label}</p>
-        <span className="dot" style={{ color }} />
+        <span className={`dot ${toneClass}`} />
       </div>
-      <p className="mt-5 data-value text-[1.5rem] leading-none" style={{ color }}>
+      <p className={`mt-5 data-value text-[1.5rem] leading-none ${toneClass}`}>
         {statusLabel}
       </p>
       {detail ? (

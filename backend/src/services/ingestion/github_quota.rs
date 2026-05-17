@@ -45,8 +45,12 @@ pub struct GitHubQuotaDbSignals {
 #[serde(rename_all = "camelCase")]
 pub struct GitHubQuotaSchedulerContext {
     pub enabled: bool,
-    pub ingest_max_repos_per_cycle: usize,
+    pub ingest_max_repos_per_cycle: u32,
     pub corpus_refresh_stale_secs: u64,
+}
+
+fn ingest_max_repos_per_cycle_for_report(value: usize) -> u32 {
+    u32::try_from(value).unwrap_or(u32::MAX)
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -253,7 +257,9 @@ pub async fn build_report(
         db: db_signals,
         scheduler: GitHubQuotaSchedulerContext {
             enabled: config.scheduler_enabled,
-            ingest_max_repos_per_cycle: config.ingest_max_repos_per_cycle,
+            ingest_max_repos_per_cycle: ingest_max_repos_per_cycle_for_report(
+                config.ingest_max_repos_per_cycle,
+            ),
             corpus_refresh_stale_secs: config.corpus_refresh_stale_secs,
         },
         live_probe,
@@ -323,61 +329,12 @@ pub async fn fetch_live_rate_limit(token: &str) -> Result<GitHubQuotaLiveProbe, 
 
 #[cfg(test)]
 mod tests {
-    use uuid::Uuid;
-
     use super::*;
-    use crate::config::AppConfig;
-
-    fn sample_config(token: Option<&str>) -> AppConfig {
-        AppConfig {
-            host: "127.0.0.1".to_string(),
-            port: 4000,
-            database_url: "postgres://localhost/test".to_string(),
-            dev_user_id: Uuid::nil(),
-            dev_user_email: "dev@example.com".to_string(),
-            dev_user_username: "dev".to_string(),
-            dev_user_display_name: None,
-            dev_user_avatar_url: None,
-            app_base_url: "http://127.0.0.1:4000".to_string(),
-            frontend_base_url: "http://localhost:5173".to_string(),
-            app_session_secret: None,
-            app_notification_secret: None,
-            github_client_id: None,
-            github_client_secret: None,
-            discord_client_id: None,
-            discord_client_secret: None,
-            admin_api_token: None,
-            github_token: token.map(str::to_string),
-            email_smtp_host: "smtp-relay.brevo.com".to_string(),
-            email_smtp_port: 587,
-            email_smtp_username: None,
-            email_smtp_password: None,
-            email_from_address: "noreply@usestakly.com".to_string(),
-            email_from_name: "UseStakly".to_string(),
-            scheduler_enabled: false,
-            recompute_interval_secs: 3_600,
-            digest_interval_secs: 1_800,
-            corpus_refresh_stale_secs: 3_600,
-            ingest_max_repos_per_cycle: 40,
-            scheduler_run_on_startup: false,
-            mcp_auth_failure_limit_per_minute: 30,
-            mcp_read_limit_per_minute: 120,
-            mcp_write_limit_per_hour: 60,
-            mcp_log_usage_cooldown_secs: 900,
-            mcp_negative_signal_window_hours: 24,
-            active_signal_min_reputation: 0.45,
-            active_signal_default_consensus: 2,
-            active_signal_severe_consensus: 3,
-            semantic_search_enabled: false,
-            structural_stale_secs: 172_800,
-            repo_refresh_cooldown_secs: 900,
-            repo_refresh_user_limit_per_hour: 10,
-        }
-    }
+    use crate::config::{AppConfig, test_app_config};
 
     #[test]
     fn assess_disabled_without_token() {
-        let config = sample_config(None);
+        let config = AppConfig::test_defaults();
         let db = GitHubQuotaDbSignals {
             rate_limit_hits_1h: 0,
             last_rate_limit_at: None,
@@ -392,7 +349,7 @@ mod tests {
 
     #[test]
     fn assess_degraded_on_low_remaining_snapshot() {
-        let config = sample_config(Some("token"));
+        let config = test_app_config(Some("token".to_string()));
         let db = GitHubQuotaDbSignals {
             rate_limit_hits_1h: 0,
             last_rate_limit_at: None,

@@ -287,6 +287,61 @@ fn optional_env_value(value: &str) -> Option<String> {
 }
 
 #[cfg(test)]
+pub fn test_app_config(github_token: Option<String>) -> AppConfig {
+    AppConfig {
+        host: "127.0.0.1".to_string(),
+        port: 4000,
+        database_url: "postgres://localhost/test".to_string(),
+        dev_user_id: Uuid::nil(),
+        dev_user_email: "dev@example.com".to_string(),
+        dev_user_username: "dev".to_string(),
+        dev_user_display_name: None,
+        dev_user_avatar_url: None,
+        app_base_url: "http://127.0.0.1:4000".to_string(),
+        frontend_base_url: "http://localhost:5173".to_string(),
+        app_session_secret: None,
+        app_notification_secret: None,
+        github_client_id: None,
+        github_client_secret: None,
+        discord_client_id: None,
+        discord_client_secret: None,
+        admin_api_token: None,
+        github_token,
+        email_smtp_host: "smtp-relay.brevo.com".to_string(),
+        email_smtp_port: 587,
+        email_smtp_username: None,
+        email_smtp_password: None,
+        email_from_address: "noreply@usestakly.com".to_string(),
+        email_from_name: "UseStakly".to_string(),
+        scheduler_enabled: false,
+        recompute_interval_secs: 3_600,
+        digest_interval_secs: 1_800,
+        corpus_refresh_stale_secs: 3_600,
+        ingest_max_repos_per_cycle: 40,
+        scheduler_run_on_startup: false,
+        mcp_auth_failure_limit_per_minute: 30,
+        mcp_read_limit_per_minute: 120,
+        mcp_write_limit_per_hour: 60,
+        mcp_log_usage_cooldown_secs: 900,
+        mcp_negative_signal_window_hours: 24,
+        active_signal_min_reputation: 0.45,
+        active_signal_default_consensus: 2,
+        active_signal_severe_consensus: 3,
+        semantic_search_enabled: false,
+        structural_stale_secs: 172_800,
+        repo_refresh_cooldown_secs: 900,
+        repo_refresh_user_limit_per_hour: 10,
+    }
+}
+
+#[cfg(test)]
+impl AppConfig {
+    pub fn test_defaults() -> Self {
+        test_app_config(None)
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

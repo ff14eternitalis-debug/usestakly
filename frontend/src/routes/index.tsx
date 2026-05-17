@@ -112,7 +112,7 @@ function HeroPanel() {
             <p className="mono text-[0.74rem] uppercase tracking-[0.14em] text-fg-muted">
               {t.landing.panelSample}
             </p>
-            <p className="display-md !text-[1.1rem] mt-1">
+            <p className="display-md text-[1.1rem]! mt-1">
               <span className="mono text-fg-muted">
                 {repo ? `${repo.owner}/` : "owner/"}
               </span>
@@ -511,14 +511,14 @@ function Ticker() {
 
   if (!items.length) {
     return (
-      <div className="overflow-hidden rounded-[6px] border border-line bg-surface/40 py-3 text-center mono text-[0.78rem] uppercase tracking-[0.18em] text-fg-muted">
+      <div className="overflow-hidden rounded-md border border-line bg-surface/40 py-3 text-center mono text-[0.78rem] uppercase tracking-[0.18em] text-fg-muted">
         {t.landing.tickerTuning}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-[6px] border border-line bg-surface/40 py-3">
+    <div className="overflow-hidden rounded-md border border-line bg-surface/40 py-3">
       <div className="marquee-track gap-10 whitespace-nowrap">
         {doubled.map((repo, i) => {
           const tone = scoreTone(repo.quality?.overall);
