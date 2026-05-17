@@ -66,15 +66,6 @@ pub fn compute_radar_snapshot(input: &RepoRadarInput) -> RepoRadarSnapshot {
             reasons.push("clear_category");
             reasons.push("healthy_activity");
             "established"
-        } else if has_clear_category
-            && has_activity
-            && has_structure
-            && abandonment <= 0.25
-            && (trend_signal >= 0.45 || overall >= 0.50)
-        {
-            reasons.push("clear_category");
-            reasons.push("recent_activity");
-            "emerging"
         } else if corpus_backed_established(
             input,
             freshness,
@@ -85,6 +76,15 @@ pub fn compute_radar_snapshot(input: &RepoRadarInput) -> RepoRadarSnapshot {
             reasons.push("corpus_backed");
             reasons.push("community_proof_pending");
             "established"
+        } else if has_clear_category
+            && has_activity
+            && has_structure
+            && abandonment <= 0.25
+            && (trend_signal >= 0.45 || overall >= 0.50)
+        {
+            reasons.push("clear_category");
+            reasons.push("recent_activity");
+            "emerging"
         } else if corpus_backed_emerging(
             input,
             has_clear_category,
@@ -415,6 +415,28 @@ mod tests {
         let snapshot = compute_radar_snapshot(&input);
 
         assert_eq!(snapshot.maturity_band, "noisy");
+    }
+
+    #[test]
+    fn large_corpus_active_repo_without_community_overall_is_established_not_emerging() {
+        let mut input = input();
+        input.quality_overall = Some(0.59);
+        input.stars_count = 48_000;
+        input.commits_30d = Some(120);
+        input.distinct_contributors_90d = Some(45);
+        input.has_ci = Some(true);
+        input.releases_count = Some(12);
+
+        let snapshot = compute_radar_snapshot(&input);
+
+        assert_eq!(snapshot.maturity_band, "established");
+        assert!(
+            snapshot.explanation["reasons"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|reason| reason == "corpus_backed")
+        );
     }
 
     #[test]
