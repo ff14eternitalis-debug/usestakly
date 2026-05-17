@@ -98,12 +98,13 @@ pub async fn public_status(State(state): State<AppState>) -> Json<PublicStatusRe
         .unwrap_or_else(|_| "unavailable".to_string());
     let registry_ok = db_ok && repo_count > 0;
     let formula_ok = formula_version != "unavailable";
-    let (ingestion_public, ingestion_message) = github_quota::public_ingestion_status(
-        &state.db,
-        &state.config,
-    )
-    .await
-    .unwrap_or((PublicIngestionStatus::Degraded, Some("GitHub ingestion degraded".into())));
+    let (ingestion_public, ingestion_message) =
+        github_quota::public_ingestion_status(&state.db, &state.config)
+            .await
+            .unwrap_or((
+                PublicIngestionStatus::Degraded,
+                Some("GitHub ingestion degraded".into()),
+            ));
     let ingestion_ok = ingestion_public == PublicIngestionStatus::Ok;
     let overall_ok = db_ok && registry_ok && formula_ok && ingestion_ok;
 

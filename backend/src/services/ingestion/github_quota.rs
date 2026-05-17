@@ -118,8 +118,7 @@ pub fn record_headers_snapshot(context: &str, headers: &HeaderMap) {
         context: context.to_string(),
         remaining: remaining.and_then(|value| value.parse().ok()),
         limit: limit.and_then(|value| value.parse().ok()),
-        used: header_str(headers, "x-ratelimit-used")
-            .and_then(|value| value.parse().ok()),
+        used: header_str(headers, "x-ratelimit-used").and_then(|value| value.parse().ok()),
         reset_at,
     };
     if let Ok(mut slot) = header_snapshot_slot().lock() {
@@ -144,7 +143,10 @@ pub fn last_limit_hit() -> Option<GitHubQuotaHitRecord> {
     hit_slot().lock().ok().and_then(|s| s.clone())
 }
 
-pub async fn load_db_signals(db: &PgPool, stale_after_secs: u64) -> Result<GitHubQuotaDbSignals, sqlx::Error> {
+pub async fn load_db_signals(
+    db: &PgPool,
+    stale_after_secs: u64,
+) -> Result<GitHubQuotaDbSignals, sqlx::Error> {
     let row: (i64, Option<DateTime<Utc>>, Option<DateTime<Utc>>, i64, i64) = sqlx::query_as(
         r#"
         SELECT
@@ -190,9 +192,7 @@ pub fn assess_ingestion(
     }
 
     if let Some(hit) = hit {
-        if hit.kind == "secondary"
-            && hit.observed_at > Utc::now() - SECONDARY_HIT_WINDOW
-        {
+        if hit.kind == "secondary" && hit.observed_at > Utc::now() - SECONDARY_HIT_WINDOW {
             reasons.push("Recent GitHub secondary rate limit".to_string());
         }
         if hit.kind == "primary" && hit.observed_at > Utc::now() - HIT_WINDOW {
@@ -226,7 +226,10 @@ pub fn assess_ingestion(
     }
 }
 
-pub async fn build_report(db: &PgPool, config: &AppConfig) -> Result<GitHubQuotaReport, sqlx::Error> {
+pub async fn build_report(
+    db: &PgPool,
+    config: &AppConfig,
+) -> Result<GitHubQuotaReport, sqlx::Error> {
     let db_signals = load_db_signals(db, config.corpus_refresh_stale_secs).await?;
     let snapshot = last_header_snapshot();
     let hit = last_limit_hit();
