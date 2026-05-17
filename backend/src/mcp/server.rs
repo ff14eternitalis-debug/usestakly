@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::app::AppState;
 use http::request::Parts;
 use rmcp::{
     ErrorData, ServerHandler,
@@ -13,20 +14,6 @@ use rmcp::{
         tower::StreamableHttpService,
     },
 };
-use serde_json::json;
-
-use crate::{
-    app::AppState,
-    domain::quality::ArtifactKind,
-    mcp::auth::{verify_agent, verify_bearer},
-    services::{
-        quality::{RecordSignalInput, load_v2, recompute_all_scores_with_config, record_signal},
-        recommendations::recommend_for_use_case,
-        repos::{self as repos_service, RepoSearchFilters, RepoSort},
-        trust::agent_token_events,
-        use_case_watches, watchlist,
-    },
-};
 
 pub use crate::mcp::tools::{
     LogUsageOutput, LogUsageParams, Provenance, RadarBrief, RecommendReposOutput,
@@ -37,10 +24,8 @@ pub use crate::mcp::tools::{
 };
 
 use crate::mcp::tools::{
-    build_recommendations_from_use_case, build_use_case_service_query, ensure_github_artifact,
-    into_context_output, into_repo_candidate, into_watch_use_case_output, map_anyhow,
-    map_api_error, mcp_allowed_hosts, normalize_topics, parse_filter, parse_passive_outcome,
-    parse_risk_tolerance, recommendation_sections, repo_matches_topics, resolve_artifact_id,
+    handle_get_repo_quality_context, handle_log_usage, handle_recommend_github_repos,
+    handle_search_github_repos, handle_watch_repo, handle_watch_use_case, mcp_allowed_hosts,
 };
 
 // ---------- Server handler ----------
@@ -71,50 +56,9 @@ impl McpServer {
         Parameters(p): Parameters<SearchReposParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<SearchReposOutput>, ErrorData> {
-        verify_bearer(&self.state.db, &parts).await?;
-
-        let filter = parse_filter(p.filter.as_deref());
-        let sort = RepoSort::parse(p.sort.as_deref());
-        let filters = RepoSearchFilters {
-            query: p.query,
-            filter,
-            language: p.language,
-            license_spdx: None,
-            stars_min: p.stars_min,
-            topics: Vec::new(),
-            maturity_bands: p.maturity_bands,
-            score_min: None,
-            abandonment_max: None,
-            include_archived: false,
-            sort,
-            limit: Some(p.limit.unwrap_or(20).clamp(1, 50)),
-            offset: None,
-        };
-
-        let results =
-            repos_service::search_github_repos(&self.state.db, &self.state.config, &filters)
-                .await
-                .map_err(map_api_error)?;
-
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let scored_at = results
-            .iter()
-            .filter_map(|r| r.quality.as_ref().map(|q| q.computed_at))
-            .max();
-
-        let candidates: Vec<RepoCandidate> = results.into_iter().map(into_repo_candidate).collect();
-
-        Ok(Json(SearchReposOutput {
-            provenance: Provenance {
-                source: "usestakly://registry/github".to_string(),
-                formula_version,
-                scored_at,
-            },
-            filter_used: filter.as_str().to_string(),
-            sort_used: sort.as_str().to_string(),
-            count: candidates.len(),
-            results: candidates,
-        }))
+        handle_search_github_repos(&self.state, p, parts)
+            .await
+            .map(Json)
     }
 
     #[tool(
@@ -129,86 +73,9 @@ impl McpServer {
         Parameters(p): Parameters<RecommendReposParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<RecommendReposOutput>, ErrorData> {
-        verify_bearer(&self.state.db, &parts).await?;
-
-        let query = p.need.trim();
-        if query.is_empty() {
-            return Err(ErrorData::invalid_params("need is required", None));
-        }
-
-        let ecosystem = p.ecosystem.as_deref().or(p.language.as_deref());
-        let normalized_topics = normalize_topics(&p.must_have_topics);
-        let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
-        let service_query = build_use_case_service_query(query, ecosystem, &normalized_topics);
-        let mut report = recommend_for_use_case(
-            &self.state.db,
-            &self.state.config,
-            &service_query,
-            risk_tolerance.as_str(),
-            (p.limit.unwrap_or(5).clamp(1, 10) * 4).clamp(10, 40),
-        )
-        .await
-        .map_err(map_api_error)?;
-        if !normalized_topics.is_empty() {
-            report.recommendations.retain(|recommendation| {
-                repo_matches_topics(&recommendation.repo, &normalized_topics)
-            });
-        }
-        let max_results = p.limit.unwrap_or(5).clamp(1, 10) as usize;
-        report.recommendations.truncate(max_results);
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let scored_at = report
-            .recommendations
-            .iter()
-            .filter_map(|recommendation| {
-                recommendation
-                    .repo
-                    .quality
-                    .as_ref()
-                    .map(|quality| quality.computed_at)
-            })
-            .max();
-        let recommendations =
-            build_recommendations_from_use_case(report.recommendations, risk_tolerance);
-        let fallback = if recommendations.is_empty() {
-            Some(RecommendationFallback {
-                message: "No indexed repo matched the current need. Add candidate repos, then retry the recommendation.".to_string(),
-                add_repo_candidates: report.fallback_candidates.clone(),
-                next_actions: vec![
-                    "Add promising fallback repos through /discover or POST /api/repos/add.".to_string(),
-                    "Retry recommend_github_repos after ingestion and scoring completes.".to_string(),
-                    "Relax must_have_topics if they are too narrow.".to_string(),
-                ],
-            })
-        } else {
-            None
-        };
-        let sections = recommendation_sections(
-            recommendations.clone(),
-            fallback
-                .as_ref()
-                .map(|fallback| fallback.add_repo_candidates.clone())
-                .unwrap_or_default(),
-        );
-
-        Ok(Json(RecommendReposOutput {
-            provenance: Provenance {
-                source: "usestakly://registry/github/recommendations".to_string(),
-                formula_version,
-                scored_at,
-            },
-            query_used: report.query,
-            ecosystem_used: ecosystem.map(str::to_string),
-            risk_tolerance_used: risk_tolerance.as_str().to_string(),
-            must_have_topics: normalized_topics,
-            filter_used: p.filter.as_deref().unwrap_or("use_case").to_string(),
-            count: recommendations.len(),
-            recommendations,
-            stable_picks: sections.stable_picks,
-            emerging_picks: sections.emerging_picks,
-            fallback_candidates: sections.fallback_candidates,
-            fallback,
-        }))
+        handle_recommend_github_repos(&self.state, p, parts)
+            .await
+            .map(Json)
     }
 
     #[tool(
@@ -223,30 +90,9 @@ impl McpServer {
         Parameters(p): Parameters<RepoContextParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<RepoContextOutput>, ErrorData> {
-        verify_bearer(&self.state.db, &parts).await?;
-
-        let owner = p.owner.trim();
-        let name = p.name.trim();
-        if owner.is_empty() || name.is_empty() {
-            return Err(ErrorData::invalid_params(
-                "owner and name are required",
-                None,
-            ));
-        }
-
-        let artifact_id = resolve_artifact_id(&self.state.db, owner, name)
-            .await?
-            .ok_or_else(|| {
-                ErrorData::invalid_params(format!("repo not ingested: {owner}/{name}"), None)
-            })?;
-
-        let profile =
-            repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
-                .await
-                .map_err(map_api_error)?;
-
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        Ok(Json(into_context_output(profile, formula_version)))
+        handle_get_repo_quality_context(&self.state, p, parts)
+            .await
+            .map(Json)
     }
 
     #[tool(
@@ -260,104 +106,7 @@ impl McpServer {
         Parameters(p): Parameters<LogUsageParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<LogUsageOutput>, ErrorData> {
-        let agent = verify_agent(&self.state.db, &parts).await?;
-        let owner = p.owner.trim();
-        let name = p.name.trim();
-        if owner.is_empty() || name.is_empty() {
-            return Err(ErrorData::invalid_params(
-                "owner and name are required",
-                None,
-            ));
-        }
-
-        let signal = parse_passive_outcome(&p.outcome)?;
-        let notes = p.notes.as_deref().map(str::trim).filter(|s| !s.is_empty());
-        agent_token_events::enforce_write_quota(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            agent_token_events::REJECTION_TOOL_LOG_USAGE,
-            owner,
-            name,
-            self.state.config.mcp_write_limit_per_hour,
-        )
-        .await
-        .map_err(map_api_error)?;
-        agent_token_events::enforce_log_usage_guards(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            owner,
-            name,
-            signal,
-            notes,
-            self.state.config.mcp_log_usage_cooldown_secs,
-            self.state.config.mcp_negative_signal_window_hours,
-        )
-        .await
-        .map_err(map_api_error)?;
-        let artifact_id = ensure_github_artifact(&self.state, owner, name).await?;
-
-        let record = record_signal(
-            &self.state.db,
-            RecordSignalInput {
-                artifact_kind: ArtifactKind::External,
-                snippet_id: None,
-                external_artifact_id: Some(artifact_id),
-                signal,
-                review_status: "accepted".to_string(),
-                actor_user_id: Some(agent.user_id),
-                evidence_url: None,
-                evidence_description: None,
-                agent_context: Some(json!({
-                    "source": "mcp",
-                    "token_id": agent.token_id,
-                    "notes": notes,
-                })),
-            },
-        )
-        .await
-        .map_err(map_api_error)?;
-        agent_token_events::record_log_usage(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            owner,
-            name,
-            signal,
-            notes,
-        )
-        .await
-        .map_err(map_api_error)?;
-        let report = recompute_all_scores_with_config(&self.state.db, Some(&self.state.config))
-            .await
-            .map_err(map_anyhow)?;
-
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        let profile =
-            repos_service::get_repo_profile(&self.state.db, &self.state.config, artifact_id)
-                .await
-                .map_err(map_api_error)?;
-        let q = profile.repo.quality.as_ref();
-        Ok(Json(LogUsageOutput {
-            provenance: Provenance {
-                source: format!("usestakly://registry/github/{owner}/{name}"),
-                formula_version,
-                scored_at: Some(report.computed_at),
-            },
-            owner: owner.to_string(),
-            name: name.to_string(),
-            signal: record.signal,
-            recorded_at: record.created_at,
-            quality_overall: q.and_then(|q| q.overall),
-            quality_adoption: q.and_then(|q| q.adoption),
-            quality_reliability: q.and_then(|q| q.reliability),
-            quality_abandonment: q.and_then(|q| q.abandonment),
-            quality_resolve_count: q.map(|q| q.resolve_count).unwrap_or_default(),
-            quality_build_success_count: q.map(|q| q.build_success_count).unwrap_or_default(),
-            quality_build_failure_count: q.map(|q| q.build_failure_count).unwrap_or_default(),
-            quality_regret_count: q.map(|q| q.regret_count).unwrap_or_default(),
-        }))
+        handle_log_usage(&self.state, p, parts).await.map(Json)
     }
 
     #[tool(
@@ -370,53 +119,7 @@ impl McpServer {
         Parameters(p): Parameters<WatchRepoParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<WatchRepoOutput>, ErrorData> {
-        let agent = verify_agent(&self.state.db, &parts).await?;
-        let owner = p.owner.trim();
-        let name = p.name.trim();
-        if owner.is_empty() || name.is_empty() {
-            return Err(ErrorData::invalid_params(
-                "owner and name are required",
-                None,
-            ));
-        }
-
-        agent_token_events::enforce_write_quota(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            agent_token_events::REJECTION_TOOL_WATCH_REPO,
-            owner,
-            name,
-            self.state.config.mcp_write_limit_per_hour,
-        )
-        .await
-        .map_err(map_api_error)?;
-        let artifact_id = ensure_github_artifact(&self.state, owner, name).await?;
-        watchlist::add_watch(&self.state.db, agent.user_id, artifact_id)
-            .await
-            .map_err(map_api_error)?;
-        agent_token_events::record_watch_repo(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            owner,
-            name,
-        )
-        .await
-        .map_err(map_api_error)?;
-
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        Ok(Json(WatchRepoOutput {
-            provenance: Provenance {
-                source: format!("usestakly://registry/github/{owner}/{name}"),
-                formula_version,
-                scored_at: None,
-            },
-            owner: owner.to_string(),
-            name: name.to_string(),
-            artifact_id: artifact_id.to_string(),
-            watching: true,
-        }))
+        handle_watch_repo(&self.state, p, parts).await.map(Json)
     }
 
     #[tool(
@@ -431,52 +134,7 @@ impl McpServer {
         Parameters(p): Parameters<WatchUseCaseParams>,
         Extension(parts): Extension<Parts>,
     ) -> Result<Json<WatchUseCaseOutput>, ErrorData> {
-        let agent = verify_agent(&self.state.db, &parts).await?;
-        let need = p.need.trim();
-        if need.is_empty() {
-            return Err(ErrorData::invalid_params("need is required", None));
-        }
-        let risk_tolerance = parse_risk_tolerance(p.risk_tolerance.as_deref());
-
-        agent_token_events::enforce_write_quota(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            agent_token_events::REJECTION_TOOL_WATCH_USE_CASE,
-            "use-case",
-            need,
-            self.state.config.mcp_write_limit_per_hour,
-        )
-        .await
-        .map_err(map_api_error)?;
-
-        let watch = use_case_watches::create_watch(
-            &self.state.db,
-            &self.state.config,
-            agent.user_id,
-            need,
-            p.label,
-            risk_tolerance.as_str(),
-        )
-        .await
-        .map_err(map_api_error)?;
-
-        agent_token_events::record_watch_use_case(
-            &self.state.db,
-            agent.token_id,
-            agent.user_id,
-            &watch.label,
-            &watch.query_text,
-        )
-        .await
-        .map_err(map_api_error)?;
-
-        let formula_version = load_v2().map_err(map_anyhow)?.meta.version;
-        Ok(Json(into_watch_use_case_output(
-            watch,
-            formula_version,
-            None,
-        )))
+        handle_watch_use_case(&self.state, p, parts).await.map(Json)
     }
 }
 

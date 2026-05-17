@@ -1,9 +1,14 @@
 mod common;
 mod context;
+mod context_handler;
+mod log_usage_handler;
 mod recommend;
 mod recommend_explain;
+mod recommend_handler;
 mod recommend_match;
 mod search;
+mod search_handler;
+mod watch_handler;
 mod write;
 
 pub use common::Provenance;
@@ -29,6 +34,12 @@ pub(crate) use search::into_repo_candidate;
 pub(crate) use write::{
     ensure_github_artifact, into_watch_use_case_output, parse_passive_outcome, resolve_artifact_id,
 };
+
+pub use context_handler::handle_get_repo_quality_context;
+pub use log_usage_handler::handle_log_usage;
+pub use recommend_handler::handle_recommend_github_repos;
+pub use search_handler::handle_search_github_repos;
+pub use watch_handler::{handle_watch_repo, handle_watch_use_case};
 
 #[cfg(test)]
 pub(crate) use common::RiskTolerance;
