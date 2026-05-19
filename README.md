@@ -12,7 +12,7 @@
 ![TanStack Router](https://img.shields.io/badge/TanStack_Router-active-FF4154)
 ![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP-10B981)
 ![Coolify](https://img.shields.io/badge/Coolify-deployed-0B0D0E)
-![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-blue.svg)
+![Source Available: BSL 1.1](https://img.shields.io/badge/Source_Available-BSL_1.1-blue.svg)
 
 > Public beta observatory for GitHub OSS repositories: quality-scored discovery, watchlists, in-app notifications, and MCP tools for coding agents.
 
@@ -199,11 +199,12 @@ Start here:
 
 ## License
 
-UseStakly is licensed under the **Business Source License 1.1** (BSL 1.1).
+UseStakly is **source-available** under the **Business Source License 1.1** (BSL 1.1).
 
-- **Source Available**: The source code is public and transparent.
-- **Protection**: Production use for competing services, white-labeling, or user redirection is strictly prohibited until the Change Date.
-- **Future Open Source**: On **May 1st, 2030**, this version of the software will automatically convert to the **Apache License, Version 2.0**.
-- **MCP CLI**: The npm package in `cli/` (`usestakly-mcp`) is distributed separately under the **MIT License** to make agent installation easy.
+The repository is public so developers can inspect how the product works, audit the scoring logic, and give feedback. The main platform is not OSI open source today: production use for competing scoring, registry, discovery, white-label, or user-redirection services is restricted until the Change Date.
+
+On **May 1st, 2030**, this version of UseStakly automatically converts to the **Apache License, Version 2.0**.
+
+The MCP CLI in `cli/` (`usestakly-mcp`) is distributed separately under the **MIT License** to make agent installation easy.
 
 For full terms and conditions, please see the [LICENSE](./LICENSE) file.
