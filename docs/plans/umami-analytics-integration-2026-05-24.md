@@ -94,7 +94,7 @@ raw search queries until reviewed
 - Modify: `deploy/coolify/frontend.env.example`
 - Modify: `frontend/src/main.tsx` or create `frontend/src/lib/analytics.ts`
 
-- [ ] **Step 1: Add frontend env vars**
+- [x] **Step 1: Add frontend env vars**
 
 Add to `.env.example` and `deploy/coolify/frontend.env.example`:
 
@@ -105,7 +105,7 @@ VITE_UMAMI_WEBSITE_ID=
 
 Do not put real IDs in committed files.
 
-- [ ] **Step 2: Create analytics helper**
+- [x] **Step 2: Create analytics helper**
 
 Create `frontend/src/lib/analytics.ts`:
 
@@ -135,7 +135,7 @@ export function trackEvent(
 }
 ```
 
-- [ ] **Step 3: Inject Umami script only when configured**
+- [x] **Step 3: Inject Umami script only when configured**
 
 In `frontend/src/main.tsx`, before rendering or in a tiny helper, add:
 
@@ -159,7 +159,7 @@ installUmamiScript();
 
 Expected: no script is injected locally unless env vars are set.
 
-- [ ] **Step 4: Build frontend**
+- [x] **Step 4: Build frontend**
 
 ```powershell
 cd frontend
@@ -179,7 +179,7 @@ Expected: build passes.
 - Modify: `frontend/src/features/repos/components/DiscoverFilters.tsx` only if submit/click lives there
 - Modify: `frontend/src/features/repos/components/RepoHeader.tsx` or watch button owner only if needed
 
-- [ ] **Step 1: Track page-level openings**
+- [x] **Step 1: Track page-level openings**
 
 Add route-level `useEffect` events:
 
@@ -203,7 +203,7 @@ useEffect(() => {
 
 Do not include the raw repo id in the event unless reviewed.
 
-- [ ] **Step 2: Track coarse actions**
+- [x] **Step 2: Track coarse actions**
 
 Track only button/action events:
 
@@ -216,7 +216,7 @@ trackEvent("watch_repo_click", { route: "/repos/:id" });
 
 Do not send raw query text, repo names, token labels, or error messages.
 
-- [ ] **Step 3: Build frontend**
+- [x] **Step 3: Build frontend**
 
 ```powershell
 cd frontend
@@ -233,7 +233,7 @@ Expected: build passes.
 - Modify: `frontend/src/i18n/en.ts`
 - Depends on: `docs/plans/privacy-page-rgpd-update-2026-05-24.md`
 
-- [ ] **Step 1: Update analytics section only after Umami is configured**
+- [x] **Step 1: Update analytics section only after Umami is configured**
 
 If Umami is enabled, update `/privacy` analytics section to:
 
@@ -253,7 +253,7 @@ If Umami Cloud is used, mention:
 Umami is used as an analytics processor.
 ```
 
-- [ ] **Step 2: Build frontend**
+- [x] **Step 2: Build frontend**
 
 ```powershell
 cd frontend

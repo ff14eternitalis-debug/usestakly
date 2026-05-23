@@ -189,7 +189,7 @@ export const en = {
       {
         title: "Analytics",
         body:
-          "UseStakly does not use invasive marketing analytics or a marketing mailing list. If privacy-friendly analytics such as Umami are enabled, this page will describe what is collected and how to opt out if needed."
+          "UseStakly can use optional privacy-friendly analytics through Umami Cloud to understand aggregate product usage: page views, referrers, device/browser category, and a small set of non-sensitive product events. No email, OAuth id, MCP token, admin token, private source code, search query, repository name, or free-form note is sent to analytics. Analytics is disabled unless configured in the deployed frontend."
       }
     ],
     closing:

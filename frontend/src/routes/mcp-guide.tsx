@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useT } from "../i18n";
 import { ApiError, authUrl } from "../lib/api-client";
 import { createAgentToken } from "../lib/api/account";
+import { trackEvent } from "../lib/analytics";
 import type { AgentTokenCreated } from "../lib/types";
 import { loginSearch } from "../lib/return-to";
 import { useAuthStore } from "../state/auth-store";
@@ -95,6 +96,13 @@ export function McpGuidePage() {
         ? t.mcpGuide.createTokenFail
         : null;
 
+  useEffect(() => {
+    trackEvent("mcp_guide_open", {
+      route: "/mcp-guide",
+      auth_state: isAuthed ? "signed_in" : "anonymous"
+    });
+  }, [isAuthed]);
+
   const testToken = useMutation({
     mutationFn: async () => {
       if (!created?.token) throw new Error("No token");
@@ -149,7 +157,13 @@ export function McpGuidePage() {
           testPending={testToken.isPending}
           testResult={testResult}
           createError={createError}
-          onCreate={() => createToken.mutate()}
+          onCreate={() => {
+            trackEvent("mcp_token_create_click", {
+              route: "/mcp-guide",
+              auth_state: "signed_in"
+            });
+            createToken.mutate();
+          }}
           onCopyConfig={() => void copyConfig()}
           onTest={() => testToken.mutate()}
         />

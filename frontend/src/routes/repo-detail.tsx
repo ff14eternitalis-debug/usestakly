@@ -25,6 +25,7 @@ import { RepoSignalsList } from "../features/repos/components/RepoSignalsList";
 import { ReportSignalForm } from "../features/repos/components/ReportSignalForm";
 import { labelsForExplanation } from "../lib/repo-explanation";
 import { useSeoOverride } from "../seo/seo-context";
+import { trackEvent } from "../lib/analytics";
 
 export function RepoDetailPage() {
   const t = useT();
@@ -47,6 +48,13 @@ export function RepoDetailPage() {
   useEffect(() => {
     setOverride(null);
   }, [id, setOverride]);
+
+  useEffect(() => {
+    trackEvent("repo_detail_open", {
+      route: "/repos/:id",
+      auth_state: isAuthed ? "signed_in" : "anonymous"
+    });
+  }, [id, isAuthed]);
 
   useEffect(() => {
     if (!isAuthed) return;
@@ -194,7 +202,14 @@ export function RepoDetailPage() {
         watching={watching}
         watchPending={addWatch.isPending}
         unwatchPending={removeWatch.isPending}
-        addToWatchlist={() => addWatch.mutate()}
+        addToWatchlist={() => {
+          trackEvent("watch_repo_click", {
+            route: "/repos/:id",
+            repo_source: "direct",
+            auth_state: "signed_in"
+          });
+          addWatch.mutate();
+        }}
         removeFromWatchlist={() => removeWatch.mutate()}
         signInToWatchLabel={t.repoDetail.signInToWatch}
         signInToWatchHint={t.repoDetail.signInToWatchHint}
