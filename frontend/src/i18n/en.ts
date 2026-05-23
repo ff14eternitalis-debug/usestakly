@@ -137,33 +137,63 @@ export const en = {
   },
   privacy: {
     eyebrow: "Privacy",
-    h1: "Data UseStakly stores",
+    h1: "How UseStakly handles data",
     intro:
-      "UseStakly keeps the minimum data needed for GitHub repo scoring, watchlists, notifications, and MCP access.",
+      "UseStakly is a public beta for GitHub repository discovery, watchlists, notifications, and MCP access. This page explains what data is used to run the service.",
     sections: [
       {
-        title: "OAuth identity",
+        title: "Controller and contact",
         body:
-          "GitHub or Discord OAuth is used for login. UseStakly stores your user id, username, avatar, and email when the provider returns one. It does not run a marketing mailing list."
+          "UseStakly operates this service. For privacy, legal, security, or product questions, contact contact@usestakly.com."
+      },
+      {
+        title: "Account and session",
+        body:
+          "GitHub or Discord OAuth is used for login. UseStakly stores your provider user id, username, avatar, and email when the provider returns one. The usestakly_session cookie is HTTP-only and is used only to keep you signed in."
       },
       {
         title: "Watchlist and notifications",
         body:
-          "Repos you watch and notification read state are stored so the app can alert you when scores drift."
+          "Repos you watch, notification read state, and optional notification channels are stored so UseStakly can alert you when scores drift. Email destinations are stored for email alerts; Discord webhook URLs are encrypted at rest."
       },
       {
         title: "MCP tokens",
         body:
-          "Agent tokens use the usk_ format. Plaintext is shown once, then only a SHA-256 hash is stored server-side."
+          "Agent tokens use the usk_ format. Plaintext is shown once, then only a SHA-256 hash is stored server-side. Tokens can be revoked from the account page."
       },
       {
         title: "Usage signals",
         body:
-          "MCP log_usage and user reports store repo owner/name, outcome, timestamp, token owner, and optional notes so scores can improve with real usage."
+          "MCP log_usage and user reports can store repo owner/name, outcome, timestamp, token owner, and optional notes so scores can improve with real usage. Do not include secrets or private source code in notes."
+      },
+      {
+        title: "Public GitHub metadata",
+        body:
+          "UseStakly stores public GitHub repository metadata such as owner, name, topics, language, release activity, CI signals, and freshness inputs. Private repositories and private source code are not ingested."
+      },
+      {
+        title: "Service providers",
+        body:
+          "UseStakly relies on GitHub and Discord for OAuth, GitHub for public repository metadata, infrastructure hosting for the app and database, and an email provider such as Brevo when outbound notifications are enabled."
+      },
+      {
+        title: "Legal bases and retention",
+        body:
+          "Account, session, watchlist, MCP, and notification data are processed to provide the service you request. Security and abuse-prevention data are processed for legitimate operational interest. Data is kept only as long as needed for the public beta, security, and scoring integrity."
+      },
+      {
+        title: "Your rights",
+        body:
+          "You can ask for access, correction, deletion, or objection where applicable by contacting contact@usestakly.com. Until self-service deletion exists, account/data deletion is handled manually by request."
+      },
+      {
+        title: "Analytics",
+        body:
+          "UseStakly does not use invasive marketing analytics or a marketing mailing list. If privacy-friendly analytics such as Umami are enabled, this page will describe what is collected and how to opt out if needed."
       }
     ],
     closing:
-      "Public repo metadata comes from GitHub. Private source code is not ingested by UseStakly."
+      "UseStakly is a beta service, not a legal or security certification system. Scores are transparent decision aids and should not replace your own dependency review."
   },
   legal: {
     eyebrow: "Legal",

@@ -4,10 +4,10 @@ export function PrivacyPage() {
   const t = useT();
 
   return (
-    <article className="shell-narrow grid gap-10 py-10 md:py-14">
+    <article className="shell-narrow grid gap-12 py-12 md:py-16">
       <header className="grid gap-4">
         <span className="kicker">{t.privacy.eyebrow}</span>
-        <h1 className="display-lg max-w-[18ch]">{t.privacy.h1}</h1>
+        <h1 className="display-lg max-w-[20ch]">{t.privacy.h1}</h1>
         <p className="max-w-[64ch] text-[0.98rem] leading-relaxed text-fg-dim">
           {t.privacy.intro}
         </p>
