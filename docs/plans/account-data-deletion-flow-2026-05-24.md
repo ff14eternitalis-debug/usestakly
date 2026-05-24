@@ -8,6 +8,8 @@
 
 **Tech Stack:** Rust/Axum/SQLx/Postgres backend, React account page, existing session auth, existing `users`, `agent_tokens`, `watched_artifacts`, `notifications`, `notification_channels`, `quality_signals`, `agent_token_events`.
 
+**Implementation note (2026-05-24):** shipped directly as a self-service flow rather than stopping at the manual request panel. The UI requires typing `DELETE`; backend deletion uses a tombstone user row with a unique `deleted-user-<uuid>` username to avoid the `users.username` uniqueness conflict that a shared `deleted-user` value would create.
+
 ---
 
 ## Context
@@ -92,7 +94,7 @@ or whether user rows are physically deleted after dependent rows are handled. To
 - Modify: `frontend/src/routes/account.tsx` or account component area
 - Modify: `frontend/src/routes/privacy.tsx` only if needed after privacy plan
 
-- [ ] **Step 1: Add account copy**
+- [x] **Step 1: Add account copy**
 
 Add an account section:
 
@@ -101,7 +103,7 @@ Data deletion
 To delete your UseStakly account and associated personal data, contact contact@usestakly.com from the email linked to your account. Until self-service deletion is available, requests are handled manually.
 ```
 
-- [ ] **Step 2: Add UI section on `/account`**
+- [x] **Step 2: Add UI section on `/account`**
 
 Add a small non-destructive panel. No button that deletes data yet.
 
@@ -112,7 +114,7 @@ Data deletion
 Request deletion by emailing contact@usestakly.com from your account email. MCP tokens can be revoked immediately above.
 ```
 
-- [ ] **Step 3: Build frontend**
+- [x] **Step 3: Build frontend**
 
 ```powershell
 cd frontend
@@ -135,7 +137,7 @@ git commit -m "docs: add account deletion request guidance"
 - Modify: `backend/src/services/mod.rs`
 - Test: `backend/src/services/account_deletion.rs`
 
-- [ ] **Step 1: Add service input/output types**
+- [x] **Step 1: Add service input/output types**
 
 Create:
 
@@ -158,7 +160,7 @@ pub struct DeleteAccountOutcome {
 }
 ```
 
-- [ ] **Step 2: Add DB transaction function**
+- [x] **Step 2: Add DB transaction function**
 
 Implement:
 
@@ -193,7 +195,7 @@ WHERE id = $1
 
 If a `deleted_at` column does not exist, do not add it in this task unless a migration is explicitly added.
 
-- [ ] **Step 3: Add tests around SQL shape where feasible**
+- [x] **Step 3: Add tests around SQL shape where feasible**
 
 If DB integration tests are not available, add unit tests for tombstone email builder:
 
@@ -207,7 +209,7 @@ Expected:
 deleted+<uuid>@deleted.usestakly.local
 ```
 
-- [ ] **Step 4: Run backend checks**
+- [x] **Step 4: Run backend checks**
 
 ```powershell
 cd backend
@@ -226,7 +228,7 @@ cargo test
 - Modify: `frontend/src/lib/api/account.ts`
 - Test: handler/service tests if patterns exist
 
-- [ ] **Step 1: Add route**
+- [x] **Step 1: Add route**
 
 Add:
 
@@ -241,7 +243,7 @@ Requirements:
 - clears session cookie on success;
 - returns outcome summary without sensitive data.
 
-- [ ] **Step 2: Handler behavior**
+- [x] **Step 2: Handler behavior**
 
 Pseudo-flow:
 
@@ -252,7 +254,7 @@ let clear_cookie = clear_session_cookie(&state.config)?;
 return Json(outcome) with Set-Cookie clear header;
 ```
 
-- [ ] **Step 3: Add frontend API function**
+- [x] **Step 3: Add frontend API function**
 
 In `frontend/src/lib/api/account.ts`:
 
@@ -274,7 +276,7 @@ export type AccountDeletionOutcome = {
 };
 ```
 
-- [ ] **Step 4: Run checks**
+- [x] **Step 4: Run checks**
 
 ```powershell
 cd backend
@@ -294,7 +296,7 @@ npm run build
 - Modify: `frontend/src/i18n/en.ts`
 - Modify: `frontend/src/state/auth-store.ts` if logout state must clear manually
 
-- [ ] **Step 1: Add danger section**
+- [x] **Step 1: Add danger section**
 
 UI requirements:
 
@@ -304,7 +306,7 @@ UI requirements:
 - warns public GitHub corpus is not deleted;
 - revokes tokens and clears session.
 
-- [ ] **Step 2: Add mutation**
+- [x] **Step 2: Add mutation**
 
 Use React Query mutation:
 
@@ -320,7 +322,7 @@ const deleteAccount = useMutation({
 
 Use existing auth store patterns.
 
-- [ ] **Step 3: Build frontend**
+- [x] **Step 3: Build frontend**
 
 ```powershell
 cd frontend
@@ -337,7 +339,7 @@ npm run build
 - Modify: `docs/architecture-backend-current.md`
 - Modify: `docs/plans/remaining-work-2026-05-03.md`
 
-- [ ] **Step 1: Update privacy text**
+- [x] **Step 1: Update privacy text**
 
 Once self-service exists, replace:
 
@@ -351,7 +353,7 @@ with:
 You can request deletion by email or delete your account from the account page. Deletion revokes MCP tokens, removes watchlists, notifications, and notification channels, and anonymizes account identity while preserving public GitHub corpus data and aggregate scoring provenance.
 ```
 
-- [ ] **Step 2: Update docs**
+- [x] **Step 2: Update docs**
 
 Document:
 

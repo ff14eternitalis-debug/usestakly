@@ -184,7 +184,7 @@ export const en = {
       {
         title: "Your rights",
         body:
-          "You can ask for access, correction, deletion, or objection where applicable by contacting contact@usestakly.com. Until self-service deletion exists, account/data deletion is handled manually by request."
+          "You can ask for access, correction, deletion, or objection where applicable by contacting contact@usestakly.com. You can also delete your account from the account page. Deletion revokes MCP tokens, removes watchlists, notifications, and notification channels, and anonymizes account identity while preserving public GitHub corpus data and aggregate scoring provenance."
       },
       {
         title: "Analytics",
@@ -855,6 +855,16 @@ export const en = {
     channelDeleted: "Notification channel removed.",
     channelTestSent: "Test notification sent.",
     notificationPreferencesSaved: "Digest preferences saved.",
+    deleteAccountEyebrow: "Data deletion",
+    deleteAccountTitle: "Delete account data",
+    deleteAccountBody:
+      "Delete your UseStakly account data when you no longer want the service to retain your personal account state.",
+    deleteAccountWarning:
+      "This revokes MCP tokens, removes watchlists, notifications, and notification channels, clears OAuth links, and anonymizes your account identity. Public GitHub corpus data and aggregate scoring provenance are kept.",
+    deleteAccountConfirmLabel: "Type DELETE to confirm",
+    deleteAccountConfirmPlaceholder: "DELETE",
+    deleteAccountAction: "Delete my account",
+    deleteAccountDeleting: "Deleting account...",
     quotaTitle: "Write safety",
     quotaBody:
       "MCP write tools are limited per token, duplicate log_usage calls are throttled, and repeated negative outcomes are cooled down to reduce poisoning.",

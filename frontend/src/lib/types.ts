@@ -304,6 +304,20 @@ export type AccountSummary = {
   activeSignalSevereConsensus: number;
 };
 
+export type AccountDeletionOutcome = {
+  revokedTokens: number;
+  deletedWatchlistRows: number;
+  deletedNotifications: number;
+  deletedChannels: number;
+  deletedDigestDeliveries: number;
+  deletedUseCaseWatchMatches: number;
+  deletedUseCaseWatches: number;
+  deletedUseCaseQueries: number;
+  deletedRepoRefreshEvents: number;
+  deletedAuthIdentities: number;
+  anonymizedUser: boolean;
+};
+
 export type PendingRepoSignal = {
   id: string;
   repoId: string;

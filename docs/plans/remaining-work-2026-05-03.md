@@ -3,7 +3,7 @@
 > **Snapshot** : passe complète sur `TODO.md` v5.5 + `docs/plans/*` + état réel du code.
 > Les faux positifs détectés (items marqués TODO mais déjà livrés) ont été corrigés directement dans les docs concernées (`TODO.md`, `docs/plans/source-of-truth-oss-radar-plan.md`, `docs/plans/use-case-recommendation-watch-plan.md`, `docs/plans/anti-slop-vitality-v2.md`).
 >
-> Last reconciled with code: 2026-05-17 (Awesome import tooling + add_repo short-circuit).
+> Last reconciled with code: 2026-05-24 (account data deletion self-service).
 > Cette doc liste **uniquement** ce qui reste vraiment ouvert, organisé par priorité d'exécution.
 > À mettre à jour à chaque vague de finition. Source de vérité opérationnelle = `docs/source-of-truth.md` + ce backlog priorisé. `TODO.md` reste une roadmap historique longue.
 
@@ -30,6 +30,7 @@ Objectifs bloquants identifiés dans `docs/ops-mcp-coolify-hardening.md` et la s
 
 - [x] **Page légale `/legal`** — livrée 2026-05-07 avec mentions beta, MCP, data sources, licence et absence de garantie.
 - [x] **Contact officiel affiché** — `contact@usestakly.com` ajouté dans le footer et la page légale. Reste à vérifier côté provider mail que l'adresse ou l'alias existe réellement.
+- [x] **Suppression compte/données self-service** — livré 2026-05-24. `/account` expose une zone danger avec confirmation `DELETE`; `DELETE /api/account` révoque les tokens MCP, supprime watchlists/notifs/canaux/use-case watches/liens OAuth et anonymise l'identité user, tout en conservant le corpus GitHub public et la provenance agrégée des scores.
 
 ---
 
