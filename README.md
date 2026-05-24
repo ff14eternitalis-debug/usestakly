@@ -40,8 +40,9 @@ Already shipped:
 - score provenance plus `dimensionStates` / `proofTier` on repo detail and MCP context
 - watchlist and in-app notifications
 - notification channels and daily digest plumbing; one real outbound product email is still a launch-hardening proof item
-- account page for MCP token creation and revocation
+- account page for MCP token creation, revocation, notification settings, and self-service account/data deletion
 - public beta pages: landing, status, privacy/data, reading guide, MCP guide
+- optional privacy-friendly analytics via Umami Cloud, disabled unless frontend env vars are configured
 - public status endpoint: `/api/status/public`
 - optional local semantic search with `fastembed` and `pgvector` behind the `semantic-search` feature
 - Awesome-list corpus import tooling and the first bounded production import
@@ -156,6 +157,8 @@ If `APP_SESSION_SECRET` and OAuth client secrets are missing, OAuth is disabled 
 - `APP_MCP_LOG_USAGE_COOLDOWN_SECS`: cooldown for repeated `log_usage`
 - `APP_MCP_NEGATIVE_SIGNAL_WINDOW_HOURS`: negative signal cooling window
 - `APP_ACTIVE_SIGNAL_MIN_REPUTATION`: trust threshold for active signals
+- `VITE_UMAMI_SCRIPT_URL`: optional Umami script URL for privacy-friendly analytics
+- `VITE_UMAMI_WEBSITE_ID`: optional Umami website id
 
 ## Security Posture
 
@@ -169,6 +172,8 @@ Already implemented:
 - public flags require reputation and consensus
 - `security_issue` flows through stricter review
 - repo owners can dispute signals
+- users can delete their account data from `/account`; this revokes MCP tokens, removes watchlists, notifications, channels, and OAuth links, then anonymizes identity while preserving public GitHub corpus data and aggregate score provenance
+- optional analytics is privacy-friendly and does not send emails, OAuth ids, MCP tokens, repo names, search queries, or free-form notes
 - MCP host validation is configured for the public backend host
 - database is private on Coolify, not publicly exposed
 - Authorization Bearer is required for all `/mcp` requests, including `initialize` and `tools/list` (HTTP entrypoint middleware, see [docs/mcp-endpoint-security.md](./docs/mcp-endpoint-security.md))
