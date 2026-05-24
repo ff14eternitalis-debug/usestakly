@@ -1,5 +1,6 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "../api-client";
+import { apiDelete, apiDeleteJson, apiGet, apiPost, apiPut } from "../api-client";
 import type {
+  AccountDeletionOutcome,
   AccountSummary,
   AgentTokenCreated,
   AgentTokenSummary,
@@ -74,4 +75,8 @@ export function updateNotificationPreferences(body: {
     "/api/account/notification-preferences",
     body
   );
+}
+
+export function deleteAccount(): Promise<AccountDeletionOutcome> {
+  return apiDeleteJson<AccountDeletionOutcome>("/api/account");
 }

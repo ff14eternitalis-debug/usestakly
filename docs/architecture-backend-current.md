@@ -1,7 +1,7 @@
 # Architecture backend actuelle
 
-> Version : 1.4
-> Dernière mise à jour : 2026-05-17
+> Version : 1.5
+> Dernière mise à jour : 2026-05-24
 > Portée : backend vivant de **UseStakly** (public beta exposable)
 
 ## Vue d'ensemble
@@ -51,7 +51,7 @@ Responsabilité : I/O HTTP seulement.
 
 - `health` — `/health` + `/api/status/public` (status enrichi public beta, incl. `ingestion` générique sans quota brut)
 - `auth` — callbacks OAuth GitHub / Discord avec `return_to` signé
-- `me`, `account` — profil user, settings
+- `me`, `account` — profil user, settings, suppression/anonymisation self-service (`DELETE /api/account`)
 - `admin` — endpoints admin gated par `ADMIN_API_TOKEN` (recompute, MCP metrics, `GET /api/admin/github/quota`, scoring explain, embeddings backfill, signal review queue…)
 - `agent_tokens` — CRUD tokens MCP (`POST/GET /api/agent-tokens`, `DELETE /api/agent-tokens/{id}`)
 - `search` — recherche discovery publique
@@ -72,6 +72,7 @@ Responsabilité : logique métier.
 - `ingestion/structural_extras.rs` — signaux structurels GitHub : CI racine/workflows, releases paginées, fallback tags si aucune release
 - `repos/*` — agrégation profils repo, réponses discovery, score provenance, explications publiques
 - `watchlist.rs`, `notifications.rs`, `notification_channels/*`, `notification_digest.rs`
+- `account_deletion.rs` — suppression self-service : revoke tokens, purge watchlist/notifs/canaux/use-case watches, suppression liens OAuth, anonymisation tombstone user
 - `scheduler.rs` — boucle `tokio::spawn` active par défaut en prod/staging : refresh watchlist + corpus GitHub stale, plafond `APP_INGEST_MAX_REPOS_PER_CYCLE`, puis recompute + emit notifs
 - `semantic_search.rs` — embeddings repo + ranking hybride lexical/sémantique/qualité (derrière feature `semantic-search`)
 - `agent_tokens.rs` — création, hash SHA-256, lookup, révocation

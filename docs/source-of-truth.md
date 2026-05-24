@@ -1,6 +1,6 @@
 # UseStakly Source Of Truth
 
-> Last reconciled: 2026-05-17
+> Last reconciled: 2026-05-24
 > Scope: current runtime and documentation routing for agents.
 
 ## Current Product
@@ -75,6 +75,19 @@ Known non-fields: `ingestionStatus` does not currently include `lastIngestError`
 Manual corpus add: `POST /api/repos/add` ingests one GitHub repo when new (`alreadyIndexed: false`) and **does not call GitHub** when the repo already exists (`alreadyIndexed: true`, case-insensitive owner/repo lookup). Bulk Awesome import: `docs/corpus/awesome-import.md`.
 
 GitHub quota ops: structured logs in `ingestion/github/client.rs` (via `ingestion/github_quota.rs`); operator view `GET /api/admin/github/quota` (`x-admin-token`); public `GET /api/status/public` exposes `ingestion.status` + generic message only (no raw remaining/limit). Runbook: `docs/ops-mcp-coolify-hardening.md` (GitHub API quota section).
+
+## Account Data Deletion
+
+Self-service deletion is exposed from `/account` and backed by `DELETE /api/account`.
+
+Runtime behavior:
+
+- session required; the endpoint only deletes/anonymizes the current user
+- clears the `usestakly_session` cookie on success
+- revokes MCP tokens and sanitizes their labels
+- deletes watchlist rows, notifications, notification channels, digest delivery rows, use-case watches/matches/queries, repo refresh events, and OAuth identity links
+- anonymizes the `users` row to a tombstone identity (`deleted+<uuid>@deleted.usestakly.local`, `deleted-user-<uuid>`, `Deleted user`)
+- preserves public GitHub corpus data, aggregate score rows, and scoring provenance
 
 ## Legacy Boundary
 

@@ -119,6 +119,13 @@ export function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
   });
 }
 
+export function apiDeleteJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, {
+    method: "DELETE",
+    signal
+  });
+}
+
 export function authUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }

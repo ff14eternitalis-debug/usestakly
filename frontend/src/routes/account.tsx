@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 
 import { ApiError } from "../lib/api-client";
 import { getMcpMetrics, getPendingRepoSignals, reviewPendingRepoSignal } from "../lib/api/admin";
 import {
   createAgentToken,
+  deleteAccount as deleteAccountApi,
   deleteNotificationChannel,
   getAccountSummary,
   getAgentTokens,
@@ -32,7 +34,9 @@ function detectTimezone(): string {
 export function AccountPage() {
   const t = useT();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const resetAuth = useAuthStore((s) => s.reset);
   const [label, setLabel] = useState("");
   const [created, setCreated] = useState<AgentTokenCreated | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,6 +50,7 @@ export function AccountPage() {
   const [webhookDigest, setWebhookDigest] = useState(false);
   const [digestTimePreset, setDigestTimePreset] = useState<DigestTimePreset>("morning");
   const [channelMessage, setChannelMessage] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   const summary = useQuery({
     queryKey: ["account-summary"],
@@ -170,6 +175,15 @@ export function AccountPage() {
     }
   });
 
+  const deleteAccount = useMutation({
+    mutationFn: deleteAccountApi,
+    onSuccess: () => {
+      resetAuth();
+      queryClient.clear();
+      void navigate({ to: "/" });
+    }
+  });
+
   const error =
     createToken.error instanceof ApiError
       ? createToken.error.message
@@ -183,11 +197,13 @@ export function AccountPage() {
         ? saveWebhookChannel.error.message
         : deleteChannel.error instanceof ApiError
           ? deleteChannel.error.message
-          : testChannel.error instanceof ApiError
-            ? testChannel.error.message
-            : saveNotificationPreferences.error instanceof ApiError
-              ? saveNotificationPreferences.error.message
-              : null;
+            : testChannel.error instanceof ApiError
+              ? testChannel.error.message
+              : saveNotificationPreferences.error instanceof ApiError
+                ? saveNotificationPreferences.error.message
+                : null;
+  const deleteAccountError =
+    deleteAccount.error instanceof ApiError ? deleteAccount.error.message : null;
 
   useEffect(() => {
     const emailChannel = notificationChannels.data?.find(
@@ -325,6 +341,53 @@ export function AccountPage() {
         onDelete={(id) => deleteChannel.mutate(id)}
         onTest={(id) => testChannel.mutate(id)}
       />
+
+      <section className="rounded-[8px] border border-line bg-surface/35 p-5">
+        <div className="grid gap-5 md:grid-cols-[0.8fr_1.2fr] md:items-start">
+          <div className="grid gap-2">
+            <p className="kicker">{t.account.deleteAccountEyebrow}</p>
+            <h2 className="text-[1.05rem] font-semibold text-fg">
+              {t.account.deleteAccountTitle}
+            </h2>
+            <p className="text-[0.9rem] leading-relaxed text-fg-dim">
+              {t.account.deleteAccountBody}
+            </p>
+          </div>
+          <div className="grid gap-3">
+            <p className="text-[0.88rem] leading-relaxed text-fg-dim">
+              {t.account.deleteAccountWarning}
+            </p>
+            <label className="grid gap-1.5">
+              <span className="kicker">{t.account.deleteAccountConfirmLabel}</span>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={t.account.deleteAccountConfirmPlaceholder}
+                className="input"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => deleteAccount.mutate()}
+              disabled={deleteConfirmation !== "DELETE" || deleteAccount.isPending}
+              className="inline-flex w-fit items-center rounded-[6px] border border-[color:var(--color-danger)] bg-transparent px-4 py-2 text-[0.88rem] font-medium text-[color:var(--color-danger)] transition-colors hover:bg-[color:var(--color-danger)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--color-danger)]"
+            >
+              {deleteAccount.isPending
+                ? t.account.deleteAccountDeleting
+                : t.account.deleteAccountAction}
+            </button>
+            {deleteAccountError ? (
+              <p
+                className="text-[0.84rem] leading-relaxed"
+                style={{ color: "var(--color-danger)" }}
+              >
+                {deleteAccountError}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
 
       <AdminModerationPanel
         adminToken={adminToken}

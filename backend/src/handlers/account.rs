@@ -1,10 +1,16 @@
-use axum::{Json, extract::State, http::HeaderMap};
+use axum::{
+    Json,
+    extract::State,
+    http::{HeaderMap, HeaderValue, StatusCode, header},
+    response::{IntoResponse, Response},
+};
 
 use crate::{
     app::{AppState, error::ApiError},
-    auth::resolve_current_user,
+    auth::{clear_session_cookie, resolve_current_user},
     domain::account::AccountSummary,
     services::{
+        account_deletion::{DeleteAccountOutcome, delete_account_data},
         account_preferences::{self, NotificationPreferences, UpdateNotificationPreferences},
         trust::reputation,
     },
@@ -42,4 +48,20 @@ pub async fn update_notification_preferences(
     let user = resolve_current_user(&state.db, &state.config, &headers).await?;
     let preferences = account_preferences::update(&state.db, user.id, req).await?;
     Ok(Json(preferences))
+}
+
+pub async fn delete_account(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
+    let user = resolve_current_user(&state.db, &state.config, &headers).await?;
+    let outcome: DeleteAccountOutcome = delete_account_data(&state.db, user.id).await?;
+    let cookie = clear_session_cookie(&state.config)?;
+    let mut response = (StatusCode::OK, Json(outcome)).into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie)
+            .map_err(|_| ApiError::bad_request("invalid session cookie"))?,
+    );
+    Ok(response)
 }
